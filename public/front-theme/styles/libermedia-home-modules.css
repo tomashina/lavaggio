@@ -1,0 +1,116 @@
+/* CMS home modules share the storefront's type, colours and spacing. */
+.libermedia-storefront .lm-benefits-placement { margin-top: 0; }
+.libermedia-storefront .lm-benefits {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+    padding: 30px 12px;
+    border-bottom: 1px solid var(--libermedia-line);
+}
+.libermedia-storefront .lm-benefits > :is(div, a) { display: flex; min-width: 0; align-items: center; justify-content: center; gap: 15px; color: var(--libermedia-ink); text-decoration: none; }
+.libermedia-storefront .lm-benefits > :is(div, a) > span { min-width: 0; }
+.libermedia-storefront .lm-benefits svg { width: 32px; height: 32px; flex: 0 0 32px; color: var(--libermedia-green); transition: color .18s ease; }
+.libermedia-storefront .lm-benefits strong { display: block; margin-bottom: 3px; font-size: 14px; font-weight: 700; line-height: 1.4; }
+.libermedia-storefront .lm-benefits small { display: block; color: var(--libermedia-muted); font-size: 12px; line-height: 1.5; }
+.libermedia-storefront .lm-benefits > a:hover strong { color: var(--libermedia-action); }
+.libermedia-storefront .lm-benefits > :is(div, a):hover svg { color: var(--libermedia-action); }
+.libermedia-storefront .lm-benefits > a:focus-visible { outline: 2px solid var(--libermedia-action); outline-offset: 6px; }
+.libermedia-storefront .lm-eyebrow { margin: 0 0 11px; color: var(--libermedia-green); font-size: 11px; font-weight: 750; letter-spacing: .11em; line-height: 1.5; }
+.libermedia-storefront .lm-section-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 22px; }
+.libermedia-storefront .lm-section-heading h2 { margin: 0; color: var(--libermedia-ink); font-size: clamp(24px, 2vw, 32px); font-weight: 750; line-height: 1.2; letter-spacing: -.035em; }
+.libermedia-storefront .lm-button { display: inline-flex; align-items: center; justify-content: center; gap: 16px; width: fit-content; min-height: 44px; padding: 12px 19px; border: 1px solid transparent; border-radius: 6px; background: var(--libermedia-action); color: #fff; font-size: 13px; font-weight: 700; line-height: 1.4; text-decoration: none; transition: background .18s ease, transform .18s ease; }
+.libermedia-storefront .lm-button svg { width: 16px; height: 16px; flex-shrink: 0; }
+.libermedia-storefront .lm-button:hover { background: var(--libermedia-action-hover); color: #fff; transform: translateY(-1px); }
+.libermedia-storefront .lm-button:focus-visible { outline: 3px solid var(--libermedia-green); outline-offset: 4px; }
+.libermedia-storefront .lm-button--green { background: var(--libermedia-green); }
+.libermedia-storefront .lm-button--green:hover { background: var(--libermedia-green-hover); }
+.libermedia-storefront .lm-campaign-section { margin: 38px 0 44px; }
+.libermedia-storefront .lm-campaign-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: repeat(2, minmax(270px, auto)); gap: 22px; }
+.libermedia-storefront .lm-campaign { position: relative; isolation: isolate; overflow: hidden; border: 1px solid var(--libermedia-line); border-radius: 16px; background: #f1f5f0; }
+.libermedia-storefront .lm-campaign--bags { grid-row: 1 / 3; background: #e8f0e6; }
+.libermedia-storefront .lm-campaign-copy { position: relative; z-index: 2; padding: clamp(25px, 2.5vw, 44px); }
+.libermedia-storefront .lm-campaign h3 { margin: 0; color: var(--libermedia-ink); font-size: clamp(24px, 2vw, 34px); font-weight: 750; letter-spacing: -.045em; line-height: 1.12; }
+.libermedia-storefront .lm-campaign-copy > p:not(.lm-eyebrow) { max-width: 320px; margin: 15px 0 20px; color: #556052; font-size: 14px; line-height: 1.65; }
+.libermedia-storefront .lm-campaign--bags h3 { font-size: clamp(29px, 2.6vw, 44px); }
+.libermedia-storefront .lm-campaign--bags .lm-campaign-copy { max-width: 92%; }
+.libermedia-storefront .lm-campaign-bag-images { position: absolute; inset: 245px 0 0; }
+.libermedia-storefront .lm-bag { position: absolute; width: 58%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+.libermedia-storefront .lm-bag--front { right: 2%; bottom: -4%; transform: rotate(8deg); }
+.libermedia-storefront .lm-bag--back { left: 0; bottom: 3%; transform: rotate(-11deg); }
+.libermedia-storefront .lm-campaign--meli { background: var(--libermedia-sage); }
+.libermedia-storefront .lm-campaign--montessori { background: #edf2ec; }
+.libermedia-storefront :is(.lm-campaign--meli, .lm-campaign--montessori) .lm-campaign-copy { width: 60%; padding-right: 0; }
+.libermedia-storefront :is(.lm-campaign--meli, .lm-campaign--montessori) h3 { font-size: clamp(23px, 1.8vw, 32px); }
+.libermedia-storefront .lm-campaign-product { position: absolute; z-index: 1; width: 48%; height: 93%; right: -2%; bottom: 0; object-fit: contain; mix-blend-mode: multiply; }
+.libermedia-storefront .lm-meli-product { transform: rotate(11deg); right: -1%; width: 45%; }
+.libermedia-storefront .lm-montessori-product { width: 44%; height: 88%; right: 0; bottom: 4%; transform: rotate(-5deg); }
+.libermedia-storefront .lm-kindergarten { display: grid; grid-template-columns: 1fr 1.3fr .85fr; overflow: hidden; margin: 44px 0; border-radius: 16px; background: var(--libermedia-green); }
+.libermedia-storefront .lm-kindergarten-photo { display: block; width: 100%; height: 100%; min-height: 360px; object-fit: cover; }
+.libermedia-storefront .lm-kindergarten-copy { align-self: stretch; display: flex; flex-direction: column; justify-content: center; padding: clamp(28px, 3vw, 54px); color: #edf5ed; }
+.libermedia-storefront .lm-kindergarten-copy .lm-eyebrow { color: #c5dfc7; }
+.libermedia-storefront .lm-kindergarten h2 { margin: 0 0 20px; color: #fff; font-size: clamp(27px, 2.2vw, 38px); font-weight: 750; letter-spacing: -.035em; line-height: 1.15; }
+.libermedia-storefront .lm-kindergarten-copy > p:not(.lm-eyebrow) { margin: 0 0 14px; font-size: 14px; line-height: 1.75; }
+.libermedia-storefront .lm-kindergarten-copy .lm-button { margin-top: 9px; }
+.libermedia-storefront .lm-kindergarten-copy .lm-button:focus-visible { outline-color: #fff; }
+.libermedia-storefront .lm-extra-products { margin: 44px 0; }
+.libermedia-storefront .lm-assurance { position: relative; isolation: isolate; overflow: hidden; margin: 42px 0; padding: clamp(30px, 4vw, 60px); border-radius: 16px; background-color: var(--libermedia-sage); }
+.libermedia-storefront .lm-assurance-heading { max-width: 980px; margin: 0 auto 32px; text-align: center; }
+.libermedia-storefront .lm-assurance-seal { display: inline-flex; justify-content: center; align-items: center; box-sizing: border-box; overflow: visible; margin-bottom: 10px; width: 76px; height: 76px; padding: 12px; border: 1px solid #edc3a9; border-radius: 50%; background: #fff5ec; color: var(--libermedia-action); }
+.libermedia-storefront .lm-assurance-seal :is(svg, img) { display: block; width: 48px; height: 48px; flex-shrink: 0; object-fit: contain; overflow: visible; }
+.libermedia-storefront .lm-assurance-heading > .lm-eyebrow { color: var(--libermedia-action); font-size: 13px; letter-spacing: .13em; }
+.libermedia-storefront .lm-assurance h2 { margin: 0 0 16px; font-size: clamp(28px, 2.6vw, 42px); font-weight: 750; letter-spacing: -.04em; line-height: 1.15; }
+.libermedia-storefront .lm-assurance-heading > p:last-child { margin: 0; color: #556052; font-size: 15px; line-height: 1.8; }
+.libermedia-storefront .lm-assurance-points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; padding-top: 28px; border-top: 1px solid #ccdcca; text-align: center; }
+.libermedia-storefront .lm-assurance-points > div > svg { width: 25px; height: 25px; margin: 0 auto 10px; color: var(--libermedia-green); }
+.libermedia-storefront .lm-assurance h3 { margin: 0 0 7px; font-size: 16px; font-weight: 700; }
+.libermedia-storefront .lm-assurance-points p { margin: 0; color: #556052; font-size: 13px; line-height: 1.6; }
+.libermedia-storefront .lm-assurance-points a { display: inline-flex; align-items: center; gap: 7px; margin-top: 10px; color: var(--libermedia-green); font-size: 12px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.libermedia-storefront .lm-assurance-points a svg { width: 12px; height: 12px; }
+/* Continue the same nursery motif through all promotional green surfaces. */
+.libermedia-storefront :is(.lm-campaign, .lm-kindergarten-copy, .libermedia-category-bundle, .lm-assurance) {
+    background-image: var(--libermedia-pattern);
+    background-size: clamp(1000px, 98vw, 1400px) auto;
+    background-position: center -64px;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+.libermedia-storefront .lm-kindergarten-copy { background-image: url("/assets/brand/libermedia-nursery-pattern-dark.svg?v=children-3"); }
+@media (min-width: 1600px) {
+    .libermedia-storefront .lm-campaign-grid { grid-template-rows: repeat(2, minmax(310px, auto)); }
+    .libermedia-storefront .lm-campaign-bag-images { top: 250px; }
+}
+@media (max-width: 1100px) {
+    .libermedia-storefront .lm-benefits { gap: 16px; padding-inline: 0; }
+    .libermedia-storefront .lm-benefits > :is(div, a) { gap: 10px; }
+    .libermedia-storefront .lm-benefits strong { font-size: 13px; }
+    .libermedia-storefront .lm-benefits small { font-size: 11px; }
+    .libermedia-storefront .lm-campaign-grid { gap: 16px; }
+    .libermedia-storefront .lm-campaign-copy { padding: 27px; }
+    .libermedia-storefront .lm-campaign--bags .lm-campaign-copy { max-width: 100%; }
+    .libermedia-storefront .lm-campaign--bags h3 { font-size: 32px; }
+    .libermedia-storefront .lm-kindergarten { grid-template-columns: 1fr 1.3fr; }
+    .libermedia-storefront .lm-kindergarten-photo--outdoor { display: none; }
+}
+@media (max-width: 767px) {
+    .libermedia-storefront :is(.lm-campaign, .lm-kindergarten-copy, .libermedia-category-bundle, .lm-assurance) { background-size: max(720px, 130vw) auto; background-position: center -40px; background-attachment: scroll; }
+    .libermedia-storefront .lm-benefits { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 15px; padding-block: 20px; }
+    .libermedia-storefront .lm-benefits > :is(div, a) { justify-content: flex-start; }
+    .libermedia-storefront .lm-benefits svg { width: 24px; height: 24px; flex-basis: 24px; }
+    .libermedia-storefront .lm-campaign-section { margin-block: 30px; }
+    .libermedia-storefront .lm-campaign-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+    .libermedia-storefront .lm-campaign--bags { grid-row: auto; min-height: 510px; }
+    .libermedia-storefront .lm-campaign--bags h3 { font-size: 34px; }
+    .libermedia-storefront .lm-campaign-bag-images { top: 240px; }
+    .libermedia-storefront :is(.lm-campaign--meli, .lm-campaign--montessori) { min-height: 275px; }
+    .libermedia-storefront :is(.lm-campaign--meli, .lm-campaign--montessori) .lm-campaign-copy { width: 60%; }
+    .libermedia-storefront :is(.lm-campaign--meli, .lm-campaign--montessori) h3 { font-size: 26px; }
+    .libermedia-storefront .lm-kindergarten { grid-template-columns: 1fr; margin-block: 32px; }
+    .libermedia-storefront .lm-kindergarten-photo { height: 230px; min-height: 0; }
+    .libermedia-storefront .lm-kindergarten-copy { padding: 30px 26px; }
+    .libermedia-storefront .lm-assurance { padding: 30px 22px; margin-block: 30px; background-attachment: scroll; }
+    .libermedia-storefront .lm-assurance-points { grid-template-columns: 1fr; gap: 25px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .libermedia-storefront .lm-benefits svg { transition: none; }
+    .libermedia-storefront .lm-button { transition: none; }
+}

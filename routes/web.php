@@ -1,0 +1,766 @@
+<?php
+
+use App\Http\Controllers\Admin\AdminAiController;
+use App\Http\Controllers\Admin\ContractWithdrawalController;
+use App\Http\Controllers\Admin\CustomerImpersonationController;
+use App\Http\Controllers\Admin\CustomerStatisticsController;
+use App\Http\Controllers\Admin\OrderGlsController;
+use App\Http\Controllers\Admin\SystemToolsController;
+use App\Http\Controllers\Feed\NabavaNetFeedController;
+use App\Http\Controllers\Front\AccountController;
+use App\Http\Controllers\Front\AuthController;
+use App\Http\Controllers\Front\B2BController;
+use App\Http\Controllers\Front\BlogController;
+use App\Http\Controllers\Front\CartController;
+use App\Http\Controllers\Front\CatalogController;
+use App\Http\Controllers\Front\CheckoutController;
+use App\Http\Controllers\Front\ContactController;
+use App\Http\Controllers\Front\EprelDocumentController;
+use App\Http\Controllers\Front\FaqController;
+use App\Http\Controllers\Front\ManufacturerController;
+use App\Http\Controllers\Front\NewsletterController;
+use App\Http\Controllers\Front\PageController;
+use App\Http\Controllers\Front\ProductController;
+use App\Http\Controllers\Front\ReturnRequestController;
+use App\Http\Controllers\Front\ReviewController;
+use App\Http\Controllers\Front\StorefrontController;
+use App\Http\Controllers\Front\StorefrontStylesController;
+use App\Http\Controllers\Front\WishlistController;
+use App\Models\Catalog\Action\CatalogAction;
+use App\Models\Catalog\Attribute\Attribute as CatalogAttribute;
+use App\Models\Catalog\Attribute\AttributeGroup as CatalogAttributeGroup;
+use App\Models\Catalog\Category\Category;
+use App\Models\Catalog\Manufacturer\Manufacturer;
+use App\Models\Catalog\Option\Option;
+use App\Models\Catalog\Option\OptionValue;
+use App\Models\Catalog\Pricing\B2BPriceRule;
+use App\Models\Catalog\Product\Product;
+use App\Models\Content\Blog\BlogPost;
+use App\Models\Content\ContentBlock;
+use App\Models\Content\ContentBlockSlot;
+use App\Models\Content\Page\InfoPage;
+use App\Models\Content\Support\Comment;
+use App\Models\Content\Support\Faq;
+use App\Models\Sales\Order\Order as SalesOrder;
+use App\Models\Settings\Local\Language;
+use App\Models\Settings\Local\ShippingMethod;
+use App\Models\User;
+use App\Models\User\CustomerGroup;
+use App\Models\User\LoyaltyTransaction;
+use App\Models\User\UserTrackingEvent;
+use App\Services\Loyalty\LoyaltyService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Spatie\Activitylog\Models\Activity;
+
+Route::get('storefront-settings.css', StorefrontStylesController::class)
+    ->name('front.storefront.styles');
+
+Route::get('integrations/stock/{supplier}', \App\Http\Controllers\Integrations\StockSyncController::class)
+    ->where('supplier', implode('|', array_keys(\App\Support\Integrations\Stock\StockSyncRegistry::all())))
+    ->middleware('throttle:30,1')
+    ->name('integrations.stock.run');
+
+Route::get('integrations/eracuni/attributes', \App\Http\Controllers\Integrations\EracuniAttributeSyncController::class)
+    ->middleware('throttle:30,1')->name('integrations.eracuni.attributes');
+
+Route::get('robots.txt', [\App\Http\Controllers\Front\SitemapController::class, 'robots'])->name('seo.robots');
+Route::get('sitemap.xml', [\App\Http\Controllers\Front\SitemapController::class, 'index'])->name('seo.sitemap');
+Route::get('sitemap-{kind}-{page}.xml', [\App\Http\Controllers\Front\SitemapController::class, 'part'])
+    ->where('kind', 'products|categories|manufacturers|pages|blog')->whereNumber('page')->name('seo.sitemap.part');
+
+Route::get('feeds/nabava.xml', NabavaNetFeedController::class)
+    ->middleware('throttle:10,1')
+    ->name('feeds.nabava');
+
+Route::post('account/impersonation/stop', [CustomerImpersonationController::class, 'stop'])
+    ->name('front.impersonation.stop');
+
+Route::post('admin/users/{user}/staff-impersonation', [\App\Http\Controllers\Admin\StaffImpersonationController::class, 'start'])
+    ->middleware(['auth', 'verified'])
+    ->name('admin.users.staff-impersonation.start');
+
+// Session identity is verified by the service, including disabled preview targets.
+Route::post('admin/staff-impersonation/stop', [\App\Http\Controllers\Admin\StaffImpersonationController::class, 'stop'])
+    ->name('admin.staff-impersonation.stop');
+
+Route::middleware(['front.customer-impersonation', 'front.locale', 'front.device', 'front.search', 'front.b2b', 'front.cache'])
+    ->group(function (): void {
+        Route::get('locale/{code}', function (string $code, Request $request) {
+            $fallback = strtolower((string) config('app.locale', 'en'));
+            $target = strtolower(trim($code));
+
+            try {
+                $available = Language::query()
+                    ->where('is_active', true)
+                    ->pluck('code')
+                    ->map(static fn ($item) => strtolower((string) $item))
+                    ->values()
+                    ->all();
+            } catch (\Throwable) {
+                $available = [$fallback];
+            }
+
+            if (! in_array($target, $available, true)) {
+                $target = in_array($fallback, $available, true) ? $fallback : (string) ($available[0] ?? $fallback);
+            }
+
+            $request->session()->put('front_locale', $target);
+
+            return redirect()->back();
+        })->name('front.locale.switch');
+
+        Route::get('/', [StorefrontController::class, 'home'])->name('home');
+        Route::get('iskustva-kupaca', [ReviewController::class, 'index'])->name('reviews.index');
+
+        Route::get('search/autocomplete', [CatalogController::class, 'autocomplete'])->name('search.autocomplete');
+        Route::get('shop', [CatalogController::class, 'index'])->name('shop.index');
+        Route::get('akcije', fn () => redirect()->route('shop.index', ['promo_only' => 1]))->name('shop.promotions');
+        Route::get('categories', [CatalogController::class, 'categories'])->name('categories.index');
+        Route::get('category/{slug}', [CatalogController::class, 'showCategory'])->name('categories.show');
+        Route::get('product/{slug}', [ProductController::class, 'show'])->name('products.show');
+        Route::get('product/{product}/energy/{declaration}/{document}', EprelDocumentController::class)
+            ->whereNumber('product')->whereNumber('declaration')->where('document', 'label|sheet')
+            ->middleware('throttle:60,1')->name('products.energy.document');
+        Route::post('product/{slug}/comments', [ProductController::class, 'storeComment'])->name('products.comments.store');
+        Route::post('product/fit-finder/preferences', [ProductController::class, 'storeFitFinderPreferences'])->name('products.fit_finder.preferences');
+
+        Route::get('bundle-artikli', [\App\Http\Controllers\Front\BundleController::class, 'index'])->name('bundles.index');
+        Route::post('bundle-artikli/{bundle}', [\App\Http\Controllers\Front\BundleController::class, 'store'])->middleware('throttle:30,1')->name('bundles.store');
+
+        Route::get('savjeti-za-poklone', \App\Http\Controllers\Front\GiftGuideController::class)->name('gift-guide.index');
+
+        Route::get('poklon-bon', [\App\Http\Controllers\Front\GiftVoucherController::class, 'create'])->name('gift-vouchers.create');
+        Route::post('poklon-bon', [\App\Http\Controllers\Front\GiftVoucherController::class, 'store'])->middleware('throttle:10,1')->name('gift-vouchers.store');
+        Route::get('poklon-bon/narudzba/{orderNumber}', [\App\Http\Controllers\Front\GiftVoucherController::class, 'purchaseStatus'])->middleware('signed')->name('gift-vouchers.purchase');
+
+        Route::get('obavijesti-o-dostupnosti', [\App\Http\Controllers\Front\StockNotificationController::class, 'create'])->name('stock-notifications.create');
+        Route::post('obavijesti-o-dostupnosti', [\App\Http\Controllers\Front\StockNotificationController::class, 'store'])->middleware('throttle:10,1')->name('stock-notifications.store');
+        Route::get('obavijesti-o-dostupnosti/odjava/{token}', [\App\Http\Controllers\Front\StockNotificationController::class, 'unsubscribe'])->where('token', '[a-zA-Z0-9]{64}')->name('stock-notifications.unsubscribe');
+        Route::post('obavijesti-o-dostupnosti/odjava/{token}', [\App\Http\Controllers\Front\StockNotificationController::class, 'cancel'])->where('token', '[a-zA-Z0-9]{64}')->middleware('throttle:20,1')->name('stock-notifications.cancel');
+
+        Route::get('brendovi', [ManufacturerController::class, 'index'])->name('manufacturers.index');
+        Route::redirect('brandovi', '/brendovi', 301);
+        Route::redirect('manufacturers', '/brendovi', 301);
+        Route::get('manufacturer/{slug}', [ManufacturerController::class, 'show'])->name('manufacturers.show');
+
+        Route::get('blog', [BlogController::class, 'index'])->name('blog.index');
+        Route::get('blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
+        Route::get('faq', [FaqController::class, 'index'])->name('faq.index');
+
+        Route::get('katalozi', [\App\Http\Controllers\Front\SupplierCatalogController::class, 'index'])->name('supplier-catalogs.index');
+        Route::get('katalozi/{catalog}/pdf', [\App\Http\Controllers\Front\SupplierCatalogController::class, 'document'])
+            ->whereNumber('catalog')->name('supplier-catalogs.document');
+        Route::get('katalozi/{catalog}/cover', [\App\Http\Controllers\Front\SupplierCatalogController::class, 'cover'])
+            ->whereNumber('catalog')->name('supplier-catalogs.cover');
+        Route::get('reference', [\App\Http\Controllers\Front\ReferenceProjectController::class, 'index'])->name('references.index');
+        Route::get('reference/{slug}', [\App\Http\Controllers\Front\ReferenceProjectController::class, 'show'])->name('references.show');
+        Route::get('reference/{project}/photos/{photo}/{size?}', [\App\Http\Controllers\Front\ReferenceProjectController::class, 'photo'])
+            ->whereNumber('project')->whereNumber('photo')->where('size', 'card|large|original')->name('references.photo');
+
+        Route::get('pages/category/{slug}', [PageController::class, 'category'])->name('pages.category');
+        Route::get('page/{slug}', [PageController::class, 'show'])->name('pages.show');
+
+        Route::get('contact', [ContactController::class, 'create'])->name('contact.create');
+        Route::post('contact', [ContactController::class, 'store'])->name('contact.store');
+        Route::get('{returnRequestSlug}', [ReturnRequestController::class, 'create'])
+            ->where('returnRequestSlug', 'forma-za-povrat-i-reklamacije|returns-and-claims|rucksendungen-und-reklamationen')
+            ->name('returns.create');
+        Route::post('{returnRequestSlug}', [ReturnRequestController::class, 'review'])
+            ->middleware('throttle:10,1')
+            ->where('returnRequestSlug', 'forma-za-povrat-i-reklamacije|returns-and-claims|rucksendungen-und-reklamationen')
+            ->name('returns.review');
+        Route::post('{returnRequestSlug}/confirm', [ReturnRequestController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->where('returnRequestSlug', 'forma-za-povrat-i-reklamacije|returns-and-claims|rucksendungen-und-reklamationen')
+            ->name('returns.store');
+        Route::post('newsletter/subscribe', [NewsletterController::class, 'store'])->name('newsletter.subscribe');
+
+        Route::get('cart/preview', [CartController::class, 'preview'])->name('cart.preview');
+        Route::get('cart', [CartController::class, 'index'])->name('cart.index');
+        Route::post('cart/items', [CartController::class, 'store'])->name('cart.items.store');
+        Route::patch('cart/items/{product}', [CartController::class, 'update'])->name('cart.items.update');
+        Route::delete('cart/items/{product}', [CartController::class, 'destroy'])->name('cart.items.destroy');
+        Route::post('cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
+        Route::delete('cart/coupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
+        Route::post('cart/gift-voucher', [CartController::class, 'applyGiftVoucher'])->middleware('throttle:10,1')->name('cart.gift-voucher.apply');
+        Route::delete('cart/gift-voucher', [CartController::class, 'removeGiftVoucher'])->name('cart.gift-voucher.remove');
+        Route::delete('cart', [CartController::class, 'clear'])->name('cart.clear');
+
+        Route::get('wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+        Route::post('wishlist/toggle/{product}', [WishlistController::class, 'toggle'])->name('wishlist.items.toggle');
+        Route::post('wishlist/items/{product}', [WishlistController::class, 'store'])->name('wishlist.items.store');
+        Route::delete('wishlist/items/{product}', [WishlistController::class, 'destroy'])->name('wishlist.items.destroy');
+
+        Route::get('checkout', [CheckoutController::class, 'create'])->name('checkout.create');
+        Route::get('checkout/options', [CheckoutController::class, 'options'])->name('checkout.options');
+        Route::post('checkout/login', [CheckoutController::class, 'login'])->middleware('guest')->name('checkout.login');
+        Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+        Route::get('checkout/wspay/{orderNumber}', [CheckoutController::class, 'wspayStart'])
+            ->where('orderNumber', '[A-Za-z0-9\-]+')
+            ->name('checkout.wspay.start');
+        Route::match(['GET', 'POST'], 'checkout/wspay/return/{orderNumber}', [CheckoutController::class, 'wspayReturn'])
+            ->where('orderNumber', '[A-Za-z0-9\-]+')
+            ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+            ->name('checkout.wspay.return');
+        Route::match(['GET', 'POST'], 'checkout/wspay/error/{orderNumber}', [CheckoutController::class, 'wspayError'])
+            ->where('orderNumber', '[A-Za-z0-9\-]+')
+            ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+            ->name('checkout.wspay.error');
+        Route::match(['GET', 'POST'], 'checkout/wspay/cancel/{orderNumber}', [CheckoutController::class, 'wspayCancel'])
+            ->where('orderNumber', '[A-Za-z0-9\-]+')
+            ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+            ->name('checkout.wspay.cancel');
+        Route::match(['GET', 'POST'], 'checkout/corvus/success', [CheckoutController::class, 'corvusSuccessStatic'])
+            ->middleware('throttle:30,1')
+            ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+            ->name('checkout.corvus.success.static');
+        Route::match(['GET', 'POST'], 'checkout/corvus/cancel', [CheckoutController::class, 'corvusCancelStatic'])
+            ->middleware('throttle:30,1')
+            ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+            ->name('checkout.corvus.cancel.static');
+        Route::match(['GET', 'POST'], 'checkout/corvus/success/{orderNumber}', [CheckoutController::class, 'corvusSuccess'])
+            ->where('orderNumber', '[A-Za-z0-9\-]+')
+            ->middleware('throttle:30,1')
+            ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+            ->name('checkout.corvus.success');
+        Route::match(['GET', 'POST'], 'checkout/corvus/cancel/{orderNumber}', [CheckoutController::class, 'corvusCancel'])
+            ->where('orderNumber', '[A-Za-z0-9\-]+')
+            ->middleware('throttle:30,1')
+            ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+            ->name('checkout.corvus.cancel');
+        Route::get('checkout/corvus/{orderNumber}', [CheckoutController::class, 'corvusStart'])
+            ->where('orderNumber', '[A-Za-z0-9\-]+')
+            ->name('checkout.corvus.start');
+        Route::get('checkout/keks/{orderNumber}', [CheckoutController::class, 'keksStart'])
+            ->where('orderNumber', '[A-Za-z0-9\-]+')
+            ->name('checkout.keks.start');
+        Route::match(['GET', 'POST'], 'checkout/keks/success', [CheckoutController::class, 'keksSuccess'])
+            ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+            ->name('checkout.keks.success');
+        Route::match(['GET', 'POST'], 'checkout/keks/fail', [CheckoutController::class, 'keksFail'])
+            ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+            ->name('checkout.keks.fail');
+        Route::match(['GET', 'POST'], 'checkout/keks/advice', [CheckoutController::class, 'keksAdvice'])
+            ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+            ->name('checkout.keks.advice');
+        Route::get('checkout/success', [CheckoutController::class, 'successLatest'])->name('checkout.success.latest');
+        Route::get('checkout/success/{orderNumber}', [CheckoutController::class, 'success'])
+            ->where('orderNumber', '[A-Za-z0-9\-]+')
+            ->name('checkout.success');
+
+        Route::middleware('guest')->prefix('auth')->as('front.auth.')->group(function (): void {
+            Route::get('login', [AuthController::class, 'showLogin'])->name('login');
+            Route::post('login', [AuthController::class, 'login'])->name('login.store');
+            Route::get('forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
+            Route::post('forgot-password', [AuthController::class, 'sendPasswordResetLink'])
+                ->middleware('throttle:5,1')
+                ->name('password.email');
+            Route::get('reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
+            Route::post('reset-password', [AuthController::class, 'resetPassword'])
+                ->middleware('throttle:10,1')
+                ->name('password.update');
+            Route::get('register', [AuthController::class, 'showRegister'])->name('register');
+            Route::post('register', [AuthController::class, 'register'])->name('register.store');
+            Route::get('b2b-register', [AuthController::class, 'showB2BRegister'])->name('b2b-register');
+            Route::post('b2b-register', [AuthController::class, 'registerB2B'])->name('b2b-register.store');
+        });
+
+        Route::middleware(['auth', 'verified'])
+            ->prefix('account')
+            ->as('account.')
+            ->group(function (): void {
+                Route::get('/', [AccountController::class, 'dashboard'])->name('dashboard');
+                Route::get('orders', [AccountController::class, 'orders'])->name('orders');
+                Route::get('statistics', [AccountController::class, 'statistics'])->name('statistics');
+                Route::get('customer-offers', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'buyerIndex'])->name('customer-offers.index');
+                Route::get('customer-offers/{offer}/pdf', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'buyerPdf'])
+                    ->whereNumber('offer')->name('customer-offers.pdf');
+                Route::get('orders/{orderNumber}', [AccountController::class, 'showOrder'])
+                    ->where('orderNumber', '[A-Za-z0-9\-]+')
+                    ->name('orders.show');
+                Route::post('orders/{orderNumber}/reorder', [B2BController::class, 'reorder'])
+                    ->where('orderNumber', '[A-Za-z0-9\-]+')
+                    ->name('orders.reorder');
+                Route::get('b2b/quick-order', [B2BController::class, 'quickOrder'])->name('b2b.quick-order');
+                Route::get('b2b/frequent-products', [B2BController::class, 'frequentProducts'])
+                    ->name('b2b.frequent-products');
+                Route::get('b2b/favorite-products', [B2BController::class, 'favoriteProducts'])
+                    ->name('b2b.favorite-products');
+                Route::get('b2b/quick-order/search', [B2BController::class, 'searchQuickOrder'])
+                    ->middleware('throttle:60,1')
+                    ->name('b2b.quick-order.search');
+                Route::put('b2b/quick-order/draft', [B2BController::class, 'syncQuickOrder'])
+                    ->name('b2b.quick-order.draft');
+                Route::post('b2b/quick-order/resolve', [B2BController::class, 'resolveQuickOrder'])
+                    ->middleware('throttle:30,1')
+                    ->name('b2b.quick-order.resolve');
+                Route::post('b2b/quick-order', [B2BController::class, 'storeQuickOrder'])->name('b2b.quick-order.store');
+                Route::get('loyalty', [AccountController::class, 'loyalty'])->name('loyalty');
+
+                Route::get('profile', [AccountController::class, 'profile'])->name('profile');
+                Route::put('profile', [AccountController::class, 'updateProfile'])->name('profile.update');
+                Route::put('preferences', [AccountController::class, 'updatePreferences'])->name('preferences.update');
+                Route::put('addresses/{type}', [AccountController::class, 'updateAddress'])
+                    ->where('type', 'billing|shipping')
+                    ->name('addresses.update');
+            });
+    });
+
+Route::get('dashboard', function (Request $request) {
+    $user = $request->user();
+
+    if (! config('commerce.b2c_only') && $user && $user->b2bAccount()->exists()) {
+        return redirect()->route('account.dashboard');
+    }
+
+    if ($user && $user->isA('customer')) {
+        return redirect('/');
+    }
+
+    return redirect()->route('admin.dashboard');
+})
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+Route::redirect('admin/login', '/login');
+
+Route::middleware(['admin.locale', 'auth', 'verified', 'admin.access', 'admin.maintenance-bypass', 'admin.ability'])
+    ->prefix('admin')
+    ->as('admin.')
+    ->group(function (): void {
+        Route::redirect('/', '/admin/dashboard');
+        Route::view('dashboard', 'admin.dashboard')->name('dashboard');
+        Route::view('help', 'admin.help.index')->name('help.index');
+        Route::view('categories', 'admin.categories')->name('categories');
+        Route::view('categories/create', 'admin.categories.create')->name('categories.create');
+        Route::get('categories/{category}/edit', function (Category $category) {
+            return view('admin.categories.edit', compact('category'));
+        })->name('categories.edit');
+        Route::view('bundles', 'admin.bundles')->name('bundles');
+        Route::view('stock-notifications', 'admin.stock-notifications')->name('stock-notifications');
+        Route::view('products', 'admin.products')->name('products');
+        Route::view('products/create', 'admin.products.create')->name('products.create');
+        Route::get('products/{product}/edit', function (Product $product) {
+            return view('admin.products.edit', compact('product'));
+        })->name('products.edit');
+        Route::view('orders', 'admin.orders.index')->name('orders');
+        Route::view('gift-vouchers', 'admin.gift-vouchers')->name('gift-vouchers');
+        Route::get('customer-offers', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'index'])->name('customer-offers.index');
+        Route::get('customer-offers/create', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'create'])->name('customer-offers.create');
+        Route::get('customer-offers/customers', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'customers'])->name('customer-offers.customers');
+        Route::get('customer-offers/products', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'products'])->name('customer-offers.products');
+        Route::post('customer-offers', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'store'])->name('customer-offers.store');
+        Route::get('customer-offers/{offer}/edit', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'edit'])->whereNumber('offer')->name('customer-offers.edit');
+        Route::put('customer-offers/{offer}', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'update'])->whereNumber('offer')->name('customer-offers.update');
+        Route::get('customer-offers/{offer}/preview', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'preview'])->whereNumber('offer')->name('customer-offers.preview');
+        Route::get('customer-offers/{offer}/pdf', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'pdf'])->whereNumber('offer')->name('customer-offers.pdf');
+        Route::post('customer-offers/{offer}/send', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'send'])->whereNumber('offer')->middleware('throttle:10,1')->name('customer-offers.send');
+        Route::get('withdrawals', [ContractWithdrawalController::class, 'index'])->name('withdrawals.index');
+        Route::get('withdrawals/{withdrawal}', [ContractWithdrawalController::class, 'show'])->name('withdrawals.show');
+        Route::patch('withdrawals/{withdrawal}', [ContractWithdrawalController::class, 'update'])->name('withdrawals.update');
+        Route::post('withdrawals/{withdrawal}/resend', [ContractWithdrawalController::class, 'resend'])->name('withdrawals.resend');
+        Route::get('shipping', function (Request $request) {
+            $legacyEditId = (int) $request->query('edit', 0);
+
+            if ($legacyEditId > 0) {
+                $editParameters = array_filter([
+                    'shippingMethod' => $legacyEditId,
+                    'search' => trim((string) $request->query('search', '')) ?: null,
+                    'page' => (int) $request->query('page', 1) > 1 ? (int) $request->query('page') : null,
+                ], static fn (int|string|null $value): bool => $value !== null);
+
+                return redirect()->route('admin.shipping.edit', $editParameters);
+            }
+
+            return view('admin.shipping.index');
+        })->name('shipping.index');
+        Route::view('shipping/create', 'admin.shipping.create')->name('shipping.create');
+        Route::get('shipping/{shippingMethod}/edit', function (ShippingMethod $shippingMethod) {
+            return view('admin.shipping.edit', compact('shippingMethod'));
+        })->name('shipping.edit');
+        Route::post('orders/{order}/gls/send', [OrderGlsController::class, 'send'])->name('orders.gls.send');
+        Route::get('orders/{order}/gls/label', [OrderGlsController::class, 'label'])->name('orders.gls.label');
+        Route::get('orders/{order}/show', function (SalesOrder $order) {
+            app(\App\Services\Admin\OrderManagerAccess::class)->assertOrder($order);
+
+            return view('admin.orders.show', compact('order'));
+        })->name('orders.show');
+        Route::get('orders/{order}/invoice', function (SalesOrder $order) {
+            app(\App\Services\Admin\OrderManagerAccess::class)->assertOrder($order);
+            $order->load([
+                'status:id,code,name,color',
+                'items',
+                'totals',
+            ]);
+
+            return view('admin.orders.invoice', compact('order'));
+        })->name('orders.invoice');
+        Route::middleware('catalog.feature:catalog_use_options')->group(function (): void {
+            Route::get('products/{product}/options', function (Product $product) {
+                return view('admin.products.options', compact('product'));
+            })->name('products.options');
+        });
+        Route::middleware('catalog.feature:catalog_use_options')->group(function (): void {
+            Route::view('options', 'admin.options')->name('options');
+            Route::view('options/create', 'admin.options.create')->name('options.create');
+            Route::get('options/{option}/edit', function (Option $option) {
+                return view('admin.options.edit', compact('option'));
+            })->name('options.edit');
+            Route::get('options/{option}/values', function (Option $option) {
+                return view('admin.options.values', compact('option'));
+            })->name('options.values');
+            Route::get('options/{option}/values/create', function (Option $option) {
+                return view('admin.options.value-create', compact('option'));
+            })->name('options.values.create');
+            Route::get('options/{option}/values/{value}/edit', function (Option $option, OptionValue $value) {
+                abort_unless((int) $value->option_id === (int) $option->id, 404);
+
+                return view('admin.options.value-edit', compact('option', 'value'));
+            })->name('options.values.edit');
+        });
+        Route::middleware('catalog.feature:catalog_use_attributes')->group(function (): void {
+            Route::view('attributes', 'admin.attributes')->name('attributes');
+
+            Route::view('attributes/groups/create', 'admin.attributes.group-create')
+                ->name('attributes.groups.create');
+            Route::get('attributes/groups/{attributeGroup}', function (CatalogAttributeGroup $attributeGroup) {
+                return view('admin.attributes.group-show', compact('attributeGroup'));
+            })->name('attributes.groups.show');
+            Route::get('attributes/groups/{attributeGroup}/edit', function (CatalogAttributeGroup $attributeGroup) {
+                return view('admin.attributes.group-edit', compact('attributeGroup'));
+            })->name('attributes.groups.edit');
+            Route::get('attributes/groups/{attributeGroup}/attributes/create', function (CatalogAttributeGroup $attributeGroup) {
+                return view('admin.attributes.attribute-create', compact('attributeGroup'));
+            })->name('attributes.groups.attributes.create');
+            Route::get('attributes/groups/{attributeGroup}/attributes/{attribute}/edit', function (
+                CatalogAttributeGroup $attributeGroup,
+                CatalogAttribute $attribute,
+            ) {
+                abort_unless((int) $attribute->attribute_group_id === (int) $attributeGroup->id, 404);
+
+                return view('admin.attributes.attribute-edit', compact('attributeGroup', 'attribute'));
+            })->name('attributes.groups.attributes.edit');
+
+            Route::get('attributes/create', function (Request $request) {
+                return redirect()->route('admin.attributes.groups.create', $request->only('locale'));
+            })->name('attributes.create');
+            Route::get('attributes/{attribute}/edit', function (CatalogAttribute $attribute) {
+                $group = $attribute->group
+                    ?? CatalogAttributeGroup::query()->where('code', $attribute->group_code)->firstOrFail();
+
+                return redirect()->route('admin.attributes.groups.attributes.edit', [
+                    'attributeGroup' => $group,
+                    'attribute' => $attribute,
+                    'locale' => request()->query('locale'),
+                ]);
+            })->name('attributes.edit');
+        });
+        Route::middleware('catalog.feature:catalog_use_manufacturers')->group(function (): void {
+            Route::view('manufacturers', 'admin.manufacturers')->name('manufacturers');
+            Route::view('manufacturers/create', 'admin.manufacturers.create')->name('manufacturers.create');
+            Route::get('manufacturers/{manufacturer}/edit', function (Manufacturer $manufacturer) {
+                return view('admin.manufacturers.edit', compact('manufacturer'));
+            })->name('manufacturers.edit');
+        });
+        Route::middleware('catalog.feature:catalog_use_actions')->group(function (): void {
+            Route::view('actions', 'admin.actions')->name('actions');
+            Route::view('actions/create', 'admin.actions.create')->name('actions.create');
+            Route::get('actions/{action}/edit', function (CatalogAction $action) {
+                return view('admin.actions.edit', compact('action'));
+            })->name('actions.edit');
+        });
+        Route::view('b2b-prices', 'admin.b2b-prices')->name('b2b-prices');
+        Route::view('b2b-prices/catalogs', 'admin.b2b-prices.catalogs')->name('b2b-prices.catalogs');
+        Route::view('b2b-prices/create', 'admin.b2b-prices.create')->name('b2b-prices.create');
+        Route::get('b2b-prices/{rule}/edit', function (B2BPriceRule $rule) {
+            return view('admin.b2b-prices.edit', compact('rule'));
+        })->name('b2b-prices.edit');
+        Route::view('users', 'admin.users.index')->name('users');
+        Route::get('users/statistics', CustomerStatisticsController::class)->name('users.statistics');
+        Route::view('users/b2b', 'admin.users.b2b')->name('users.b2b');
+        Route::view('users/newsletter', 'admin.users.newsletter')->name('users.newsletter');
+        Route::view('users/groups', 'admin.users.groups')->name('users.groups');
+        Route::view('users/groups/create', 'admin.users.group-create')->name('users.groups.create');
+        Route::get('users/groups/{customerGroup}/edit', function (CustomerGroup $customerGroup) {
+            return view('admin.users.group-edit', compact('customerGroup'));
+        })->name('users.groups.edit');
+        Route::view('users/access', 'admin.users.access')->name('users.access');
+        Route::view('users/activity', 'admin.users.activity')->name('users.activity');
+        Route::view('users/crm', 'admin.users.crm')->name('users.crm');
+        Route::middleware('user.feature:user_loyalty_enabled')->group(function (): void {
+            Route::view('users/loyalty', 'admin.users.loyalty')->name('users.loyalty');
+        });
+        Route::post('users/{user}/impersonate', [CustomerImpersonationController::class, 'start'])
+            ->name('users.impersonate');
+        Route::get('users/{user}/show', function (User $user) {
+            $current = auth()->user();
+            abort_unless($current && ($current->isA('superadmin') || $current->can('users.list.view')), 403);
+            app(\App\Services\Admin\OrderManagerAccess::class)->assertCustomer($user, $current);
+
+            $user->load([
+                'roles:id,name,title',
+                'profile',
+                'addresses',
+                'customerGroups:id,name,is_active',
+                'b2bAccount.customerGroup:id,name,code',
+            ]);
+            $adminActivity = Activity::query()
+                ->where('subject_type', User::class)
+                ->where('subject_id', $user->id)
+                ->latest('id')
+                ->limit(12)
+                ->get();
+            $trackingEvents = UserTrackingEvent::query()
+                ->where('user_id', $user->id)
+                ->latest('occurred_at')
+                ->limit(12)
+                ->get();
+
+            $loyaltyEnabled = app(LoyaltyService::class)->availableForUser($user);
+
+            $loyaltyStats = [
+                'balance' => 0,
+                'entries' => 0,
+                'earned' => 0,
+                'spent' => 0,
+            ];
+            $loyaltyEntries = collect();
+            $recentOrders = collect();
+
+            if ($loyaltyEnabled) {
+                $loyaltyQuery = LoyaltyTransaction::query()->where('user_id', $user->id);
+                $loyaltyStats = [
+                    'balance' => (int) (clone $loyaltyQuery)->sum('points'),
+                    'entries' => (int) (clone $loyaltyQuery)->count(),
+                    'earned' => (int) (clone $loyaltyQuery)->where('points', '>', 0)->sum('points'),
+                    'spent' => abs((int) (clone $loyaltyQuery)->where('points', '<', 0)->sum('points')),
+                ];
+                $loyaltyEntries = (clone $loyaltyQuery)
+                    ->with(['order:id,order_number,grand_total,currency_code', 'creator:id,name'])
+                    ->latest('id')
+                    ->limit(10)
+                    ->get();
+            }
+
+            $canViewCustomerOrders = $current->isA('superadmin') || $current->can('sales.orders.view');
+            if ($canViewCustomerOrders) {
+                $recentOrders = SalesOrder::query()
+                    ->where('user_id', $user->id)
+                    ->with('status:id,name,color')
+                    ->latest('id')
+                    ->limit(10)
+                    ->get(['id', 'order_number', 'status_id', 'grand_total', 'currency_code', 'created_at']);
+            }
+
+            return view('admin.users.show', compact(
+                'user',
+                'adminActivity',
+                'trackingEvents',
+                'loyaltyEnabled',
+                'loyaltyStats',
+                'loyaltyEntries',
+                'canViewCustomerOrders',
+                'recentOrders'
+            ));
+        })->name('users.show');
+        Route::get('users/{user}/edit', function (User $user) {
+            app(\App\Services\Admin\OrderManagerAccess::class)->assertCustomer($user);
+
+            return view('admin.users.edit', compact('user'));
+        })->name('users.edit');
+        Route::view('profile', 'profile')->name('profile');
+
+        Route::prefix('integrations')
+            ->as('integrations.')
+            ->group(function (): void {
+                Route::view('eprel/settings', 'admin.integrations.eprel.settings')->name('eprel.settings');
+                Route::view('eprel/catalog', 'admin.integrations.eprel.catalog')->name('eprel.catalog');
+                Route::view('stock', 'admin.integrations.stock.index')->name('stock.index');
+                Route::view('supplier-catalog', 'admin.integrations.supplier-catalog.index')->name('supplier-catalog.index');
+                Route::view('eracuni', 'admin.integrations.eracuni.index')->name('eracuni.index');
+                Route::view('spreadsheet', 'admin.integrations.spreadsheet.index')->name('spreadsheet.index');
+                Route::view('media', 'admin.integrations.media.index')->name('media.index');
+            });
+
+        Route::prefix('content')
+            ->as('content.')
+            ->group(function (): void {
+                Route::redirect('/', '/admin/content/blocks')->name('index');
+                Route::view('supplier-catalogs', 'admin.content.supplier-catalogs.index')->name('supplier-catalogs.index');
+                Route::post('supplier-catalogs/{catalog}/upload', \App\Http\Controllers\Admin\SupplierCatalogUploadController::class)
+                    ->whereNumber('catalog')->name('supplier-catalogs.upload');
+                Route::view('references', 'admin.content.references.index')->name('references.index');
+                Route::middleware('catalog.feature:catalog_use_blog')->group(function (): void {
+                    Route::view('blog', 'admin.content.blog.index')->name('blog.index');
+                    Route::view('blog/create', 'admin.content.blog.create')->name('blog.create');
+                    Route::get('blog/{post}/edit', function (BlogPost $post) {
+                        return view('admin.content.blog.edit', compact('post'));
+                    })->name('blog.edit');
+                });
+                Route::view('pages', 'admin.content.pages.index')->name('pages.index');
+                Route::view('pages/create', 'admin.content.pages.create')->name('pages.create');
+                Route::get('pages/{page}/edit', function (InfoPage $page) {
+                    return view('admin.content.pages.edit', compact('page'));
+                })->name('pages.edit');
+                Route::view('faqs', 'admin.content.faqs.index')->name('faqs.index');
+                Route::view('faqs/create', 'admin.content.faqs.create')->name('faqs.create');
+                Route::get('faqs/{faq}/edit', function (Faq $faq) {
+                    return view('admin.content.faqs.edit', compact('faq'));
+                })->name('faqs.edit');
+                Route::view('comments', 'admin.content.comments.index')->name('comments.index');
+                Route::get('comments/{comment}/edit', function (Comment $comment) {
+                    abort_if($comment->trashed(), 404);
+
+                    return view('admin.content.comments.edit', compact('comment'));
+                })->name('comments.edit');
+                Route::view('blocks', 'admin.content.blocks.index')->name('blocks');
+                Route::view('blocks/create', 'admin.content.blocks.create')->name('blocks.create');
+                Route::get('blocks/{block}/edit', function (ContentBlock $block) {
+                    return view('admin.content.blocks.edit', compact('block'));
+                })->name('blocks.edit');
+                Route::view('navigation', 'admin.content.navigation.index')->name('navigation');
+
+                Route::view('slots', 'admin.content.slots.index')->name('slots');
+                Route::view('slots/create', 'admin.content.slots.create')->name('slots.create');
+                Route::get('slots/{slot}/edit', function (ContentBlockSlot $slot) {
+                    return view('admin.content.slots.edit', compact('slot'));
+                })->name('slots.edit');
+            });
+
+        Route::prefix('settings')
+            ->as('settings.')
+            ->group(function (): void {
+                Route::redirect('/', '/admin/settings/local/payment-methods')->name('index');
+                Route::redirect('local/shipping-methods', '/admin/shipping')->name('local.shipping-redirect');
+
+                Route::get('local/{resource}', function (string $resource) {
+                    return view('admin.settings.local.resource', compact('resource'));
+                })
+                    ->where('resource', 'payment-methods|shipping-methods|geo-zones|geo-zone-countries|regions|currencies|tax-rates|order-statuses|languages')
+                    ->name('local.resource');
+
+                Route::get('local/{resource}/create', function (string $resource) {
+                    return view('admin.settings.local.create', compact('resource'));
+                })
+                    ->where('resource', 'payment-methods|geo-zones|geo-zone-countries|regions|currencies|tax-rates|order-statuses|languages')
+                    ->name('local.resource.create');
+
+                Route::get('local/{resource}/{record}/edit', function (string $resource, string $record) {
+                    return view('admin.settings.local.edit', [
+                        'resource' => $resource,
+                        'recordId' => (int) $record,
+                    ]);
+                })
+                    ->where('resource', 'payment-methods|geo-zones|geo-zone-countries|regions|currencies|tax-rates|order-statuses|languages')
+                    ->whereNumber('record')
+                    ->name('local.resource.edit');
+
+                Route::get('system/runtime', function () {
+                    $current = auth()->user();
+                    abort_unless(
+                        $current && ($current->isA('superadmin') || $current->can('settings.system.runtime.manage')),
+                        403
+                    );
+
+                    return view('admin.settings.system.runtime');
+                })->name('system.runtime');
+                Route::view('system/admin-appearance-controls', 'admin.settings.system.admin-appearance-controls')->name('system.admin-appearance-controls');
+                Route::view('system/catalog-features', 'admin.settings.system.catalog-features')->name('system.catalog-features');
+                Route::view('system/store-settings', 'admin.settings.system.store-settings')->name('system.store-settings');
+                Route::view('system/withdrawal-settings', 'admin.settings.system.withdrawal-settings')->name('system.withdrawal-settings');
+                Route::prefix('api')
+                    ->as('api.')
+                    ->group(function (): void {
+                        Route::get('/', function () {
+                            $current = auth()->user();
+                            abort_unless(
+                                $current && ($current->isA('superadmin') || $current->can('settings.api.manage')),
+                                403
+                            );
+
+                            $features = app(\App\Services\Catalog\CatalogFeatureService::class);
+                            $catalogUseApi = $features->useApi();
+
+                            if ($catalogUseApi) {
+                                return redirect()->route('admin.settings.api.wholesale');
+                            }
+
+                            return redirect()->route('admin.settings.system.catalog-features')->with('notify', [
+                                'type' => 'warning',
+                                'message' => 'Wholesale API is disabled in Catalog Features.',
+                            ]);
+                        })->name('index');
+
+                        Route::middleware('catalog.feature:catalog_use_api')->get('wholesale', function () {
+                            $current = auth()->user();
+                            abort_unless(
+                                $current && ($current->isA('superadmin') || $current->can('settings.api.manage')),
+                                403
+                            );
+
+                            return view('admin.settings.api.wholesale');
+                        })->name('wholesale');
+
+                    });
+                Route::view('user', 'admin.settings.user.index')->name('user.index');
+            });
+
+        Route::prefix('system')
+            ->as('system.')
+            ->group(function (): void {
+                Route::post('cache/clear', [SystemToolsController::class, 'clearCache'])->name('cache.clear');
+                Route::post('maintenance/on', [SystemToolsController::class, 'maintenanceOn'])->name('maintenance.on');
+                Route::post('maintenance/off', [SystemToolsController::class, 'maintenanceOff'])->name('maintenance.off');
+            });
+
+        Route::prefix('ai')
+            ->as('ai.')
+            ->group(function (): void {
+                Route::post('preview', [AdminAiController::class, 'preview'])->name('preview');
+                Route::post('execute', [AdminAiController::class, 'execute'])->name('execute');
+            });
+    });
+
+Route::redirect('profile', '/admin/profile')
+    ->middleware(['auth', 'verified'])
+    ->name('profile');
+
+Route::post('logout', function (Request $request) {
+    $impersonation = app(\App\Services\User\CustomerImpersonationService::class);
+    if ($impersonation->isActive($request)) {
+        $customerId = (int) $request->session()->get(\App\Services\User\CustomerImpersonationService::SESSION_KEY.'.customer_id');
+        $staffPreview = $request->session()->exists(\App\Services\User\StaffImpersonationService::SESSION_KEY);
+        $admin = $impersonation->stop($request);
+
+        if (! $admin) {
+            return redirect()->route('login');
+        }
+
+        return $staffPreview || app(\App\Services\Admin\OrderManagerAccess::class)->isRestricted($admin) || ! User::query()->whereKey($customerId)->exists()
+            ? redirect()->route('admin.users')
+            : redirect()->route('admin.users.show', ['user' => $customerId]);
+    }
+
+    $staffImpersonation = app(\App\Services\User\StaffImpersonationService::class);
+    if ($staffImpersonation->isActive($request)) {
+        $admin = $staffImpersonation->stop($request);
+
+        return $admin ? redirect()->route('admin.users') : redirect()->route('login');
+    }
+
+    Auth::guard('web')->logout();
+
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect('/');
+})->middleware('auth')->name('logout');
+
+require __DIR__.'/auth.php';
+
+// Retained OpenCart aliases are resolved before routing by middleware.
+// A registered fallback makes that middleware run for formerly unregistered
+// paths as well; unknown paths still retain the normal 404 semantics.
+Route::fallback(fn () => abort(404))->middleware(['front.locale', 'front.device']);

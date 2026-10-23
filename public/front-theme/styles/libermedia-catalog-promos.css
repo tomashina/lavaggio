@@ -1,0 +1,20 @@
+/* Promotional tiles fill only the last row of the five-column desktop grid. */
+body.libermedia-storefront [data-catalog-grid] > .lm-catalog-promo { display: none; }
+@media (min-width: 1536px) {
+    body.libermedia-storefront [data-catalog-grid][data-catalog-promo-columns="5"][class~="2xl:grid-cols-5"] > .lm-catalog-promo { display: flex; }
+}
+.lm-catalog-promo { position: relative; isolation: isolate; flex-direction: column; align-items: flex-start; justify-content: center; min-width: 0; min-height: 340px; padding: clamp(19px, 1.5vw, 30px); overflow: hidden; border-right: 1px solid var(--libermedia-line, #e2e8f0); border-bottom: 1px solid var(--libermedia-line, #e2e8f0); background: var(--libermedia-sage, #edf3ec); color: var(--libermedia-green, #245b42); text-decoration: none; }
+.lm-catalog-promo::before { content: ''; position: absolute; z-index: -1; inset: 0; background: var(--libermedia-pattern, none) center / 900px auto no-repeat; opacity: .55; pointer-events: none; }
+.lm-catalog-promo--gift { background-color: #f7f2e9; }
+.lm-catalog-promo-icon { display: flex; width: 68px; height: 68px; align-items: center; justify-content: center; margin-bottom: 24px; border: 1px solid #cadcc9; border-radius: 50%; background: #ffffff85; color: #245b42; }
+.lm-catalog-promo--gift .lm-catalog-promo-icon { color: #d64200; border-color: #edcfb7; }
+.lm-catalog-promo-icon > svg { width: 37px; height: 37px; }
+.lm-catalog-promo-eyebrow { display: block; margin-bottom: 12px; color: #245b42; font-size: 9px; font-weight: 750; letter-spacing: .08em; line-height: 1.6; }
+.lm-catalog-promo-title { display: block; max-width: 12ch; margin-bottom: 15px; color: var(--libermedia-ink, #14151d); font-size: clamp(23px, 1.6vw, 29px); font-weight: 750; letter-spacing: -.04em; line-height: 1.14; }
+.lm-catalog-promo-description { display: block; max-width: 24ch; margin-bottom: 27px; color: #51665a; font-size: 13px; line-height: 1.7; }
+.lm-catalog-promo-cta { display: inline-flex; width: 100%; min-height: 44px; align-items: center; justify-content: center; gap: 9px; padding: 11px 12px; border: 1px solid var(--libermedia-action, #ff4d00); border-radius: var(--libermedia-button-radius, 8px); background: var(--libermedia-action, #ff4d00); color: #fff; font-size: 12px; font-weight: 700; line-height: 1.5; text-align: center; transition: background-color .16s ease, border-color .16s ease; }
+.lm-catalog-promo-cta > svg { flex: 0 0 13px; width: 13px; height: 13px; color: #fff; }
+.lm-catalog-promo:is(:hover, :focus-visible) { color: #245b42; }
+.lm-catalog-promo:is(:hover, :focus-visible) .lm-catalog-promo-cta { border-color: var(--libermedia-action-hover, #d64200); background: var(--libermedia-action-hover, #d64200); color: #fff; }
+.lm-catalog-promo:focus-visible { z-index: 1; outline: 3px solid var(--libermedia-action-hover, #d64200); outline-offset: -5px; }
+@media (prefers-reduced-motion: reduce) { .lm-catalog-promo-cta { transition: none; } }

@@ -1,0 +1,120 @@
+/* Shared page heading band. Forms and purchase controls stay outside this block. */
+body.libermedia-storefront main:has(.lm-page-title) { padding-top: 0; }
+body.libermedia-storefront :is(.lm-bundles-page, .lm-reviews-page):has(> .lm-page-title) { padding-top: 0; }
+body.libermedia-storefront .lm-page-title,
+body.libermedia-storefront.account-commerce-body .commerce-main > .lm-page-title {
+    position: relative;
+    isolation: isolate;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    margin: 0 0 30px;
+    padding: 30px 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--libermedia-sage, #edf3ec);
+    background-image: none;
+    box-shadow: 0 0 0 100vmax var(--libermedia-sage, #edf3ec);
+    clip-path: inset(0 -100vmax);
+    color: var(--libermedia-ink, #14151d);
+    text-align: center;
+}
+body.libermedia-storefront .lm-page-title::before,
+body.libermedia-storefront.account-commerce-body .commerce-main > .lm-page-title::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0 auto 0 calc(50% - 50vw);
+    display: block;
+    width: 100vw;
+    height: auto;
+    margin: 0;
+    background-color: var(--libermedia-sage, #edf3ec);
+    background-image: var(--libermedia-pattern);
+    background-position: center -64px;
+    background-repeat: no-repeat;
+    background-size: clamp(1000px, 98vw, 1400px) auto;
+    background-attachment: fixed;
+    content: '';
+    pointer-events: none;
+}
+body.libermedia-storefront .lm-page-title::after,
+body.libermedia-storefront.account-commerce-body .commerce-main > .lm-page-title::after {
+    position: absolute;
+    inset: auto auto 0 calc(50% - 50vw);
+    width: 100vw;
+    height: 1px;
+    background: var(--libermedia-line, #e5e3da);
+    content: '';
+    pointer-events: none;
+}
+body.libermedia-storefront .lm-page-title h1 {
+    max-width: none;
+    margin: 0;
+    color: var(--libermedia-ink, #14151d);
+    font-size: clamp(26px, 2.3vw, 34px);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -.03em;
+    text-transform: none;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+}
+body.libermedia-storefront .lm-page-title > p,
+body.libermedia-storefront .lm-page-title > div > h1 + p {
+    max-width: none;
+    margin: 8px auto 0;
+    color: var(--libermedia-muted, #62615e);
+    line-height: 1.6;
+}
+body.libermedia-storefront .lm-page-title nav {
+    justify-content: center;
+    max-width: 100%;
+    margin: 0 auto 10px;
+    text-align: center;
+}
+body.libermedia-storefront .lm-page-title nav ol { justify-content: center; }
+body.libermedia-storefront .lm-page-title :is(.gift-voucher-eyebrow, .gift-voucher-benefits, .lm-bundles-eyebrow, .lm-home-reviews-eyebrow, .reference-eyebrow, .front-eyebrow) {
+    justify-content: center;
+    margin: 0 auto 10px;
+    color: var(--libermedia-green, #245b42);
+}
+body.libermedia-storefront .gift-voucher-heading.lm-page-title > p:last-of-type { max-width: 100%; }
+body.libermedia-storefront .gift-voucher-heading.lm-page-title .gift-voucher-benefits { margin: 20px auto 0; }
+body.libermedia-storefront .lm-bundles-header.lm-page-title .lm-bundles-header-gift { width: 54px; height: 54px; margin: 0 auto 15px; }
+body.libermedia-storefront .lm-bundles-header.lm-page-title .lm-bundles-header-gift svg { width: 30px; height: 30px; }
+body.libermedia-storefront .lm-reviews-page-header.lm-page-title .lm-reviews-page-summary {
+    display: flex;
+    width: fit-content;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px 15px;
+    margin: 20px auto 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+body.libermedia-storefront .lm-reviews-page-header.lm-page-title .lm-reviews-page-summary > strong { font-size: 26px; }
+body.libermedia-storefront .lm-page-title--breadcrumb { padding-block: 18px; }
+body.libermedia-storefront .lm-page-title--breadcrumb ol { justify-content: center; }
+body.libermedia-storefront .lm-page-title--breadcrumb::after { content: ''; }
+body.libermedia-storefront .lm-page-title .stock-notify-heading-icon { margin: 0 auto 15px; }
+body.libermedia-storefront .lm-page-title .stock-notify-back { display: flex; width: fit-content; margin: 0 auto 14px; }
+body.libermedia-storefront .lm-page-title + .stock-notify-page { margin-top: 0; }
+body.libermedia-storefront .wishlist-grid-toolbar { justify-content: flex-end; }
+@media (max-width: 1023px) {
+    body.libermedia-storefront .lm-page-title::before,
+    body.libermedia-storefront.account-commerce-body .commerce-main > .lm-page-title::before {
+        background-size: max(720px, 130vw) auto;
+        background-position: center -40px;
+        background-attachment: scroll;
+    }
+}
+@media (max-width: 639px) {
+    body.libermedia-storefront .lm-page-title,
+    body.libermedia-storefront.account-commerce-body .commerce-main > .lm-page-title { padding-block: 24px; margin-bottom: 24px; }
+    body.libermedia-storefront .lm-page-title h1 { font-size: 26px; }
+    body.libermedia-storefront .lm-page-title--breadcrumb { padding-block: 15px; }
+}

@@ -1,0 +1,112 @@
+/* Editorial tables only: checkout, cart and account tables keep their own layout. */
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]):has(table) {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table {
+    display: table;
+    width: 100% !important;
+    max-width: none;
+    height: auto !important;
+    margin: 24px 0;
+    border: 1px solid var(--libermedia-line, #e5e3da);
+    border-collapse: collapse;
+    border-spacing: 0;
+    background: var(--libermedia-surface, #fff);
+    color: var(--libermedia-ink, #14151d);
+    font-size: 14px;
+    line-height: 1.65;
+    text-align: left;
+    overflow: visible;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table :is(th, td) {
+    min-width: 7rem;
+    padding: 14px 18px;
+    border: 1px solid var(--libermedia-line, #e5e3da);
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    text-align: left;
+    vertical-align: top;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table th {
+    color: var(--libermedia-green, #245b42);
+    font-weight: 700;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table tbody > tr:nth-child(even) > :is(th, td) {
+    background: color-mix(in srgb, var(--libermedia-sage, #edf3ec) 40%, var(--libermedia-surface, #fff));
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table :is(thead, tfoot) > tr > :is(th, td),
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table tr:first-child:has(> th):not(:has(> td)) > th {
+    background: var(--libermedia-sage, #edf3ec);
+    color: var(--libermedia-green, #245b42);
+    font-weight: 700;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table caption {
+    padding: 0 0 12px;
+    color: var(--libermedia-muted, #62615e);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.6;
+    text-align: left;
+    caption-side: top;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table :is(th, td) > :first-child {
+    margin-top: 0;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table :is(th, td) > :last-child {
+    margin-bottom: 0;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table a {
+    color: var(--libermedia-green, #245b42);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table a:is(:hover, :focus-visible) {
+    color: var(--libermedia-action-hover, #d64200);
+}
+
+body.storefront.libermedia-storefront .lm-richtext-table-scroll {
+    min-width: 0;
+    max-width: 100%;
+    margin: 24px 0;
+    border-radius: 8px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--libermedia-line-strong, #becbbb) var(--libermedia-sage, #edf3ec);
+    -webkit-overflow-scrolling: touch;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) .lm-richtext-table-scroll > table {
+    margin: 0;
+}
+
+body.storefront.libermedia-storefront .lm-richtext-table-scroll:focus-visible {
+    outline: 2px solid var(--libermedia-green, #245b42);
+    outline-offset: -2px;
+}
+
+@media (max-width: 767px) {
+    body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table {
+        font-size: 13px;
+    }
+
+    body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content]) table :is(th, td) {
+        padding: 11px 13px;
+    }
+}

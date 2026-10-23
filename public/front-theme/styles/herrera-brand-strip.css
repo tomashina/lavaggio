@@ -1,0 +1,290 @@
+.herrera-storefront .herrera-brand-strip {
+    padding: 36px 0;
+    background: #edf7f9;
+    box-shadow: 0 0 0 100vmax #edf7f9;
+    clip-path: inset(0 -100vmax);
+}
+
+.herrera-storefront .herrera-brand-strip__heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.herrera-storefront .herrera-brand-strip__heading .herrera-home-section-eyebrow {
+    margin: 0 0 6px;
+    color: #007c8d;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.5;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+}
+
+.herrera-storefront .herrera-brand-strip__heading h2 {
+    margin: 0;
+    font-size: clamp(23px, 2vw, 30px);
+    font-weight: 700;
+    letter-spacing: -.035em;
+    line-height: 1.25;
+}
+
+.herrera-storefront .herrera-brand-strip__actions,
+.herrera-storefront .herrera-brand-carousel .splide__arrows {
+    display: flex;
+    align-items: center;
+}
+
+.herrera-storefront .herrera-brand-strip__actions {
+    flex-shrink: 0;
+    gap: 24px;
+}
+
+.herrera-storefront .herrera-brand-strip__all {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    color: #007c8d;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.herrera-storefront .herrera-brand-strip__all svg {
+    width: 12px;
+    height: 12px;
+}
+
+.herrera-storefront .herrera-brand-carousel {
+    position: relative;
+    min-width: 0;
+    visibility: visible;
+}
+
+.herrera-storefront .herrera-brand-carousel .splide__arrows {
+    gap: 8px;
+}
+
+.herrera-storefront .herrera-brand-carousel .splide__arrow {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #dce6e9;
+    border-radius: 6px;
+    background: #fff;
+    color: #34474f;
+    opacity: 1;
+    transform: none;
+    cursor: pointer;
+}
+
+.herrera-storefront .herrera-brand-carousel .splide__arrow:hover:not(:disabled) {
+    border-color: #007c8d;
+    color: #007c8d;
+}
+
+.herrera-storefront .herrera-brand-carousel .splide__arrow:disabled {
+    opacity: .35;
+    cursor: default;
+}
+
+.herrera-storefront .herrera-brand-carousel .splide__arrow svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+}
+
+.herrera-storefront .herrera-brand-carousel .splide__arrow--prev svg {
+    transform: rotate(180deg);
+}
+
+.herrera-storefront .herrera-brand-carousel .splide__track {
+    overflow: hidden;
+    overflow: clip;
+}
+
+.herrera-storefront .herrera-brand-carousel:not(.is-initialized) .splide__track {
+    overflow: hidden;
+}
+
+.herrera-storefront .herrera-brand-carousel .splide__list {
+    display: flex;
+    gap: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none;
+}
+
+.herrera-storefront .herrera-brand-carousel .splide__slide {
+    flex: 0 0 auto;
+    /* Splide uses this same margin while measuring loop clones during mount. */
+    margin-right: 12px;
+    min-width: 0;
+    height: auto;
+}
+
+.herrera-storefront .herrera-brand-carousel:not(.is-initialized) .splide__slide {
+    width: calc((100% + 12px) / var(--herrera-brand-columns, 7) - 12px);
+}
+
+.herrera-brand-strip__brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 104px;
+    padding: 16px 12px;
+    overflow: hidden;
+    border: 1px solid #e3e7e8;
+    border-radius: 12px;
+    background: #fff;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.herrera-brand-strip__brand:hover {
+    border-color: #03aabd;
+    box-shadow: 0 4px 14px rgb(12 32 40 / 5%);
+}
+
+.herrera-brand-strip__brand:focus-visible {
+    outline: 2px solid #007c8d;
+    outline-offset: -3px;
+}
+
+.herrera-storefront .herrera-brand-strip__all:focus-visible,
+.herrera-storefront .herrera-brand-carousel .splide__arrow:focus-visible {
+    outline: 2px solid #007c8d;
+    outline-offset: 3px;
+}
+
+.herrera-brand-strip__image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 64px;
+    overflow: hidden;
+}
+
+.herrera-brand-strip__image img {
+    display: block;
+    width: 100%;
+    max-width: 160px;
+    height: 64px;
+    object-fit: contain;
+}
+
+/* The original official Struhm header asset contains a second brand below it.
+   Show the Struhm area without altering or redrawing the source artwork. */
+.herrera-brand-strip__image--struhm {
+    height: 45px;
+    align-items: flex-start;
+}
+
+.herrera-brand-strip__image--struhm img {
+    width: 152px;
+    min-width: 152px;
+    max-width: none;
+    height: auto;
+    transform: translateY(-3px);
+}
+
+/* These official image files include generous white margins. Keep the files
+   intact and crop only their empty margins in the display viewport. */
+.herrera-brand-strip__image--midea img {
+    width: 276px;
+    min-width: 276px;
+    max-width: none;
+    height: auto;
+}
+
+.herrera-brand-strip__image--gewiss img {
+    width: 174px;
+    min-width: 174px;
+    max-width: none;
+    height: auto;
+}
+
+.herrera-brand-strip__image--on-dark,
+.herrera-brand-strip__image--on-red {
+    padding: 12px;
+    border-radius: 6px;
+}
+
+.herrera-brand-strip__image--on-dark {
+    background: #24343b;
+}
+
+.herrera-brand-strip__image--on-red {
+    background: #da2735;
+}
+
+.herrera-brand-strip__image--on-dark img,
+.herrera-brand-strip__image--on-red img {
+    height: 100%;
+}
+
+@media (max-width: 1439px) {
+    .herrera-storefront .herrera-brand-carousel:not(.is-initialized) .splide__slide {
+        width: calc((100% + 12px) / var(--herrera-brand-laptop-columns, 6) - 12px);
+    }
+}
+
+@media (max-width: 1023px) {
+    .herrera-storefront .herrera-brand-carousel:not(.is-initialized) .splide__slide {
+        width: calc((100% + 12px) / var(--herrera-brand-tablet-columns, 4) - 12px);
+    }
+}
+
+@media (max-width: 767px) {
+    .herrera-storefront .herrera-brand-strip {
+        padding: 28px 0;
+    }
+
+    .herrera-storefront .herrera-brand-strip__heading {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .herrera-storefront .herrera-brand-strip__actions {
+        width: 100%;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .herrera-storefront .herrera-brand-strip__all {
+        font-size: 11px;
+    }
+
+    .herrera-storefront .herrera-brand-carousel:not(.is-initialized) .splide__slide {
+        width: calc((100% + 12px) / var(--herrera-brand-mobile-columns, 2) - 12px);
+    }
+
+    .herrera-brand-strip__brand {
+        min-height: 92px;
+        padding: 12px;
+    }
+
+    .herrera-brand-strip__image img {
+        max-width: 140px;
+    }
+
+    .herrera-brand-strip__image--struhm img,
+    .herrera-brand-strip__image--midea img,
+    .herrera-brand-strip__image--gewiss img {
+        max-width: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .herrera-brand-strip__brand {
+        transition: none;
+    }
+}

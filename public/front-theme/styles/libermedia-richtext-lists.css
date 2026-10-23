@@ -1,0 +1,63 @@
+/* Native markers stay scoped to reading content and the gift voucher instructions. */
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) :is(ul, ol) {
+    display: block;
+    margin-block: 1rem;
+    margin-inline: 0;
+    padding-block: 0;
+    padding-inline-end: 0;
+    list-style-position: outside;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) ul {
+    padding-inline-start: 1.45em;
+    list-style-type: disc;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) ol {
+    padding-inline-start: 2em;
+    list-style-type: decimal;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) :is(ul, ol) > li {
+    display: list-item;
+    margin-block: .5rem;
+    padding-inline-start: .35em;
+    line-height: 1.75;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) li::marker {
+    color: var(--libermedia-green, #245b42);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) li > :is(ul, ol) {
+    margin-block: .5rem .25rem;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) ul ul {
+    list-style-type: circle;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) ul ul ul {
+    list-style-type: square;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) ol ol {
+    list-style-type: lower-alpha;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) ol ol ol {
+    list-style-type: lower-roman;
+}
+
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) li > p:last-child {
+    margin-bottom: 0;
+}
+
+/* Explicit author-selected ordered-list types take priority over nested defaults. */
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) ol[type="1"] { list-style-type: decimal; }
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) ol[type="a" s] { list-style-type: lower-alpha; }
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) ol[type="A" s] { list-style-type: upper-alpha; }
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) ol[type="i" s] { list-style-type: lower-roman; }
+body.storefront.libermedia-storefront :is(.content-richtext, .product-detail-description-content, .catalog-description, .prose, [data-richtext-content], .gift-voucher-how) ol[type="I" s] { list-style-type: upper-roman; }

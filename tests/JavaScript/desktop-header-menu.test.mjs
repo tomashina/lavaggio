@@ -1,0 +1,784 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test from 'node:test';
+import vm from 'node:vm';
+
+const script = readFileSync(new URL('../../public/front-theme/scripts/desktop-header-menu.js', import.meta.url), 'utf8');
+
+function harness({ savedSections = {}, sectionKeys = Object.keys(savedSections), hrefs = [],
+    currentPath = '/shop', parents = {}, linkSections = [], categoriesButton = false,
+    headerSpacer = false, headerHeight = 176, compactHeaderHeight = 130, scrollY = 0,
+    herreraStorefront = false, mobileViewport = false,
+    deferredCatalogMenu = false, catalogTriggerPresent = true, catalogTree = null } = {}) {
+    const queuedToggles = new Set();
+    class Element {
+        constructor() {
+            this.dataset = {};
+            this.listeners = new Map();
+            this.attributes = new Map();
+            this.children = [];
+            const classes = new Set();
+            this.classMutations = [];
+            const classMutations = this.classMutations;
+            this.classList = {
+                add(value) { classMutations.push(value); classes.add(value); },
+                remove(value) { classMutations.push(value); classes.delete(value); },
+                contains: (value) => classes.has(value),
+                toggle(value, enabled) {
+                    classMutations.push(value);
+                    if (enabled) classes.add(value); else classes.delete(value);
+                },
+            };
+            this.style = {
+                values: new Map(),
+                setProperty(name, value) { this.values.set(name, value); },
+                getPropertyValue(name) { return this.values.get(name) || ''; },
+            };
+        }
+        addEventListener(type, callback) {
+            this.listeners.set(type, [...(this.listeners.get(type) || []), callback]);
+        }
+        emit(type, event = {}) {
+            for (const callback of this.listeners.get(type) || []) callback(event);
+        }
+        querySelector() { return null; }
+        querySelectorAll() { return []; }
+        hasAttribute(name) { return this.attributes.has(name); }
+        getAttribute(name) { return this.attributes.get(name) || null; }
+        setAttribute(name, value) { this.attributes.set(name, value); }
+        removeAttribute(name) { this.attributes.delete(name); }
+        closest() { return null; }
+        getBoundingClientRect() { return { height: 72 }; }
+        getClientRects() { return this.visible === false ? [] : [{}]; }
+        focus() { document.activeElement = this; }
+        append(...children) { this.children.push(...children); }
+        replaceChildren(fragment) { this.children = fragment?.children || []; }
+        contains(element) { return element === this || this.children.some((child) => child.contains?.(element)); }
+    }
+    class Details extends Element {
+        constructor(key) {
+            super(); this.dataset.menuSectionKey = key; this.currentOpen = false;
+            this.parentElement = null;
+        }
+        get open() { return this.currentOpen; }
+        set open(value) {
+            if (value !== this.currentOpen) { this.currentOpen = value; queuedToggles.add(this); }
+        }
+    }
+    class Template extends Element {
+        constructor(id, menu) {
+            super();
+            this.dataset.catalogMegaTemplate = id;
+            this.content = { children: [menu] };
+            this.removed = false;
+        }
+        remove() { this.removed = true; }
+    }
+    const root = new Element();
+    const header = new Element();
+    header.expandedHeight = headerHeight;
+    header.compactHeight = compactHeaderHeight;
+    header.measurements = 0;
+    header.getBoundingClientRect = () => {
+        header.measurements++;
+        return { height: header.classList.contains('is-sticky') ? header.compactHeight : header.expandedHeight };
+    };
+    const spacer = headerSpacer ? new Element() : null;
+    const openButton = new Element();
+    const panel = new Element();
+    panel.id = 'mobile-navigation';
+    const overlay = new Element();
+    const drawerClose = new Element();
+    const catalogNavGroup = new Element();
+    catalogNavGroup.children = [];
+    catalogNavGroup.append = (fragment) => {
+        catalogNavGroup.children.push(...fragment.children);
+        fragment.children = [];
+    };
+    const catalogMenu = new Element();
+    const catalogTrigger = new Element();
+    catalogTrigger.setAttribute('data-catalog-mega-trigger', '');
+    catalogTrigger.setAttribute('aria-controls', 'site-main-nav-mega-0');
+    catalogTrigger.closest = (selector) => selector === '.group\\/nav' ? catalogNavGroup : null;
+    catalogNavGroup.contains = (element) => element === catalogNavGroup || element === catalogTrigger
+        || catalogMenu.contains(element);
+    const catalogTemplate = deferredCatalogMenu ? new Template('site-main-nav-mega-0', catalogMenu) : null;
+    const catalogLists = [];
+    const catalogColumns = catalogTree ? [0, 1].map(() => {
+        const column = new Element();
+        const title = new Element();
+        const viewAll = new Element();
+        const list = new Element();
+        catalogLists.push(list);
+        column.querySelector = (selector) => {
+            const itemMatch = selector.match(/^\[data-catalog-mega-item-index="(\d+)"\]$/);
+            return itemMatch ? list.children[Number(itemMatch[1])]?.children[0] : ({
+                '[data-catalog-mega-column-title]': title,
+                '[data-catalog-mega-column-link]': viewAll,
+                '[data-catalog-mega-list]': list,
+            })[selector] || null;
+        };
+        column.querySelectorAll = (selector) => selector === '[data-catalog-mega-item]'
+            ? list.children.map((item) => item.children[0]) : [];
+        return column;
+    }) : [];
+    if (catalogTree) {
+        catalogMenu.dataset = { catalogMegaMaxColumns: '2', catalogMegaUrl: '/shop' };
+        catalogMenu.closest = (selector) => selector === '.group\\/nav' ? catalogNavGroup : null;
+        catalogMenu.querySelector = (selector) => selector === '[data-catalog-mega-tree]'
+            ? { textContent: JSON.stringify(catalogTree) } : null;
+        catalogMenu.querySelectorAll = (selector) => selector === '[data-catalog-mega-column]' ? catalogColumns : [];
+        catalogNavGroup.querySelector = (selector) => selector === ':scope > [data-catalog-mega-trigger]' ? catalogTrigger : null;
+    }
+    const sections = sectionKeys.map((key) => new Details(key));
+    const sectionsByKey = new Map(sections.map((section) => [section.dataset.menuSectionKey, section]));
+    sections.forEach((section) => {
+        const parent = sectionsByKey.get(parents[section.dataset.menuSectionKey]);
+        if (parent) {
+            const wrapper = new Element(); wrapper.children = []; wrapper.tagName = 'UL';
+            wrapper.closest = (selector) => selector === 'details' ? parent : null;
+            section.parentElement = wrapper;
+        }
+    });
+    const links = hrefs.map((href) => Object.assign(new Element(), {
+        href: new URL(href, 'https://shop.example/shop').href,
+    }));
+    links.forEach((link, index) => {
+        link.closest = (selector) => selector === 'details' ? sectionsByKey.get(linkSections[index]) || null : null;
+    });
+    panel.querySelector = (selector) => selector === '[data-mobile-menu-close]' ? drawerClose : null;
+    panel.querySelectorAll = (selector) => selector === 'a[href], button, summary, [tabindex="0"]'
+        ? [drawerClose, ...links] : [];
+    const sectionToggles = sections.map((section) => {
+        const toggle = new Element();
+        const alternate = new Element();
+        toggle.closest = alternate.closest = () => section;
+        toggle.alternate = alternate;
+        section.querySelector = (selector) => ({
+            ':scope > summary > [data-mobile-menu-toggle-open]': toggle,
+            ':scope > summary > [data-mobile-menu-toggle-close]': alternate,
+        })[selector] || null;
+        return toggle;
+    });
+    panel.contains = (element) => [panel, drawerClose, ...links,
+        ...sectionToggles.flatMap((toggle) => [toggle, toggle.alternate])].includes(element);
+    if (categoriesButton) openButton.setAttribute('data-mobile-menu-open-categories', '');
+    root.querySelector = (selector) => ({
+        '[data-mobile-menu-panel]': panel, '[data-mobile-menu-close]': overlay,
+        '[data-mobile-menu-catalog]': sectionsByKey.get('catalog'),
+    })[selector] || null;
+    root.querySelectorAll = (selector) => ({
+        '[data-mobile-menu-accordion]': sections, '[data-mobile-menu-close]': [overlay, drawerClose],
+        '[data-mobile-menu-toggle]': sectionToggles.flatMap((toggle) => [toggle, toggle.alternate]),
+        'a[href]': links,
+    })[selector] || [];
+    const document = new Element();
+    document.body = new Element(); document.readyState = 'complete';
+    document.activeElement = openButton;
+    document.createElement = document.createElementNS = () => new Element();
+    document.createDocumentFragment = () => new Element();
+    if (herreraStorefront) document.body.classList.add('herrera-storefront');
+    const fontReadyCallbacks = [];
+    document.fonts = { ready: { then(callback) { fontReadyCallbacks.push(callback); } } };
+    document.querySelector = (selector) => ({
+        '.site-main-header': header, '[data-mobile-menu-root]': root,
+        '[data-site-main-header-spacer]': spacer,
+    })[selector] || null;
+    document.querySelectorAll = (selector) => ({
+        '[data-mobile-menu-open]': [openButton],
+        'template[data-catalog-mega-template]': catalogTemplate && !catalogTemplate.removed ? [catalogTemplate] : [],
+        '[data-catalog-mega-trigger]': catalogTriggerPresent ? [catalogTrigger] : [],
+        '[data-catalog-mega]': catalogTree ? [catalogMenu] : [],
+    })[selector] || [];
+    const window = new Element();
+    window.location = { origin: 'https://shop.example', href: new URL(currentPath, 'https://shop.example').href };
+    window.scrollY = scrollY;
+    window.requestAnimationFrame = (callback) => callback();
+    const nativeStickyViewport = new Element();
+    nativeStickyViewport.matches = mobileViewport;
+    window.matchMedia = (query) => {
+        assert.equal(query, '(max-width: 1023px)');
+        return nativeStickyViewport;
+    };
+    const storage = { reads: 0, writes: 0, value: JSON.stringify(savedSections) };
+    const sessionStorage = {
+        getItem() { storage.reads++; return storage.value; },
+        setItem(key, value) { storage.writes++; storage.value = value; },
+    };
+    vm.runInNewContext(script, {
+        document, window, sessionStorage, URL, HTMLElement: Element, HTMLDetailsElement: Details,
+        HTMLTemplateElement: Template, HTMLAnchorElement: Element,
+    });
+    return {
+        root, header, spacer, window, document, openButton, overlay, drawerClose, sections, storage, links, sectionToggles,
+        catalogTemplate, catalogNavGroup, catalogMenu, catalogColumns, catalogTrigger,
+        catalogLink(depth, index) { return catalogLists[depth]?.children[index]?.children[0]; },
+        finishFonts() { fontReadyCallbacks.forEach((callback) => callback()); },
+        setMobileViewport(matches) {
+            nativeStickyViewport.matches = matches;
+            nativeStickyViewport.emit('change', { matches });
+        },
+        open() { openButton.emit('click', { preventDefault() {}, currentTarget: openButton }); },
+        flushToggles() {
+            while (queuedToggles.size > 0) {
+                const pending = [...queuedToggles]; queuedToggles.clear();
+                pending.forEach((section) => section.emit('toggle'));
+            }
+        },
+    };
+}
+
+test('deferred desktop menu returns to its trigger group once without changing header flow', () => {
+    const page = harness({ deferredCatalogMenu: true, herreraStorefront: true, mobileViewport: true });
+    assert.deepEqual(page.catalogNavGroup.children, [page.catalogMenu]);
+    assert.equal(page.catalogTemplate.removed, true);
+    assert.equal(page.header.measurements, 0);
+    page.window.emit('pageshow', { persisted: true });
+    assert.deepEqual(page.catalogNavGroup.children, [page.catalogMenu]);
+});
+
+test('a deferred menu without its trigger remains inert', () => {
+    const page = harness({ deferredCatalogMenu: true, catalogTriggerPresent: false });
+    assert.deepEqual(page.catalogNavGroup.children, []);
+    assert.equal(page.catalogTemplate.removed, false);
+    assert.deepEqual(page.catalogTemplate.content.children, [page.catalogMenu]);
+});
+
+test('touch and pen taps on the catalogue trigger open its drawer in both responsive header modes', () => {
+    for (const mobileViewport of [false, true]) {
+        for (const pointerType of ['touch', 'pen']) {
+            const page = harness({ herreraStorefront: true, mobileViewport, sectionKeys: ['catalog', 'rasvjeta'] });
+            page.catalogTrigger.emit('pointerdown', { pointerType });
+            let prevented = false;
+            page.catalogTrigger.emit('click', {
+                detail: 1, currentTarget: page.catalogTrigger,
+                preventDefault() { prevented = true; },
+            });
+            page.flushToggles();
+            assert.equal(prevented, true, `${pointerType}, mobile viewport: ${mobileViewport}`);
+            assert.equal(page.root.dataset.menuOpen, '1');
+            assert.equal(page.root.inert, false);
+            assert.equal(page.document.body.classList.contains('overflow-hidden'), true);
+            assert.deepEqual(page.sections.map((section) => section.open), [true, false]);
+            assert.equal(page.document.activeElement, page.drawerClose);
+            page.document.emit('keydown', { key: 'Escape', preventDefault() {} });
+            assert.equal(page.root.dataset.menuOpen, '0');
+            assert.equal(page.document.activeElement, page.catalogTrigger);
+        }
+    }
+});
+
+test('a pen tap with pointer events alone opens the catalogue drawer', () => {
+    const page = harness({ sectionKeys: ['catalog'] });
+    page.catalogTrigger.emit('pointerdown', { pointerType: 'pen', clientX: 100, clientY: 100 });
+    page.catalogTrigger.emit('pointerup', { pointerType: 'pen', clientX: 100, clientY: 100 });
+    let prevented = false;
+    page.catalogTrigger.emit('click', {
+        detail: 1, currentTarget: page.catalogTrigger,
+        preventDefault() { prevented = true; },
+    });
+    assert.equal(prevented, true);
+    assert.equal(page.root.dataset.menuOpen, '1');
+    assert.equal(page.sections[0].open, true);
+});
+
+test('keyboard activation of the normal drawer opener still works after a swipe', () => {
+    const page = harness();
+    page.openButton.emit('pointerdown', { pointerType: 'touch', clientX: 100, clientY: 100 });
+    page.openButton.emit('pointermove', { pointerType: 'touch', clientX: 130, clientY: 100 });
+    page.openButton.emit('click', {
+        detail: 1, currentTarget: page.openButton, preventDefault() {},
+    });
+    assert.equal(page.root.dataset.menuOpen, '0');
+    let prevented = false;
+    page.openButton.emit('click', {
+        detail: 0, currentTarget: page.openButton,
+        preventDefault() { prevented = true; },
+    });
+    assert.equal(prevented, true);
+    assert.equal(page.root.dataset.menuOpen, '1');
+    assert.equal(page.document.activeElement, page.drawerClose);
+});
+
+test('mouse and keyboard activation preserve the catalogue trigger link', () => {
+    for (const activation of ['mouse', 'keyboard']) {
+        const page = harness({ sectionKeys: ['catalog'] });
+        if (activation === 'mouse') {
+            page.catalogTrigger.emit('pointerdown', { pointerType: 'mouse' });
+        }
+        let prevented = false;
+        page.catalogTrigger.emit('click', {
+            detail: activation === 'keyboard' ? 0 : 1, currentTarget: page.catalogTrigger,
+            preventDefault() { prevented = true; },
+        });
+        assert.equal(prevented, false, activation);
+        assert.equal(page.root.dataset.menuOpen, '0');
+        assert.equal(page.sections[0].open, false);
+    }
+});
+
+test('keyboard and attached mouse activation preserve the catalogue link after a touch interaction', () => {
+    for (const activation of ['mouse', 'keyboard']) {
+        const page = harness({ sectionKeys: ['catalog'] });
+        page.catalogTrigger.emit('touchstart', { touches: [{ clientX: 100, clientY: 100 }] });
+        page.catalogTrigger.emit('touchend', {
+            changedTouches: [{ clientX: 100, clientY: 100 }], currentTarget: page.catalogTrigger,
+            preventDefault() {},
+        });
+        assert.equal(page.root.dataset.menuOpen, '1');
+        page.drawerClose.emit('click');
+        if (activation === 'mouse') {
+            page.catalogTrigger.emit('pointerdown', { pointerType: 'mouse', clientX: 100, clientY: 100 });
+        }
+        let prevented = false;
+        page.catalogTrigger.emit('click', {
+            detail: activation === 'keyboard' ? 0 : 1, currentTarget: page.catalogTrigger,
+            preventDefault() { prevented = true; },
+        });
+        assert.equal(prevented, false, activation);
+        assert.equal(page.root.dataset.menuOpen, '0');
+    }
+});
+
+test('a canceled touch on the catalogue trigger cannot open the drawer through a later click', () => {
+    const page = harness({ sectionKeys: ['catalog'] });
+    page.catalogTrigger.emit('touchstart', { touches: [{ clientX: 100, clientY: 100 }] });
+    page.catalogTrigger.emit('touchcancel');
+    let prevented = false;
+    page.catalogTrigger.emit('click', {
+        detail: 1, currentTarget: page.catalogTrigger,
+        preventDefault() { prevented = true; },
+    });
+    assert.equal(prevented, true);
+    assert.equal(page.root.dataset.menuOpen, '0');
+    assert.equal(page.sections[0].open, false);
+});
+
+test('touch and pen pointer movement or cancellation prevents a catalogue tap', () => {
+    for (const pointerType of ['touch', 'pen']) {
+        for (const gesture of ['horizontal', 'vertical', 'cancel']) {
+            const page = harness({ sectionKeys: ['catalog'] });
+            page.catalogTrigger.emit('pointerdown', { pointerType, clientX: 100, clientY: 100 });
+            if (gesture === 'cancel') {
+                page.catalogTrigger.emit('pointercancel', { pointerType });
+            } else {
+                page.catalogTrigger.emit('pointermove', {
+                    pointerType, clientX: gesture === 'horizontal' ? 113 : 100,
+                    clientY: gesture === 'vertical' ? 113 : 100,
+                });
+            }
+            let prevented = false;
+            page.catalogTrigger.emit('click', {
+                detail: 1, currentTarget: page.catalogTrigger,
+                preventDefault() { prevented = true; },
+            });
+            assert.equal(prevented, true, `${pointerType}, ${gesture}`);
+            assert.equal(page.root.dataset.menuOpen, '0');
+            assert.equal(page.sections[0].open, false);
+        }
+    }
+});
+
+test('the catalogue trigger restores its desktop accessibility target after BFCache restoration', () => {
+    const page = harness({ sectionKeys: ['catalog'] });
+    assert.equal(page.catalogTrigger.getAttribute('aria-controls'), 'site-main-nav-mega-0');
+    page.catalogTrigger.emit('pointerdown', { pointerType: 'touch', clientX: 100, clientY: 100 });
+    page.catalogTrigger.emit('click', {
+        detail: 1, currentTarget: page.catalogTrigger, preventDefault() {},
+    });
+    assert.equal(page.catalogTrigger.getAttribute('aria-controls'), 'mobile-navigation');
+    assert.equal(page.catalogTrigger.getAttribute('aria-expanded'), 'true');
+    page.window.emit('pageshow', { persisted: true });
+    assert.equal(page.root.dataset.menuOpen, '0');
+    assert.equal(page.catalogTrigger.getAttribute('aria-controls'), 'site-main-nav-mega-0');
+    assert.equal(page.catalogTrigger.getAttribute('aria-expanded'), 'false');
+    assert.equal(page.catalogTrigger.listeners.get('click').length, 1);
+    page.catalogTrigger.emit('pointerdown', { pointerType: 'touch', clientX: 100, clientY: 100 });
+    page.catalogTrigger.emit('click', {
+        detail: 1, currentTarget: page.catalogTrigger, preventDefault() {},
+    });
+    assert.equal(page.root.dataset.menuOpen, '1');
+    assert.equal(page.catalogTrigger.getAttribute('aria-controls'), 'mobile-navigation');
+});
+
+test('a touch-only catalogue tap opens once and suppresses its synthetic click', () => {
+    const page = harness({ sectionKeys: ['catalog', 'rasvjeta'] });
+    page.catalogTrigger.emit('touchstart', { touches: [{ clientX: 100, clientY: 100 }] });
+    let prevented = false;
+    page.catalogTrigger.emit('touchend', {
+        changedTouches: [{ clientX: 104, clientY: 106 }], currentTarget: page.catalogTrigger,
+        preventDefault() { prevented = true; }, stopPropagation() {},
+    });
+    page.flushToggles();
+    assert.equal(prevented, true);
+    assert.equal(page.root.dataset.menuOpen, '1');
+    assert.deepEqual(page.sections.map((section) => section.open), [true, false]);
+
+    page.sectionToggles[1].emit('click', { preventDefault() {}, stopPropagation() {} });
+    assert.equal(page.sections[1].open, true);
+    prevented = false;
+    page.catalogTrigger.emit('click', {
+        detail: 1, currentTarget: page.catalogTrigger,
+        preventDefault() { prevented = true; }, stopPropagation() {},
+    });
+    assert.equal(prevented, true);
+    assert.equal(page.root.dataset.menuOpen, '1');
+    assert.equal(page.sections[1].open, true, 'the synthetic click must not reopen and reset the drawer');
+});
+
+test('swiping the catalogue trigger never opens the drawer, even after a synthetic click', () => {
+    for (const movement of [{ clientX: 113, clientY: 100 }, { clientX: 100, clientY: 113 }]) {
+        const page = harness({ sectionKeys: ['catalog'] });
+        page.catalogTrigger.emit('pointerdown', { pointerType: 'touch' });
+        page.catalogTrigger.emit('touchstart', { touches: [{ clientX: 100, clientY: 100 }] });
+        page.catalogTrigger.emit('touchmove', { touches: [movement] });
+        page.catalogTrigger.emit('touchend', {
+            changedTouches: [movement], currentTarget: page.catalogTrigger,
+            preventDefault() {}, stopPropagation() {},
+        });
+        page.catalogTrigger.emit('click', {
+            detail: 1, currentTarget: page.catalogTrigger,
+            preventDefault() {}, stopPropagation() {},
+        });
+        assert.equal(page.root.dataset.menuOpen, '0');
+        assert.equal(page.sections[0].open, false);
+        assert.equal(page.document.body.classList.contains('overflow-hidden'), false);
+    }
+});
+
+test('moving away and back to the catalogue trigger still counts as a swipe', () => {
+    const page = harness({ sectionKeys: ['catalog'] });
+    page.catalogTrigger.emit('pointerdown', { pointerType: 'touch' });
+    page.catalogTrigger.emit('touchstart', { touches: [{ clientX: 100, clientY: 100 }] });
+    page.catalogTrigger.emit('touchmove', { touches: [{ clientX: 130, clientY: 100 }] });
+    page.catalogTrigger.emit('touchend', {
+        changedTouches: [{ clientX: 100, clientY: 100 }], currentTarget: page.catalogTrigger,
+        preventDefault() {}, stopPropagation() {},
+    });
+    page.catalogTrigger.emit('click', {
+        detail: 1, currentTarget: page.catalogTrigger,
+        preventDefault() {}, stopPropagation() {},
+    });
+    assert.equal(page.root.dataset.menuOpen, '0');
+});
+
+test('touch hover events cannot expand the desktop menu while mouse hover still does', () => {
+    const page = harness({ catalogTree: [{ label: 'Rasvjeta', url: '/rasvjeta',
+        children: [{ label: 'Unutarnja rasvjeta', url: '/rasvjeta/unutarnja' }] }] });
+    const parent = page.catalogLink(0, 0);
+    page.catalogNavGroup.emit('pointerenter', { pointerType: 'touch' });
+    parent.emit('pointerenter', { pointerType: 'touch' });
+    assert.notEqual(page.catalogTrigger.getAttribute('aria-expanded'), 'true');
+    assert.equal(parent.getAttribute('aria-expanded'), 'false');
+    assert.equal(page.catalogColumns[1].hidden, true);
+    page.catalogNavGroup.emit('pointerenter', { pointerType: 'mouse' });
+    parent.emit('pointerenter', { pointerType: 'mouse' });
+    assert.equal(page.catalogTrigger.getAttribute('aria-expanded'), 'true');
+    assert.equal(parent.getAttribute('aria-expanded'), 'true');
+    assert.equal(page.catalogColumns[1].hidden, false);
+});
+
+test('Herrera mobile uses native sticky without header measurements or class changes', () => {
+    const page = harness({ herreraStorefront: true, mobileViewport: true, headerSpacer: true, scrollY: 300 });
+    for (const type of ['scroll', 'resize', 'load', 'pageshow']) page.window.emit(type);
+    page.finishFonts();
+    page.window.scrollY = 0; page.window.emit('scroll');
+    page.window.scrollY = 500; page.window.emit('pageshow', { persisted: true });
+    assert.equal(page.header.classList.contains('is-sticky'), false);
+    assert.equal(page.header.measurements, 0);
+    assert.deepEqual(page.header.classMutations, []);
+    assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '');
+});
+
+test('Herrera breakpoint changes switch between native sticky and the measured desktop header', () => {
+    const page = harness({ herreraStorefront: true, mobileViewport: true, headerSpacer: true, scrollY: 300 });
+    page.setMobileViewport(false);
+    assert.equal(page.header.classList.contains('is-sticky'), true);
+    assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '176px');
+    page.setMobileViewport(true);
+    assert.equal(page.header.classList.contains('is-sticky'), false);
+    const mobileMeasurements = page.header.measurements;
+    const mobileMutations = page.header.classMutations.length;
+    page.window.emit('resize'); page.window.emit('scroll'); page.finishFonts();
+    assert.equal(page.header.measurements, mobileMeasurements);
+    assert.equal(page.header.classMutations.length, mobileMutations);
+    page.header.expandedHeight = 220;
+    page.setMobileViewport(false);
+    assert.equal(page.header.classList.contains('is-sticky'), true);
+    assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '220px');
+});
+
+test('other storefront mobile headers retain their existing measured sticky behavior', () => {
+    const page = harness({ mobileViewport: true, headerSpacer: true, scrollY: 300 });
+    assert.equal(page.header.classList.contains('is-sticky'), true);
+    assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '176px');
+    page.header.expandedHeight = 200; page.window.emit('resize');
+    assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '200px');
+});
+
+test('restored scrolling reserves the expanded header height before compacting', () => {
+    const page = harness({ headerSpacer: true, scrollY: 300 });
+    assert.equal(page.header.classList.contains('is-sticky'), true);
+    assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '176px');
+});
+
+test('sticky threshold retains hysteresis and the measured height after BFCache restoration', () => {
+    const page = harness({ headerSpacer: true });
+    page.window.scrollY = 177; page.window.emit('scroll');
+    assert.equal(page.header.classList.contains('is-sticky'), true);
+    page.window.scrollY = 170; page.window.emit('scroll');
+    assert.equal(page.header.classList.contains('is-sticky'), true);
+    page.window.scrollY = 150; page.window.emit('pageshow', { persisted: true });
+    assert.equal(page.header.classList.contains('is-sticky'), false);
+    assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '176px');
+    assert.equal(page.window.listeners.get('scroll').length, 1);
+    assert.equal(page.window.listeners.get('resize').length, 1);
+});
+
+test('resizing a compact header updates the spacer from its expanded layout', () => {
+    const page = harness({ headerSpacer: true, scrollY: 300 });
+    page.header.expandedHeight = 220;
+    page.header.compactHeight = 150;
+    page.window.emit('resize');
+    assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '220px');
+    assert.equal(page.header.classList.contains('is-sticky'), true);
+    page.window.scrollY = 190;
+    page.window.emit('resize');
+    assert.equal(page.header.classList.contains('is-sticky'), false);
+});
+
+test('pageshow and image loading refresh header geometry without another scroll', () => {
+    const page = harness({ headerSpacer: true });
+    page.window.scrollY = 300;
+    page.window.emit('pageshow', { persisted: false });
+    assert.equal(page.header.classList.contains('is-sticky'), true);
+    page.header.expandedHeight = 194;
+    page.window.emit('load');
+    assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '194px');
+});
+
+test('initial pageshow leaves an already opened mobile menu visible', () => {
+    const page = harness();
+    page.open();
+    page.window.emit('pageshow', { persisted: false });
+    assert.equal(page.root.dataset.menuOpen, '1');
+    assert.equal(page.root.inert, false);
+    assert.equal(page.document.body.classList.contains('overflow-hidden'), true);
+});
+
+test('BFCache restoration closes the previous menu without duplicate input handlers', () => {
+    const page = harness();
+    page.open();
+    page.window.emit('pageshow', { persisted: true });
+    assert.equal(page.root.dataset.menuOpen, '0');
+    assert.equal(page.root.inert, true);
+    assert.equal(page.document.body.classList.contains('overflow-hidden'), false);
+    assert.equal(page.openButton.listeners.get('click').length, 1);
+    assert.equal(page.window.listeners.get('scroll').length, 1);
+    page.open();
+    assert.equal(page.root.dataset.menuOpen, '1');
+});
+
+test('old saved category branches are ignored and only the outer catalogue opens', () => {
+    const page = harness({ savedSections: { catalog: true, rasvjeta: true, unutarnja: true, paneli: true }, categoriesButton: true });
+    assert.equal(page.sections.every((section) => !section.open), true);
+    page.open();
+    page.flushToggles();
+    assert.deepEqual(page.sections.map((section) => section.open), [true, false, false, false]);
+    assert.equal(page.storage.reads, 0);
+    assert.equal(page.storage.writes, 0);
+});
+
+test('the active category stays highlighted without automatically revealing its ancestors', () => {
+    const page = harness({ sectionKeys: ['catalog', 'rasvjeta', 'unutarnja'], categoriesButton: true,
+        parents: { rasvjeta: 'catalog', unutarnja: 'rasvjeta' }, linkSections: ['unutarnja'],
+        hrefs: ['/categories/paneli'], currentPath: '/categories/paneli' });
+    assert.equal(page.sections.every((section) => !section.open), true);
+    assert.equal(page.links[0].getAttribute('aria-current'), 'page');
+    page.open();
+    page.flushToggles();
+    assert.deepEqual(page.sections.map((section) => section.open), [true, false, false]);
+    assert.equal(page.links[0].getAttribute('aria-current'), 'page');
+});
+
+test('deliberate category toggling works while every manual reopening starts with closed children', () => {
+    const page = harness({ sectionKeys: ['catalog', 'rasvjeta'], categoriesButton: true });
+    page.open(); page.flushToggles();
+    page.sectionToggles[1].emit('click', { preventDefault() {}, stopPropagation() {} });
+    page.flushToggles();
+    assert.equal(page.sections[1].open, true);
+    page.overlay.emit('click'); page.open(); page.flushToggles();
+    assert.deepEqual(page.sections.map((section) => section.open), [true, false]);
+    assert.equal(page.storage.reads, 0);
+    assert.equal(page.storage.writes, 0);
+});
+
+test('swiping away and back over an accordion arrow does not toggle it through a synthetic click', () => {
+    const page = harness({ sectionKeys: ['catalog'] });
+    page.open();
+    const arrow = page.sectionToggles[0];
+    arrow.emit('touchstart', { touches: [{ clientX: 100, clientY: 100 }] });
+    arrow.emit('touchmove', { touches: [{ clientX: 130, clientY: 100 }] });
+    arrow.emit('touchend', {
+        changedTouches: [{ clientX: 100, clientY: 100 }], preventDefault() {}, stopPropagation() {},
+    });
+    assert.equal(page.sections[0].open, false);
+    let prevented = false;
+    arrow.emit('click', {
+        detail: 1, preventDefault() { prevented = true; }, stopPropagation() {},
+    });
+    assert.equal(prevented, true);
+    assert.equal(page.sections[0].open, false);
+});
+
+test('a deliberate touch tap on an accordion arrow toggles exactly once', () => {
+    const page = harness({ sectionKeys: ['catalog'] });
+    page.open();
+    const arrow = page.sectionToggles[0];
+    arrow.emit('touchstart', { touches: [{ clientX: 100, clientY: 100 }] });
+    arrow.emit('touchend', {
+        changedTouches: [{ clientX: 104, clientY: 106 }], preventDefault() {}, stopPropagation() {},
+    });
+    assert.equal(page.sections[0].open, true);
+    arrow.emit('click', { detail: 1, preventDefault() {}, stopPropagation() {} });
+    assert.equal(page.sections[0].open, true);
+});
+
+test('canceling a touch on an accordion arrow suppresses a later click', () => {
+    const page = harness({ sectionKeys: ['catalog'] });
+    page.open();
+    const arrow = page.sectionToggles[0];
+    arrow.emit('touchstart', { touches: [{ clientX: 100, clientY: 100 }] });
+    arrow.emit('touchcancel');
+    let prevented = false;
+    arrow.emit('click', {
+        detail: 1, preventDefault() { prevented = true; }, stopPropagation() {},
+    });
+    assert.equal(prevented, true);
+    assert.equal(page.sections[0].open, false);
+});
+
+test('keyboard activation of an accordion arrow works immediately after a swipe', () => {
+    const page = harness({ sectionKeys: ['catalog'] });
+    page.open();
+    const arrow = page.sectionToggles[0];
+    arrow.emit('touchstart', { touches: [{ clientX: 100, clientY: 100 }] });
+    arrow.emit('touchmove', { touches: [{ clientX: 100, clientY: 130 }] });
+    arrow.emit('touchend', {
+        changedTouches: [{ clientX: 100, clientY: 130 }], preventDefault() {}, stopPropagation() {},
+    });
+    assert.equal(page.sections[0].open, false);
+    arrow.emit('click', { detail: 0, preventDefault() {}, stopPropagation() {} });
+    assert.equal(page.sections[0].open, true);
+});
+
+test('ordinary full-page link navigation keeps the outgoing drawer and scroll lock still', () => {
+    const page = harness({ hrefs: ['/categories/rasvjeta'] });
+    page.open();
+    let prevented = false;
+    page.links[0].emit('click', { button: 0, preventDefault() { prevented = true; } });
+    assert.equal(page.root.dataset.menuOpen, '1');
+    assert.equal(page.document.body.classList.contains('overflow-hidden'), true);
+    assert.equal(prevented, false);
+    page.window.emit('pageshow', { persisted: true });
+    assert.equal(page.root.dataset.menuOpen, '0');
+});
+
+test('manual closing and same-document, auxiliary, download or canceled links still dismiss the drawer', () => {
+    const cases = [
+        { href: '#catalog' }, { href: '/shop#' }, { href: 'tel:+38512345' },
+        { href: 'javascript:void(0)' }, { event: { ctrlKey: true } },
+        { event: { metaKey: true } }, { event: { shiftKey: true } },
+        { event: { altKey: true } }, { event: { button: 1 } },
+        { event: { defaultPrevented: true } },
+        { attributes: { target: '_blank' } }, { attributes: { download: '' } },
+    ];
+    for (const entry of cases) {
+        const page = harness({ hrefs: [entry.href || '/categories/rasvjeta'] });
+        for (const [name, value] of Object.entries(entry.attributes || {})) page.links[0].setAttribute(name, value);
+        page.open();
+        page.links[0].emit('click', { button: 0, ...entry.event });
+        assert.equal(page.root.dataset.menuOpen, '0', JSON.stringify(entry));
+        assert.equal(page.document.body.classList.contains('overflow-hidden'), false);
+    }
+    const page = harness(); page.open(); page.overlay.emit('click');
+    assert.equal(page.root.dataset.menuOpen, '0');
+});
+
+
+test('mobile drawer announces its state, focuses close, and restores its opener on Escape', () => {
+    const page = harness();
+    assert.equal(page.openButton.getAttribute('aria-controls'), 'mobile-navigation');
+    assert.equal(page.openButton.getAttribute('aria-expanded'), 'false');
+    page.open();
+    assert.equal(page.openButton.getAttribute('aria-expanded'), 'true');
+    assert.equal(page.document.activeElement, page.drawerClose);
+    let prevented = false;
+    page.document.emit('keydown', { key: 'Escape', preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.equal(page.root.dataset.menuOpen, '0');
+    assert.equal(page.openButton.getAttribute('aria-expanded'), 'false');
+    assert.equal(page.document.activeElement, page.openButton);
+});
+
+test('Tab stays within visible drawer controls and skips collapsed category links', () => {
+    const page = harness({ hrefs: ['/shop', '/categories/collapsed'] });
+    page.links[1].visible = false;
+    page.open();
+    let prevented = false;
+    page.document.emit('keydown', { key: 'Tab', shiftKey: true, preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.equal(page.document.activeElement, page.links[0]);
+    prevented = false;
+    page.document.emit('keydown', { key: 'Tab', preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.equal(page.document.activeElement, page.drawerClose);
+    page.drawerClose.emit('click');
+    assert.equal(page.document.activeElement, page.openButton);
+});
+
+
+test('accordion toggling keeps focus visible and Escape still closes after focus leaves the panel', () => {
+    const page = harness({ sectionKeys: ['catalog'], categoriesButton: false });
+    page.open();
+    page.sectionToggles[0].focus();
+    page.sectionToggles[0].emit('click', { preventDefault() {}, stopPropagation() {} });
+    assert.equal(page.sections[0].open, true);
+    assert.equal(page.document.activeElement, page.sectionToggles[0].alternate);
+    // Browsers can move focus to body when a previously focused details control hides.
+    page.document.activeElement = page.document.body;
+    page.document.emit('keydown', { key: 'Escape', preventDefault() {} });
+    assert.equal(page.root.dataset.menuOpen, '0');
+    assert.equal(page.document.activeElement, page.openButton);
+});
+
+test('Tab recovers focus that has moved outside an open drawer', () => {
+    const page = harness({ hrefs: ['/shop'] });
+    page.open();
+    page.document.activeElement = page.document.body;
+    let prevented = false;
+    page.document.emit('keydown', { key: 'Tab', preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.equal(page.document.activeElement, page.drawerClose);
+    page.document.activeElement = page.document.body;
+    page.document.emit('keydown', { key: 'Tab', shiftKey: true, preventDefault() {} });
+    assert.equal(page.document.activeElement, page.links[0]);
+});
+
+
+test('desktop ArrowRight enters the first child and reselecting a parent retains its child column', () => {
+    const page = harness({ catalogTree: [{ label: 'Rasvjeta', url: '/rasvjeta',
+        children: [{ label: 'Unutarnja rasvjeta', url: '/rasvjeta/unutarnja' }] }] });
+    const parent = page.catalogLink(0, 0);
+    let prevented = false;
+    parent.emit('keydown', { key: 'ArrowRight', preventDefault() { prevented = true; } });
+    const child = page.catalogLink(1, 0);
+    assert.equal(prevented, true);
+    assert.equal(page.document.activeElement, child);
+    assert.equal(page.catalogColumns[1].hidden, false);
+    parent.emit('pointerenter', { pointerType: 'mouse' });
+    assert.equal(page.catalogLink(1, 0), child);
+    assert.equal(parent.getAttribute('aria-expanded'), 'true');
+    child.emit('keydown', { key: 'ArrowLeft', preventDefault() {} });
+    assert.equal(page.document.activeElement, parent);
+});

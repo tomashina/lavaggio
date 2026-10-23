@@ -1,0 +1,169 @@
+body.libermedia-storefront .libermedia-home-blog-carousel {
+    visibility: visible;
+    min-width: 0;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .libermedia-home-blog-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .splide__track {
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .libermedia-home-blog-grid {
+    display: flex;
+    grid-template-columns: none;
+    gap: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .splide__slide {
+    display: flex;
+    min-width: 0;
+    height: auto;
+    flex-direction: column;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .herrera-blog-card {
+    flex: 1;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel:not(.is-active) .libermedia-home-blog-grid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 48px) / 3);
+    gap: 24px;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel:not(.is-active) .splide__track {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel:not(.is-active) .splide__slide {
+    scroll-snap-align: start;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .splide__arrows {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel:not(.is-active) .splide__arrows {
+    display: none;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .splide__arrow {
+    position: static;
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--libermedia-line);
+    border-radius: var(--libermedia-button-radius, 8px);
+    background: #fff;
+    color: var(--libermedia-green);
+    opacity: 1;
+    transform: none;
+    transition: color .16s ease, background-color .16s ease, border-color .16s ease;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .splide__arrow > svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .splide__arrow--prev > svg {
+    transform: rotate(180deg);
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .splide__arrow:hover:not(:disabled) {
+    border-color: var(--libermedia-action-hover);
+    background: var(--libermedia-action-hover);
+    color: #fff;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .splide__arrow:disabled {
+    opacity: .35;
+    cursor: default;
+}
+
+body.libermedia-storefront .libermedia-home-blog-carousel .splide__arrow:focus-visible {
+    outline: 2px solid var(--libermedia-action-hover);
+    outline-offset: 3px;
+}
+
+@media (max-width: 1023px) {
+    body.libermedia-storefront .libermedia-home-blog-carousel:not(.is-active) .libermedia-home-blog-grid {
+        grid-auto-columns: calc((100% - 16px) / 2);
+        gap: 16px;
+    }
+}
+
+@media (max-width: 767px) {
+    body.libermedia-storefront .libermedia-home-blog-carousel:not(.is-active) .libermedia-home-blog-grid {
+        grid-auto-columns: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.libermedia-storefront .libermedia-home-blog-carousel .splide__arrow {
+        transition: none;
+    }
+}
+
+@media (max-width: 767px) {
+    body.libermedia-storefront .libermedia-home-blog-carousel .herrera-home-heading {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+    body.libermedia-storefront .libermedia-home-blog-carousel .herrera-home-heading > div { min-width: 0; }
+    body.libermedia-storefront .libermedia-home-blog-carousel .herrera-home-heading h2 { font-size: 24px; line-height: 1.25; }
+    body.libermedia-storefront .libermedia-home-blog-carousel .libermedia-home-blog-actions {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 16px;
+    }
+    body.libermedia-storefront .libermedia-home-blog-carousel .herrera-home-products-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 40px;
+        padding: 10px 15px;
+        border: 1px solid var(--libermedia-green);
+        border-radius: var(--libermedia-button-radius, 8px);
+        background: var(--libermedia-green);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.4;
+        white-space: nowrap;
+    }
+    body.libermedia-storefront .libermedia-home-blog-carousel .herrera-home-products-link svg { width: 14px; height: 14px; color: inherit; }
+    body.libermedia-storefront .libermedia-home-blog-carousel .herrera-home-products-link:is(:hover, :focus-visible) { background: var(--libermedia-action-hover); border-color: var(--libermedia-action-hover); color: #fff; }
+}
+
+@media (max-width: 767px) {
+    html[data-theme] body.libermedia-storefront .libermedia-home-blog-carousel .libermedia-home-blog-actions > a.herrera-home-products-link,
+    html[data-theme] body.libermedia-storefront .libermedia-home-blog-carousel .libermedia-home-blog-actions > a.herrera-home-products-link > svg {
+        color: #fff;
+    }
+}

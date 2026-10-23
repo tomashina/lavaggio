@@ -1,0 +1,4 @@
+/* The production SVG has a white wordmark; retain its shape on the light header. */
+html[data-theme="light"] body.watchline-storefront [data-store-brand-logo-light] {
+    filter: brightness(0);
+}

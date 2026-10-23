@@ -1,0 +1,45 @@
+/* Section headings carry the brand pattern; checkout controls stay on white. */
+body.libermedia-storefront .checkout-shell { max-width: 100%; }
+body.libermedia-storefront .checkout-shell :is(.checkout-card, .checkout-login-card, .checkout-summary) {
+    padding: 0;
+    overflow: hidden;
+    border-width: 1px;
+    border-color: var(--libermedia-line, #dce5dc);
+    background: #fff;
+    background-image: none;
+}
+body.libermedia-storefront .checkout-shell .checkout-section-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--libermedia-line, #dce5dc);
+    background-color: var(--libermedia-sage, #edf3ec);
+    background-image: var(--libermedia-pattern);
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-size: clamp(1000px, 98vw, 1400px) auto;
+}
+body.libermedia-storefront .checkout-shell .checkout-section-header h2 { font-size: 19px; line-height: 1.35; }
+body.libermedia-storefront .checkout-shell .checkout-section-body {
+    padding: 24px;
+    border-top: 0;
+    background: #fff;
+    background-image: none;
+}
+body.libermedia-storefront .checkout-shell .checkout-section-body > .grid { margin-top: 0; }
+body.libermedia-storefront .checkout-login-card .checkout-section-body { margin-top: 0; }
+body.libermedia-storefront .checkout-section-body--shipping-address:has([data-shipping-fields][aria-hidden="true"]) { padding: 0; }
+body.libermedia-storefront .checkout-section-body [data-shipping-fields] > div { margin-top: 0; padding-top: 0; border-top: 0; }
+body.libermedia-storefront .checkout-shell :is(.checkout-option-card, .checkout-inline-panel, .checkout-payment-description),
+body.libermedia-storefront .checkout-shell .checkout-option-card:has(input:checked),
+body.libermedia-storefront .checkout-shell .checkout-option-card:hover {
+    background: #fff;
+    background-image: none;
+}
+body.libermedia-storefront .checkout-shell .checkout-section-body :is(.bg-slate-50, .bg-slate-100, [data-boxnow-selection-summary], [data-gls-dpm-selection-summary]) { background: #fff; background-image: none; }
+body.libermedia-storefront .checkout-shell .gift-voucher-redemption { padding: 0; overflow: hidden; background: #fff; }
+body.libermedia-storefront .checkout-shell .gift-voucher-redemption > summary { padding: 15px 16px; background-color: var(--libermedia-sage, #edf3ec); }
+body.libermedia-storefront .checkout-shell .gift-voucher-redemption-content { padding: 16px; border-top: 1px solid var(--libermedia-line, #dce5dc); background: #fff; }
+@media (max-width: 640px) {
+    body.libermedia-storefront .checkout-shell :is(.checkout-section-header, .checkout-section-body) { padding: 18px; }
+    body.libermedia-storefront .checkout-section-body--shipping-address:has([data-shipping-fields][aria-hidden="true"]) { padding: 0; }
+    body.libermedia-storefront .checkout-shell .checkout-section-header h2 { font-size: 18px; }
+}

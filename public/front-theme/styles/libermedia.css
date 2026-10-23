@@ -1,0 +1,1402 @@
+/* Liber Media identity. Keep the inherited storefront layout and product artwork. */
+body.libermedia-storefront {
+    --libermedia-orange: #ff4d00;
+    --libermedia-action: var(--libermedia-orange);
+    --libermedia-action-hover: #d64200;
+    --libermedia-link: #c43b00;
+    --libermedia-green: #245b42;
+    --libermedia-green-hover: #17422e;
+    --libermedia-button-green: #245b42;
+    --libermedia-button-green-hover: #17422e;
+    --libermedia-button-radius: 8px;
+    --libermedia-ink: #14151d;
+    --libermedia-muted: #62615e;
+    --libermedia-cream: #fff5ec;
+    --libermedia-sage: #edf3ec;
+    --libermedia-surface: #fff;
+    --libermedia-surface-raised: #fcfaf7;
+    --libermedia-line: #e5e3da;
+    --libermedia-line-strong: #becbbb;
+    --libermedia-footer: #1f4c39;
+    --libermedia-footer-text: #dbe9df;
+    --libermedia-footer-accent: #ffad83;
+    --libermedia-pattern: url("/assets/brand/libermedia-nursery-pattern.svg?v=children-3");
+
+    --storefront-bg: var(--libermedia-surface);
+    --storefront-surface: var(--libermedia-surface);
+    --storefront-surface-raised: var(--libermedia-surface-raised);
+    --storefront-surface-soft: var(--libermedia-sage);
+    --storefront-text: var(--libermedia-ink);
+    --storefront-muted: var(--libermedia-muted);
+    --storefront-border: var(--libermedia-line);
+    --storefront-border-strong: var(--libermedia-line-strong);
+    --storefront-accent: var(--libermedia-link);
+    --storefront-button: var(--libermedia-action);
+    --storefront-button-hover: var(--libermedia-action-hover);
+    --storefront-focus: var(--libermedia-action);
+    --herrera-cyan: var(--libermedia-orange);
+    --herrera-action: var(--libermedia-action);
+    --herrera-dark: var(--libermedia-ink);
+    --herrera-soft: var(--libermedia-sage);
+    --herrera-footer: var(--libermedia-footer);
+    --herrera-form-surface: var(--libermedia-sage);
+    --herrera-surface-pattern: var(--libermedia-pattern);
+    --navigation-background-color: var(--libermedia-green);
+    --navigation-text-color: #fff;
+    --store-announcement-background-color: var(--libermedia-action);
+    --store-announcement-text-color: #fff;
+    --reading-slate-900: var(--libermedia-ink);
+    --reading-slate-800: var(--libermedia-ink);
+    --reading-slate-700: #454840;
+    --reading-slate-600: var(--libermedia-muted);
+    --category-ink: var(--libermedia-ink);
+    --category-muted: var(--libermedia-muted);
+    --category-line: var(--libermedia-line);
+    --category-blue: var(--libermedia-green);
+    --brand-ink: var(--libermedia-ink);
+    --brand-muted: var(--libermedia-muted);
+    --brand-line: var(--libermedia-line);
+    --brand-surface: var(--libermedia-sage);
+    background-color: var(--storefront-bg);
+    color: var(--libermedia-ink);
+}
+
+/* Map the commerce components too: several declare their tokens locally. */
+body.libermedia-storefront,
+body.libermedia-storefront:is(.commerce-body, .mobile-commerce-body, .account-commerce-body),
+body.libermedia-storefront :is(.checkout-shell, .mobile-checkout, .quick-order-builder) {
+    --commerce-accent: var(--libermedia-action);
+    --commerce-accent-hover: var(--libermedia-action-hover);
+    --commerce-accent-soft: var(--libermedia-cream);
+    --commerce-orange: var(--libermedia-orange);
+    --commerce-border: var(--libermedia-line);
+    --commerce-border-strong: var(--libermedia-line-strong);
+    --commerce-muted: var(--libermedia-muted);
+    --commerce-ink: var(--libermedia-ink);
+    --commerce-surface: var(--libermedia-sage);
+    --commerce-form-surface: var(--libermedia-sage);
+    --checkout-accent: var(--libermedia-action);
+    --checkout-accent-hover: var(--libermedia-action-hover);
+    --checkout-accent-soft: var(--libermedia-cream);
+    --checkout-focus-ring: var(--storefront-focus);
+    --checkout-border: var(--libermedia-line);
+    --checkout-border-strong: var(--libermedia-line-strong);
+    --checkout-muted: var(--libermedia-muted);
+    --checkout-ink: var(--libermedia-ink);
+    --checkout-surface: var(--libermedia-sage);
+    --checkout-form-surface: var(--libermedia-sage);
+    --qo-accent: var(--libermedia-action);
+    --qo-accent-dark: var(--libermedia-action-hover);
+    --qo-border: var(--libermedia-line);
+    --qo-muted: var(--libermedia-muted);
+    --qo-ink: var(--libermedia-ink);
+}
+
+/* White header, sage utility strip and forest green navigation. */
+@media (min-width: 1024px) {
+    body.libermedia-storefront .herrera-primary-navigation {
+        gap: clamp(18px, 2vw, 32px);
+    }
+
+    body.libermedia-storefront .herrera-header-layout:not(:has([data-herrera-quick-order])) .herrera-primary-navigation {
+        grid-column: 2 / -1;
+    }
+
+    body.libermedia-storefront .herrera-primary-navigation a {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    body.libermedia-storefront .herrera-primary-navigation [data-navigation-align="right"] {
+        order: 1;
+        margin-left: auto;
+    }
+
+    body.libermedia-storefront .herrera-primary-navigation .navigation-item-icon {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+}
+
+body.libermedia-storefront .site-main-header {
+    --herrera-header-ink: var(--libermedia-ink);
+    --herrera-header-muted: var(--libermedia-muted);
+    --herrera-header-surface: var(--libermedia-sage);
+    --herrera-header-line: var(--libermedia-line);
+    --herrera-header-hover: var(--libermedia-sage);
+    --herrera-header-pressed: var(--libermedia-cream);
+    --herrera-header-action-hover: var(--libermedia-action-hover);
+    background-color: var(--libermedia-surface);
+}
+
+body.libermedia-storefront .site-main-header .site-main-logo {
+    width: 220px;
+    max-width: 220px;
+    height: 40px;
+    max-height: 40px;
+    object-fit: contain;
+    object-position: left center;
+}
+
+body.libermedia-storefront .store-auth-brand-logo {
+    width: 220px;
+    max-width: 100%;
+    height: 40px;
+    object-fit: contain;
+    object-position: left center;
+}
+
+body.libermedia-storefront .site-top-bar {
+    background-color: var(--libermedia-sage);
+}
+
+body.libermedia-storefront :is(.site-top-bar-link, .site-top-bar-social-link, .site-top-bar-announcement) {
+    color: var(--libermedia-green);
+}
+
+body.libermedia-storefront :is(.site-top-bar-link, .site-top-bar-social-link):is(:hover, :focus-visible) {
+    color: var(--libermedia-link);
+    outline-color: var(--storefront-focus);
+}
+
+body.libermedia-storefront .herrera-header-layout .header-search-form {
+    background-color: var(--libermedia-sage);
+}
+
+body.libermedia-storefront :is(.herrera-primary-navigation a, .herrera-header-quick-order, .herrera-mobile-shortcuts a) {
+    color: var(--libermedia-green);
+}
+
+body.libermedia-storefront .herrera-header-layout :is(.header-cart-count, .responsive-header-cart-count) {
+    background: var(--libermedia-action);
+    color: #fff;
+}
+
+body.libermedia-storefront :is(.catalog-mega-layout, .catalog-mega-columns, .catalog-mega-column, .catalog-mega-column-header, .catalog-mega-promo, .mobile-menu) {
+    --catalog-menu-accent: var(--libermedia-green);
+    --catalog-menu-tint: var(--libermedia-sage);
+    --mobile-menu-accent: var(--libermedia-green);
+    --mobile-menu-tint: var(--libermedia-sage);
+}
+
+@media (min-width: 1025px) {
+    body.libermedia-storefront .site-catalog-mega .catalog-mega-item {
+        font-size: .9375rem;
+        font-weight: 600;
+    }
+
+    body.libermedia-storefront .site-catalog-mega .catalog-mega-item-thumb {
+        width: 3rem;
+        height: 3rem;
+        flex-basis: 3rem;
+    }
+}
+
+@media (min-width: 1025px) and (max-width: 1279px) {
+    body.libermedia-storefront .site-catalog-mega .catalog-mega-item {
+        font-size: .875rem;
+    }
+}
+
+body.libermedia-storefront :is(.header-search-suggestions-meta, .header-search-suggestions-footer),
+body.libermedia-storefront :is(.header-search-suggestion, .header-search-related-suggestion):is(:hover, :focus-visible, .is-active) {
+    background: var(--libermedia-sage);
+}
+
+body.libermedia-storefront .header-search-suggestions-link:is(:hover, :focus-visible) {
+    background: var(--libermedia-cream);
+    color: var(--libermedia-link);
+}
+
+/* Warm hero and calm supporting bands share the Liber Media symbol. */
+body.libermedia-storefront :is(.herrera-hero, .herrera-b2b-hero) {
+    border-color: var(--libermedia-line);
+    background-color: var(--libermedia-sage);
+    background-image: var(--libermedia-pattern);
+}
+
+body.libermedia-storefront :is(.herrera-catalog-heading-band, .herrera-brand-strip, .herrera-home-registration, .site-footer-newsletter),
+body.libermedia-storefront.account-commerce-body .commerce-main > .front-soft-hero {
+    background-color: var(--libermedia-sage);
+    box-shadow: 0 0 0 100vmax var(--libermedia-sage);
+}
+
+body.libermedia-storefront :is(.herrera-catalog-heading-band, .herrera-brand-strip, .herrera-home-registration, .site-footer-newsletter)::before {
+    background-color: var(--libermedia-sage);
+    background-image: var(--libermedia-pattern);
+}
+
+body.libermedia-storefront .herrera-catalog-heading-band::after {
+    background: var(--libermedia-line);
+    box-shadow: 0 0 0 100vmax var(--libermedia-line);
+}
+
+body.libermedia-storefront :is(.herrera-eyebrow, .herrera-home-section-eyebrow, .herrera-category-support-eyebrow, .herrera-home-registration-eyebrow, .herrera-category-module-link, .herrera-brand-strip__all, .herrera-newsletter-eyebrow, .herrera-home-heading a, .herrera-home-registration-login),
+body.libermedia-storefront .site-footer-newsletter .herrera-newsletter-eyebrow,
+body.libermedia-storefront .herrera-brand-strip__heading .herrera-home-section-eyebrow,
+body.libermedia-storefront .herrera-b2b-hero .herrera-eyebrow,
+body.libermedia-storefront .herrera-b2b-products .herrera-home-products-link,
+body.libermedia-storefront .herrera-b2b-tools a > svg:first-child {
+    color: var(--libermedia-green);
+}
+
+body.libermedia-storefront :is(.herrera-b2b-hero h1, .herrera-hero h1, .herrera-hero-panel h2, .herrera-home-registration h2, .herrera-home-registration-benefits h3, .herrera-category-module-heading h2, .herrera-category-support h3, .herrera-blog-card-copy h2, .herrera-blog-card-copy h3, .herrera-catalog-heading-band h1, .site-footer-newsletter h3, .product-detail-title) {
+    color: var(--libermedia-ink);
+}
+
+body.libermedia-storefront .herrera-b2b-hero .herrera-hero-panel h2 {
+    color: var(--libermedia-ink);
+}
+
+body.libermedia-storefront :is(.herrera-hero-description, .herrera-hero-panel p, .herrera-category-module-heading p, .herrera-category-support-description, .herrera-home-registration-description, .herrera-home-registration-benefits p, .herrera-home-registration-note, .herrera-blog-card-copy p, .herrera-newsletter-email-label),
+body.libermedia-storefront .herrera-b2b-hero :is(.herrera-hero-description, .herrera-b2b-tools-note),
+body.libermedia-storefront .site-footer-newsletter :is(h3 + p, label) {
+    color: var(--libermedia-muted);
+}
+
+body.libermedia-storefront .herrera-b2b-hero .herrera-hero-panel,
+body.libermedia-storefront :is(.herrera-category-tile, .herrera-category-tile-icon, .herrera-b2b-products, .herrera-home-registration-benefit-icon, .product-information-panel) {
+    border-color: var(--libermedia-line);
+    background-color: var(--libermedia-surface);
+    color: var(--libermedia-ink);
+}
+
+body.libermedia-storefront .herrera-category-tile:is(:hover, :focus-visible) {
+    border-color: var(--libermedia-green);
+    background: var(--libermedia-sage);
+}
+
+body.libermedia-storefront :is(.herrera-category-support, .herrera-category-support:hover, .herrera-home-registration-icon) {
+    border-color: var(--libermedia-line);
+    background-color: var(--libermedia-cream);
+    color: var(--libermedia-green);
+}
+
+body.libermedia-storefront .herrera-home-registration-benefits li + li {
+    border-color: var(--libermedia-line);
+}
+
+/* Purchase buttons carry the orange identity; secondary actions use green. */
+body.libermedia-storefront .herrera-b2b-hero .herrera-hero-primary-action,
+body.libermedia-storefront :is(.herrera-home-registration-primary, .herrera-category-support-contact, .product-detail-action, .commerce-primary-action, .checkout-primary-button, .product-cart-modal-action-primary, [data-product-add-to-cart]),
+body.libermedia-storefront .product-card-lined .product-card-lined-controls .product-card-lined-cart,
+body.libermedia-storefront .site-footer-newsletter button[type=submit] {
+    border-color: var(--libermedia-action);
+    background: var(--libermedia-action);
+    color: #fff;
+    transition: color .16s ease, background-color .16s ease, border-color .16s ease;
+}
+
+body.libermedia-storefront .herrera-b2b-hero .herrera-hero-primary-action:is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]),
+body.libermedia-storefront :is(.herrera-home-registration-primary, .herrera-category-support-contact, .product-detail-action, .commerce-primary-action, .checkout-primary-button, .product-cart-modal-action-primary, [data-product-add-to-cart]):is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]),
+body.libermedia-storefront .product-card-lined .product-card-lined-cart:is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]),
+body.libermedia-storefront .site-footer-newsletter button[type=submit]:is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]) {
+    border-color: var(--libermedia-action-hover);
+    background: var(--libermedia-action-hover);
+    color: #fff;
+}
+
+body.libermedia-storefront .herrera-b2b-hero .herrera-hero-actions .herrera-hero-secondary-action,
+body.libermedia-storefront :is(.herrera-category-support-register, .commerce-secondary-action) {
+    border-color: var(--libermedia-green);
+    background: var(--libermedia-surface);
+    color: var(--libermedia-green);
+}
+
+body.libermedia-storefront .herrera-b2b-hero .herrera-hero-actions .herrera-hero-secondary-action:is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]),
+body.libermedia-storefront :is(.herrera-category-support-register, .commerce-secondary-action):is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]) {
+    border-color: var(--libermedia-green-hover);
+    background: var(--libermedia-sage);
+    color: var(--libermedia-green-hover);
+}
+
+body.libermedia-storefront :is(.herrera-hero-primary-action, .herrera-hero-secondary-action, .herrera-home-registration-primary, .herrera-category-support-contact, .herrera-category-support-register, .product-detail-action, .product-card-lined-cart, .commerce-primary-action, .commerce-secondary-action, .checkout-primary-button, .product-cart-modal-action, [data-product-add-to-cart]):focus-visible,
+body.libermedia-storefront .site-footer-newsletter button[type=submit]:focus-visible {
+    outline: 3px solid var(--storefront-focus);
+    outline-offset: 3px;
+}
+
+body.libermedia-storefront :is(.herrera-hero-primary-action, .herrera-hero-secondary-action, .herrera-home-registration-primary, .herrera-category-support-contact, .herrera-category-support-register, .product-detail-action, .commerce-primary-action, .commerce-secondary-action, .checkout-primary-button, .product-cart-modal-action, [data-product-add-to-cart]):is(:disabled, [aria-disabled=true]),
+body.libermedia-storefront .herrera-b2b-hero .herrera-hero-actions .herrera-hero-secondary-action:is(:disabled, [aria-disabled=true]),
+body.libermedia-storefront .product-card-lined .product-card-lined-controls .product-card-lined-cart:is(:disabled, [aria-disabled=true]),
+body.libermedia-storefront .site-footer-newsletter button[type=submit]:is(:disabled, [aria-disabled=true]) {
+    border-color: var(--libermedia-line);
+    background: var(--libermedia-sage);
+    color: var(--libermedia-muted);
+    cursor: not-allowed;
+    opacity: 1;
+    transform: none;
+}
+
+body.libermedia-storefront :is(.product-detail-action, .product-card-lined-cart, .checkout-primary-button, .commerce-primary-action, .product-cart-modal-action)[aria-busy=true] {
+    cursor: progress;
+}
+
+body.libermedia-storefront :is(.product-card-current-price, [data-product-price-current]) {
+    color: var(--libermedia-link);
+}
+
+body.libermedia-storefront .product-detail-pricing [data-product-price-current] {
+    color: var(--libermedia-orange);
+}
+
+/* Compact B2C cards: information flows directly into the price, while the
+   purchase controls share the bottom edge of cards in the same row. */
+body.libermedia-storefront .product-card-lined-content {
+    padding: 12px;
+}
+
+body.libermedia-storefront .product-card-lined .product-card-title {
+    display: -webkit-box;
+    min-height: 2.7em;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+body.libermedia-storefront .product-card-lined .product-card-brand {
+    margin-top: 4px;
+    overflow: hidden;
+    color: var(--libermedia-muted);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.libermedia-storefront .product-card-lined [data-product-identifiers] {
+    margin-top: 4px;
+    color: var(--libermedia-muted);
+    line-height: 1.3;
+}
+
+body.libermedia-storefront .product-card-lined .product-card-lined-price {
+    min-height: 0;
+    margin-top: 10px;
+    padding-top: 0;
+}
+
+body.libermedia-storefront .product-card-lined-price[data-product-price-kind=b2c]:has(.product-card-current-price) {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 3px 7px;
+    align-items: center;
+}
+
+body.libermedia-storefront .product-card-lined-price[data-product-price-kind=b2c]:has(.product-card-current-price) > .product-card-price-label {
+    display: none;
+}
+
+body.libermedia-storefront .product-card-lined-price[data-product-price-kind=b2c] > .product-card-price-row {
+    grid-area: 1 / 1;
+    margin-top: 0;
+}
+
+body.libermedia-storefront .product-card-lined-price[data-product-price-kind=b2c] > .product-card-old-price {
+    grid-area: 1 / 2;
+    margin-top: 0;
+    color: var(--libermedia-muted);
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+body.libermedia-storefront .product-card-lined-price[data-product-price-kind=b2c] > :is([data-price-includes-tax], [data-price-excludes-tax], .product-card-lowest-price) {
+    grid-column: 1 / -1;
+    margin-top: 0;
+    color: var(--libermedia-muted);
+    line-height: 1.3;
+}
+
+body.libermedia-storefront .product-card-lined .product-card-current-price {
+    font-size: 18px;
+    line-height: 1.15;
+}
+
+body.libermedia-storefront .product-card-lined .product-availability-status {
+    margin-top: 8px;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+body.libermedia-storefront .product-card-lined .product-card-lined-form {
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+body.libermedia-storefront .product-card-lined .product-card-lined-controls {
+    grid-template-columns: minmax(0, 1fr) 44px;
+    gap: 6px;
+}
+
+body.libermedia-storefront .product-card-lined .product-card-lined-qty {
+    grid-template-columns: 28px minmax(0, 1fr) 28px;
+    border-color: var(--libermedia-line);
+}
+
+body.libermedia-storefront .product-card-lined .product-card-lined-controls .product-card-lined-cart {
+    width: 44px;
+}
+
+@container herrera-product-card (max-width: 215px) {
+    body.libermedia-storefront .product-card-lined .product-card-title {
+        font-size: 13px;
+    }
+
+    body.libermedia-storefront .product-card-lined .product-card-current-price {
+        font-size: 17px;
+    }
+}
+
+@container herrera-product-card (max-width: 164px) {
+    body.libermedia-storefront .product-card-lined .product-card-lined-controls {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    body.libermedia-storefront .product-card-lined .product-card-lined-controls .product-card-lined-cart {
+        width: 100%;
+    }
+}
+
+body.libermedia-storefront .product-card-lined .product-size-radio:checked + .product-size-label-text {
+    border-color: var(--libermedia-green);
+    background: var(--libermedia-green);
+    color: #fff;
+}
+
+body.libermedia-storefront .product-card-lined .product-size-label-text:hover {
+    border-color: var(--libermedia-green-hover);
+    background: var(--libermedia-green-hover);
+    color: #fff;
+}
+
+body.libermedia-storefront .product-card-lined .product-card-lined-qty > button:is(:hover, :focus-visible),
+body.libermedia-storefront .product-detail-quantity-control button:is(:hover, :focus-visible) {
+    background: var(--libermedia-cream);
+    color: var(--libermedia-link);
+}
+
+body.libermedia-storefront :is(.product-card-lined-qty, .product-detail-quantity-control):focus-within,
+body.libermedia-storefront :is(.product-card-lined-cart, .product-detail-cart-button, .herrera-home-registration-primary, .herrera-home-registration-login):focus-visible,
+body.libermedia-storefront .product-card-lined .product-size-radio:focus-visible + .product-size-label-text,
+body.libermedia-storefront :is(.herrera-home-product-carousel, .herrera-home-blog-carousel) button:focus-visible {
+    outline-color: var(--storefront-focus);
+}
+
+body.libermedia-storefront .product-card-lined .product-card-lined-qty > button:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--storefront-focus);
+}
+
+body.libermedia-storefront .product-color-variant-link:is(:hover, :focus-visible, [aria-current=true]) {
+    box-shadow: 0 0 0 2px rgb(214 66 0 / 15%);
+}
+
+body.libermedia-storefront :is(.product-detail-pricing .b2b-price-access, .product-purchase-information .legal-warranty-notice--product, .product-information-summary-icon, .product-detail-card [data-product-availability] > div) {
+    border-color: var(--libermedia-line);
+    background: var(--libermedia-sage);
+}
+
+body.libermedia-storefront :is(.product-information-summary-icon, .product-purchase-information .legal-warranty-icon) {
+    color: var(--libermedia-green);
+}
+
+body.libermedia-storefront :is(.herrera-product-carousel, .herrera-home-product-carousel, .herrera-home-blog-carousel) .splide__arrow:is(:hover, :focus-visible):not(:disabled) {
+    border-color: var(--libermedia-action-hover);
+    background: var(--libermedia-action-hover);
+    color: #fff;
+}
+
+body.libermedia-storefront :is(.store-text-link, .content-richtext a, .product-information-sheet-link, .product-energy-document-link):is(:hover, :focus-visible) {
+    color: var(--libermedia-action-hover);
+}
+
+body.libermedia-storefront .herrera-product-specifications > h2 {
+    background: var(--libermedia-sage);
+    color: var(--libermedia-ink);
+}
+
+body.libermedia-storefront .herrera-product-more-specifications summary,
+body.libermedia-storefront .product-detail-lower .product-detail-section-body a {
+    color: var(--libermedia-link);
+}
+
+body.libermedia-storefront .herrera-product-more-specifications summary:focus-visible,
+body.libermedia-storefront .product-detail-lower :is(.product-detail-comment-toggle, .product-detail-comment-submit, .product-detail-section-body a):focus-visible,
+body.libermedia-storefront .herrera-category-support-actions a:focus-visible,
+body.libermedia-storefront .herrera-home-registration a:focus-visible {
+    outline-color: var(--storefront-focus);
+}
+
+body.libermedia-storefront .herrera-brand-carousel .splide__arrow:is(:hover, :focus-visible):not(:disabled),
+body.libermedia-storefront .herrera-subcategories-controls button:is(:hover, :focus-visible):not(:disabled) {
+    border-color: var(--libermedia-action-hover);
+    background: var(--libermedia-action-hover);
+    color: #fff;
+}
+
+/* Three editorial cards share the catalog's type and spacing. */
+body.libermedia-storefront .libermedia-home-blog-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+body.libermedia-storefront .libermedia-home-blog-grid > li {
+    min-width: 0;
+}
+
+body.libermedia-storefront .libermedia-home-blog .herrera-blog-card-image {
+    border-radius: 8px;
+    background: var(--libermedia-sage);
+}
+
+body.libermedia-storefront .libermedia-home-blog .herrera-blog-card a:is(:hover, :focus-visible) :is(h2, h3) {
+    color: var(--libermedia-green);
+}
+
+body.libermedia-storefront .libermedia-home-blog-read {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    color: var(--libermedia-green);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+body.libermedia-storefront .libermedia-home-blog-read svg {
+    width: 12px;
+    height: 12px;
+}
+
+body.libermedia-storefront .libermedia-home-blog a:is(:hover, :focus-visible) {
+    color: var(--libermedia-link);
+    outline-color: var(--storefront-focus);
+}
+
+@media (max-width: 1023px) {
+    body.libermedia-storefront .herrera-header-layout,
+    body.libermedia-storefront .site-main-header.is-sticky .herrera-header-layout {
+        grid-template-rows: 52px;
+    }
+
+    body.libermedia-storefront .site-main-header .site-main-logo {
+        width: 176px;
+        max-width: 176px;
+        height: 32px;
+    }
+
+    body.libermedia-storefront .libermedia-home-blog-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+    }
+}
+
+/* Product confirmation keeps the familiar dialog, in the store's own palette. */
+body.libermedia-storefront .product-cart-modal {
+    --product-cart-modal-brand: var(--libermedia-action);
+    --product-cart-modal-accent: var(--libermedia-orange);
+}
+
+body.libermedia-storefront .product-cart-modal-panel {
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    border-color: var(--libermedia-line);
+    border-top-color: var(--libermedia-orange);
+    border-radius: 14px;
+    background: var(--libermedia-surface);
+}
+
+body.libermedia-storefront :is(.product-cart-modal-status, .product-cart-modal-actions, .product-cart-modal-detail) {
+    border-color: var(--libermedia-line);
+    background: var(--libermedia-sage);
+}
+
+body.libermedia-storefront .product-cart-modal-status-icon {
+    background: var(--libermedia-green);
+    box-shadow: 0 5px 14px rgb(36 91 66 / 18%);
+}
+
+body.libermedia-storefront :is(.product-cart-modal-status-title, .product-cart-modal-name, .product-cart-modal-detail-label) {
+    color: var(--libermedia-ink);
+}
+
+body.libermedia-storefront :is(.product-cart-modal-image-wrap, .product-cart-modal-detail, .product-cart-modal-action) {
+    border-radius: 7px;
+}
+
+body.libermedia-storefront .product-cart-modal-image-wrap {
+    border-color: var(--libermedia-line);
+}
+
+body.libermedia-storefront .product-cart-modal-action-secondary {
+    border-color: var(--libermedia-green);
+    color: var(--libermedia-green);
+}
+
+body.libermedia-storefront .product-cart-modal-action-secondary:is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]) {
+    border-color: var(--libermedia-green-hover);
+    background: #e2ece1;
+    color: var(--libermedia-green-hover);
+}
+
+body.libermedia-storefront .product-cart-modal-action-primary:is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]) {
+    border-color: var(--libermedia-action-hover);
+    background: var(--libermedia-action-hover);
+}
+
+body.libermedia-storefront .product-cart-modal-close:is(:hover, :focus-visible) {
+    background: #e2ece1;
+    color: var(--libermedia-green);
+}
+
+@media (max-width: 767px) {
+    body.libermedia-storefront .libermedia-home-blog-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+body.libermedia-storefront :is(input, textarea, select) {
+    accent-color: var(--libermedia-action);
+}
+
+body.libermedia-storefront .site-footer-newsletter input[type=email] {
+    border-color: var(--libermedia-line-strong);
+}
+
+body.libermedia-storefront .site-footer-newsletter input[type=email]:focus {
+    border-color: var(--storefront-focus);
+    outline-color: var(--storefront-focus);
+}
+
+body.libermedia-storefront .reference-photo-link:hover .reference-photo-zoom,
+body.libermedia-storefront .reference-lightbox button:hover {
+    background: var(--libermedia-action);
+}
+
+/* Forest footer with warm accents, including the mobile accordions. */
+body.libermedia-storefront .site-footer {
+    color: var(--libermedia-footer-text);
+}
+
+body.libermedia-storefront .site-footer :is(.site-footer-contact-details, .site-footer-contact-intro, .site-footer-link-list, .site-footer-benefit, .store-footer-bottom, .legal-warranty-notice--footer a),
+body.libermedia-storefront .site-footer-mobile-links :is(a, p) {
+    color: var(--libermedia-footer-text);
+}
+
+body.libermedia-storefront .site-footer-mobile-links {
+    --reading-slate-500: var(--libermedia-footer-text);
+    --reading-slate-600: var(--libermedia-footer-text);
+    --reading-slate-700: var(--libermedia-footer-accent);
+    --reading-slate-900: #fff;
+}
+
+body.libermedia-storefront .site-footer :is(.site-footer-contact-phone, .legal-warranty-notice--footer svg),
+body.libermedia-storefront .site-footer-mobile-links a[href^=tel],
+body.libermedia-storefront .site-footer a:is(:hover, :focus-visible) {
+    color: var(--libermedia-footer-accent);
+}
+
+/* Cookie consent is mounted under body, independently of the shop shell. */
+body.libermedia-storefront #cc-main {
+    --cookie-footer-blue: var(--libermedia-green);
+    --cookie-footer-blue-dark: var(--libermedia-green-hover);
+    --cookie-footer-orange: var(--libermedia-orange);
+    --cookie-footer-orange-text: #fff;
+    --cc-bg: var(--libermedia-surface);
+    --cc-primary-color: var(--libermedia-ink);
+    --cc-secondary-color: var(--libermedia-muted);
+    --cc-link-color: var(--libermedia-link);
+    --cc-btn-primary-bg: var(--libermedia-action);
+    --cc-btn-primary-color: #fff;
+    --cc-btn-primary-border-color: var(--libermedia-action);
+    --cc-btn-primary-hover-bg: var(--libermedia-action-hover);
+    --cc-btn-primary-hover-color: #fff;
+    --cc-btn-primary-hover-border-color: var(--libermedia-action-hover);
+    --cc-btn-secondary-bg: var(--libermedia-surface);
+    --cc-btn-secondary-color: var(--libermedia-green);
+    --cc-btn-secondary-border-color: var(--libermedia-green);
+    --cc-btn-secondary-hover-bg: var(--libermedia-sage);
+    --cc-btn-secondary-hover-color: var(--libermedia-green-hover);
+    --cc-btn-secondary-hover-border-color: var(--libermedia-green-hover);
+    --cc-separator-border-color: var(--libermedia-line);
+    --cc-toggle-on-bg: var(--libermedia-green);
+    --cc-cookie-category-block-bg: var(--libermedia-sage);
+    --cc-cookie-category-block-border: var(--libermedia-line);
+    --cc-cookie-category-block-hover-bg: var(--libermedia-sage);
+    --cc-cookie-category-block-hover-border: var(--libermedia-line-strong);
+    --cc-cookie-category-expanded-block-hover-bg: var(--libermedia-sage);
+    --cc-footer-bg: var(--libermedia-surface);
+    --cc-footer-border-color: var(--libermedia-line);
+}
+
+body.libermedia-storefront #cc-main :is(.cm__title, .cm__desc) {
+    color: var(--libermedia-ink);
+}
+
+body.libermedia-storefront #cc-main :is(.cm__footer, .pm__footer) {
+    border-color: var(--libermedia-line);
+    background-color: var(--libermedia-surface);
+}
+
+body.libermedia-storefront #cookie-consent-floating-button {
+    background: var(--libermedia-green);
+    box-shadow: 0 10px 22px rgb(36 91 66 / 22%);
+}
+
+body.libermedia-storefront #cookie-consent-floating-button:is(:hover, :focus-visible) {
+    box-shadow: 0 14px 26px rgb(36 91 66 / 28%);
+    outline-color: var(--libermedia-orange);
+}
+
+/* Theme-specific tokens keep the same brand on warm charcoal surfaces. */
+html[data-theme=dark] body.libermedia-storefront {
+    --libermedia-link: #ffad83;
+    --libermedia-green: #a9d8b6;
+    --libermedia-green-hover: #d2edd7;
+    --libermedia-ink: #f4f2eb;
+    --libermedia-muted: #b8beb2;
+    --libermedia-cream: #33261f;
+    --libermedia-sage: #202e25;
+    --libermedia-surface: #171c19;
+    --libermedia-surface-raised: #252d27;
+    --libermedia-line: #3b493e;
+    --libermedia-line-strong: #768675;
+    --libermedia-footer: #14291e;
+    --libermedia-pattern: url("/assets/brand/libermedia-nursery-pattern-dark.svg?v=children-3");
+    --storefront-bg: #111713;
+    --storefront-surface: var(--libermedia-surface);
+    --storefront-surface-raised: var(--libermedia-surface-raised);
+    --storefront-surface-soft: var(--libermedia-sage);
+    --storefront-text: var(--libermedia-ink);
+    --storefront-muted: var(--libermedia-muted);
+    --storefront-border: var(--libermedia-line);
+    --storefront-border-strong: var(--libermedia-line-strong);
+    --storefront-accent: var(--libermedia-link);
+    --storefront-button: var(--libermedia-action);
+    --storefront-button-hover: var(--libermedia-action-hover);
+    --storefront-focus: #ffad83;
+    --herrera-dark: var(--libermedia-ink);
+    --herrera-action: var(--libermedia-action);
+    --herrera-soft: var(--libermedia-sage);
+    --herrera-footer: var(--libermedia-footer);
+    --herrera-form-surface: var(--libermedia-sage);
+    --herrera-surface-pattern: var(--libermedia-pattern);
+    --category-blue: var(--libermedia-green);
+}
+
+html[data-theme=dark] body.libermedia-storefront .site-main-header {
+    --herrera-header-pressed: var(--libermedia-cream);
+    --herrera-header-action-hover: var(--libermedia-link);
+}
+
+html[data-theme=dark] body.libermedia-storefront :is(.herrera-primary-navigation a, .herrera-header-quick-order, .herrera-mobile-shortcuts a),
+html[data-theme=dark] body.libermedia-storefront .libermedia-home-blog-read {
+    color: var(--libermedia-green);
+}
+
+html[data-theme=dark] body.libermedia-storefront :is(.product-card-current-price, [data-product-price-current]) {
+    color: var(--libermedia-link);
+}
+
+html[data-theme=dark] body.libermedia-storefront .product-detail-card [data-product-price-current] {
+    color: var(--libermedia-link);
+}
+
+html[data-theme=dark] body.libermedia-storefront :is(.herrera-hero, .herrera-b2b-hero) {
+    background-color: var(--libermedia-sage);
+}
+
+html[data-theme=dark] body.libermedia-storefront :is(.herrera-eyebrow, .herrera-home-section-eyebrow, .herrera-category-support-eyebrow, .herrera-home-registration-eyebrow, .herrera-brand-strip__all, .herrera-category-module-link, .herrera-home-heading a, .herrera-home-registration-login),
+html[data-theme=dark] body.libermedia-storefront .herrera-b2b-products .herrera-home-products-link,
+html[data-theme=dark] body.libermedia-storefront .herrera-b2b-hero .herrera-eyebrow,
+html[data-theme=dark] body.libermedia-storefront .site-footer-newsletter .herrera-newsletter-eyebrow {
+    color: var(--libermedia-green);
+}
+
+html[data-theme=dark] body.libermedia-storefront .product-card-lined .product-size-radio:checked + .product-size-label-text,
+html[data-theme=dark] body.libermedia-storefront .product-card-lined .product-size-label-text:hover {
+    border-color: #245b42;
+    background: #245b42;
+    color: #fff;
+}
+
+html[data-theme=dark] body.libermedia-storefront :is(.bg-blue-50, .bg-cyan-50, .bg-sky-50, .bg-indigo-50, .bg-blue-100, .bg-cyan-100, .bg-sky-100) {
+    background-color: var(--libermedia-sage);
+}
+
+html[data-theme=dark] body.libermedia-storefront :is(.store-text-link, .content-richtext a, .product-information-sheet-link, .product-energy-document-link):is(:hover, :focus-visible) {
+    color: #ffd0b9;
+}
+
+html[data-theme=dark] body.libermedia-storefront #cc-main {
+    --cookie-footer-blue: #245b42;
+    --cookie-footer-blue-dark: #17422e;
+    --cc-btn-secondary-hover-color: var(--libermedia-green);
+}
+
+/* Gentle nursery motifs share viewport coordinates across the
+   top bar, search and green content bands. */
+body.libermedia-storefront .site-top-bar,
+body.libermedia-storefront .herrera-header-layout .header-search-form,
+body.libermedia-storefront .herrera-b2b-hero,
+body.libermedia-storefront .herrera-catalog-heading-band::before,
+body.libermedia-storefront .herrera-brand-strip::before,
+body.libermedia-storefront .herrera-home-registration::before,
+body.libermedia-storefront .site-footer-newsletter::before {
+    background-image: var(--libermedia-pattern);
+    background-size: clamp(1000px, 98vw, 1400px) auto;
+    background-position: center -64px;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* These bands use a full-width pseudo element; keep the symbol on one layer. */
+body.libermedia-storefront :is(.herrera-catalog-heading-band, .herrera-brand-strip, .herrera-home-registration, .site-footer-newsletter) {
+    background-image: none;
+}
+
+@media (max-width: 1023px) {
+    body.libermedia-storefront .site-top-bar,
+    body.libermedia-storefront .herrera-header-layout .header-search-form,
+    body.libermedia-storefront .herrera-b2b-hero,
+    body.libermedia-storefront .herrera-catalog-heading-band::before,
+    body.libermedia-storefront .herrera-brand-strip::before,
+    body.libermedia-storefront .herrera-home-registration::before,
+    body.libermedia-storefront .site-footer-newsletter::before {
+        background-size: max(720px, 130vw) auto;
+        background-position: center -40px;
+        background-attachment: scroll;
+    }
+}
+
+/* Promotion labels share the storefront green on cards and product details. */
+body.libermedia-storefront :is(.product-promotion-badge, [data-product-price-discount]) {
+    border-color: #245b42;
+    background-color: #245b42;
+    color: #fff;
+}
+body.libermedia-storefront .bundle-purchase-action {
+    border: 1px solid var(--libermedia-orange);
+    background: var(--libermedia-orange);
+    color: #fff;
+}
+body.libermedia-storefront .bundle-purchase-action:hover {
+    background: var(--libermedia-action-hover);
+    border-color: var(--libermedia-action-hover);
+    color: #fff;
+}
+
+/* The category tree expands naturally with the document, without nested scrolling. */
+@media (min-width: 1025px) {
+    body.libermedia-storefront .catalog-desktop-sidebar-inner {
+        position: static;
+        max-height: none;
+        overflow: visible;
+        contain: none;
+        scrollbar-gutter: auto;
+    }
+    body.libermedia-storefront .catalog-sidebar-category-options {
+        max-height: none;
+        overflow: visible;
+    }
+}
+body.libermedia-storefront :is(.catalog-reset-button, .catalog-price-reset, .catalog-sidebar-active a, .catalog-mobile-filter-reset, .catalog-mobile-reset-link) {
+    color: var(--libermedia-green);
+    border-color: var(--libermedia-line-strong);
+}
+body.libermedia-storefront :is(.catalog-reset-button, .catalog-price-reset, .catalog-mobile-filter-reset):hover {
+    color: var(--libermedia-green-hover);
+    border-color: var(--libermedia-green);
+    background: var(--libermedia-sage);
+}
+
+/* Reviews sit beside the story, with an honest summary of published ratings. */
+body.libermedia-storefront .product-detail-lower {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
+}
+body.libermedia-storefront .product-detail-lower .product-detail-content-section {
+    min-width: 0;
+    margin-top: 0;
+}
+@media (min-width: 1100px) {
+    body.libermedia-storefront .product-detail-lower:has(#product-description) {
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    }
+    body.libermedia-storefront #product-comments {
+        padding: 26px;
+    }
+}
+body.libermedia-storefront .product-rating-overview {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding: 22px;
+    border: 1px solid var(--libermedia-line);
+    border-radius: 12px;
+    background: var(--libermedia-sage);
+}
+body.libermedia-storefront .product-rating-score > strong {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 42px;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: var(--libermedia-green);
+}
+body.libermedia-storefront .product-rating-score > strong > span {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--libermedia-muted);
+    letter-spacing: 0;
+}
+body.libermedia-storefront .product-rating-score > p,
+body.libermedia-storefront .product-rating-overview > p {
+    margin: 10px 0 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--libermedia-muted);
+}
+body.libermedia-storefront .product-review-star.is-full,
+body.libermedia-storefront .product-comment-stars .is-filled,
+body.libermedia-storefront .product-rating-bar-row > span:first-child > span {
+    color: var(--libermedia-orange);
+}
+body.libermedia-storefront .product-review-star.is-half {
+    background-image: linear-gradient(90deg, var(--libermedia-orange) 50%, #d5ded6 50%);
+}
+body.libermedia-storefront .product-rating-distribution { display: grid; gap: 8px; }
+body.libermedia-storefront .product-rating-bar-row {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 24px;
+    align-items: center;
+    gap: 8px;
+    color: var(--libermedia-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+body.libermedia-storefront .product-rating-bar-row > span:last-child { text-align: right; }
+body.libermedia-storefront .product-rating-track { height: 6px; overflow: hidden; border-radius: 10px; background: #d6e3d5; }
+body.libermedia-storefront .product-rating-track > span { display: block; height: 100%; border-radius: inherit; background: #245b42; }
+body.libermedia-storefront .product-detail-lower .product-detail-comments-list { display: grid; gap: 14px; }
+body.libermedia-storefront .product-detail-lower .product-detail-comment { padding: 18px; border: 1px solid var(--libermedia-line); border-radius: 12px; background: var(--libermedia-surface); }
+body.libermedia-storefront .product-detail-lower .product-detail-comment-meta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+body.libermedia-storefront .product-detail-lower .product-detail-comment-meta > p { margin: 0; font-size: 13px; color: var(--libermedia-ink); }
+body.libermedia-storefront .product-comment-stars { display: inline-flex; gap: 2px; color: #d5ded6; font-size: 15px; white-space: nowrap; }
+body.libermedia-storefront .product-comment-date { display: block; margin-top: 7px; font-size: 11px; color: var(--libermedia-muted); }
+body.libermedia-storefront .product-detail-lower .product-detail-comment-body { margin-top: 12px; font-size: 14px; line-height: 1.75; overflow-wrap: anywhere; white-space: pre-line; }
+body.libermedia-storefront .product-rating-empty-stars { color: #9aaa9c; font-size: 27px; letter-spacing: 3px; }
+body.libermedia-storefront #product-comments .product-detail-comment-grid { grid-template-columns: minmax(0, 1fr); }
+body.libermedia-storefront #product-comments .product-detail-comment-toggle {
+    border-color: var(--libermedia-green);
+    background: var(--libermedia-surface);
+    color: var(--libermedia-green);
+}
+body.libermedia-storefront #product-comments .product-detail-comment-toggle[aria-expanded=true] {
+    background: var(--libermedia-sage);
+}
+body.libermedia-storefront #product-comments .product-detail-comment-submit {
+    border-color: var(--libermedia-button-green);
+    background: var(--libermedia-button-green);
+    color: #fff;
+}
+body.libermedia-storefront #product-comments :is(.product-detail-comment-toggle, .product-detail-comment-submit):is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]) {
+    border-color: var(--libermedia-button-green-hover);
+    background: var(--libermedia-button-green-hover);
+    color: #fff;
+}
+body.libermedia-storefront #product-comments :is(.product-detail-comment-toggle, .product-detail-comment-submit):focus-visible {
+    outline: 3px solid var(--storefront-focus);
+    outline-offset: 3px;
+}
+body.libermedia-storefront #product-comments :is(.product-detail-comment-toggle, .product-detail-comment-submit):is(:disabled, [aria-disabled=true]) {
+    border-color: var(--libermedia-line);
+    background: var(--libermedia-sage);
+    color: var(--libermedia-muted);
+    cursor: not-allowed;
+    opacity: 1;
+}
+
+@media (min-width: 1100px) {
+    body.libermedia-storefront .product-detail-lower:has(#product-description) {
+        grid-template-columns: minmax(0, 1.55fr) minmax(360px, 1fr);
+    }
+    body.libermedia-storefront #product-comments { padding: 30px; container-type: inline-size; }
+    body.libermedia-storefront .product-detail-lower:has(#product-description) > #product-comments {
+        position: sticky;
+        top: var(--product-comments-sticky-top, 160px);
+        align-self: start;
+    }
+}
+body.libermedia-storefront .product-detail-lower .product-detail-description-content { max-width: none; }
+body.libermedia-storefront .product-detail-lower .product-detail-comment { padding: 22px; }
+body.libermedia-storefront .product-detail-lower .product-detail-comment-meta > p { font-size: 14px; }
+body.libermedia-storefront .product-detail-lower .product-detail-comment-body { font-size: 15px; line-height: 1.8; }
+body.libermedia-storefront .product-comment-stars { font-size: 17px; }
+body.libermedia-storefront .product-comment-date { font-size: 12px; }
+@container (min-width: 480px) {
+    body.libermedia-storefront .product-rating-overview {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: center;
+        gap: 24px;
+        padding: 26px;
+    }
+    body.libermedia-storefront .product-rating-score > strong { font-size: 48px; }
+}
+
+/* Keep shopping bag icons white on orange purchase controls. */
+body.libermedia-storefront :is(.product-card-lined-cart, .product-detail-action, .commerce-primary-action, .checkout-primary-button, .product-cart-modal-action-primary, [data-product-add-to-cart]):not(:disabled) > .fa6-icon { color: #fff; }
+
+/* One orange interaction palette for links and secondary actions. */
+body.libermedia-storefront :is(.herrera-b2b-tools a, .herrera-home-products-link, .lm-assurance-points a, .lm-home-review-product, .libermedia-home-blog-link, .lm-section-heading > a):is(:hover, :focus-visible) {
+    color: var(--libermedia-action-hover);
+}
+body.libermedia-storefront .herrera-b2b-tools a:is(:hover, :focus-visible) { background: var(--libermedia-cream); }
+body.libermedia-storefront .herrera-b2b-tools a:is(:hover, :focus-visible) > svg { color: var(--libermedia-action-hover); }
+body.libermedia-storefront .herrera-b2b-tools a:focus-visible { outline: 3px solid var(--libermedia-action-hover); outline-offset: 4px; }
+body.libermedia-storefront .herrera-b2b-hero .herrera-hero-actions .herrera-hero-secondary-action:is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]),
+body.libermedia-storefront :is(.herrera-category-support-register, .commerce-secondary-action, .lm-button--green):is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]),
+body.libermedia-storefront #product-comments :is(.product-detail-comment-toggle, .product-detail-comment-submit):is(:hover, :focus-visible):not(:disabled):not([aria-disabled=true]) {
+    border-color: var(--libermedia-action-hover);
+    background: var(--libermedia-action-hover);
+    color: #fff;
+}
+body.libermedia-storefront #product-comments :is(.product-detail-comment-toggle, .product-detail-comment-submit):focus-visible { outline-color: var(--libermedia-action-hover); }
+body.libermedia-storefront .lm-button { color: #fff; }
+body.libermedia-storefront .lm-button--green { background: var(--libermedia-button-green); }
+body.libermedia-storefront .lm-button:not(.lm-button--green):is(:hover, :focus-visible) { background: var(--libermedia-action-hover); border-color: var(--libermedia-action-hover); color: #fff; }
+
+/* Shared button shape across shopping, account forms and content calls to action. */
+body.libermedia-storefront :is(button, input[type=submit], input[type=button], [role=button], .lm-button, .reference-button, .commerce-primary-action, .commerce-secondary-action, .checkout-primary-button, .herrera-hero-primary-action, .herrera-hero-secondary-action, .herrera-home-registration-primary, .herrera-category-support-contact, .herrera-category-support-register, .product-detail-cart-button, .product-detail-wishlist, .product-floating-cart-action, .product-cart-modal-action, .header-cart-view-action, .header-cart-empty-action, .bundle-purchase-action, .stock-notify-button, .catalog-mobile-filter-trigger, .catalog-reset-button, .catalog-mobile-reset-link, .libermedia-category-bundle-cta),
+body.libermedia-storefront.account-commerce-body :is(.commerce-primary-action, .commerce-secondary-action),
+body.libermedia-storefront .herrera-header-layout .header-search-submit,
+body.libermedia-storefront .site-footer-newsletter button[type=submit],
+body.libermedia-storefront :is(.herrera-home-product-carousel, .herrera-home-blog-carousel, .product-gallery-main) .splide__arrow,
+body.libermedia-storefront .herrera-category-tile .libermedia-category-bundle-cta,
+body.libermedia-storefront .herrera-b2b-hero .herrera-hero-actions > a,
+body.libermedia-storefront #product-comments :is(.product-detail-comment-toggle, .product-detail-comment-submit),
+body.libermedia-storefront #cc-main :is(.cm__btn, .pm__btn) {
+    border-radius: var(--libermedia-button-radius);
+}
+
+/* Legacy commerce styles mark these radii important; keep the override scoped. */
+body.libermedia-storefront .product-card-lined .product-card-lined-controls .product-card-lined-cart,
+body.libermedia-storefront .product-detail-wishlist,
+body.libermedia-storefront .cart-remove-action,
+body.libermedia-storefront.mobile-commerce-body :is(.commerce-primary-action, .gradient-blue, .btn-border) {
+    border-radius: var(--libermedia-button-radius) !important;
+}
+
+body.libermedia-storefront :is(.product-card-lined-qty, .product-detail-quantity-control, .product-floating-cart-quantity, .product-widget-card-quantity, .cart-quantity-stepper, .lm-bundle-quantity-control),
+body.libermedia-storefront .product-card-lined .product-card-lined-qty {
+    border-radius: var(--libermedia-button-radius);
+    overflow: hidden;
+}
+
+body.libermedia-storefront :is(.product-card-lined-qty, .product-detail-quantity-control, .product-floating-cart-quantity, .product-widget-card-quantity, .cart-quantity-stepper, .lm-bundle-quantity-control) > :is(button, input) {
+    border-radius: 0;
+}
+
+/* Filled action icons follow the same white foreground as their labels. */
+body.libermedia-storefront :is(.lm-button, .herrera-hero-primary-action, .herrera-home-registration-primary, .herrera-category-support-contact, .product-detail-action, .commerce-primary-action, .checkout-primary-button, .product-cart-modal-action-primary, .bundle-purchase-action) .fa6-icon {
+    color: inherit;
+}
+
+@media (min-width: 1024px) {
+    body.libermedia-storefront .herrera-b2b-hero { grid-template-columns: minmax(0, 1.15fr) minmax(480px, 1fr); }
+    body.libermedia-storefront .herrera-b2b-hero .herrera-hero-panel h2 { max-width: none; font-size: clamp(20px, 1.35vw, 26px); white-space: nowrap; }
+    body.libermedia-storefront .herrera-primary-navigation [data-navigation-align="right"] ~ [data-navigation-align="right"] { margin-left: 0; }
+}
+
+/* Give the homepage brand artwork more presence within the existing cards. */
+body.libermedia-storefront .herrera-brand-strip__image img {
+    transform: scale(1.3);
+}
+
+body.libermedia-storefront .herrera-b2b-tools a {
+    padding-inline: 12px;
+    border-radius: 6px;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+@media (max-width: 1024px) {
+    body.libermedia-storefront .catalog-mobile-filter-toolbar--square { gap: 8px; }
+    body.libermedia-storefront .lm-mobile-availability {
+        display: inline-flex;
+        flex: 1 1 auto;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-width: 0;
+        min-height: 44px;
+        color: var(--libermedia-ink);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.25;
+        text-decoration: none;
+    }
+    body.libermedia-storefront .lm-mobile-availability-check {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 16px;
+        width: 16px;
+        height: 16px;
+        border: 1px solid #cbd5e1;
+        border-radius: 3px;
+    }
+    body.libermedia-storefront .lm-mobile-availability-check svg { width: 11px; height: 11px; }
+    body.libermedia-storefront .lm-mobile-availability.is-active .lm-mobile-availability-check { border-color: var(--libermedia-link); background: var(--libermedia-link); color: #fff; }
+}
+
+body.libermedia-storefront .herrera-b2b-hero .libermedia-hero-headline {
+    max-width: 680px;
+    margin: 0;
+    color: var(--libermedia-ink);
+    font-size: clamp(32px, 3.5vw, 56px);
+    font-weight: 750;
+    line-height: 1.08;
+    letter-spacing: -.045em;
+}
+@media (max-width: 767px) {
+    body.libermedia-storefront .herrera-b2b-hero .libermedia-hero-headline {
+        max-width: 420px;
+        font-size: clamp(25px, 7.4vw, 44px);
+    }
+}
+
+@media (max-width: 767px) {
+    body.libermedia-storefront .herrera-home-main { padding-top: 12px; }
+    body.libermedia-storefront .herrera-b2b-hero { padding: 22px 18px; gap: 20px; }
+    body.libermedia-storefront .herrera-b2b-hero .herrera-eyebrow { margin-bottom: 12px; font-size: 10px; letter-spacing: .08em; }
+    body.libermedia-storefront .herrera-b2b-hero .libermedia-hero-headline { font-size: clamp(25px, 6.4vw, 30px); line-height: 1.12; }
+    body.libermedia-storefront .herrera-b2b-hero .herrera-hero-description { margin-top: 14px; font-size: 14px; line-height: 1.6; }
+    body.libermedia-storefront .herrera-b2b-hero .herrera-hero-actions { margin-top: 18px; gap: 8px; }
+    body.libermedia-storefront .herrera-b2b-hero .herrera-hero-actions a { min-height: 44px; padding: 10px 12px; font-size: 12px; gap: 6px; }
+    body.libermedia-storefront .herrera-b2b-hero .herrera-hero-panel { padding: 18px 16px; }
+    body.libermedia-storefront .herrera-b2b-hero .herrera-hero-panel h2 { margin-bottom: 12px; font-size: 18px; line-height: 1.3; }
+    body.libermedia-storefront .herrera-b2b-tools a { min-height: 48px; padding: 10px 6px; font-size: 13px; gap: 8px; }
+    body.libermedia-storefront .herrera-b2b-hero .herrera-b2b-tools-note { display: none; }
+}
+@media (min-width: 360px) and (max-width: 767px) {
+    body.libermedia-storefront .herrera-b2b-hero .herrera-hero-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    body.libermedia-storefront .herrera-b2b-hero .herrera-hero-actions a { width: auto; padding-inline: 8px; }
+    body.libermedia-storefront .herrera-b2b-hero .herrera-hero-primary-action svg { display: none; }
+}
+
+body.libermedia-storefront .lm-footer-benefits {
+    position: relative;
+    background: #fff;
+    box-shadow: 0 0 0 100vmax #fff;
+    clip-path: inset(0 -100vmax);
+}
+body.libermedia-storefront .site-footer .lm-footer-benefits a { color: var(--libermedia-ink); }
+body.libermedia-storefront .lm-footer-benefits .lm-benefits { border-bottom: 0; padding-block: 26px; }
+body.libermedia-storefront .site-footer-links { column-gap: 40px; padding-top: 36px; padding-bottom: 30px; }
+body.libermedia-storefront .site-footer :is(.site-footer-contact-title, .site-footer-column-title) { font-size: 16px; line-height: 1.4; font-weight: 650; color: #fff; }
+body.libermedia-storefront .site-footer-contact-details { max-width: 34ch; margin-top: 14px; }
+body.libermedia-storefront .site-footer :is(.site-footer-contact-details p, .site-footer-contact-intro, .site-footer-link-list) { font-size: 13px; line-height: 1.7; }
+body.libermedia-storefront .site-footer-link-list { margin-top: 14px; gap: 7px; }
+body.libermedia-storefront .site-footer-contact-phone { display: inline-block; margin-block: 3px; font-size: 18px; }
+body.libermedia-storefront .site-footer-contact-details p:last-child { margin-top: 14px; font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+body.libermedia-storefront .site-footer .store-footer-bottom { padding-block: 16px; font-size: 12px; }
+@media (max-width: 1023px) {
+    body.libermedia-storefront .site-footer-mobile-links summary { padding-block: 15px; font-size: 14px; }
+    body.libermedia-storefront .site-footer-mobile-links :is(p, a) { font-size: 13px; line-height: 1.7; }
+    body.libermedia-storefront .lm-footer-benefits .lm-benefits { padding-block: 22px; }
+}
+
+/* One column rhythm for newsletter, shopping benefits and footer navigation. */
+@media (min-width: 1024px) {
+    body.libermedia-storefront .site-footer {
+        --lm-footer-grid-gap: 32px;
+    }
+    body.libermedia-storefront .site-footer-links,
+    body.libermedia-storefront .lm-footer-benefits .lm-benefits,
+    body.libermedia-storefront .site-footer-newsletter > div {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        column-gap: var(--lm-footer-grid-gap);
+    }
+    body.libermedia-storefront .site-footer-newsletter > div > :is(div, form) {
+        grid-column: span 2;
+        min-width: 0;
+    }
+    body.libermedia-storefront .lm-footer-benefits .lm-benefits {
+        padding-inline: 0;
+    }
+    body.libermedia-storefront .lm-footer-benefits .lm-benefits > :is(div, a) {
+        justify-content: flex-start;
+        align-items: center;
+        gap: 12px;
+    }
+    body.libermedia-storefront .site-footer-link-column {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 1023px) {
+    body.libermedia-storefront .herrera-mobile-shortcuts .lm-mobile-search-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-width: 96px;
+        min-height: 44px;
+        margin-left: auto;
+        padding: 0 10px;
+        color: var(--libermedia-green);
+        font-size: 12px;
+        font-weight: 600;
+    }
+    body.libermedia-storefront .lm-mobile-search-toggle .fa6-icon { width: 20px; height: 20px; }
+    body.libermedia-storefront .lm-mobile-search-toggle:focus-visible { outline: 2px solid var(--libermedia-green); outline-offset: -3px; }
+    body.libermedia-storefront .herrera-header-layout .responsive-header-action > svg { width: 23px; height: 23px; }
+}
+
+@media (max-width: 1023px) {
+    body.libermedia-storefront .herrera-header-layout .responsive-header-brand { padding-block: 0; }
+    body.libermedia-storefront .herrera-header-layout .responsive-header-action > svg { width: 22px; height: 22px; }
+}
+
+@media (max-width: 1023px) {
+    body.libermedia-storefront .herrera-header-layout .responsive-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        height: 44px;
+    }
+    body.libermedia-storefront .herrera-header-layout .responsive-header-action {
+        display: inline-flex;
+        flex: 0 0 40px;
+        width: 40px !important;
+        height: 44px;
+        padding: 0;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+    }
+    body.libermedia-storefront .herrera-header-layout .responsive-header-action > .fa6-icon {
+        display: block;
+        flex: 0 0 22px;
+        width: 22px;
+        height: 22px;
+        margin: 0;
+        vertical-align: middle;
+    }
+    body.libermedia-storefront .herrera-header-layout .responsive-header-action .header-count-badge {
+        top: 0;
+        right: 0;
+    }
+}
+
+@media (max-width: 1023px) {
+    body.libermedia-storefront .herrera-header-layout .responsive-header-actions [data-mobile-menu-open],
+    body.libermedia-storefront .herrera-header-layout .responsive-header-actions [data-wishlist-link].hidden {
+        display: none;
+    }
+}
+
+body.libermedia-storefront .site-footer .site-footer-contact-phone,
+body.libermedia-storefront .site-footer .site-footer-mobile-links a[href^="tel:"] {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: #fff;
+}
+body.libermedia-storefront .site-footer .lm-footer-phone-icon {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 17px;
+    color: inherit;
+}
+
+html[data-theme] body.libermedia-storefront .site-footer a.site-footer-contact-phone,
+html[data-theme] body.libermedia-storefront .site-footer .site-footer-mobile-links a[href^="tel:"] {
+    color: #fff;
+}
+@media (min-width: 1024px) {
+    body.libermedia-storefront .store-footer-bottom { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+}
+@media (max-width: 1023px) {
+    body.libermedia-storefront .site-footer .store-footer-bottom { justify-items: center; text-align: center; gap: 14px; }
+    body.libermedia-storefront .store-footer-bottom-links { justify-content: center; }
+}
+
+/* Payment marks from one coordinated monochrome SVG set. */
+body.libermedia-storefront .store-footer-bottom .lm-footer-payments { margin: 0; padding: 0; background: transparent; text-align: center; }
+body.libermedia-storefront .lm-footer-payments > p { display: none; }
+body.libermedia-storefront .lm-footer-payment-logos { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; }
+body.libermedia-storefront .lm-footer-payment-logo { display: inline-flex; flex: 0 0 56px; align-items: center; justify-content: center; width: 56px; height: 34px; padding: 0; border: 0; background: transparent; }
+body.libermedia-storefront .lm-footer-payment-logo img { display: block; width: 52px; height: 34px; max-width: none; max-height: none; object-fit: contain; filter: none; }
+@media (max-width: 639px) {
+    body.libermedia-storefront .lm-footer-payment-logos { gap: 8px; }
+    body.libermedia-storefront .lm-footer-payment-logo { flex-basis: 46px; width: 46px; height: 30px; }
+    body.libermedia-storefront .lm-footer-payment-logo img { width: 46px; height: 30px; }
+}
+
+/* Touch screens keep the primary image visible in every product grid. */
+@media (max-width: 767px), (hover: none), (pointer: coarse) {
+    body.libermedia-storefront [data-product-card-image-frame] > [data-product-card-hover-image] {
+        display: none;
+    }
+
+    body.libermedia-storefront [data-product-card-image-frame][data-image-state] > img[data-product-card-image] {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 767px) {
+    body.libermedia-storefront .product-floating-cart,
+    body.libermedia-storefront #page .product-floating-cart {
+        right: 0;
+        bottom: 0;
+        left: 0;
+        border-right: 0;
+        border-bottom: 0;
+        border-left: 0;
+        border-radius: 0;
+    }
+
+    body.libermedia-storefront .product-floating-cart-shell {
+        padding: 10px max(12px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+    }
+}
+
+body.libermedia-storefront [data-mobile-nav-view-all] {
+    justify-content: space-between;
+    gap: 16px;
+    color: var(--libermedia-green);
+}
+body.libermedia-storefront [data-mobile-nav-view-all] > span {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* Sage feedback keeps touch navigation in the Liber Media palette. */
+html[data-theme] body.libermedia-storefront [data-mobile-menu-panel] {
+    --mobile-menu-tint: #fff3eb;
+    --mobile-menu-accent: #ff5000;
+}
+html[data-theme] body.libermedia-storefront .desktop-mobile-menu-row:is(:hover, :active):not(.desktop-mobile-menu-row-active):not(details[open] > summary) {
+    background: #edf3ec;
+    color: #245b42;
+}
+
+/* Purchase form rules must not square off the product favourite button. */
+html[data-theme] body.libermedia-storefront .product-detail-shell [data-ga4-add-to-cart-form] button.product-detail-wishlist[type="submit"],
+html[data-theme] body.libermedia-storefront button.product-detail-wishlist {
+    border-radius: var(--libermedia-button-radius, 8px) !important;
+}

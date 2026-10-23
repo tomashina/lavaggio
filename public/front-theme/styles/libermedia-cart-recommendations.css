@@ -1,0 +1,84 @@
+.lm-cart-recommendations {
+    --herrera-form-surface: var(--libermedia-surface, #fff);
+    --herrera-surface-pattern: none;
+    min-width: 0;
+    margin-top: clamp(2.5rem, 5vw, 4.5rem);
+}
+.lm-cart-recommendations-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+.lm-cart-recommendations-eyebrow {
+    margin: 0 0 .5rem;
+    color: var(--lm-green, #245c45);
+    font-size: .75rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+.lm-cart-recommendations-heading h2 {
+    margin: 0;
+    color: #17191f;
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    font-weight: 800;
+    line-height: 1.2;
+}
+.lm-cart-recommendations-heading a {
+    flex-shrink: 0;
+    color: var(--lm-green, #245c45);
+    font-size: .875rem;
+    font-weight: 700;
+}
+.lm-cart-recommendations-heading a:hover {
+    color: var(--lm-orange, #ff5000);
+}
+.lm-cart-recommendations-heading a:focus-visible {
+    outline: 2px solid var(--lm-orange, #ff5000);
+    outline-offset: 5px;
+}
+.lm-cart-recommendations-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 1.5rem;
+}
+body.libermedia-storefront .lm-cart-recommendations-carousel:not(.is-initialized) .splide__track {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+}
+.lm-cart-recommendations-carousel .splide__slide {
+    min-width: 0;
+    scroll-snap-align: start;
+}
+/* Commerce form surfaces also match the cards' utility classes. Keep product
+   photography on the same plain surface as the catalog instead. */
+body.libermedia-storefront.cart-commerce-body .commerce-main [data-cart-recommendations] [data-product-card-image-frame] {
+    background-color: var(--libermedia-surface, #fff);
+    background-image: none;
+}
+body.libermedia-storefront.cart-commerce-body .commerce-main [data-cart-recommendations] [data-qty-control] input {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+.cart-b2c-availability {
+    margin-top: .5rem;
+    color: var(--lm-green, #245c45);
+    font-size: .75rem;
+    font-weight: 600;
+}
+.cart-b2c-availability::before {
+    content: '●';
+    margin-right: .4rem;
+    font-size: .6rem;
+}
+@media (max-width: 639px) {
+    .lm-cart-recommendations-heading { align-items: start; flex-direction: column; gap: .75rem; }
+    .lm-cart-recommendations-actions { width: 100%; justify-content: space-between; gap: .75rem; }
+}
