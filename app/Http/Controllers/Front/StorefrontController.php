@@ -24,7 +24,7 @@ class StorefrontController extends Controller
         if (in_array(config('storefront.home'), ['libermedia', 'watchline'], true)) {
             $locales = array_unique([app()->getLocale(), (string) config('app.fallback_locale', 'hr')]);
             $featuredReviews = Comment::query()
-                ->where('is_featured', true)
+                ->when(config('storefront.home') !== 'watchline', fn (Builder $query) => $query->where('is_featured', true))
                 ->status(Comment::STATUS_APPROVED)
                 ->whereNull('parent_id')
                 ->whereBetween('rating', [1, 5])

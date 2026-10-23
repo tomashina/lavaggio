@@ -63,7 +63,7 @@ Provjereno je i arhiviranje 490 pregledanih proizvoda kupaca, 143 košarice, 37 
 
 Arhiva sadrži i tehničke zapise vlasništva nad uvozom te može čuvati više izvornih prikaza istog retka. Zato se njezin ukupan broj redaka ne koristi kao broj kupaca, narudžbi ili ostalih poslovnih objekata.
 
-Početni SEO pregled imao je 4.255 neriješenih odredišta: 4.253 neaktivna proizvoda, 1 neaktivan blog zapis i stari put `account/return/add`. Stari put za povrat sada ima preslikavanje na postojeću lokalnu formu `/forma-za-povrat-i-reklamacije`; nakon ponavljanja SEO faze ostaju samo 4.254 namjerno nedostupna zapisa. **Nijedan aktivan proizvod nema neriješeno odredište.**
+Nakon završnog SEO prijenosa 2.597 starih adresa ima aktivno odredište, a 4.254 zadržavaju izvorno neaktivno odredište. Stari obrazac povrata preusmjerava na lokalnu formu. Početni SEO pregled imao je 4.255 neriješenih odredišta: 4.253 neaktivna proizvoda, 1 neaktivan blog zapis i stari put `account/return/add`. Stari put za povrat sada ima preslikavanje na postojeću lokalnu formu `/forma-za-povrat-i-reklamacije`; nakon ponavljanja SEO faze ostaju samo 4.254 namjerno nedostupna zapisa. **Nijedan aktivan proizvod nema neriješeno odredište.**
 
 ## Provjere
 
@@ -73,3 +73,7 @@ Početni SEO pregled imao je 4.255 neriješenih odredišta: 4.253 neaktivna proi
 - Stilska provjera svih novih uvoznih servisa, naredbe i pripadajućih testova prolazi.
 - Završni kombinirani skup prije posljednje provjere starog puta za povrat: **112 testova, 692 provjere**. Preslikavanje starog puta za povrat dodatno je provjereno u `HerreraLegacyUrlTest`.
 - Završno usklađivanje brojeva rađeno je čitanjem SQL-a i aplikacijske baze otvorene u načinu samo za čitanje, bez ispisivanja osobnih podataka.
+
+## Završni lokalni prikaz
+
+Poklon bon je aktivan u navigaciji i na `/poklon-bon`; slanje stvarnih poruka ostaje isključeno. Početna zadržava Liber Media slajder recenzija i prikazuje 37 odobrenih komentara proizvoda, s ocjenama i poveznicama na artikle. Četiri neodobrena komentara ostaju skrivena. Isto vrijedi za stranicu svih iskustava kupaca. Završne provjere tog prikaza: 17 testova, 168 provjera. Lokalna početna, katalog, proizvod, blog, info stranice, prijave, poklon bon i iskustva kupaca vraćaju uspješan odgovor.

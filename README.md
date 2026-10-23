@@ -56,7 +56,7 @@ Slike se zasad učitavaju izravno s `https://www.watchline.hr/image/`, uz predno
 
 Detaljna usporedba izvora i prijenosa: [docs/watchline-migration.md](docs/watchline-migration.md). Lokalni pristup administraciji nalazi se u privatnoj `.local/admin-access.txt`.
 
-Lokalni pregled koristi `MAIL_MAILER=log` i lokalni sigurni način rada. Obavijesti, poklon bonovi i stvarna naplata nisu uključeni. Naslijeđene `libermedia:*`, `herrera:*`, integracije i deployment skripte zadržane su kao dio izvornog koda te zahtijevaju prilagodbu prije uporabe za Watchline. Uklonjen je automatski cPanel deployment za Liber Media.
+Lokalni pregled koristi `MAIL_MAILER=log` i lokalni sigurni način rada. Poklon bon dostupan je u navigaciji. Slanje obavijesti i stvarna naplata nisu uključeni. Naslijeđene `libermedia:*`, `herrera:*`, integracije i deployment skripte zadržane su kao dio izvornog koda te zahtijevaju prilagodbu prije uporabe za Watchline. Uklonjen je automatski cPanel deployment za Liber Media.
 
 ## Provjere
 

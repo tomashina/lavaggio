@@ -69,6 +69,7 @@ class WatchlineConfigurePreview extends Command
             $navigation[] = ['type' => 'page', 'label' => 'O nama', 'page_id' => $aboutId, 'is_active' => true, 'sort_order' => 4];
         }
         $navigation[] = ['type' => 'contact', 'label' => 'Kontakt', 'is_active' => true, 'sort_order' => 5];
+        $navigation[] = ['type' => 'custom', 'label' => 'Poklon bon', 'url' => route('gift-vouchers.create', absolute: false), 'icon' => 'ticket', 'align_right' => true, 'is_active' => true, 'sort_order' => 6];
 
         $links = [];
         if (filter_var($email, FILTER_VALIDATE_EMAIL)) {

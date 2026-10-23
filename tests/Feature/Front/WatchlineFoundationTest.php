@@ -5,6 +5,7 @@ namespace Tests\Feature\Front;
 use App\Models\Catalog\Action\CatalogAction;
 use App\Models\Catalog\Category\Category;
 use App\Models\Catalog\Product\Product;
+use App\Models\Content\Support\Comment;
 use App\Services\Import\WatchlineContentNormalizer;
 use App\Services\Import\WatchlineSpecialSchedule;
 use App\Services\Pricing\ProductPricePresentationService;
@@ -57,6 +58,32 @@ class WatchlineFoundationTest extends TestCase
         $this->assertSame('2026-10-26 23:59:59', $schedule[1]['ends_at']);
         $this->assertSame('2026-10-27 00:00:00', $schedule[2]['starts_at']);
         $this->assertNull($schedule[2]['ends_at']);
+    }
+
+    public function test_home_shows_approved_imported_product_reviews_without_requiring_a_featured_flag(): void
+    {
+        $this->watchline();
+        $product = $this->product();
+        $attributes = [
+            'commentable_type' => Product::class, 'commentable_id' => $product->id,
+            'locale' => 'hr', 'author_name' => 'Kupac', 'body' => 'Uvezena recenzija sata',
+            'rating' => 4, 'status' => Comment::STATUS_APPROVED, 'is_featured' => false,
+            'payload' => ['watchline_import' => ['source_table' => 'review', 'source_id' => 1]],
+        ];
+        Comment::create($attributes);
+        Comment::create(array_replace($attributes, ['body' => 'Recenzija koja čeka odobrenje', 'status' => Comment::STATUS_PENDING]));
+        Comment::create(array_replace($attributes, ['body' => 'Opći komentar trgovine', 'commentable_type' => null, 'commentable_id' => null]));
+
+        $this->get('/')->assertOk()->assertSee('data-libermedia-home-reviews-carousel', false)
+            ->assertSee('Uvezena recenzija sata')->assertSee('data-home-review-rating="4"', false)
+            ->assertSee(route('products.show', ['slug' => 'watchline-test']).'#product-comments', false)
+            ->assertSee('https://www.watchline.hr/image/catalog/watch.jpg', false)
+            ->assertDontSee('Recenzija koja čeka odobrenje')->assertDontSee('Opći komentar trgovine')
+            ->assertViewHas('featuredReviews', fn ($reviews) => $reviews->count() === 1);
+
+        $this->get(route('reviews.index'))->assertOk()->assertSee('Uvezena recenzija sata')
+            ->assertSee('data-reviews-total="1"', false)
+            ->assertDontSee('Recenzija koja čeka odobrenje')->assertDontSee('Opći komentar trgovine');
     }
 
     public function test_imported_content_uses_live_images_and_resolvable_local_links_idempotently(): void
