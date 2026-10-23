@@ -10,14 +10,30 @@
     }
 
     $siteIconStoreName = trim((string) (($branding['store_name'] ?? null) ?: config('app.name', 'AG Shop')));
-    $usesHerreraIcons = str_contains(strtolower($siteIconStoreName), 'herrera');
+    $usesWatchlineIcons = config('storefront.home') === 'watchline'
+        || str_contains(strtolower(preg_replace('/\s+/', '', $siteIconStoreName)), 'watchline');
+    $usesHerreraIcons = ! $usesWatchlineIcons && str_contains(strtolower($siteIconStoreName), 'herrera');
     $siteIcons = is_array($branding['favicons'] ?? null) ? $branding['favicons'] : [];
     $legacySiteIcon = trim((string) ($branding['favicon_url'] ?? ''));
     $siteManifestUrl = null;
-    $libermediaIcon = null;
-    if (\App\Support\StorefrontTheme::usesLibermediaBrand($siteIconStoreName)) {
+    $siteSvgIcon = null;
+    if ($usesWatchlineIcons) {
+        $versionedWatchlineIcon = static function (string $filename): string {
+            $path = 'assets/brand/'.$filename;
+
+            return asset($path).'?v='.substr(hash_file('sha256', public_path($path)), 0, 12);
+        };
+        $siteSvgIcon = $versionedWatchlineIcon('watchline-favicon.svg');
+        $siteIcons = [
+            'ico_url' => $versionedWatchlineIcon('watchline-favicon.ico'),
+            '16_url' => $versionedWatchlineIcon('watchline-favicon-16.png'),
+            '32_url' => $versionedWatchlineIcon('watchline-favicon-32.png'),
+            '180_url' => $versionedWatchlineIcon('watchline-apple-touch-icon.png'),
+        ];
+        $legacySiteIcon = '';
+    } elseif (\App\Support\StorefrontTheme::usesLibermediaBrand($siteIconStoreName)) {
         $iconPath = 'assets/brand/libermedia-favicon.svg';
-        $libermediaIcon = asset($iconPath).'?v='.filemtime(public_path($iconPath));
+        $siteSvgIcon = asset($iconPath).'?v='.filemtime(public_path($iconPath));
         $siteIcons = [];
         $legacySiteIcon = '';
     }
@@ -41,8 +57,8 @@
     }
 @endphp
 
-@if ($libermediaIcon)
-    <link rel="icon" type="image/svg+xml" href="{{ $libermediaIcon }}">
+@if ($siteSvgIcon)
+    <link rel="icon" type="image/svg+xml" href="{{ $siteSvgIcon }}">
 @endif
 @if (! empty($siteIcons['ico_url']))
     <link rel="icon" type="image/x-icon" href="{{ $siteIcons['ico_url'] }}" sizes="{{ $usesHerreraIcons ? '16x16 32x32 48x48' : 'any' }}">

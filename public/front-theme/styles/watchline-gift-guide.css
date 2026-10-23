@@ -1,0 +1,94 @@
+body.watchline-storefront .wl-gift-guide { padding-bottom: 40px; color: var(--wl-ink); }
+body.watchline-storefront .wl-gift-title { padding: 26px 20px; text-align: center; }
+body.watchline-storefront .wl-gift-title h1 { margin: 8px 0; color: var(--wl-blue-dark); font-size: clamp(28px, 3vw, 42px); font-weight: 600; line-height: 1.15; }
+body.watchline-storefront .wl-gift-title > p:last-child { max-width: 620px; margin: 0 auto; color: var(--wl-muted); font-size: 14px; line-height: 1.7; }
+body.watchline-storefront .wl-gift-eyebrow { display: flex; align-items: center; justify-content: inherit; gap: 8px; margin: 0 0 7px; color: var(--wl-blue-dark); font-size: 10px; font-weight: 700; line-height: 1.5; letter-spacing: .12em; }
+body.watchline-storefront .wl-gift-title .wl-gift-eyebrow { justify-content: center; }
+body.watchline-storefront .wl-gift-eyebrow .fa6-icon { width: 20px; height: 20px; }
+body.watchline-storefront .wl-gift-filter-panel { margin-top: 24px; padding: 22px; border: 1px solid var(--wl-line); border-radius: 8px; background: #fff; }
+body.watchline-storefront .wl-gift-filters { display: grid; gap: 20px; }
+body.watchline-storefront .wl-gift-recipients { min-width: 0; margin: 0; padding: 0; border: 0; }
+body.watchline-storefront .wl-gift-recipients legend,
+body.watchline-storefront .wl-gift-fields > label { padding: 0; color: var(--wl-ink); font-size: 12px; font-weight: 600; }
+body.watchline-storefront .wl-gift-choices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-top: 9px; }
+body.watchline-storefront .wl-gift-choices label { position: relative; min-width: 0; cursor: pointer; }
+body.watchline-storefront .wl-gift-choices input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
+body.watchline-storefront .wl-gift-choices span { display: flex; min-height: 44px; align-items: center; justify-content: center; padding: 9px; border: 1px solid var(--wl-line); border-radius: 5px; background: #fff; color: var(--wl-blue-dark); font-size: 13px; font-weight: 600; text-align: center; }
+body.watchline-storefront .wl-gift-choices input:checked + span { border-color: var(--wl-blue-dark); background: var(--wl-blue-dark); color: #fff; }
+body.watchline-storefront .wl-gift-choices input:focus-visible + span { outline: 2px solid var(--wl-blue-dark); outline-offset: 3px; }
+body.watchline-storefront .wl-gift-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+body.watchline-storefront .wl-gift-fields select,
+body.watchline-storefront .wl-gift-sort select { display: block; width: 100%; min-height: 44px; margin-top: 8px; padding: 10px 32px 10px 12px; border: 1px solid var(--wl-line); border-radius: 5px; background-color: #fff; color: var(--wl-ink); font-family: inherit; font-size: 13px; font-weight: 400; }
+body.watchline-storefront .wl-gift-filter-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
+body.watchline-storefront .wl-gift-filter-actions button,
+body.watchline-storefront .wl-gift-voucher > a { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 10px; padding: 11px 18px; border: 1px solid var(--wl-blue-dark); border-radius: 5px; background: var(--wl-blue-dark); color: #fff; font-size: 13px; font-weight: 600; text-decoration: none; }
+body.watchline-storefront .wl-gift-filter-actions button { height: 44px; width: max-content; white-space: nowrap; }
+body.watchline-storefront .wl-gift-filter-actions button .fa6-icon,
+body.watchline-storefront .wl-gift-voucher > a .fa6-icon,
+body.watchline-storefront .wl-gift-sort button .fa6-icon { flex: 0 0 16px; width: 16px; height: 16px; }
+body.watchline-storefront .wl-gift-filter-actions button:hover,
+body.watchline-storefront .wl-gift-voucher > a:hover { background: #00669c; }
+body.watchline-storefront .wl-gift-filter-actions > a,
+body.watchline-storefront .wl-gift-empty > a { color: var(--wl-blue-dark); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+body.watchline-storefront .wl-gift-results { margin-top: 32px; scroll-margin-top: 24px; }
+body.watchline-storefront .wl-gift-results-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 16px; }
+body.watchline-storefront .wl-gift-results-heading h2,
+body.watchline-storefront .wl-gift-voucher h2 { margin: 0; font-size: clamp(21px, 2vw, 28px); font-weight: 600; line-height: 1.25; }
+body.watchline-storefront .wl-gift-results-heading > p { margin: 0; color: var(--wl-muted); font-size: 12px; white-space: nowrap; }
+body.watchline-storefront .wl-gift-taxonomy-note { margin: 0 0 16px; color: var(--wl-muted); font-size: 12px; line-height: 1.65; }
+body.watchline-storefront .wl-gift-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
+body.watchline-storefront .wl-gift-switches { display: flex; flex-wrap: wrap; gap: 10px; }
+body.watchline-storefront .wl-gift-switches label { display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 10px 12px; border: 1px solid var(--wl-line); border-radius: 5px; color: var(--wl-blue-dark); font-size: 12px; cursor: pointer; }
+body.watchline-storefront .wl-gift-switches input { border-color: var(--wl-line); border-radius: 3px; color: var(--wl-blue-dark); accent-color: var(--wl-blue-dark); }
+body.watchline-storefront .wl-gift-sort { display: flex; align-items: center; gap: 10px; }
+body.watchline-storefront .wl-gift-sort select { width: min(270px, 100%); margin-top: 0; }
+body.watchline-storefront .wl-gift-columns { display: flex; gap: 5px; }
+body.watchline-storefront .wl-gift-columns a { display: flex; align-items: center; justify-content: center; width: 40px; height: 44px; border: 1px solid var(--wl-line); border-radius: 4px; color: var(--wl-blue-dark); }
+body.watchline-storefront .wl-gift-columns a.is-active { border-color: var(--wl-blue-dark); background: var(--wl-paper); }
+body.watchline-storefront .wl-gift-columns .fa6-icon { width: 16px; height: 16px; }
+body.watchline-storefront .wl-gift-product-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+body.watchline-storefront .wl-gift-product-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body.watchline-storefront .wl-gift-product-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+body.watchline-storefront .wl-gift-pagination { margin-top: 22px; }
+body.watchline-storefront .wl-gift-empty { padding: 32px 20px; border: 1px solid var(--wl-line); border-radius: 8px; text-align: center; }
+body.watchline-storefront .wl-gift-empty > .fa6-icon { width: 32px; height: 32px; color: var(--wl-blue-dark); }
+body.watchline-storefront .wl-gift-empty h3 { margin: 14px 0 8px; font-size: 21px; font-weight: 600; }
+body.watchline-storefront .wl-gift-empty > p { max-width: 540px; margin: 0 auto 16px; color: var(--wl-muted); font-size: 13px; line-height: 1.7; }
+body.watchline-storefront .wl-gift-voucher { display: flex; align-items: center; gap: 24px; margin-top: 30px; padding: 26px; border: 1px solid var(--wl-line); border-radius: 8px; background-color: var(--wl-paper); background-image: var(--libermedia-pattern); background-position: center top; background-size: var(--wl-pattern-size); background-repeat: no-repeat; background-attachment: fixed; }
+body.watchline-storefront .wl-gift-voucher > .fa6-icon { flex: 0 0 45px; width: 45px; height: 45px; color: var(--wl-blue-dark); }
+body.watchline-storefront .wl-gift-voucher > div { flex: 1; }
+body.watchline-storefront .wl-gift-voucher > div > p:last-child { margin: 9px 0 0; color: var(--wl-muted); font-size: 13px; line-height: 1.7; }
+body.watchline-storefront .wl-gift-voucher > a { flex-shrink: 0; }
+body.watchline-storefront .wl-gift-guide :is(a, button, select, input):focus-visible { outline: 2px solid var(--wl-blue-dark); outline-offset: 3px; }
+@media (min-width: 1101px) {
+    body.watchline-storefront .wl-gift-filters { grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 16px 24px; }
+    body.watchline-storefront .wl-gift-recipients { grid-column: 1 / -1; }
+    body.watchline-storefront .wl-gift-filter-actions { flex-wrap: nowrap; gap: 14px; min-height: 44px; }
+    body.watchline-storefront .wl-gift-filter-actions > a { white-space: nowrap; }
+}
+@media (max-width: 1100px) {
+    body.watchline-storefront .wl-gift-product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    body.watchline-storefront .wl-gift-voucher { gap: 18px; }
+    body.watchline-storefront .wl-gift-voucher > .fa6-icon { flex-basis: 32px; width: 32px; height: 32px; }
+}
+@media (max-width: 767px) {
+    body.watchline-storefront .wl-gift-title { padding: 22px 14px; }
+    body.watchline-storefront .wl-gift-title > p:last-child { font-size: 13px; }
+    body.watchline-storefront .wl-gift-filter-panel { margin-top: 18px; padding: 16px; }
+    body.watchline-storefront .wl-gift-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    body.watchline-storefront .wl-gift-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; }
+    body.watchline-storefront .wl-gift-fields > label:last-child { grid-column: 1 / -1; }
+    body.watchline-storefront .wl-gift-filter-actions button { flex: 1; }
+    body.watchline-storefront .wl-gift-results { margin-top: 26px; }
+    body.watchline-storefront .wl-gift-results-heading { align-items: flex-start; }
+    body.watchline-storefront .wl-gift-results-heading > p { padding-top: 24px; }
+    body.watchline-storefront .wl-gift-switches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+    body.watchline-storefront .wl-gift-switches label { padding: 9px; font-size: 11px; }
+    body.watchline-storefront .wl-gift-sort { width: 100%; }
+    body.watchline-storefront .wl-gift-sort select { flex: 1; width: auto; min-width: 0; }
+    body.watchline-storefront .wl-gift-columns { display: none; }
+    body.watchline-storefront .wl-gift-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    body.watchline-storefront .wl-gift-voucher { flex-wrap: wrap; gap: 16px; padding: 20px 16px; }
+    body.watchline-storefront .wl-gift-voucher > div { flex-basis: calc(100% - 52px); }
+    body.watchline-storefront .wl-gift-voucher > a { width: 100%; }
+}

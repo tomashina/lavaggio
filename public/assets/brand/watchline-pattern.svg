@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="none">
+  <title>Watchline large double checkmark background</title>
+  <!-- Original logo checkmarks, with the second rising arm extended beyond the canvas; no wordmark or arcs. -->
+  <defs>
+    <g id="watchline-check">
+      <polyline points="27.086,25.41 48.323,48.696 81.762,6.874 48.137,59.502 27.086,25.41" />
+      <polyline points="51.304,23.919 73.473,48.51 86.419,34.445 117.497299,-12 120.851299,-12 89.773,34.445 73.193,59.223 51.304,23.919" />
+    </g>
+  </defs>
+  <g fill="#0093DD" opacity="0.065">
+    <use xlink:href="#watchline-check" transform="translate(490 -120) scale(17.5) translate(-27.086 -6.874)" />
+  </g>
+</svg>

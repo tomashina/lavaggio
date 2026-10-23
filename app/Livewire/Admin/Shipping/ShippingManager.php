@@ -6,6 +6,7 @@ use App\Models\Settings\Local\GeoZone;
 use App\Models\Settings\Local\ShippingMethod;
 use App\Services\Settings\SystemSettingsService;
 use App\Services\Shipping\CroatianIslandDestinationClassifier;
+use App\Support\BoxNowShipping;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -438,6 +439,9 @@ class ShippingManager extends Component
     private function boxNowFormIsReady(array $form): bool
     {
         $ready = true;
+        $existingMethod = $this->editingId ? ShippingMethod::find($this->editingId) : null;
+        $legacyMeasurements = $existingMethod && BoxNowShipping::preservesLegacyAvailability($existingMethod)
+            && ($form['missing_measurements_policy'] ?? '') === 'allow';
 
         if (trim((string) ($form['boxnow_partner_id'] ?? '')) === '') {
             $this->addError('form.boxnow_partner_id', __('BOX NOW partner ID obavezan je za aktivnu BOX NOW dostavu.'));
@@ -455,13 +459,13 @@ class ShippingManager extends Component
         }
 
         foreach (['max_weight_kg', 'max_length_cm', 'max_width_cm', 'max_height_cm'] as $field) {
-            if (! is_numeric($form[$field] ?? null) || (float) $form[$field] <= 0) {
+            if (! $legacyMeasurements && (! is_numeric($form[$field] ?? null) || (float) $form[$field] <= 0)) {
                 $this->addError('form.'.$field, __('BOX NOW limit mora biti veći od nule.'));
                 $ready = false;
             }
         }
 
-        if (($form['missing_measurements_policy'] ?? null) !== 'block') {
+        if (! $legacyMeasurements && ($form['missing_measurements_policy'] ?? null) !== 'block') {
             $this->addError('form.missing_measurements_policy', __('Za BOX NOW artikli bez mjera moraju biti skriveni.'));
             $ready = false;
         }
@@ -478,19 +482,7 @@ class ShippingManager extends Component
 
     private function boxNowMethodIsReady(ShippingMethod $method): bool
     {
-        $settings = is_array($method->settings) ? $method->settings : [];
-
-        return trim((string) ($settings['boxnow_partner_id'] ?? '')) !== ''
-            && (string) $method->service_type === 'parcel_locker'
-            && (string) $method->pricing_type === 'flat'
-            && (string) $method->missing_measurements_policy === 'block'
-            && (float) $method->max_weight_kg > 0
-            && (float) $method->max_length_cm > 0
-            && (float) $method->max_width_cm > 0
-            && (float) $method->max_height_cm > 0
-            && ! (bool) $method->allows_fragile
-            && ! (bool) $method->allows_oversized
-            && ! (bool) $method->allows_heavy;
+        return BoxNowShipping::isReady($method);
     }
 
     /** @param array<string, mixed> $form */

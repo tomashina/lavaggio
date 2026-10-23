@@ -1,6 +1,16 @@
 <?php
 
 return [
+    'watchline_newsletter_coupon' => [
+        'subject' => 'Watchline: :percent% off your first purchase',
+        'title' => 'Your Watchline code',
+        'eyebrow' => 'WATCHLINE NEWSLETTER',
+        'heading' => 'Thank you for subscribing!',
+        'intro' => 'Use your personal code for an additional :percent% off your first purchase, including sale items.',
+        'note' => 'Enter the code in your cart. It can be used once, has no expiry date and requires your subscription email address. Gift voucher purchases are excluded.',
+        'cta' => 'Explore the collection',
+        'footer' => 'You received this email after subscribing to the Watchline newsletter.',
+    ],
     'newsletter_coupon' => [
         'subject' => 'Your 10% discount: :code',
         'title' => 'Newsletter coupon',

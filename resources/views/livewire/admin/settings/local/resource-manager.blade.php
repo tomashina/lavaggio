@@ -445,6 +445,7 @@
                                     <option value="token">token</option>
                                     <option value="basic">basic</option>
                                     <option value="url_token">url_token</option>
+                                    <option value="legacy_query_credentials">Korisnik i lozinka — stari Watchline</option>
                                 </select>
                                 @error('form.keks_advice_auth_mode') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                             </div>
@@ -460,7 +461,7 @@
                             </div>
                             <div>
                                 <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Advice password</label>
-                                <input type="text" wire:model="form.keks_advice_password" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none ring-cyan-200 focus:ring" />
+                                <input type="password" wire:model="form.keks_advice_password" autocomplete="new-password" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none ring-cyan-200 focus:ring" />
                                 @error('form.keks_advice_password') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                             </div>
                             <div class="md:col-span-2">

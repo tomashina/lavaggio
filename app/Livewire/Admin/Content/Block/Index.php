@@ -3,8 +3,10 @@
 namespace App\Livewire\Admin\Content\Block;
 
 use App\Models\Content\ContentBlock;
+use App\Models\Content\ContentBlockSlot;
 use App\Services\Content\ContentBlockResolver;
 use App\Services\Settings\SystemSettingsService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -16,8 +18,11 @@ class Index extends Component
     private const PAGE_NAME = 'contentBlocksPage';
 
     public string $search = '';
+
     public string $surface = 'all';
+
     public ?int $previewBlockId = null;
+
     public string $locale;
 
     public function mount(): void
@@ -51,6 +56,7 @@ class Index extends Component
     {
         $block = ContentBlock::query()->findOrFail($id);
         $code = (string) $block->code;
+        $fixedWidget = str_starts_with((string) $block->type, 'watchline_');
 
         activity('content_blocks')
             ->performedOn($block)
@@ -60,10 +66,55 @@ class Index extends Component
             ->log('Content block deleted');
 
         $block->delete();
-        $this->deleteTemplateFile($code);
+        if (! $fixedWidget) {
+            $this->deleteTemplateFile($code);
+        }
         ContentBlockResolver::bumpCacheVersion();
 
         $this->dispatch('notify', type: 'success', message: __('Content block deleted.'));
+    }
+
+    public function moveHomeWidget(int $slotId, string $direction): void
+    {
+        if (! in_array($direction, ['up', 'down'], true)) {
+            return;
+        }
+        DB::transaction(function () use ($slotId, $direction): void {
+            $slots = $this->homeWidgetQuery()->lockForUpdate()->get();
+            $position = $slots->search(fn ($slot) => (int) $slot->id === $slotId);
+            abort_if($position === false, 404);
+            $next = $position + ($direction === 'up' ? -1 : 1);
+            if ($next < 0 || $next >= $slots->count()) {
+                return;
+            }
+            $order = $slots->all();
+            [$order[$position], $order[$next]] = [$order[$next], $order[$position]];
+            foreach ($order as $index => $slot) {
+                $slot->update(['sort_order' => ($index + 1) * 10]);
+            }
+        });
+        ContentBlockResolver::bumpCacheVersion();
+    }
+
+    public function toggleHomeWidget(int $slotId): void
+    {
+        $slot = ContentBlockSlot::query()->with('block')
+            ->whereIn('placement', ['home.content', 'footer.benefits'])
+            ->whereHas('block', fn ($query) => $query->where('type', 'like', 'watchline_%'))
+            ->findOrFail($slotId);
+        $active = ! ($slot->is_active && $slot->block->is_active);
+        DB::transaction(function () use ($slot, $active): void {
+            $slot->block->update(['is_active' => $active]);
+            $slot->update(['is_active' => $active]);
+        });
+        ContentBlockResolver::bumpCacheVersion();
+    }
+
+    private function homeWidgetQuery()
+    {
+        return ContentBlockSlot::query()->where('placement', 'home.content')
+            ->whereHas('block', fn ($query) => $query->where('type', 'like', 'watchline_%'))
+            ->orderBy('sort_order')->orderBy('id');
     }
 
     public function render()
@@ -122,6 +173,10 @@ class Index extends Component
             'rows' => $rows,
             'perPage' => $perPage,
             'previewBlock' => $previewBlock,
+            'homeWidgetSlots' => $this->homeWidgetQuery()->with('block.translations')->get(),
+            'footerWidgetSlots' => ContentBlockSlot::query()->where('placement', 'footer.benefits')
+                ->whereHas('block', fn ($query) => $query->where('type', 'like', 'watchline_%'))
+                ->with('block.translations')->orderBy('sort_order')->get(),
         ]);
     }
 

@@ -1,36 +1,63 @@
-@php($watchlineHome = app(\App\Support\WatchlineHomeContent::class))
-<section class="lm-campaign-section" aria-labelledby="lm-campaigns-title" data-libermedia-campaigns>
-    <header class="lm-section-heading"><div><p class="lm-eyebrow">WATCHLINE. VAŠ TRENUTAK.</p><h2 id="lm-campaigns-title">Pronađite svoj novi omiljeni detalj</h2></div></header>
+@php
+    $watchlineCampaign = \App\Support\WatchlineWidgetSettings::forBlock(
+        ($block ?? null) instanceof \App\Models\Content\ContentBlock ? $block : new \App\Models\Content\ContentBlock(['type' => 'watchline_campaigns']),
+        ($translation ?? null) instanceof \App\Models\Content\ContentBlockTranslation ? $translation : null,
+    );
+    $watchlineCampaignTitleTag = config('storefront.home') === 'watchline' && request()->routeIs('home')
+        && !request()->attributes->get('watchline.campaign_heading_rendered', false) ? 'h1' : 'h2';
+    if ($watchlineCampaignTitleTag === 'h1') {
+        request()->attributes->set('watchline.campaign_heading_rendered', true);
+    }
+@endphp
+<section class="lm-campaign-section" aria-label="{{ $watchlineCampaign['aria_label'] }}" data-libermedia-campaigns>
     <div class="lm-campaign-grid">
-        <article class="lm-campaign lm-campaign--bags">
+        <article class="lm-campaign lm-campaign--bags wl-cluse-campaign" data-watchline-cluse-campaign>
             <div class="lm-campaign-copy">
-                <p class="lm-eyebrow">ZA SVAKI DAN</p>
-                <h3>Vrijeme za stil.<br>Vrijeme za vas.</h3>
-                <p>Pronađite sat koji odgovara vašem stilu.</p>
-                <a class="lm-button" href="{{ $watchlineHome->productUrl(0) }}">Istražite ponudu <x-fa-icon name="arrow-right" /></a>
+                <{{ $watchlineCampaignTitleTag }} class="wl-campaign-title">{{ preg_replace('/\s+/u', ' ', trim((string) $watchlineCampaign['cluse_title'])) }}</{{ $watchlineCampaignTitleTag }}>
+                <a class="wl-cluse-offer" href="{{ $watchlineCampaign['cluse_url'] }}">{{ $watchlineCampaign['cluse_offer_prefix'] }} <strong>{{ $watchlineCampaign['cluse_offer_highlight'] }}</strong> {{ $watchlineCampaign['cluse_offer_suffix'] }}</a>
+                <ul class="wl-cluse-perks">
+                    <li><x-fa-icon :name="$watchlineCampaign['perk_icon']" /><span>{{ $watchlineCampaign['cluse_newsletter_prefix'] }} <strong>{{ $watchlineCampaign['cluse_newsletter_highlight'] }}</strong> {{ $watchlineCampaign['cluse_newsletter_suffix'] }} <a href="{{ $watchlineCampaign['cluse_newsletter_url'] }}">{{ $watchlineCampaign['cluse_newsletter_label'] }}</a></span></li>
+                    <li><x-fa-icon :name="$watchlineCampaign['perk_icon']" /><span>{{ $watchlineCampaign['cluse_shipping_prefix'] }} <strong>{{ $watchlineCampaign['cluse_shipping_highlight'] }}</strong></span></li>
+                </ul>
+                @if ($watchlineCampaign['cluse_cta_label'] !== '' && $watchlineCampaign['cluse_url'] !== '')
+                    <a class="lm-button" href="{{ $watchlineCampaign['cluse_url'] }}">{{ $watchlineCampaign['cluse_cta_label'] }} <x-fa-icon :name="$watchlineCampaign['arrow_icon']" /></a>
+                @endif
             </div>
-            <div class="lm-campaign-bag-images" aria-hidden="true">
-                <img class="lm-bag lm-bag--back" src="{{ $watchlineHome->image(0) }}" alt="" width="1000" height="1000" loading="lazy">
-                <img class="lm-bag lm-bag--front" src="{{ $watchlineHome->image(1) }}" alt="" width="1000" height="1000" loading="lazy">
-            </div>
+            <a class="lm-campaign-bag-images" href="{{ $watchlineCampaign['cluse_url'] }}" aria-label="{{ $watchlineCampaign['cluse_image_link_label'] }}">
+                @foreach ([1, 2] as $watchlineCampaignImage)
+                    @if ($watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_url'] !== '')
+                        <span class="wl-cluse-watch">
+                            <img src="{{ $watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_url'] }}" alt="{{ $watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_alt'] }}" width="1080" height="1080" loading="eager" fetchpriority="{{ $watchlineCampaignImage === 1 ? 'high' : 'auto' }}" data-watchline-cluse-image="{{ $watchlineCampaignImage }}">
+                        </span>
+                    @endif
+                @endforeach
+            </a>
         </article>
-        <article class="lm-campaign lm-campaign--meli">
+        <article class="lm-campaign lm-campaign--meli wl-mens-campaign">
             <div class="lm-campaign-copy">
-                <p class="lm-eyebrow">ODABRANA PONUDA</p>
-                <h3>Mali detalji.<br>Veliki dojam.</h3>
-                <p>Istražite modele iz Watchline ponude.</p>
-                <a class="lm-button" href="{{ $watchlineHome->productUrl(2) }}">Pogledajte modele <x-fa-icon name="arrow-right" /></a>
+                <p class="lm-eyebrow">{{ $watchlineCampaign['mens_eyebrow'] }}</p>
+                <h2 class="wl-campaign-title">{!! nl2br(e((string) $watchlineCampaign['mens_title'])) !!}</h2>
+                <p>{!! nl2br(e((string) $watchlineCampaign['mens_description'])) !!}</p>
+                @if ($watchlineCampaign['mens_cta_label'] !== '' && $watchlineCampaign['mens_url'] !== '')
+                    <a class="lm-button" href="{{ $watchlineCampaign['mens_url'] }}">{{ $watchlineCampaign['mens_cta_label'] }} <x-fa-icon :name="$watchlineCampaign['arrow_icon']" /></a>
+                @endif
             </div>
-            <img class="lm-campaign-product lm-meli-product" src="{{ $watchlineHome->image(2) }}" alt="Model iz Watchline ponude" width="1000" height="1000" loading="lazy">
+            @if ($watchlineCampaign['mens_image_url'] !== '')
+                <a class="wl-campaign-visual" href="{{ $watchlineCampaign['mens_url'] }}" aria-label="{{ $watchlineCampaign['mens_image_link_label'] }}"><img class="lm-campaign-product lm-meli-product" src="{{ $watchlineCampaign['mens_image_url'] }}" alt="{{ $watchlineCampaign['mens_image_alt'] }}" width="698" height="931" loading="eager"></a>
+            @endif
         </article>
-        <article class="lm-campaign lm-campaign--montessori">
+        <article class="lm-campaign lm-campaign--montessori wl-sunglasses-campaign">
             <div class="lm-campaign-copy">
-                <p class="lm-eyebrow">ZA VAŠ TRENUTAK</p>
-                <h3>Odaberite detalj<br>koji vas prati.</h3>
-                <p>Ponuda za svakodnevne i posebne trenutke.</p>
-                <a class="lm-button lm-button--green" href="{{ $watchlineHome->productUrl(3) }}">Pronađite svoj model <x-fa-icon name="arrow-right" /></a>
+                <p class="lm-eyebrow">{{ $watchlineCampaign['sunglasses_eyebrow'] }}</p>
+                <h2 class="wl-campaign-title">{!! nl2br(e((string) $watchlineCampaign['sunglasses_title'])) !!}</h2>
+                <p>{!! nl2br(e((string) $watchlineCampaign['sunglasses_description'])) !!}</p>
+                @if ($watchlineCampaign['sunglasses_cta_label'] !== '' && $watchlineCampaign['sunglasses_url'] !== '')
+                    <a class="lm-button" href="{{ $watchlineCampaign['sunglasses_url'] }}">{{ $watchlineCampaign['sunglasses_cta_label'] }} <x-fa-icon :name="$watchlineCampaign['arrow_icon']" /></a>
+                @endif
             </div>
-            <img class="lm-campaign-product lm-montessori-product" src="{{ $watchlineHome->image(3) }}" alt="Model iz Watchline ponude" width="1024" height="768" loading="lazy">
+            @if ($watchlineCampaign['sunglasses_image_url'] !== '')
+                <a class="wl-campaign-visual" href="{{ $watchlineCampaign['sunglasses_url'] }}" aria-label="{{ $watchlineCampaign['sunglasses_image_link_label'] }}"><img class="lm-campaign-product lm-montessori-product" src="{{ $watchlineCampaign['sunglasses_image_url'] }}" alt="{{ $watchlineCampaign['sunglasses_image_alt'] }}" width="900" height="506" loading="eager"></a>
+            @endif
         </article>
     </div>
 </section>

@@ -19,6 +19,8 @@ use App\Services\Integrations\Eprel\EprelSettingsService;
 use App\Services\Integrations\Msan\EprelClient;
 use App\Services\Integrations\Msan\EprelException;
 use App\Services\Integrations\Msan\EprelProductLookupService;
+use App\Support\ProductNewLabel;
+use App\Support\ProductPopularityLabel;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -70,6 +72,8 @@ class Form extends Component
         'minimum_order_quantity' => 1,
         'order_quantity_step' => 1,
         'is_active' => true,
+        'is_new' => false,
+        'is_popular' => false,
         'manufacturer_id' => null,
         'tax_rate_id' => null,
         'base_price' => 0,
@@ -247,6 +251,18 @@ class Form extends Component
         $payload = $this->decodeJsonField('form.payload_text');
         if ($payload === false) {
             return null;
+        }
+
+        $existingPayload = $this->productId ? Product::query()->findOrFail($this->productId)->payload : null;
+        if (is_array($existingPayload)) {
+            $payload = array_replace_recursive($existingPayload, $payload ?? []);
+        }
+        foreach (['is_new', 'is_popular'] as $flag) {
+            $enabled = (bool) ($validated['form'][$flag] ?? false);
+            if ($enabled || data_get($payload, 'storefront.'.$flag) !== null) {
+                $payload ??= [];
+                data_set($payload, 'storefront.'.$flag, $enabled);
+            }
         }
 
         $translationPayload = $this->decodeJsonField('form.translation_payload_text');
@@ -860,6 +876,8 @@ class Form extends Component
             'form.minimum_order_quantity' => ['required', 'integer', 'min:1', 'max:999999'],
             'form.order_quantity_step' => ['required', 'integer', 'min:1', 'max:999999'],
             'form.is_active' => ['boolean'],
+            'form.is_new' => ['boolean'],
+            'form.is_popular' => ['boolean'],
             'form.tax_rate_id' => ['nullable', 'integer', Rule::exists('tax_rates', 'id')],
             'form.base_price' => ['required', 'numeric', 'min:0'],
             'form.stock_qty' => ['required', 'integer', 'min:0'],
@@ -996,6 +1014,8 @@ class Form extends Component
         $this->form['minimum_order_quantity'] = max(1, (int) $product->minimum_order_quantity);
         $this->form['order_quantity_step'] = max(1, (int) $product->order_quantity_step);
         $this->form['is_active'] = (bool) $product->is_active;
+        $this->form['is_new'] = ProductNewLabel::isNew($product);
+        $this->form['is_popular'] = ProductPopularityLabel::isPopular($product);
         $this->form['tax_rate_id'] = $product->tax_rate_id ? (int) $product->tax_rate_id : $this->defaultTaxRateId();
         $this->form['base_price'] = (float) $product->base_price;
         $this->form['stock_qty'] = (int) $product->stock_qty;

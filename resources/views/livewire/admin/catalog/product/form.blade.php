@@ -127,6 +127,22 @@
                     <span class="admin-switch-label">{{ $form['is_active'] ? __('admin.common.active') : __('admin.common.inactive') }}</span>
                 </button>
             </div>
+            <div class="mt-4">
+                <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    <input type="checkbox" wire:model="form.is_new" class="rounded border-slate-300 text-cyan-700">
+                    {{ __('Novo u ponudi') }}
+                </label>
+                <p class="mt-1 text-xs text-slate-500">{{ __('Uključi proizvod u widgete koji koriste oznaku Novo.') }}</p>
+                @error('form.is_new') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+            </div>
+            <div class="mt-4">
+                <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                    <input type="checkbox" wire:model="form.is_popular" class="rounded border-slate-300 text-cyan-700">
+                    {{ __('Popularno') }}
+                </label>
+                <p class="mt-1 text-xs text-slate-500">{{ __('Uključi proizvod u widgete koji koriste oznaku Popularno.') }}</p>
+                @error('form.is_popular') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+            </div>
         </div>
         @endif
 

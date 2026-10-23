@@ -10,6 +10,7 @@
         $isB2BPrice = false;
     }
     $hasOptionErrorForCard = (int) old('product_id', 0) === $productId && $errors->has('product_option_value_id');
+    $deferHoverImage = config('storefront.home') === 'watchline';
 @endphp
 
 <article class="group w-full min-w-0 overflow-hidden {{ $lined ? 'product-card-lined flex h-full flex-col bg-white p-0' : ($flat ? 'bg-white p-0' : 'rounded-2xl bg-white p-5 shadow-sm') }}" data-product-card data-product-id="{{ $productId }}" @if ($lined) data-product-card-lined @endif>
@@ -29,7 +30,7 @@
                         @if (!empty($imageSrcset)) srcset="{{ $imageSrcset }}" @endif
                         sizes="{{ $imageSizes }}"
                         alt="{{ $productName }}"
-                        class="block h-full w-full object-contain object-center {{ $hoverImageUrl ? 'transition-opacity duration-300 group-hover:opacity-0' : '' }}"
+                        class="block h-full w-full object-contain object-center {{ $hoverImageUrl && !$deferHoverImage ? 'transition-opacity duration-300 group-hover:opacity-0' : '' }}"
                         width="{{ (int) $imageWidth }}"
                         height="{{ (int) $imageHeight }}"
                         loading="{{ $priorityImage ? 'eager' : 'lazy' }}"
@@ -40,11 +41,16 @@
                     @if ($hoverImageUrl)
                         <img
                             data-product-card-hover-image
-                            src="{{ $hoverImageUrl }}"
-                            @if (!empty($hoverImageSrcset)) srcset="{{ $hoverImageSrcset }}" @endif
+                            @if ($deferHoverImage)
+                                data-hover-src="{{ $hoverImageUrl }}"
+                                @if (!empty($hoverImageSrcset)) data-hover-srcset="{{ $hoverImageSrcset }}" @endif
+                            @else
+                                src="{{ $hoverImageUrl }}"
+                                @if (!empty($hoverImageSrcset)) srcset="{{ $hoverImageSrcset }}" @endif
+                            @endif
                             sizes="{{ $imageSizes }}"
                             alt="{{ $productName }}"
-                            class="absolute inset-0 h-full w-full object-contain object-center opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                            class="absolute inset-0 h-full w-full object-contain object-center opacity-0 transition-opacity duration-300 {{ $deferHoverImage ? '' : 'group-hover:opacity-100' }}"
                             width="{{ (int) $hoverImageWidth }}"
                             height="{{ (int) $hoverImageHeight }}"
                             loading="lazy"

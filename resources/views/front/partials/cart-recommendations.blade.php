@@ -35,7 +35,7 @@
         <div class="splide herrera-product-carousel herrera-home-product-carousel lm-cart-recommendations-carousel" data-cart-recommendations-carousel data-herrera-home-carousel data-continuous-card-carousel data-product-count="{{ $recommendationCount }}" data-splide='@json($recommendationCarouselOptions)' aria-labelledby="cart-recommendations-heading">
             <div class="lm-cart-recommendations-heading">
                 <div>
-                    <p class="lm-cart-recommendations-eyebrow">Za još više igre</p>
+                    <p class="lm-cart-recommendations-eyebrow">{{ config('storefront.home') === 'watchline' ? 'Odabrano za vas' : 'Za još više igre' }}</p>
                     <h2 id="cart-recommendations-heading">{{ $cartRecommendations['source'] === 'co_purchase' ? 'Kupci su uz ove artikle kupili i' : 'Možda će vam se svidjeti' }}</h2>
                 </div>
                 <div class="lm-cart-recommendations-actions">

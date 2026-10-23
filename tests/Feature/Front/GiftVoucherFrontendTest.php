@@ -10,8 +10,10 @@ use App\Models\Settings\Local\OrderStatus;
 use App\Models\Settings\Local\PaymentMethod;
 use App\Models\Settings\Local\ShippingMethod;
 use App\Services\Front\CartService;
+use App\Services\Front\CheckoutService;
 use App\Services\GiftVoucherService;
 use App\Services\Payments\WSPayFormService;
+use App\Services\Settings\SystemSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -26,7 +28,7 @@ class GiftVoucherFrontendTest extends TestCase
     {
         parent::setUp();
         app()->setLocale('hr');
-        config(['commerce.b2b_only' => false, 'commerce.b2c_only' => true, 'commerce.local_safe_mode' => true, 'gift_vouchers.enabled' => true, 'gift_vouchers.emails_enabled' => false]);
+        config(['storefront.home' => 'libermedia', 'commerce.b2b_only' => false, 'commerce.b2c_only' => true, 'commerce.local_safe_mode' => true, 'gift_vouchers.enabled' => true, 'gift_vouchers.emails_enabled' => false]);
         Mail::fake();
         Http::preventStrayRequests();
         Currency::create(['code' => 'EUR', 'name' => 'Euro', 'exchange_rate' => 1, 'decimal_places' => 2, 'is_default' => true, 'is_active' => true]);
@@ -45,6 +47,81 @@ class GiftVoucherFrontendTest extends TestCase
             ->assertSee('data-gift-preview-recipient', false)->assertSee('Kupi poklon bon');
         $this->assertDatabaseCount('orders', 0);
         Mail::assertNothingSent();
+    }
+
+    public function test_watchline_uses_its_own_preview_logo_copy_and_fifty_euro_default_without_losing_explicit_amounts(): void
+    {
+        $this->watchlineCard();
+        config(['gift_vouchers.default_amount' => 30, 'app.name' => 'WATCH LINE AM - Web Shop']);
+        app(SystemSettingsService::class)->put('store_brand_name', 'WATCH LINE AM - Web Shop');
+        $response = $this->get(route('gift-vouchers.create'))->assertOk()
+            ->assertSee('Darujte izbor. Poklonite Watchline.')
+            ->assertSee('Poklon bon Watchline za satove, naočale i nakit.')
+            ->assertSee('data-gift-default-message="Poklonite detalj koji će se pamtiti."', false)
+            ->assertDontSee('Darujte igru. Prepustite im izbor.')
+            ->assertDontSee('Poklon bon Liber Media otvara svijet igre');
+        $document = new \DOMDocument;
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
+        $xpath = new \DOMXPath($document);
+        $logo = $xpath->query('//*[contains(@class, "gift-voucher-preview-top")]/img')->item(0);
+        $this->assertStringContainsString('/assets/brand/watchline-logo-on-dark.svg', $logo->getAttribute('src'));
+        $this->assertSame('Watchline', $logo->getAttribute('alt'));
+        $this->assertSame('50', $xpath->query('//*[@id="gift-amount"]/option[@selected]')->item(0)->getAttribute('value'));
+        $this->assertSame('50', trim($xpath->query('//*[@data-gift-preview-amount]')->item(0)->textContent));
+        $this->assertSame('true', $xpath->query('//*[@data-gift-amount-preset="50"]')->item(0)->getAttribute('aria-pressed'));
+        $this->getJson(route('gift-vouchers.create', ['amount' => 120]))->assertOk()->assertJsonPath('amount', 120);
+        $this->withSession(['_old_input' => ['amount' => 80]])->get(route('gift-vouchers.create'))
+            ->assertOk()->assertViewHas('selectedAmount', 80);
+        $this->get(route('gift-vouchers.create', ['amount' => 100]))->assertOk()->assertViewHas('selectedAmount', 100);
+        $this->assertDatabaseCount('orders', 0);
+    }
+
+    public function test_watchline_only_offers_ready_card_payments_and_rejects_other_methods_server_side(): void
+    {
+        $this->watchlineCard();
+        PaymentMethod::create(['code' => 'cod', 'name' => 'Pouzećem', 'provider' => 'cod', 'is_active' => true]);
+        PaymentMethod::create(['code' => 'pickup', 'name' => 'Pri preuzimanju', 'provider' => 'pickup', 'is_active' => true]);
+        PaymentMethod::create(['code' => 'keks', 'name' => 'KEKS Pay', 'provider' => 'keks', 'is_active' => true,
+            'settings' => ['keks_cid' => 'fake-cid', 'keks_tid' => 'fake-tid', 'keks_des_key' => '123456789012345678901234']]);
+        PaymentMethod::create(['code' => 'ws_pay', 'name' => 'Nespremna kartica', 'provider' => 'wspay', 'is_active' => true]);
+        $response = $this->getJson(route('gift-vouchers.create'))->assertOk()->assertJsonPath('amount', 50);
+        $this->assertSame(['wspay'], array_column($response->json('payment_methods'), 'code'));
+        $this->get(route('gift-vouchers.create'))->assertOk()->assertSee('Poklon bon moguće je platiti isključivo karticom.')
+            ->assertDontSee('name="payment_method_code" value="bank"', false)
+            ->assertDontSee('name="payment_method_code" value="keks"', false);
+        foreach (['bank', 'cod', 'pickup', 'keks'] as $code) {
+            $this->post(route('gift-vouchers.store'), array_replace($this->payload(), ['payment_method_code' => $code]))
+                ->assertSessionHasErrors('payment_method_code');
+        }
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('gift_vouchers', 0);
+        $this->assertContains('bank', app(CheckoutService::class)->availablePaymentMethods(50, 'HR', shippingMethod: ShippingMethod::where('code', 'standard')->firstOrFail())->pluck('code'));
+        Http::assertNothingSent();
+    }
+
+    public function test_watchline_card_purchase_remains_pending_and_safe_mode_never_prepares_an_external_charge(): void
+    {
+        $this->watchlineCard();
+        $this->post(route('gift-vouchers.store'), array_replace($this->payload(), ['payment_method_code' => 'wspay']))
+            ->assertRedirect();
+        $order = Order::sole();
+        $this->assertSame('wspay', $order->payment_method_code);
+        $this->assertNull($order->paid_at);
+        $this->assertSame('pending', GiftVoucher::sole()->status);
+        $this->get(route('checkout.wspay.start', ['orderNumber' => $order->order_number]))
+            ->assertRedirect(route('checkout.success', ['orderNumber' => $order->order_number]));
+        $this->assertNull(data_get($order->fresh()->payload, 'wspay.request'));
+        Http::assertNothingSent();
+        Mail::assertNothingSent();
+    }
+
+    public function test_watchline_never_falls_back_to_bank_when_no_card_method_is_ready(): void
+    {
+        config(['storefront.home' => 'watchline']);
+        $this->getJson(route('gift-vouchers.create'))->assertOk()->assertJsonPath('payment_methods', []);
+        $this->get(route('gift-vouchers.create'))->assertOk()->assertSee('Kupnja poklon bona trenutačno nije dostupna.');
+        $this->post(route('gift-vouchers.store'), $this->payload())->assertSessionHasErrors('payment_method_code');
+        $this->assertDatabaseCount('orders', 0);
     }
 
     public function test_amount_changes_use_server_quoted_payment_fees_without_exposing_gateway_settings(): void
@@ -169,6 +246,15 @@ class GiftVoucherFrontendTest extends TestCase
             ->assertRedirect(route('cart.index'))->assertSessionHas('front.cart.items', $items)->assertSessionHas('front.cart.coupon_code', 'SAVE');
     }
 
+    private function watchlineCard(): void
+    {
+        $this->app['env'] = 'local';
+        config(['storefront.home' => 'watchline', 'storefront.theme' => 'herrera', 'storefront.brand' => 'libermedia']);
+        $this->withSession(['_token' => 'gift-fixture-csrf']);
+        PaymentMethod::create(['code' => 'wspay', 'name' => 'Kartično plaćanje', 'provider' => 'wspay', 'is_active' => true,
+            'settings' => ['wspay_mode' => 'live', 'wspay_shop_id' => 'fake-shop', 'wspay_secret_key' => 'fake-private-secret', 'local_preview_only' => true]]);
+    }
+
     private function product(): Product
     {
         $product = Product::create(['code' => 'GIFT-TEST-PRODUCT', 'sku' => 'GIFT-TEST-PRODUCT', 'base_price' => 10, 'stock_qty' => 100, 'supplier_stock_qty' => 0, 'is_active' => true]);
@@ -185,6 +271,7 @@ class GiftVoucherFrontendTest extends TestCase
     private function payload(): array
     {
         return [
+            '_token' => 'gift-fixture-csrf',
             'amount' => 50, 'recipient_name' => 'Ana', 'recipient_email' => 'ana@example.test', 'sender_name' => 'Marko', 'message' => 'Sretan rođendan!',
             'customer_first_name' => 'Marko', 'customer_last_name' => 'Kupac', 'customer_email' => 'kupac@example.test', 'customer_phone' => '+385911234567',
             'billing_address_line_1' => 'Ulica 1', 'billing_postal_code' => '10000', 'billing_city' => 'Zagreb', 'billing_country_code' => 'HR',

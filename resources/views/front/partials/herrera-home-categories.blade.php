@@ -23,8 +23,11 @@
     $showHerreraCategorySupport = (bool) ($showCategorySupport ?? request()->routeIs('home'))
         && str_contains(strtolower((string) ($storeSettings['branding']['store_name'] ?? config('app.name'))), 'herrera');
     $usesLibermediaCategories = \App\Support\StorefrontTheme::usesLibermediaBrand((string) ($storeSettings['branding']['store_name'] ?? config('app.name')));
-    $showLibermediaBundleTile = $usesLibermediaCategories && request()->routeIs('home');
-    $showLibermediaGiftTile = $usesLibermediaCategories && request()->routeIs('categories.index');
+    $isWatchlineCategories = config('storefront.home') === 'watchline';
+    $showLibermediaBundleTile = $usesLibermediaCategories && ! $isWatchlineCategories && request()->routeIs('home');
+    $showLibermediaGiftTile = $usesLibermediaCategories && ! $isWatchlineCategories && request()->routeIs('categories.index');
+    $showWatchlineGiftVoucherTile = $usesLibermediaCategories && $isWatchlineCategories && config('gift_vouchers.enabled', true)
+        && request()->routeIs('home', 'categories.index');
     $preferWebp = (bool) ($storeSettings['images']['use_webp'] ?? false);
     $categoryIcons = [
         'rasvjeta' => 'lightbulb',
@@ -135,6 +138,17 @@
                     </span>
                 </a>
             @endforeach
+            @if ($showWatchlineGiftVoucherTile)
+                <a href="{{ route('gift-vouchers.create') }}" class="herrera-category-tile libermedia-category-bundle" data-watchline-category-gift-voucher>
+                    <span class="libermedia-category-bundle-icon"><x-fa-icon name="gift" style="light" /></span>
+                    <span class="libermedia-category-bundle-copy">
+                        <span class="libermedia-category-bundle-eyebrow">POKLON PO NJIHOVOM IZBORU</span>
+                        <span class="libermedia-category-bundle-title">Poklon bon</span>
+                        <span class="libermedia-category-bundle-description">Darujte izbor satova, naočala i nakita.</span>
+                    </span>
+                    <span class="libermedia-category-bundle-cta">Odaberite poklon bon <x-fa-icon name="arrow-right" /></span>
+                </a>
+            @endif
             @if ($showLibermediaGiftTile)
                 <a href="{{ route('gift-guide.index') }}" class="herrera-category-tile libermedia-category-bundle" data-libermedia-category-gift>
                     <span class="libermedia-category-bundle-icon"><x-fa-icon name="gift" style="light" /></span>

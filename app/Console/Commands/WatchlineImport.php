@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Import\HerreraOpenCartImportService;
 use App\Services\Import\WatchlineLegacySalesImportService;
+use App\Services\Import\WatchlineStaffImportService;
 use App\Services\Import\WatchlineSupplementImportService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -29,6 +30,10 @@ class WatchlineImport extends HerreraImport
                 $dryRun = (bool) $this->option('dry-run');
                 $summary = app(WatchlineSupplementImportService::class)->import($connection, $dryRun, (string) $this->option('prefix'));
                 $summary += app(WatchlineLegacySalesImportService::class)->import($connection, $dryRun);
+                $staff = app(WatchlineStaffImportService::class)->import(DB::connection($connection), (string) $this->option('prefix'), ! $dryRun);
+                foreach ($staff as $key => $count) {
+                    $summary['staff_'.$key] = $count;
+                }
                 $this->table(['Additional Watchline records', 'Count'], collect($summary)->map(fn ($value, $key) => [$key, $value])->all());
                 if (! $dryRun) {
                     foreach (['watchline:normalize-content', 'watchline:import-promotions'] as $command) {

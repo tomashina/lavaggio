@@ -1,6 +1,10 @@
 @extends('front.desktop.layouts.store')
 
-@section('title', 'Poklon bon – darujte igru i veselje')
+@php
+    $isWatchlineVoucher = config('storefront.home') === 'watchline';
+    $giftVoucherDefaultMessage = $isWatchlineVoucher ? 'Poklonite detalj koji će se pamtiti.' : 'Poklonite trenutke pune igre i veselja.';
+@endphp
+@section('title', $isWatchlineVoucher ? 'Poklon bon – Watchline' : 'Poklon bon – darujte igru i veselje')
 @section('main_class', 'gift-voucher-shell')
 
 @push('styles')
@@ -13,9 +17,9 @@
         $initialPayment = $paymentOptions->firstWhere('code', $selectedPayment) ?? $paymentOptions->first();
     @endphp
     <header class="gift-voucher-heading lm-page-title">
-        <p class="gift-voucher-eyebrow"><x-fa-icon name="gift" /> POKLON ZA MALE VELIKE IDEJE</p>
-        <h1>Darujte igru. Prepustite im izbor.</h1>
-        <p>Za rođendan, mali uspjeh ili samo zato. Poklon bon Liber Media otvara svijet igre, mašte i učenja.</p>
+        <p class="gift-voucher-eyebrow"><x-fa-icon name="gift" /> {{ $isWatchlineVoucher ? 'POKLON PO NJIHOVOM IZBORU' : 'POKLON ZA MALE VELIKE IDEJE' }}</p>
+        <h1>{{ $isWatchlineVoucher ? 'Darujte izbor. Poklonite Watchline.' : 'Darujte igru. Prepustite im izbor.' }}</h1>
+        <p>{{ $isWatchlineVoucher ? 'Poklon bon Watchline za satove, naočale i nakit. Prepustite odabir onome kome darujete.' : 'Za rođendan, mali uspjeh ili samo zato. Poklon bon Liber Media otvara svijet igre, mašte i učenja.' }}</p>
         <div class="gift-voucher-benefits"><span><x-fa-icon name="envelope" /> Dostava e-mailom nakon uplate</span><span><x-fa-icon name="gift" /> Iznosi od 10 do 300 €</span></div>
     </header>
 
@@ -27,7 +31,7 @@
     @endif
 
     <div class="gift-voucher-layout">
-        <form action="{{ route('gift-vouchers.store') }}" method="POST" class="gift-voucher-form" data-gift-purchase-form data-payment-options-url="{{ route('gift-vouchers.create') }}">
+        <form action="{{ route('gift-vouchers.store') }}" method="POST" class="gift-voucher-form" data-gift-purchase-form data-gift-default-message="{{ $giftVoucherDefaultMessage }}" data-payment-options-url="{{ route('gift-vouchers.create') }}">
             @csrf
             <section class="gift-voucher-form-card">
                 <h2><span>1</span> Odaberite iznos</h2>
@@ -106,6 +110,7 @@
 
             <section class="gift-voucher-form-card">
                 <h2 id="gift-payment-method-code"><span>4</span> Način plaćanja</h2>
+                @if ($isWatchlineVoucher)<p>Poklon bon moguće je platiti isključivo karticom.</p>@endif
                 <div class="gift-voucher-payment-options" data-gift-payment-options>
                     @forelse ($paymentMethods as $method)
                         <label class="gift-voucher-payment-option">
@@ -139,11 +144,11 @@
         <div class="gift-voucher-preview-panel" data-gift-sticky-preview>
             <p class="gift-voucher-preview-label">OVAKO IZGLEDA VAŠ POKLON</p>
             <div class="gift-voucher-preview">
-                <div class="gift-voucher-preview-top"><img src="{{ asset('assets/brand/libermedia-logo.svg') }}" alt="Liber Media" width="180" height="35"><span>POKLON BON</span></div>
+                <div class="gift-voucher-preview-top"><img src="{{ asset($isWatchlineVoucher ? 'assets/brand/watchline-logo-on-dark.svg' : 'assets/brand/libermedia-logo.svg') }}" alt="{{ $isWatchlineVoucher ? 'Watchline' : 'Liber Media' }}" width="180" height="35"><span>POKLON BON</span></div>
                 <x-fa-icon name="gift" class="gift-voucher-preview-gift" />
                 <div class="gift-voucher-preview-amount"><span data-gift-preview-amount>{{ $selectedAmount }}</span> <small>€</small></div>
                 <p>Za <strong data-gift-preview-recipient>{{ old('recipient_name') ?: 'nekoga posebnog' }}</strong></p>
-                <p class="gift-voucher-preview-message" data-gift-preview-message>{{ old('message') ?: 'Poklonite trenutke pune igre i veselja.' }}</p>
+                <p class="gift-voucher-preview-message" data-gift-preview-message>{{ old('message') ?: $giftVoucherDefaultMessage }}</p>
                 <p class="gift-voucher-preview-sender">Od <span data-gift-preview-sender>{{ old('sender_name', $defaults['sender_name']) ?: 'vas, od srca' }}</span></p>
                 <span class="gift-voucher-preview-code">VAŠ JEDINSTVENI KOD</span>
             </div>

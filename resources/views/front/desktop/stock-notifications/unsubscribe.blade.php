@@ -1,6 +1,7 @@
 @extends('front.desktop.layouts.store')
 @section('title', 'Odjava obavijesti o dostupnosti')
 @section('content')
+    @include('front.partials.stock-notification-assets')
     <header class="lm-page-title">
         <span class="stock-notify-heading-icon" aria-hidden="true"><x-fa-icon name="bell" /></span>
         <h1>Obavijest o dostupnosti</h1>

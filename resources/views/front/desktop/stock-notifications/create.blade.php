@@ -1,6 +1,7 @@
 @extends('front.desktop.layouts.store')
 @section('title', 'Obavijesti me o dostupnosti')
 @section('content')
+    @include('front.partials.stock-notification-assets')
     @php
         $stockNotifyProductId = (int) ($product?->id ?? request('product_id', 0));
         $stockNotifyBundleId = (int) ($bundle?->id ?? request('bundle_id', 0));

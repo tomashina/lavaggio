@@ -37,7 +37,9 @@
                 <p class="lm-home-reviews-eyebrow">{{ __('ISKUSTVA KUPACA') }}</p>
                 <h2 id="lm-home-reviews-title">{{ __('Što kažu naši kupci') }}</h2>
             </div>
-            <p class="lm-home-reviews-caption">{{ config('storefront.home') === 'watchline' ? __('Iskustva iz prve ruke, za lakši odabir.') : __('Iskustva iz prve ruke, za lakši odabir igre i učenja.') }}</p>
+            @if (config('storefront.home') !== 'watchline')
+                <p class="lm-home-reviews-caption">{{ __('Iskustva iz prve ruke, za lakši odabir igre i učenja.') }}</p>
+            @endif
             <div class="lm-home-reviews-actions">
                 <a href="{{ route('reviews.index') }}" class="lm-home-reviews-all">Sva iskustva kupaca <x-fa-icon name="arrow-right" /></a>
                 @if ($reviewCount > 1)

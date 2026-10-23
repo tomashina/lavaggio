@@ -27,6 +27,7 @@ class GiftVoucherServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['gift_vouchers.code_prefix' => 'LIBER-']);
         config(['commerce.b2b_only' => false, 'commerce.local_safe_mode' => true, 'gift_vouchers.enabled' => true, 'gift_vouchers.emails_enabled' => false]);
         app()->setLocale('hr');
         Mail::fake();

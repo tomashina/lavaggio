@@ -27,6 +27,12 @@ class NavigationMenuService
 
     public function __construct(private readonly SystemSettingsService $settings) {}
 
+    /** @return array<int, array<string, mixed>> */
+    public function primaryCategoryItems(string $locale): array
+    {
+        return array_values(array_filter($this->forLocale($locale), fn (array $item): bool => ($item['type'] ?? '') === 'category'));
+    }
+
     /**
      * @return array<int, array<string, mixed>>
      */
@@ -35,6 +41,7 @@ class NavigationMenuService
         $locale = strtolower(trim($locale));
         $fallbackLocale = strtolower((string) config('app.locale', 'en'));
         $isHerreraStore = \App\Support\StorefrontTheme::usesHerreraLayout((string) $this->settings->get('store_brand_name', config('app.name', 'AG Shop')));
+        $isWatchlineStore = config('storefront.home') === 'watchline';
         $items = collect($this->configuredItems())
             ->filter(fn ($item): bool => (bool) ($item['is_active'] ?? true))
             ->sortBy(fn ($item): int => (int) ($item['sort_order'] ?? 0))
@@ -50,7 +57,7 @@ class NavigationMenuService
             }
         }
         $cacheKey = hash('sha256', serialize([
-            'subcategory-photography-v3', $isHerreraStore, $locale, $fallbackLocale, request()->getSchemeAndHttpHost(), config('app.url'), $revision, $items->all(),
+            'category-navigation-depth-v4', $isHerreraStore, $isWatchlineStore, $locale, $fallbackLocale, request()->getSchemeAndHttpHost(), config('app.url'), $revision, $items->all(),
         ]));
 
         if (isset($this->resolvedCache[$cacheKey])) {
@@ -233,6 +240,13 @@ class NavigationMenuService
             }
 
             if (is_array($entry) && trim((string) ($entry['url'] ?? '')) !== '') {
+                if ($isWatchlineStore && in_array($type, ['category', 'catalog'], true)) {
+                    $entry['children'] = array_map(static function (array $child): array {
+                        $child['children'] = [];
+
+                        return $child;
+                    }, $entry['children']);
+                }
                 $entry['is_highlighted'] = (bool) ($item['is_highlighted'] ?? false);
                 $entry['icon'] = $item['icon'];
                 $entry['align_right'] = $item['align_right'];

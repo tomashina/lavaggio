@@ -6,10 +6,11 @@ use App\Models\User;
 use App\Models\User\NewsletterSignup;
 use App\Services\Integrations\Newsletter\KlaviyoNewsletterService;
 use App\Services\Integrations\Newsletter\MailchimpNewsletterService;
-use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Throwable;
 
 class NewsletterSignupService
 {
@@ -17,8 +18,7 @@ class NewsletterSignupService
         private readonly StoreSettingsService $storeSettings,
         private readonly MailchimpNewsletterService $mailchimp,
         private readonly KlaviyoNewsletterService $klaviyo,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{signup: NewsletterSignup|null, synced: bool}
@@ -40,6 +40,10 @@ class NewsletterSignupService
 
         if ($provider === NewsletterSignup::PROVIDER_NONE) {
             throw new RuntimeException((string) __('ui.front.desktop.newsletter.status.failed'));
+        }
+
+        if (config('storefront.home') === 'watchline') {
+            return $this->subscribeWatchline($normalizedEmail, $consentAccepted, $user, $source, $locale, $ipAddress, $userAgent, $referrer, $provider, $newsletterSettings);
         }
 
         if ($provider === NewsletterSignup::PROVIDER_DATABASE) {
@@ -80,6 +84,52 @@ class NewsletterSignupService
         };
 
         return ['signup' => null, 'synced' => true];
+    }
+
+    private function subscribeWatchline(string $email, bool $consent, ?User $user, string $source, ?string $locale, ?string $ip, ?string $agent, ?string $referrer, string $provider, array $settings): array
+    {
+        if (! ($settings['enabled'] ?? true) || ! Schema::hasTable('newsletter_signups')) {
+            throw new RuntimeException((string) __('ui.front.desktop.newsletter.status.failed'));
+        }
+        // Staff testing an address must not bind that subscriber to the staff account.
+        $customer = $user && $user->account_type === 'customer' && Str::lower(trim($user->email)) === $email ? $user : null;
+        $result = DB::transaction(function () use ($email, $consent, $customer, $source, $locale, $ip, $agent, $referrer, $provider): array {
+            // The unique email constraint and row lock serialize repeat submissions.
+            $signup = NewsletterSignup::query()->whereRaw('LOWER(TRIM(email)) = ?', [$email])->lockForUpdate()->first();
+            if (! $signup) {
+                $signup = NewsletterSignup::query()->createOrFirst(['email' => $email], ['source' => $source, 'provider' => $provider]);
+                $signup = NewsletterSignup::query()->lockForUpdate()->findOrFail($signup->id);
+            }
+            $existingConsent = (bool) $signup->consent_accepted;
+            $payload = (array) $signup->payload;
+            $payload['last_referrer'] = trim((string) $referrer) ?: null;
+            $payload['last_seen_at'] = now()->toIso8601String();
+            $signup->fill([
+                'email' => $email, 'user_id' => $signup->user_id ?: $customer?->id, 'source' => $signup->source ?: $source,
+                'locale' => $locale ?: app()->getLocale(), 'provider' => $provider,
+                'consent_accepted' => $existingConsent || $consent, 'subscribed_at' => $signup->subscribed_at ?: now(),
+                'ip_address' => trim((string) $ip) ?: null, 'user_agent' => trim((string) $agent) ?: null,
+                'sync_status' => $provider === NewsletterSignup::PROVIDER_DATABASE ? NewsletterSignup::SYNC_SYNCED : NewsletterSignup::SYNC_PENDING,
+                'synced_at' => $provider === NewsletterSignup::PROVIDER_DATABASE ? now() : $signup->synced_at, 'payload' => $payload,
+            ])->save();
+            $welcome = ! $existingConsent && $consent ? app(WatchlineNewsletterWelcomeService::class)->issue($signup, $customer) : 'existing';
+
+            return ['signup' => $signup->fresh(), 'synced' => $provider === NewsletterSignup::PROVIDER_DATABASE, 'welcome' => $welcome];
+        });
+        if ($provider !== NewsletterSignup::PROVIDER_DATABASE && ! app()->environment('local') && ! config('commerce.local_safe_mode')) {
+            try {
+                match ($provider) {
+                    NewsletterSignup::PROVIDER_MAILCHIMP => $this->mailchimp->subscribe($email, $settings),
+                    NewsletterSignup::PROVIDER_KLAVIYO => $this->klaviyo->subscribe($email, $settings),
+                };
+                $result['signup']->update(['sync_status' => NewsletterSignup::SYNC_SYNCED, 'synced_at' => now(), 'provider_error' => null]);
+                $result['synced'] = true;
+            } catch (Throwable $exception) {
+                $result['signup']->update(['sync_status' => NewsletterSignup::SYNC_FAILED, 'provider_error' => class_basename($exception)]);
+            }
+        }
+
+        return $result;
     }
 
     private function normalizeProvider(string $provider): string

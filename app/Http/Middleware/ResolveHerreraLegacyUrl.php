@@ -17,7 +17,9 @@ class ResolveHerreraLegacyUrl
                 return redirect($result['destination'], 301);
             }
 
-            return response('<!doctype html><html lang="hr"><meta charset="utf-8"><title>Sadržaj više nije dostupan | Herrera</title><main><h1>Sadržaj više nije dostupan</h1><p>Ova stara adresa označena je za provjeru ili pripada sadržaju koji više nije dostupan.</p><a href="/shop">Pregledajte Herrera katalog</a></main></html>', 410)->header('X-Robots-Tag', 'noindex');
+            $brand = config('storefront.home') === 'watchline' ? 'Watch Line' : 'Herrera';
+
+            return response('<!doctype html><html lang="hr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sadržaj više nije dostupan | '.$brand.'</title></head><body><main><h1>Sadržaj više nije dostupan</h1><p>Sadržaj na ovoj adresi više nije dostupan.</p><a href="/shop">Pregledajte '.$brand.' katalog</a></main></body></html>', 410)->header('X-Robots-Tag', 'noindex');
         }
 
         return $next($request);

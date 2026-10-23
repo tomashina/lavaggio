@@ -90,6 +90,9 @@ class GiftVoucherService
 
         return PaymentMethod::query()->where('is_active', true)->whereIn('code', config('gift_vouchers.payment_codes', []))
             ->orderBy('sort_order')->orderBy('id')->get()
+            ->filter(fn (PaymentMethod $method) => config('storefront.home') !== 'watchline'
+                || app(WSPayFormService::class)->isWspayCode((string) $method->code)
+                || app(CorvusPayFormService::class)->isCorvusCode((string) $method->code))
             ->filter(fn (PaymentMethod $method) => app(CorvusPayFormService::class)->canBeOffered($method) && app(WSPayFormService::class)->canBeOffered($method))
             ->filter(fn (PaymentMethod $method) => ($method->min_subtotal === null || $amount >= (float) $method->min_subtotal) && ($method->max_subtotal === null || $amount <= (float) $method->max_subtotal))
             ->values();

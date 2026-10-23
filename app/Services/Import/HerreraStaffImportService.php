@@ -5,6 +5,7 @@ namespace App\Services\Import;
 use App\Models\User;
 use App\Models\User\LegacyCredential;
 use Illuminate\Database\ConnectionInterface;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -24,7 +25,7 @@ class HerreraStaffImportService
         $this->guard($source, $prefix);
         $groups = $source->table($prefix.'user_group')->get()->keyBy('user_group_id');
         $rows = $source->table($prefix.'user')->orderBy('user_id')->get();
-        $assignments = $source->table($prefix.'customer_to_user')->get(['user_id', 'customer_id']);
+        $assignments = $this->sourceAssignments($source, $prefix);
         $customerMap = DB::table('herrera_import_maps')->where('source', 'herrera-opencart')
             ->where('entity', 'customer')->pluck('target_id', 'source_id');
         $staffMap = DB::table('herrera_import_maps')->where('source', 'herrera-opencart')
@@ -66,7 +67,7 @@ class HerreraStaffImportService
             if (isset($staffMap[$row->user_id]) && (! $user || $user->account_type !== 'staff')) {
                 throw new RuntimeException('A staff import mapping points to a missing or customer identity.');
             }
-            $byUsername = User::where('admin_username', $username)->first();
+            $byUsername = User::whereRaw('LOWER(admin_username) = ?', [Str::lower($username)])->first();
             $byEmail = User::where('account_type', 'staff')->whereRaw('LOWER(email) = ?', [$email])->first();
             $candidate = $user ?? $byUsername ?? $byEmail;
             foreach ([$byUsername, $byEmail] as $other) {
@@ -226,7 +227,12 @@ class HerreraStaffImportService
         }
     }
 
-    private function guard(ConnectionInterface $source, string $prefix, bool $finalSync = false): void
+    protected function sourceAssignments(ConnectionInterface $source, string $prefix): Collection
+    {
+        return $source->table($prefix.'customer_to_user')->get(['user_id', 'customer_id']);
+    }
+
+    protected function guard(ConnectionInterface $source, string $prefix, bool $finalSync = false): void
     {
         if (! preg_match('/^[a-zA-Z0-9_]+$/', $prefix) || $source === DB::connection()
             || $source->getDatabaseName() === DB::connection()->getDatabaseName()) {

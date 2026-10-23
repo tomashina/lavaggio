@@ -29,12 +29,27 @@ class KeksPayService
         return $this->isKeksCode((string) $order->payment_method_code);
     }
 
+    public function canBeOffered(PaymentMethod $method): bool
+    {
+        if (! $this->isKeksCode((string) $method->code)) {
+            return true;
+        }
+
+        foreach (['keks_cid', 'keks_tid', 'keks_des_key'] as $key) {
+            if (trim((string) data_get($method->settings, $key, '')) === '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /**
      * @return array<string, mixed>|null
      */
     public function buildSellData(Order $order): ?array
     {
-        if (! $this->isKeksOrder($order)) {
+        if (! $this->isKeksOrder($order) || (bool) config('commerce.local_safe_mode', false)) {
             return null;
         }
 
@@ -119,6 +134,8 @@ class KeksPayService
      */
     public function handleAdvice(array $input, Request $request): array
     {
+        // Legacy callback authentication belongs to the request, never order history.
+        unset($input['user'], $input['pass']);
         $billId = trim((string) ($input['bill_id'] ?? ''));
         $status = (int) ($input['status'] ?? -1);
         $message = trim((string) ($input['message'] ?? ''));
@@ -281,6 +298,21 @@ class KeksPayService
 
         if ($mode === 'none' || $mode === '') {
             return true;
+        }
+
+        if ($mode === 'legacy_query_credentials') {
+            $username = $settings['keks_advice_username'] ?? '';
+            $password = $settings['keks_advice_password'] ?? '';
+            $incomingUser = $request->query('user');
+            $incomingPassword = $request->query('pass');
+            if (! is_string($username) || $username === '' || ! is_string($password) || $password === ''
+                || ! is_string($incomingUser) || ! is_string($incomingPassword)) {
+                return false;
+            }
+            $userMatches = hash_equals($username, $incomingUser);
+            $passwordMatches = hash_equals($password, $incomingPassword);
+
+            return $userMatches && $passwordMatches;
         }
 
         $header = trim((string) $request->header('Authorization', ''));

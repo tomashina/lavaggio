@@ -46,7 +46,7 @@
             document.querySelector('[data-gift-preview-amount]').textContent = amount.value;
             document.querySelector('[data-gift-preview-recipient]').textContent = purchaseForm.querySelector('[data-gift-recipient]').value.trim() || 'nekoga posebnog';
             document.querySelector('[data-gift-preview-sender]').textContent = purchaseForm.querySelector('[data-gift-sender]').value.trim() || 'vas, od srca';
-            document.querySelector('[data-gift-preview-message]').textContent = purchaseForm.querySelector('[data-gift-message]').value.trim() || 'Poklonite trenutke pune igre i veselja.';
+            document.querySelector('[data-gift-preview-message]').textContent = purchaseForm.querySelector('[data-gift-message]').value.trim() || purchaseForm.dataset.giftDefaultMessage || 'Poklonite trenutke pune igre i veselja.';
             purchaseForm.querySelectorAll('[data-gift-amount-preset]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.giftAmountPreset === amount.value)));
         };
         const updatePaymentOptions = async () => {

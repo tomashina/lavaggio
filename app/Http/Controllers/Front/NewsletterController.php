@@ -118,7 +118,14 @@ class NewsletterController extends Controller
             ? __('ui.front.desktop.newsletter.status.subscribed')
             : __('ui.front.desktop.newsletter.status.saved_with_sync_issue');
 
-        if ($result['synced'] && ! config('commerce.b2b_only', false) && ($this->storeSettings->newsletter()['coupon_enabled'] ?? true)) {
+        if (config('storefront.home') === 'watchline') {
+            if (($result['welcome'] ?? '') === 'existing') {
+                $message = __('ui.front.desktop.newsletter.status.already_subscribed');
+            } elseif (($result['welcome'] ?? '') === 'issued') {
+                $delivery = app(\App\Services\Front\WatchlineNewsletterWelcomeService::class)->deliver($result['signup']);
+                $message = __('ui.front.desktop.newsletter.status.'.($delivery === 'sent' ? 'welcome_sent' : 'welcome_pending'));
+            }
+        } elseif ($result['synced'] && ! config('commerce.b2b_only', false) && ($this->storeSettings->newsletter()['coupon_enabled'] ?? true)) {
             $this->notifications->sendNewsletterCoupon(
                 (string) $validator->validated()['newsletter_email'],
                 (string) app()->getLocale(),

@@ -9,14 +9,19 @@ use App\Models\Content\Blog\BlogPost;
 use App\Models\Content\ContentBlock;
 use App\Services\Content\ContentBlockResolver;
 use App\Services\Content\FeaturedCategoriesService;
+use App\Support\ProductPopularityLabel;
+use App\Support\WatchlineWidgetSettings;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Form extends Component
 {
+    use WithFileUploads;
+
     private const CATEGORY_PRODUCT_SORTS = [
         'category_order',
         'price_asc',
@@ -41,6 +46,9 @@ class Form extends Component
     private const MATERIAL_CRAFTSMANSHIP_BULLET_COUNT = 3;
 
     private const ITEM_TYPE_MAP = [
+        'watchline_products' => 'product',
+        'watchline_brands' => 'manufacturer',
+        'watchline_blog' => 'blog',
         'products' => 'product',
         'products_carousel' => 'product',
         'category_products_carousel' => 'category',
@@ -55,6 +63,8 @@ class Form extends Component
     public ?int $blockId = null;
 
     public array $form = [];
+
+    public array $watchlineImageUploads = [];
 
     /**
      * @var array<string, string>
@@ -92,6 +102,10 @@ class Form extends Component
     public string $pickerSearch = '';
 
     public string $manufacturerFilterSearch = '';
+
+    public string $watchlineCategoryFilterSearch = '';
+
+    public string $watchlineManufacturerFilterSearch = '';
 
     public string $lastType = '';
 
@@ -135,6 +149,54 @@ class Form extends Component
     public function getIsItemBlockProperty(): bool
     {
         return $this->currentItemType !== null;
+    }
+
+    public function getIsWatchlineWidgetProperty(): bool
+    {
+        return $this->isWatchlineWidgetType((string) ($this->form['type'] ?? ''));
+    }
+
+    public function getWatchlineFieldsProperty(): array
+    {
+        return WatchlineWidgetSettings::fields((string) ($this->form['type'] ?? ''));
+    }
+
+    public function getWatchlineCategoryFilterOptionsProperty(): Collection
+    {
+        return $this->watchlineFilterOptions('categories');
+    }
+
+    public function getWatchlineManufacturerFilterOptionsProperty(): Collection
+    {
+        return $this->watchlineFilterOptions('manufacturers');
+    }
+
+    public function getPopularFilterHasNoProductsProperty(): bool
+    {
+        if (($this->form['type'] ?? '') !== 'watchline_products'
+            || ! filter_var(data_get($this->form, 'watchline.popular_only', false), FILTER_VALIDATE_BOOL)) {
+            return false;
+        }
+
+        return ! ProductPopularityLabel::scope(Product::query()->where('is_active', true))->exists();
+    }
+
+    public function clearWatchlineFilter(string $key): void
+    {
+        if (in_array($key, ['category_ids', 'manufacturer_ids'], true)) {
+            $this->form['watchline'][$key] = [];
+        }
+    }
+
+    public function updatedWatchlineImageUploads(mixed $value, string $key): void
+    {
+        if (($this->watchlineFields[$key]['type'] ?? '') !== 'image') {
+            unset($this->watchlineImageUploads[$key]);
+
+            return;
+        }
+
+        $this->validateOnly('watchlineImageUploads.'.$key, $this->rules());
     }
 
     public function getItemOptionsProperty(): Collection
@@ -244,6 +306,17 @@ class Form extends Component
         $this->loadTranslationForLocale();
     }
 
+    public function updatedForm(mixed $value, ?string $key): void
+    {
+        foreach (['watchline.category_ids', 'watchline.manufacturer_ids', 'selected_item_ids'] as $selectionKey) {
+            if ($key === $selectionKey || str_starts_with((string) $key, $selectionKey.'.')) {
+                $this->useAutomaticProductsWhenManualSelectionIsEmpty();
+
+                return;
+            }
+        }
+    }
+
     public function updatedFormType(string $type): void
     {
         if (! array_key_exists($type, $this->types)) {
@@ -253,6 +326,26 @@ class Form extends Component
         $suggestedSurface = $this->suggestedFrontendVariantForType($type);
         if ($suggestedSurface !== null) {
             $this->form['slot_frontend_variant'] = $suggestedSurface;
+        }
+
+        if ($this->isWatchlineWidgetType($type) && $this->lastType !== $type) {
+            $this->watchlineImageUploads = [];
+            $this->watchlineCategoryFilterSearch = '';
+            $this->watchlineManufacturerFilterSearch = '';
+            $defaults = WatchlineWidgetSettings::defaults($type);
+            $this->form['watchline'] = array_intersect_key($defaults, WatchlineWidgetSettings::fields($type));
+            foreach (['title', 'subtitle', 'cta_label', 'cta_url'] as $key) {
+                $this->form[$key] = (string) ($defaults[$key] ?? '');
+            }
+            $this->form['items_limit'] = match ($type) {
+                'watchline_reviews' => 50,
+                'watchline_blog' => 5,
+                default => 12,
+            };
+            $this->form['slot_placement'] = $type === 'watchline_benefits' ? 'footer.benefits' : 'home.content';
+            $this->form['slot_frontend_variant'] = 'all';
+            $this->form['bg_css'] = '';
+            $this->form['custom_classes'] = '';
         }
 
         if ($type === 'category_products_carousel' && $this->lastType !== $type) {
@@ -292,6 +385,13 @@ class Form extends Component
             $this->pickerSearch = '';
         }
 
+        if ($this->isWatchlineWidgetType($type)) {
+            $this->form['template_body'] = '';
+            $this->lastType = $type;
+
+            return;
+        }
+
         $currentTemplate = (string) ($this->form['template_body'] ?? '');
         $shouldLoadDefault = trim($currentTemplate) === '';
 
@@ -311,6 +411,9 @@ class Form extends Component
     public function loadTemplatePreset(): void
     {
         $type = (string) ($this->form['type'] ?? 'banner');
+        if ($this->isWatchlineWidgetType($type)) {
+            return;
+        }
         $this->form['template_body'] = $this->defaultTemplateForType($type);
         $this->dispatch('content-block-template-loaded', template: $this->form['template_body']);
     }
@@ -351,6 +454,7 @@ class Form extends Component
             array_map(static fn ($value): int => (int) $value, (array) ($this->form['selected_item_ids'] ?? [])),
             static fn (int $value): bool => $value !== $id
         ));
+        $this->useAutomaticProductsWhenManualSelectionIsEmpty();
     }
 
     public function moveSelectedItemUp(int $index): void
@@ -377,11 +481,14 @@ class Form extends Component
 
     public function save()
     {
+        $this->useAutomaticProductsWhenManualSelectionIsEmpty();
         $validated = $this->validate($this->rules(), [
             'form.slot_ends_at.after_or_equal' => __('End date must be after or equal to start date.'),
         ]);
         $userId = auth()->id();
         $isEdit = $this->blockId !== null;
+        $isWatchlineWidget = $this->isWatchlineWidgetType((string) $validated['form']['type']);
+        $wasWatchlineWidget = false;
         $existingBlockPayload = null;
         $translationPayload = [];
         if ($this->blockId) {
@@ -392,20 +499,35 @@ class Form extends Component
             $translationPayload = is_array($existingBlock?->translations->first()?->payload ?? null)
                 ? $existingBlock->translations->first()->payload
                 : [];
+            $wasWatchlineWidget = $this->isWatchlineWidgetType((string) $existingBlock?->type);
         }
 
-        $bgCss = trim((string) ($validated['form']['bg_css'] ?? ''));
+        $bgCss = $isWatchlineWidget ? '' : trim((string) ($validated['form']['bg_css'] ?? ''));
         if ($bgCss !== '') {
             $translationPayload['bg_css'] = $bgCss;
         } else {
             unset($translationPayload['bg_css']);
         }
 
-        $customClasses = trim((string) ($validated['form']['custom_classes'] ?? ''));
+        $customClasses = $isWatchlineWidget ? '' : trim((string) ($validated['form']['custom_classes'] ?? ''));
         if ($customClasses !== '') {
             $translationPayload['custom_classes'] = $customClasses;
         } else {
             unset($translationPayload['custom_classes']);
+        }
+
+        if ($isWatchlineWidget) {
+            $type = (string) $validated['form']['type'];
+            $translationPayload['watchline'] = array_intersect_key(
+                array_replace(WatchlineWidgetSettings::defaults($type), (array) ($validated['form']['watchline'] ?? [])),
+                WatchlineWidgetSettings::fields($type),
+            );
+            foreach (WatchlineWidgetSettings::fields($type) as $key => $field) {
+                if (in_array($field['type'] ?? '', ['categories', 'manufacturers'], true)) {
+                    $translationPayload['watchline'][$key] = collect((array) ($translationPayload['watchline'][$key] ?? []))
+                        ->map(static fn ($id): int => (int) $id)->filter()->unique()->values()->all();
+                }
+            }
         }
 
         $itemsLimit = (int) ($validated['form']['items_limit'] ?? 0);
@@ -474,6 +596,14 @@ class Form extends Component
             ->filter()
             ->values()
             ->all();
+        if ($isWatchlineWidget) {
+            $selectedIds = array_values(array_unique($selectedIds));
+        }
+        $automaticWatchlineItems = $isWatchlineWidget && (
+            $validated['form']['type'] === 'watchline_blog'
+            || (in_array($validated['form']['type'], ['watchline_products', 'watchline_brands'], true)
+                && data_get($validated, 'form.watchline.source', 'manual') !== 'manual')
+        );
 
         if (trim((string) ($validated['form']['slot_target_ref'] ?? '')) !== '' && trim((string) ($validated['form']['slot_target_type'] ?? '')) === '') {
             $this->addError('form.slot_target_type', __('Target type is required when target ref is set.'));
@@ -482,7 +612,7 @@ class Form extends Component
             return null;
         }
 
-        if ($itemType !== null && $selectedIds === [] && ! $automaticCategories) {
+        if ($itemType !== null && $selectedIds === [] && ! $automaticCategories && ! $automaticWatchlineItems) {
             $this->addError('form.selected_item_ids', __('Select at least one item for this block type.'));
             $this->dispatch('notify', type: 'warning', message: __('Select at least one item.'));
 
@@ -506,6 +636,15 @@ class Form extends Component
             }
         }
 
+        if ($isWatchlineWidget) {
+            foreach ($this->watchlineImageUploads as $key => $upload) {
+                if ($upload && ($this->watchlineFields[$key]['type'] ?? '') === 'image') {
+                    $path = $upload->store('watchline-widgets', 'public');
+                    $translationPayload['watchline'][$key] = '/storage/'.$path;
+                }
+            }
+        }
+
         $oldCode = null;
         if ($this->blockId) {
             $oldCode = (string) ContentBlock::query()->whereKey($this->blockId)->value('code');
@@ -519,7 +658,9 @@ class Form extends Component
             $selectedIds,
             $userId,
             $oldCode,
-            $isEdit
+            $isEdit,
+            $isWatchlineWidget,
+            $wasWatchlineWidget
         ): void {
             $blockData = [
                 'code' => trim((string) $validated['form']['code']),
@@ -553,14 +694,16 @@ class Form extends Component
             $this->savePrimarySlot($block, $validated, $userId);
             $this->syncBlockItems($block, $itemType, $selectedIds);
 
-            $template = trim((string) ($validated['form']['template_body'] ?? ''));
-            if ($template === '') {
-                $template = $this->defaultTemplateForType((string) $block->type);
-            }
-            $this->writeTemplateFile((string) $block->code, $template);
+            if (! $isWatchlineWidget && ! $wasWatchlineWidget) {
+                $template = trim((string) ($validated['form']['template_body'] ?? ''));
+                if ($template === '') {
+                    $template = $this->defaultTemplateForType((string) $block->type);
+                }
+                $this->writeTemplateFile((string) $block->code, $template);
 
-            if ($oldCode !== null && $oldCode !== '' && $oldCode !== $block->code) {
-                $this->deleteTemplateFile($oldCode);
+                if ($oldCode !== null && $oldCode !== '' && $oldCode !== $block->code) {
+                    $this->deleteTemplateFile($oldCode);
+                }
             }
 
             activity('content_blocks')
@@ -597,12 +740,27 @@ class Form extends Component
         return view('livewire.admin.content.block.form');
     }
 
+    private function useAutomaticProductsWhenManualSelectionIsEmpty(): void
+    {
+        if (($this->form['type'] ?? '') !== 'watchline_products'
+            || data_get($this->form, 'watchline.source', 'manual') !== 'manual'
+            || (array) ($this->form['selected_item_ids'] ?? []) !== []) {
+            return;
+        }
+
+        if ((array) data_get($this->form, 'watchline.category_ids', []) !== []
+            || (array) data_get($this->form, 'watchline.manufacturer_ids', []) !== []) {
+            $this->form['watchline']['source'] = 'filtered';
+            $this->resetValidation('form.selected_item_ids');
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */
     private function rules(): array
     {
-        return [
+        $rules = [
             'form.code' => ['required', 'string', 'max:120', 'alpha_dash', Rule::unique('content_blocks', 'code')->ignore($this->blockId)],
             'form.name' => ['required', 'string', 'max:180'],
             'form.type' => ['required', Rule::in(array_keys($this->types))],
@@ -633,6 +791,7 @@ class Form extends Component
             'form.material_craftsmanship.materials.*.bullets' => ['nullable', 'array'],
             'form.material_craftsmanship.materials.*.bullets.*' => ['nullable', 'string', 'max:160'],
             'form.template_body' => ['nullable', 'string'],
+            'form.watchline' => ['nullable', 'array'],
 
             'form.slot_placement' => ['required', 'string', 'max:120'],
             'form.slot_frontend_variant' => ['required', Rule::in(array_keys($this->frontendVariants))],
@@ -646,6 +805,44 @@ class Form extends Component
             'form.selected_item_ids' => ['nullable', 'array'],
             'form.selected_item_ids.*' => ['integer', 'min:1'],
         ];
+
+        if ($this->isWatchlineWidget) {
+            $rules['form.cta_url'][] = function (string $attribute, mixed $value, \Closure $fail): void {
+                if (trim((string) $value) !== '' && WatchlineWidgetSettings::safeUrl($value) === '') {
+                    $fail(__('Unesite lokalnu poveznicu ili valjanu HTTPS adresu.'));
+                }
+            };
+            $imageKeys = [];
+            foreach ($this->watchlineFields as $key => $field) {
+                if (($field['type'] ?? '') === 'image') {
+                    $imageKeys[] = $key;
+                    $rules['watchlineImageUploads.'.$key] = ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'];
+                }
+                if (in_array($field['type'] ?? '', ['categories', 'manufacturers'], true)) {
+                    $exists = $field['type'] === 'categories'
+                        ? Rule::exists('categories', 'id')->where('scope', Category::SCOPE_CATALOG)
+                        : Rule::exists('catalog_manufacturers', 'id');
+                    $rules['form.watchline.'.$key.'.*'] = ['integer', 'min:1', 'distinct', $exists];
+                }
+                $rules['form.watchline.'.$key] = match ($field['type'] ?? 'text') {
+                    'categories', 'manufacturers' => ['nullable', 'array', 'max:100'],
+                    'checkbox' => ['boolean'],
+                    'number' => ['required', 'integer', 'min:'.($field['min'] ?? 1), 'max:'.($field['max'] ?? 50)],
+                    'select' => ['required', Rule::in(array_keys((array) ($field['options'] ?? [])))],
+                    'icon' => ['nullable', 'string', 'max:80', 'regex:/^[a-z0-9-]+$/'],
+                    'image', 'url' => ['nullable', 'string', 'max:2048', function (string $attribute, mixed $value, \Closure $fail) use ($field): void {
+                        if (trim((string) $value) !== '' && WatchlineWidgetSettings::safeUrl($value, $field['type'] === 'image') === '') {
+                            $fail(__('Unesite lokalnu poveznicu ili valjanu HTTPS adresu.'));
+                        }
+                    }],
+                    default => ['nullable', 'string', 'max:'.(($field['type'] ?? '') === 'textarea' ? 6000 : 1000)],
+                };
+            }
+            $rules['watchlineImageUploads'] = $imageKeys !== []
+                ? ['array:'.implode(',', $imageKeys)] : ['array', 'max:0'];
+        }
+
+        return $rules;
     }
 
     private function resetForm(): void
@@ -675,6 +872,7 @@ class Form extends Component
             'blog_source' => 'latest',
             'material_craftsmanship' => $this->materialCraftsmanshipFormValues(null),
             'template_body' => $this->defaultTemplateForType($defaultType),
+            'watchline' => [],
 
             'slot_placement' => array_key_first($this->placements) ?: 'home.hero',
             'slot_frontend_variant' => 'all',
@@ -736,6 +934,13 @@ class Form extends Component
             ? $blogSource
             : 'latest';
         $this->form['material_craftsmanship'] = $this->materialCraftsmanshipFormValues($translationPayload);
+        $widgetSettings = WatchlineWidgetSettings::forBlock($block, $translation);
+        $this->form['watchline'] = array_intersect_key($widgetSettings, WatchlineWidgetSettings::fields((string) $block->type));
+        if ($this->isWatchlineWidget) {
+            foreach (['title', 'subtitle', 'cta_label', 'cta_url'] as $key) {
+                $this->form[$key] = (string) ($widgetSettings[$key] ?? $this->form[$key]);
+            }
+        }
 
         $this->form['slot_placement'] = (string) ($slot?->placement ?? (array_key_first($this->placements) ?: 'home.hero'));
         $loadedVariant = (string) ($slot?->frontend_variant ?? 'all');
@@ -761,10 +966,14 @@ class Form extends Component
 
         $this->lastType = (string) $block->type;
 
-        $existingTemplate = $this->readTemplateFile($block->code);
-        $this->form['template_body'] = $existingTemplate !== ''
-            ? $existingTemplate
-            : $this->defaultTemplateForType($block->type);
+        if ($this->isWatchlineWidget) {
+            $this->form['template_body'] = '';
+        } else {
+            $existingTemplate = $this->readTemplateFile($block->code);
+            $this->form['template_body'] = $existingTemplate !== ''
+                ? $existingTemplate
+                : $this->defaultTemplateForType($block->type);
+        }
     }
 
     private function loadTranslationForLocale(): void
@@ -808,6 +1017,8 @@ class Form extends Component
             ? $blogSource
             : 'latest';
         $this->form['material_craftsmanship'] = $this->materialCraftsmanshipFormValues($translationPayload);
+        $widgetSettings = WatchlineWidgetSettings::forBlock($block, $translation);
+        $this->form['watchline'] = array_intersect_key($widgetSettings, WatchlineWidgetSettings::fields((string) $block->type));
     }
 
     private function clearTranslationFields(): void
@@ -824,6 +1035,10 @@ class Form extends Component
         $this->form['reviews_featured_only'] = false;
         $this->form['blog_source'] = 'latest';
         $this->form['material_craftsmanship'] = $this->materialCraftsmanshipFormValues(null);
+        $this->form['watchline'] = array_intersect_key(
+            WatchlineWidgetSettings::defaults((string) ($this->form['type'] ?? '')),
+            $this->watchlineFields,
+        );
     }
 
     /**
@@ -961,6 +1176,10 @@ class Form extends Component
                             });
                     }
                 });
+            }
+
+            if (($this->form['type'] ?? '') === 'watchline_products') {
+                $query->limit(100);
             }
 
             return $query
@@ -2446,6 +2665,43 @@ BLADE,
     private function templateViewName(string $code): string
     {
         return 'front.content-blocks.instances.'.$code;
+    }
+
+    private function isWatchlineWidgetType(string $type): bool
+    {
+        return str_starts_with($type, 'watchline_') && WatchlineWidgetSettings::fields($type) !== [];
+    }
+
+    private function watchlineFilterOptions(string $kind): Collection
+    {
+        if (($this->form['type'] ?? '') !== 'watchline_products') {
+            return collect();
+        }
+
+        $isCategory = $kind === 'categories';
+        $key = $isCategory ? 'category_ids' : 'manufacturer_ids';
+        $selected = array_map('intval', (array) ($this->form['watchline'][$key] ?? []));
+        $search = trim($isCategory ? $this->watchlineCategoryFilterSearch : $this->watchlineManufacturerFilterSearch);
+        $locale = (string) ($this->form['locale'] ?? config('app.locale'));
+        $fallbackLocale = (string) config('app.locale');
+        $query = $isCategory ? Category::query()->where('scope', Category::SCOPE_CATALOG) : Manufacturer::query();
+        $query->where(fn ($query) => $query->where('is_active', true)->orWhereIn('id', $selected))
+            ->when($search !== '', fn ($query) => $query->where(fn ($query) => $query
+                ->whereIn('id', $selected)
+                ->orWhereHas('translations', fn ($translation) => $translation->where('name', 'like', '%'.$search.'%'))))
+            ->with($isCategory ? ['translations', 'parent.translations'] : ['translations'])
+            ->orderBy($isCategory ? '_lft' : 'sort_order')->orderBy('id');
+
+        return $query->get()->map(function ($record) use ($isCategory, $locale, $fallbackLocale): array {
+            $translation = $this->resolveBestTranslation($record->translations, $locale, $fallbackLocale, ['name']);
+            $label = (string) ($translation?->name ?: $record->code);
+            if ($isCategory && $record->parent) {
+                $parent = $this->resolveBestTranslation($record->parent->translations, $locale, $fallbackLocale, ['name']);
+                $label = (string) ($parent?->name ?: $record->parent->code).' / '.$label;
+            }
+
+            return ['id' => (int) $record->id, 'label' => $label, 'is_active' => (bool) $record->is_active];
+        })->values();
     }
 
     private function templateFilePath(string $code): string

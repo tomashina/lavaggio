@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
+Schedule::command('watchline:integrations-run --due --apply')->everyMinute()->withoutOverlapping(10)
+    ->when(fn () => config('storefront.home') === 'watchline'
+        && app(\App\Services\Integrations\Watchline\WatchlineIntegrationSettings::class)->liveReady());
+
 Schedule::command('stock-notifications:send')->everyFiveMinutes()->withoutOverlapping(15)
     ->when(fn () => (bool) config('stock_notifications.enabled', true) && (bool) config('stock_notifications.emails_enabled', false));
 

@@ -1,0 +1,48 @@
+body.watchline-storefront .watchline-category-brands {
+    padding-top: 24px;
+    padding-bottom: 24px;
+}
+
+body.watchline-storefront .watchline-category-brands .herrera-brand-strip__heading {
+    align-items: center;
+    flex-wrap: nowrap;
+    margin-bottom: 16px;
+}
+
+body.watchline-storefront .watchline-category-brands h2 {
+    min-width: 0;
+    font-size: 20px;
+    color: var(--wl-ink);
+}
+
+body.watchline-storefront .watchline-category-brands .splide__arrows {
+    flex-shrink: 0;
+}
+
+body.watchline-storefront .watchline-category-brands .herrera-brand-strip__brand {
+    height: 100%;
+    border-color: var(--wl-line);
+    color: var(--wl-ink);
+}
+
+body.watchline-storefront .watchline-category-brands .herrera-brand-strip__image img {
+    transform: none;
+}
+
+body.watchline-storefront .watchline-category-brands .herrera-brand-strip__brand:hover,
+body.watchline-storefront .watchline-category-brands .splide__arrow:hover:not(:disabled) {
+    border-color: var(--wl-blue);
+    color: var(--wl-blue-dark);
+}
+
+body.watchline-storefront .watchline-category-brands :is(.herrera-brand-strip__brand, .splide__arrow):focus-visible {
+    outline-color: var(--wl-blue);
+}
+
+body.watchline-storefront .watchline-category-brands__fallback {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}

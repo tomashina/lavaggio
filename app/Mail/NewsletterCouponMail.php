@@ -18,13 +18,14 @@ class NewsletterCouponMail extends Mailable
         public readonly string $storeName,
         public readonly string $shopUrl,
         public readonly string $logoUrl = '',
-    ) {
-    }
+        public readonly float $discountPercent = 10,
+        public readonly bool $watchline = false,
+    ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('mail.newsletter_coupon.subject', ['code' => $this->couponCode]),
+            subject: __($this->watchline ? 'mail.watchline_newsletter_coupon.subject' : 'mail.newsletter_coupon.subject', ['code' => $this->couponCode, 'percent' => $this->discountPercent]),
         );
     }
 
@@ -37,6 +38,8 @@ class NewsletterCouponMail extends Mailable
                 'store_name' => $this->storeName,
                 'shop_url' => $this->shopUrl,
                 'logo_url' => $this->logoUrl,
+                'watchline' => $this->watchline,
+                'discount_percent' => $this->discountPercent,
             ],
         );
     }

@@ -1,10 +1,15 @@
 @php
     $compactProductSpecifications = $compactProductSpecifications ?? app(\App\Support\ProductSpecificationPresenter::class)
         ->compact($product, $locale ?? app()->getLocale(), $fallbackLocale ?? config('app.locale'), (string) ($translation?->description ?? ''));
-    $showAllSpecifications = \App\Support\StorefrontTheme::usesLibermediaBrand();
-    $visibleSpecifications = $showAllSpecifications
-        ? $compactProductSpecifications['primary']->concat($compactProductSpecifications['secondary'])
-        : $compactProductSpecifications['primary'];
+    $isWatchlineSpecifications = config('storefront.home') === 'watchline';
+    $showAllSpecifications = ! $isWatchlineSpecifications && \App\Support\StorefrontTheme::usesLibermediaBrand();
+    $allSpecifications = $compactProductSpecifications['primary']->concat($compactProductSpecifications['secondary']);
+    $visibleSpecifications = $isWatchlineSpecifications
+        ? $allSpecifications->take(6)
+        : ($showAllSpecifications ? $allSpecifications : $compactProductSpecifications['primary']);
+    $remainingSpecifications = $isWatchlineSpecifications
+        ? $allSpecifications->skip(6)
+        : $compactProductSpecifications['secondary'];
 @endphp
 
 @if ($compactProductSpecifications['primary']->isNotEmpty() || $compactProductSpecifications['secondary']->isNotEmpty())
@@ -25,7 +30,7 @@
                 @endforeach
             </dl>
         @endif
-        @if (! $showAllSpecifications && $compactProductSpecifications['secondary']->isNotEmpty())
+        @if (! $showAllSpecifications && $remainingSpecifications->isNotEmpty())
             <details class="product-information-panel herrera-product-more-specifications" data-product-secondary-specifications>
                 <summary class="product-information-summary">
                     <span class="product-information-summary-label">{{ app()->getLocale() === 'hr' ? 'Ostale specifikacije' : 'More specifications' }}</span>
@@ -35,7 +40,7 @@
                     </span>
                 </summary>
                 <dl class="product-information-list product-information-content">
-                    @foreach ($compactProductSpecifications['secondary'] as $fact)
+                    @foreach ($remainingSpecifications as $fact)
                         <div class="product-information-row">
                             <dt>{{ $fact['label'] }}</dt>
                             <dd>{{ $fact['value'] }}</dd>

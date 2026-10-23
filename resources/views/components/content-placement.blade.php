@@ -24,6 +24,14 @@
         }
 
         $partial = 'front.content-blocks.types.'.$block->type;
+        $isWatchlineWidget = str_starts_with((string) $block->type, 'watchline_')
+            && array_key_exists((string) $block->type, (array) config('content_blocks.types', []));
+        if ($isWatchlineWidget) {
+            // Watchline widgets use fixed layouts; editors change data, not Blade files.
+            $overrideView = '';
+            $wrapperStyle = '';
+            $wrapperClasses = '';
+        }
 
         $blockItems = $block->relationLoaded('items')
             ? $block->items
@@ -63,7 +71,7 @@
                 ->sortBy(fn ($row) => array_search((int) $row->id, $productIds, true))
                 ->values();
 
-            if ((string) $block->type === 'products_carousel') {
+            if (in_array((string) $block->type, ['products_carousel', 'watchline_products'], true)) {
                 $products = $products
                     ->filter(function ($product): bool {
                         return \App\Support\Media\LegacyCatalogImage::url(data_get($product->payload, 'opencart.image')) !== null || $product->media
@@ -268,6 +276,9 @@
         }
     @endphp
 
+    @if ($isWatchlineWidget)
+        <div data-watchline-widget="{{ $block->code }}" data-content-block-id="{{ $block->id }}">
+    @endif
     @if ($wrapperClasses !== '' || $wrapperStyle !== '')
         <div @if($wrapperClasses !== '') class="{{ $wrapperClasses }}" @endif @if($wrapperStyle !== '') style="{{ $wrapperStyle }}" @endif>
     @endif
@@ -309,6 +320,9 @@
             ])
         @endif
     @if ($wrapperClasses !== '' || $wrapperStyle !== '')
+        </div>
+    @endif
+    @if ($isWatchlineWidget)
         </div>
     @endif
 @endforeach

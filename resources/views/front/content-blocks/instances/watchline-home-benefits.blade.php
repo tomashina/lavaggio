@@ -1,7 +1,22 @@
-@php($watchlineHome = app(\App\Support\WatchlineHomeContent::class))
-<section class="lm-benefits" aria-label="Prednosti kupnje" data-libermedia-home-benefits>
-    <a href="{{ $watchlineHome->informationUrl('dostav') }}"><x-fa-icon name="truck-fast" style="light" :inline="true" /><span><strong>Dostava i preuzimanje</strong><small>Informacije o vašoj narudžbi</small></span></a>
-    <a href="{{ $watchlineHome->informationUrl('plaćanj') }}"><x-fa-icon name="credit-card" style="light" :inline="true" /><span><strong>Načini plaćanja</strong><small>Odaberite kako želite platiti</small></span></a>
-    <div><x-fa-icon name="shield-check" style="light" :inline="true" /><span><strong>Podrška pri kupnji</strong><small>Od odabira do narudžbe</small></span></div>
-    <div><x-fa-icon name="heart-pulse" style="light" :inline="true" /><span><strong>Tu smo za vas</strong><small>Javite nam se za više informacija</small></span></div>
+@php
+    $watchlineBenefits = \App\Support\WatchlineWidgetSettings::forBlock(
+        ($block ?? null) instanceof \App\Models\Content\ContentBlock ? $block : new \App\Models\Content\ContentBlock(['type' => 'watchline_benefits']),
+        ($translation ?? null) instanceof \App\Models\Content\ContentBlockTranslation ? $translation : null,
+    );
+@endphp
+<section class="lm-benefits" aria-label="{{ $watchlineBenefits['aria_label'] }}" data-libermedia-home-benefits>
+    @foreach ([1, 2, 3, 4] as $watchlineBenefit)
+        @if ($watchlineBenefits['item_'.$watchlineBenefit.'_url'] !== '')
+            <a href="{{ $watchlineBenefits['item_'.$watchlineBenefit.'_url'] }}">
+        @else
+            <div>
+        @endif
+                <x-fa-icon :name="$watchlineBenefits['item_'.$watchlineBenefit.'_icon']" style="regular" :inline="true" />
+                <span><strong>{!! nl2br(e((string) $watchlineBenefits['item_'.$watchlineBenefit.'_title'])) !!}</strong><small>{!! nl2br(e((string) $watchlineBenefits['item_'.$watchlineBenefit.'_description'])) !!}</small></span>
+        @if ($watchlineBenefits['item_'.$watchlineBenefit.'_url'] !== '')
+            </a>
+        @else
+            </div>
+        @endif
+    @endforeach
 </section>

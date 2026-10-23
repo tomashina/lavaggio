@@ -579,6 +579,11 @@ class CheckoutController extends Controller
         $allowedByUser = $request->user() && ((int) $request->user()->id === (int) $order->user_id);
         abort_unless($allowedBySession || $allowedByUser, 404);
 
+        if ((bool) config('commerce.local_safe_mode')) {
+            return redirect()->route('checkout.success', ['orderNumber' => $order->order_number])
+                ->with('status', __('ui.checkout.wspay.local_preview'));
+        }
+
         $sellData = app(KeksPayService::class)->buildSellData($order);
         if (! is_array($sellData)) {
             return redirect()

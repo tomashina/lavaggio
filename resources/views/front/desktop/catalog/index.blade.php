@@ -6,6 +6,18 @@
     $isHerreraCatalog = \App\Support\StorefrontTheme::usesHerreraLayout((string) ($storeSettings['branding']['store_name'] ?? config('app.name')));
     $isShopPage = (bool) ($isShopPage ?? false);
     $isManufacturerPage = (bool) ($isManufacturerPage ?? false);
+    $isWatchlineManufacturerCategoryContext = (bool) ($isWatchlineManufacturerCategoryContext ?? false);
+    $manufacturerCategoryContext = $manufacturerCategoryContext ?? null;
+    $manufacturerCategoryTranslation = $manufacturerCategoryContext?->translations->firstWhere('locale', $locale)
+        ?? $manufacturerCategoryContext?->translations->firstWhere('locale', $fallbackLocale);
+    $manufacturerCategoryLabel = $manufacturerCategoryTranslation?->name ?? __('Odabrana kategorija nije dostupna');
+    $displayBreadcrumbCategories = $breadcrumbCategories ?? collect();
+    if (config('storefront.home') === 'watchline') {
+        $breadcrumbRootIds = $displayBreadcrumbCategories->whereNull('parent_id')->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $displayBreadcrumbCategories = $displayBreadcrumbCategories
+            ->filter(fn ($breadcrumbCategory) => ! $breadcrumbCategory->parent_id || in_array((int) $breadcrumbCategory->parent_id, $breadcrumbRootIds, true))
+            ->values();
+    }
     $manufacturerPageModel = $isManufacturerPage ? $manufacturer : null;
     $showManufacturers = ! $isManufacturerPage
         && app(\App\Services\Catalog\CatalogFeatureService::class)->useManufacturers();
@@ -26,6 +38,9 @@
         $isShopPage => route('shop.index'),
         default => route('categories.show', ['slug' => $translation?->slug ?? $category->id]),
     };
+    if ($isWatchlineManufacturerCategoryContext) {
+        $catalogBaseUrl = url()->query($catalogBaseUrl, ['category' => (string) ($filters['category'] ?? '')]);
+    }
     $catalogUrl = static function (array $query = []) use ($isShopPage, $isManufacturerPage, $translation, $category, $manufacturerPageModel): string {
         if ($isManufacturerPage) {
             return route('manufacturers.show', [
@@ -54,6 +69,9 @@
     $catalogCurrentCategoryLabel = ($isShopPage || $isManufacturerPage)
         ? __('ui.shop.filters.all_categories')
         : ($translation?->name ?? $category->code);
+    if ($isWatchlineManufacturerCategoryContext) {
+        $catalogCurrentCategoryLabel = $manufacturerCategoryLabel;
+    }
     $promoOnlyEnabled = (bool) ($filters['promo_only'] ?? false);
     $catalogNavigationQuery = array_filter([
         'manufacturer' => trim((string) ($filters['manufacturer'] ?? '')),
@@ -62,9 +80,17 @@
     $catalogCurrentCategoryUrl = url()->query($catalogBaseUrl, $catalogNavigationQuery);
     $hasSearchQuery = trim((string) ($filters['q'] ?? '')) !== '';
     $defaultSort = $hasSearchQuery ? 'relevance' : (($isShopPage || $isManufacturerPage) ? 'newest' : 'default');
-    $catalogCategoryUrl = static function ($catalogCategory) use ($isManufacturerPage, $translation, $locale, $fallbackLocale, $catalogNavigationQuery): string {
+    $catalogCategoryUrl = static function ($catalogCategory) use ($isManufacturerPage, $isWatchlineManufacturerCategoryContext, $translation, $locale, $fallbackLocale, $catalogNavigationQuery): string {
         $catalogCategoryTranslation = $catalogCategory->translations->firstWhere('locale', $locale)
             ?? $catalogCategory->translations->firstWhere('locale', $fallbackLocale);
+
+        if ($isWatchlineManufacturerCategoryContext) {
+            return route('manufacturers.show', [
+                'slug' => $translation?->slug,
+                'category' => $catalogCategoryTranslation?->slug ?? $catalogCategory->id,
+                ...$catalogNavigationQuery,
+            ]);
+        }
 
         return route('categories.show', array_filter([
             'slug' => $catalogCategoryTranslation?->slug ?? $catalogCategory->id,
@@ -73,7 +99,8 @@
         ], static fn ($value): bool => $value !== null && $value !== ''));
     };
     $catalogParentCategory = $isHerreraCatalog && ! $isShopPage && ! $isManufacturerPage
-        ? ($breadcrumbCategories ?? collect())->firstWhere('id', $category->parent_id)
+        ? ($displayBreadcrumbCategories->firstWhere('id', $category->parent_id)
+            ?? (config('storefront.home') === 'watchline' ? $displayBreadcrumbCategories->reject(fn ($breadcrumbCategory) => $breadcrumbCategory->id === $category->id)->last() : null))
         : null;
     $catalogParentTranslation = $catalogParentCategory
         ? ($catalogParentCategory->translations->firstWhere('locale', $locale)
@@ -244,14 +271,14 @@
                     <li class="text-slate-400">/</li>
                     <li class="text-slate-700">{{ $catalogHeading }}</li>
                 @else
-                    @foreach (($breadcrumbCategories ?? collect()) as $breadcrumbCategory)
+                    @foreach ($displayBreadcrumbCategories as $breadcrumbCategory)
                         @php
                             $breadcrumbTranslation = $breadcrumbCategory->translations->firstWhere('locale', $locale)
                                 ?? $breadcrumbCategory->translations->firstWhere('locale', $fallbackLocale);
                             $breadcrumbLabel = $breadcrumbTranslation?->name ?? $breadcrumbCategory->code;
                         @endphp
                         <li class="text-slate-400">/</li>
-                        @if ($loop->last)
+                        @if ($breadcrumbCategory->id === $category->id)
                             <li class="text-slate-700">{{ $breadcrumbLabel }}</li>
                         @else
                             <li>
@@ -263,14 +290,23 @@
             </ol>
         </nav>
         <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">{{ $catalogHeading }}</h1>
+        @if ($isWatchlineManufacturerCategoryContext)
+            <p class="mt-1 text-sm text-slate-600" data-watchline-brand-category-context>{{ __('ui.shop.filters.category') }}: {{ $manufacturerCategoryLabel }}</p>
+        @endif
         @if ($showCategoryProducts)
             <p class="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">{{ (int) $products->total() }} {{ __('ui.cart.summary.total') }}</p>
         @endif
         </div>
     </section>
 
-    @if ($isHerreraCatalog && ! $isShopPage && ! $isManufacturerPage && ($subcategoryCards ?? collect())->isNotEmpty())
-        @include('front.partials.herrera-subcategory-carousel', ['carouselCategories' => $subcategoryCards])
+    @if ($isHerreraCatalog && ! $isShopPage && ! $isManufacturerPage)
+        @if (config('storefront.home') === 'watchline')
+            @if (($categoryBrands ?? collect())->isNotEmpty())
+                @include('front.partials.watchline-category-brands')
+            @endif
+        @elseif (($subcategoryCards ?? collect())->isNotEmpty())
+            @include('front.partials.herrera-subcategory-carousel', ['carouselCategories' => $subcategoryCards])
+        @endif
     @endif
 
     @if ($topBlocks->isNotEmpty())
@@ -338,6 +374,9 @@
                     </div>
                     <form method="GET" action="{{ $catalogBaseUrl }}" class="catalog-mobile-filter-panel" data-mobile-filter-panel id="category-mobile-filter-panel">
                         <input type="hidden" name="q" value="{{ $filters['q'] ?? '' }}">
+                        @if ($isWatchlineManufacturerCategoryContext)
+                            <input type="hidden" name="category" value="{{ $filters['category'] }}">
+                        @endif
                         <div class="catalog-mobile-filter-content">
                         @if (($hasSubcategories || $catalogParentCategory) && $categoryFilterPanel['visible'])
                             <details class="catalog-mobile-filter-section" @if ($categoryFilterPanel['default_open']) open @endif>
@@ -698,6 +737,9 @@
                             >
                                 <input type="hidden" name="q" value="{{ $filters['q'] ?? '' }}">
                                 <input type="hidden" name="cols" value="{{ $currentCols }}">
+                                @if ($isWatchlineManufacturerCategoryContext)
+                                    <input type="hidden" name="category" value="{{ $filters['category'] }}">
+                                @endif
 
                                 @if ($showManufacturers && $manufacturerFilterPanel['visible'])
                                     <details class="catalog-sidebar-section" @if ($manufacturerFilterPanel['default_open'] || (! $isHerreraCatalog && trim((string) ($filters['manufacturer'] ?? '')) !== '')) open @endif>

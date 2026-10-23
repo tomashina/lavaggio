@@ -63,7 +63,9 @@
     @if ($storeSettings['legal_warranty']['enabled'] ?? false)
         <link rel="stylesheet" href="{{ asset('front-theme/styles/legal-warranty.css') }}?v={{ filemtime(public_path('front-theme/styles/legal-warranty.css')) }}">
     @endif
-    <link rel="stylesheet" href="{{ asset('front-theme/styles/stock-notifications.css') }}?v={{ filemtime(public_path('front-theme/styles/stock-notifications.css')) }}">
+    @unless (config('storefront.home') === 'watchline')
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/stock-notifications.css') }}?v={{ filemtime(public_path('front-theme/styles/stock-notifications.css')) }}">
+    @endunless
     @stack('styles')
     <link rel="stylesheet" href="{{ asset('front-theme/styles/manufacturer-logos.css') }}?v={{ filemtime(public_path('front-theme/styles/manufacturer-logos.css')) }}">
     @if (\App\Support\StorefrontTheme::usesHerreraLayout((string) ($storeSettings['branding']['store_name'] ?? config('app.name'))))
@@ -83,6 +85,8 @@
         @endif
     @endif
     @if (config('storefront.home') === 'watchline')
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-pages.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-pages.css')) }}">
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-commerce.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-commerce.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline.css')) }}">
     @endif
 </head>
@@ -98,6 +102,7 @@
     $isHerreraBrand = str_contains(strtolower($storeBrandName), 'herrera');
     $herreraStorefront = \App\Support\StorefrontTheme::usesHerreraLayout($storeBrandName);
     $libermediaStorefront = \App\Support\StorefrontTheme::usesLibermediaBrand($storeBrandName);
+    $watchlineStorefront = config('storefront.home') === 'watchline';
     $storeBrandLogoUrl = trim((string) ($storeSettings['branding']['logo_url'] ?? ''));
     $storeBrandDarkLogoUrl = trim((string) ($storeSettings['branding']['dark_logo_url'] ?? '')) ?: ($isHerreraBrand && parse_url($storeBrandLogoUrl, PHP_URL_PATH) === '/assets/brand/herrera-logo.svg'
         ? asset('assets/brand/herrera-logo-dark.svg').'?v='.filemtime(public_path('assets/brand/herrera-logo-dark.svg'))
@@ -198,7 +203,7 @@
                                     @default
                                         <x-fa-icon :inline="$herreraStorefront" name="facebook-f" style="brands" />
                                 @endswitch
-                                @if ($herreraStorefront)
+                                @if ($herreraStorefront || $watchlineStorefront)
                                     <span class="site-top-bar-social-label" aria-hidden="true">{{ ($social['label'] ?? '') ?: match ($social['network']) { 'linkedin' => 'LinkedIn', 'twitter' => 'X', 'tiktok' => 'TikTok', default => ucfirst($social['network']) } }}</span>
                                 @endif
                             </a>
@@ -225,7 +230,7 @@
             @if ($herreraStorefront)
                 <nav class="herrera-primary-navigation" aria-label="{{ __('herrera.header.main_navigation') }}" data-herrera-primary-navigation>
                     @foreach ($mainNavigation as $item)
-                        @continue(($item['type'] ?? '') === 'catalog')
+                        @continue(($item['type'] ?? '') === 'catalog' || (config('storefront.home') === 'watchline' && ($item['type'] ?? '') === 'category'))
                         <a
                             href="{{ $item['url'] ?? '#' }}"
                             @if (!empty($item['open_in_new_tab'])) target="_blank" rel="noopener noreferrer" @endif
@@ -241,6 +246,11 @@
                     @endforeach
                     @include('front.partials.resource-navigation', ['resourceHerreraPrimary' => true, 'resourceMobile' => false])
                 </nav>
+                @if (config('storefront.home') === 'watchline')
+                    <nav class="herrera-catalog-navigation watchline-desktop-categories" aria-label="{{ __('Kategorije proizvoda') }}">
+                        @include('front.desktop.partials.watchline-category-nav', ['watchlineNavSurface' => 'desktop'])
+                    </nav>
+                @else
                 @php
                     $herreraCatalogNavigation = collect($mainNavigation)->firstWhere('type', 'catalog')
                         ?? ['type' => 'catalog', 'url' => route('shop.index'), 'children' => []];
@@ -249,6 +259,7 @@
                 <nav class="herrera-catalog-navigation" aria-label="{{ __('herrera.header.categories') }}" data-herrera-catalog-navigation>
                     @include('front.desktop.partials.main-nav', ['mainNavigation' => [$herreraCatalogNavigation], 'herreraCatalogHeader' => true, 'deferCatalogMega' => true])
                 </nav>
+                @endif
                 @if (! $libermediaStorefront && (! app(\App\Services\Pricing\B2BAccessService::class)->b2cEnabled() || app(\App\Services\Pricing\B2BAccessService::class)->approvedAccount(auth()->user())))
                 <a class="herrera-header-quick-order" href="{{ route('account.b2b.quick-order') }}" data-herrera-quick-order>
                     <x-fa-icon :inline="$herreraStorefront" name="list-check" style="regular" />
@@ -257,11 +268,11 @@
                 @endif
             @endif
 
-            <div id="header-search-panel" class="header-search-panel-shell" data-header-search-panel data-header-search-breakpoint="{{ $herreraStorefront ? '1023' : '1279' }}" @if($herreraStorefront) data-header-search-fullscreen data-header-search-label="{{ __('ui.front.desktop.search') }}" @endif @unless($herreraStorefront) data-header-search-persistent @endunless>
+            <div id="header-search-panel" class="header-search-panel-shell {{ $watchlineStorefront ? 'watchline-header-search-panel' : '' }}" data-header-search-panel data-header-search-breakpoint="{{ $watchlineStorefront ? '0' : ($herreraStorefront ? '1023' : '1279') }}" @if($herreraStorefront && ! $watchlineStorefront) data-header-search-fullscreen data-header-search-label="{{ __('ui.front.desktop.search') }}" @endif @if(! $herreraStorefront || $watchlineStorefront) data-header-search-persistent @endif>
                 <form
                     method="GET"
                     action="{{ route('shop.index') }}"
-                    class="header-search-form"
+                    class="header-search-form {{ $watchlineStorefront ? 'watchline-header-search' : '' }}"
                     role="search"
                     autocomplete="off"
                     data-header-search-form
@@ -298,9 +309,9 @@
                         data-header-search-input
                     >
                     <button type="submit" class="header-search-submit" aria-label="{{ __('ui.shop.filters.search') }}">
-                        <x-fa-icon :inline="$herreraStorefront" name="magnifying-glass" :style="$libermediaStorefront ? 'regular' : 'solid'" />
+                        <x-fa-icon :inline="$herreraStorefront" name="magnifying-glass" :style="$watchlineStorefront ? 'solid' : ($libermediaStorefront ? 'regular' : 'solid')" />
                     </button>
-                    @if ($herreraStorefront)
+                    @if ($herreraStorefront && ! $watchlineStorefront)
                         <button type="button" class="header-search-panel-close" aria-label="{{ __('Zatvori pretragu') }}" data-header-search-close>
                             <x-fa-icon inline name="xmark" />
                         </button>
@@ -342,18 +353,18 @@
                 <x-front.storefront-theme-toggle />
                 @auth
                     <a href="{{ route('account.dashboard') }}" class="inline-flex min-w-[136px] items-center justify-center gap-2 border-r border-slate-200 px-4 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-black">
-                        <x-fa-icon :inline="$herreraStorefront" :name="$libermediaStorefront ? 'circle-user' : 'user'" style="regular" class="h-5 w-5" />
+                        <x-fa-icon :inline="$herreraStorefront" :name="$watchlineStorefront ? 'user' : ($libermediaStorefront ? 'circle-user' : 'user')" :style="$watchlineStorefront ? 'solid' : 'regular'" class="h-5 w-5" />
                         {{ __('ui.front.desktop.account') }}
                     </a>
                 @else
                     <a href="{{ route('front.auth.login') }}" class="inline-flex min-w-[136px] items-center justify-center gap-2 border-r border-slate-200 px-4 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-black">
-                        <x-fa-icon :inline="$herreraStorefront" :name="$libermediaStorefront ? 'circle-user' : 'user'" style="regular" class="h-5 w-5" />
+                        <x-fa-icon :inline="$herreraStorefront" :name="$watchlineStorefront ? 'user' : ($libermediaStorefront ? 'circle-user' : 'user')" :style="$watchlineStorefront ? 'solid' : 'regular'" class="h-5 w-5" />
                         {{ $libermediaStorefront || app(\App\Services\Pricing\B2BAccessService::class)->b2cEnabled() ? __('Prijavi se') : ($herreraStorefront ? __('herrera.header.login') : __('ui.front.desktop.account')) }}
                     </a>
                 @endauth
 
                 <a href="{{ route('wishlist.index') }}" class="relative inline-flex h-full w-[76px] items-center justify-center border-r border-slate-200 text-slate-700 transition hover:bg-slate-50 hover:text-black {{ $wishlistCount > 0 ? '' : 'hidden' }}" aria-label="{{ __('ui.front.desktop.favorites') }}: {{ $wishlistCount }}" data-wishlist-link>
-                    <x-fa-icon :inline="$herreraStorefront" name="heart" style="regular" class="block h-5 w-5 text-current" />
+                    <x-fa-icon :inline="$herreraStorefront" name="heart" :style="$watchlineStorefront ? 'solid' : 'regular'" class="block h-5 w-5 text-current" />
                     <span class="header-count-badge absolute right-3 top-4 z-10 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-bold" data-wishlist-count>
                         {{ $wishlistCount }}
                     </span>
@@ -368,7 +379,7 @@
                         aria-expanded="false"
                         data-header-cart-trigger
                     >
-                        <x-fa-icon :inline="$herreraStorefront" :name="$libermediaStorefront ? 'basket-shopping' : 'bag-shopping'" :style="$libermediaStorefront ? 'regular' : 'solid'" class="header-cart-trigger-icon" />
+                        <x-fa-icon :inline="$herreraStorefront" :name="$watchlineStorefront ? 'bag-shopping' : ($libermediaStorefront ? 'basket-shopping' : 'bag-shopping')" :style="$watchlineStorefront ? 'solid' : ($libermediaStorefront ? 'regular' : 'solid')" class="header-cart-trigger-icon" />
                         <span class="header-count-badge header-cart-count" data-cart-count>
                             {{ (int) $cartSummary['item_qty'] }}
                         </span>
@@ -382,7 +393,7 @@
             </div>
 
             <div class="responsive-header-actions flex h-full items-stretch border-l border-slate-200 lg:hidden">
-                @if ($herreraStorefront && ! $libermediaStorefront)
+                @if ($herreraStorefront && ! $libermediaStorefront && ! $watchlineStorefront)
                     <button
                         type="button"
                         class="responsive-header-action inline-flex w-12 items-center justify-center border-r border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 hover:text-black sm:w-14"
@@ -397,34 +408,34 @@
                 <x-front.storefront-theme-toggle :mobile="true" />
                 @auth
                     <a href="{{ route('account.dashboard') }}" class="responsive-header-action inline-flex w-12 items-center justify-center border-r border-slate-200 text-slate-700 transition hover:bg-slate-50 hover:text-black sm:w-14 lg:w-16" aria-label="{{ __('ui.front.desktop.account') }}">
-                        <x-fa-icon :inline="$herreraStorefront" :name="$libermediaStorefront ? 'circle-user' : 'user'" style="regular" class="h-5 w-5" />
+                        <x-fa-icon :inline="$herreraStorefront" :name="$watchlineStorefront ? 'user' : ($libermediaStorefront ? 'circle-user' : 'user')" :style="$watchlineStorefront ? 'solid' : 'regular'" class="h-5 w-5" />
                     </a>
                 @else
                     <a href="{{ route('front.auth.login') }}" class="responsive-header-action inline-flex w-12 items-center justify-center border-r border-slate-200 text-slate-700 transition hover:bg-slate-50 hover:text-black sm:w-14 lg:w-16" aria-label="{{ __('ui.front.desktop.sign_in') }}">
-                        <x-fa-icon :inline="$herreraStorefront" :name="$libermediaStorefront ? 'circle-user' : 'user'" style="regular" class="h-5 w-5" />
+                        <x-fa-icon :inline="$herreraStorefront" :name="$watchlineStorefront ? 'user' : ($libermediaStorefront ? 'circle-user' : 'user')" :style="$watchlineStorefront ? 'solid' : 'regular'" class="h-5 w-5" />
                     </a>
                 @endauth
 
                 <a href="{{ route('wishlist.index') }}" class="responsive-header-action relative inline-flex w-12 items-center justify-center border-r border-slate-200 text-slate-700 transition hover:bg-slate-50 hover:text-black sm:w-14 lg:w-16 {{ $herreraStorefront && $wishlistCount === 0 ? 'hidden' : '' }}" aria-label="{{ __('ui.front.desktop.favorites') }}: {{ $wishlistCount }}" data-wishlist-link @unless($herreraStorefront) data-wishlist-always-visible @endunless>
-                    <x-fa-icon :inline="$herreraStorefront" name="heart" style="regular" class="h-5 w-5" />
+                    <x-fa-icon :inline="$herreraStorefront" name="heart" :style="$watchlineStorefront ? 'solid' : 'regular'" class="h-5 w-5" />
                     <span class="header-count-badge absolute right-0.5 top-2.5 h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold {{ $wishlistCount > 0 ? 'inline-flex' : 'hidden' }}" data-wishlist-count>
                         {{ $wishlistCount }}
                     </span>
                 </a>
 
                 <a href="{{ route('cart.index') }}" class="responsive-header-action relative inline-flex h-full w-12 items-center justify-center border-r border-slate-200 text-slate-900 transition hover:bg-slate-50 hover:text-black sm:w-14 lg:w-16" aria-label="{{ __('ui.front.desktop.cart') }}: {{ (int) $cartSummary['item_qty'] }}">
-                    <x-fa-icon :inline="$herreraStorefront" :name="$libermediaStorefront ? 'basket-shopping' : 'bag-shopping'" :style="$libermediaStorefront ? 'regular' : 'solid'" class="h-6 w-6" />
+                    <x-fa-icon :inline="$herreraStorefront" :name="$watchlineStorefront ? 'bag-shopping' : ($libermediaStorefront ? 'basket-shopping' : 'bag-shopping')" :style="$watchlineStorefront ? 'solid' : ($libermediaStorefront ? 'regular' : 'solid')" class="h-6 w-6" />
                     <span class="header-count-badge absolute right-0.5 top-2.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold" data-cart-count>
                         {{ (int) $cartSummary['item_qty'] }}
                     </span>
                 </a>
 
                 <button type="button" class="responsive-header-action flex h-full w-12 items-center justify-center border-r border-slate-200 bg-white text-slate-900 transition hover:bg-slate-50 sm:w-14 lg:w-16" aria-label="{{ __('ui.front.desktop.open_navigation') }}" data-mobile-menu-open>
-                    <x-fa-icon :inline="$herreraStorefront" name="bars" class="h-5 w-5" />
+                    <x-fa-icon :inline="$herreraStorefront" :name="$watchlineStorefront ? 'bars-staggered' : 'bars'" style="solid" class="h-5 w-5" />
                 </button>
             </div>
         </div>
-        @if ($herreraStorefront)
+        @if ($herreraStorefront && ! $watchlineStorefront)
             @php
                 $herreraMobileCatalogExpandable = collect($mainNavigation)->contains(
                     fn ($item) => ($item['type'] ?? '') === 'catalog' && collect($item['children'] ?? [])->isNotEmpty()
@@ -629,11 +640,22 @@
         </section>
         @endif
 
-        @yield('home-footer-benefits')
+        @if ($watchlineStorefront)
+            @php
+                $watchlineFooterBenefits = app(\App\Services\Content\ContentBlockResolver::class)->forPlacement('footer.benefits', app()->getLocale(), null, null, 'desktop');
+            @endphp
+            @if ($watchlineFooterBenefits->isNotEmpty())
+                <div class="lm-footer-benefits wl-footer-benefits">
+                    @include('components.content-placement', ['items' => $watchlineFooterBenefits])
+                </div>
+            @endif
+        @else
+            @yield('home-footer-benefits')
+        @endif
 
         @include('front.partials.legal-warranty-notice', ['warrantyVariant' => 'footer'])
 
-        @if ((bool) ($benefitsBar['enabled'] ?? true) && $footerBenefits->isNotEmpty())
+        @if (! $watchlineStorefront && (bool) ($benefitsBar['enabled'] ?? true) && $footerBenefits->isNotEmpty())
             <div class="site-footer-benefits grid md:grid-cols-3">
                 @foreach ($footerBenefits as $benefitIndex => $benefitItem)
                     @php
@@ -894,22 +916,40 @@
 <script>
     (function () {
         @if (!empty($newsletterCaptchaEnabled))
-            let newsletterCaptchaReady = Promise.resolve();
-            const newsletterCaptchaScript = document.createElement('script');
-            newsletterCaptchaScript.src = 'https://www.google.com/recaptcha/api.js?render={{ $newsletterCaptchaSiteKey }}';
-            newsletterCaptchaScript.async = true;
-            newsletterCaptchaScript.defer = true;
-            newsletterCaptchaReady = new Promise(function (resolve) {
-                newsletterCaptchaScript.onload = resolve;
-                newsletterCaptchaScript.onerror = resolve;
-            });
-            document.head.appendChild(newsletterCaptchaScript);
+            // Load footer CAPTCHA only when the visitor interacts with its form.
+            let newsletterCaptchaReady = null;
+            const loadNewsletterCaptcha = function () {
+                if (window.grecaptcha && typeof window.grecaptcha.ready === 'function') {
+                    return Promise.resolve();
+                }
+                if (newsletterCaptchaReady) {
+                    return newsletterCaptchaReady;
+                }
+                newsletterCaptchaReady = new Promise(function (resolve) {
+                    const newsletterCaptchaScript = document.createElement('script');
+                    newsletterCaptchaScript.src = 'https://www.google.com/recaptcha/api.js?render=' + encodeURIComponent(@json($newsletterCaptchaSiteKey));
+                    newsletterCaptchaScript.async = true;
+                    newsletterCaptchaScript.onload = resolve;
+                    newsletterCaptchaScript.onerror = function () {
+                        newsletterCaptchaReady = null;
+                        newsletterCaptchaScript.remove();
+                        resolve();
+                    };
+                    document.head.appendChild(newsletterCaptchaScript);
+                });
+                return newsletterCaptchaReady;
+            };
+            @unless ($watchlineStorefront)
+                loadNewsletterCaptcha();
+            @endunless
         @else
-            const newsletterCaptchaReady = Promise.resolve();
+            const loadNewsletterCaptcha = function () { return Promise.resolve(); };
         @endif
 
         const newsletterForm = document.querySelector('[data-newsletter-form]');
         if (newsletterForm) {
+            newsletterForm.addEventListener('focusin', loadNewsletterCaptcha, { once: true });
+            newsletterForm.addEventListener('pointerdown', loadNewsletterCaptcha, { once: true });
             const emailInput = newsletterForm.querySelector('[data-newsletter-email]');
             const errorMessage = newsletterForm.querySelector('[data-newsletter-error]');
             const acceptTermsInput = newsletterForm.querySelector('[data-newsletter-accept-terms]');
@@ -1046,7 +1086,7 @@
                     return Promise.resolve();
                 }
 
-                return newsletterCaptchaReady.then(function () {
+                return loadNewsletterCaptcha().then(function () {
                     if (!window.grecaptcha || typeof window.grecaptcha.ready !== 'function') {
                         tokenInput.value = '';
                         return;
@@ -1209,7 +1249,9 @@
     <script defer src="{{ asset('front-theme/scripts/scroll-to-top.js') }}?v={{ filemtime(public_path('front-theme/scripts/scroll-to-top.js')) }}"></script>
 @endif
 @stack('stock-notification-modals')
-<script defer src="{{ asset('front-theme/scripts/stock-notifications.js') }}?v={{ filemtime(public_path('front-theme/scripts/stock-notifications.js')) }}"></script>
+@unless (config('storefront.home') === 'watchline')
+    <script defer src="{{ asset('front-theme/scripts/stock-notifications.js') }}?v={{ filemtime(public_path('front-theme/scripts/stock-notifications.js')) }}"></script>
+@endunless
 @stack('scripts')
 </body>
 </html>

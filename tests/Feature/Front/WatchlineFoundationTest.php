@@ -18,7 +18,7 @@ class WatchlineFoundationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_watchline_retains_the_complete_liber_media_home_layout_with_its_own_records(): void
+    public function test_watchline_opens_with_three_promotions_and_retains_its_other_home_modules(): void
     {
         $this->app['env'] = 'local';
         $this->watchline();
@@ -32,15 +32,28 @@ class WatchlineFoundationTest extends TestCase
         $product->categories()->attach($category);
         $this->artisan('watchline:configure-home')->assertSuccessful();
 
-        $this->get('/')->assertOk()->assertSee('libermedia-storefront', false)
+        $response = $this->get('/')->assertOk()->assertSee('libermedia-storefront', false)
             ->assertSee('libermedia.css', false)->assertSee('libermedia-home-modules.css', false)
-            ->assertSee('data-libermedia-home-hero', false)->assertSee('libermedia-hero-headline', false)
-            ->assertSee('data-libermedia-campaigns', false)->assertSee('data-libermedia-kindergarten', false)
-            ->assertSee('data-libermedia-creative-products', false)->assertSee('data-libermedia-assurance', false)
+            ->assertSee('data-libermedia-campaigns', false)->assertSee('data-watchline-locations', false)
+            ->assertSee('data-libermedia-creative-products', false)->assertDontSee('data-libermedia-assurance', false)
             ->assertSee('data-libermedia-home-benefits', false)->assertSee('https://www.watchline.hr/image/catalog/watch.jpg', false)
             ->assertSee('https://www.watchline.hr/image/catalog/logo-white-blue.svg', false)
+            ->assertSeeInOrder(['data-libermedia-campaigns', 'data-watchline-locations', 'data-libermedia-creative-products'], false)
+            ->assertDontSee('data-watchline-hero', false)->assertDontSee('data-watchline-categories', false)
+            ->assertDontSee('front-theme/scripts/watchline-hero.js', false)
+            ->assertDontSee('Pronađite svoj detalj.')->assertDontSee('WATCHLINE. VAŠ TRENUTAK.')
+            ->assertDontSee('Pronađite svoj novi omiljeni detalj')
             ->assertDontSee('Didaktičke igračke')->assertDontSee('schoolbag-unicorn.webp', false)
             ->assertDontSee('data-herrera-home-registration', false);
+
+        $document = new \DOMDocument;
+        @$document->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($document);
+        $this->assertSame(1, $xpath->query('//main//h1')->length);
+        $this->assertSame(1, $xpath->query('//main//*[@data-watchline-cluse-campaign]//h1[contains(concat(" ", normalize-space(@class), " "), " wl-campaign-title ")]')->length);
+        $this->assertSame(0, $xpath->query('//main//h1[contains(concat(" ", normalize-space(@class), " "), " sr-only ")]')->length);
+        $this->assertSame(1, $xpath->query('//main/section[1]//*[@data-libermedia-campaigns]')->length);
+        $this->assertSame(3, $xpath->query('//*[@data-libermedia-campaigns]//article')->length);
     }
 
     public function test_source_special_priority_is_preserved_across_overlapping_date_periods(): void
@@ -62,6 +75,7 @@ class WatchlineFoundationTest extends TestCase
 
     public function test_home_shows_approved_imported_product_reviews_without_requiring_a_featured_flag(): void
     {
+        $this->app['env'] = 'local';
         $this->watchline();
         $product = $this->product();
         $attributes = [
@@ -73,13 +87,13 @@ class WatchlineFoundationTest extends TestCase
         Comment::create($attributes);
         Comment::create(array_replace($attributes, ['body' => 'Recenzija koja čeka odobrenje', 'status' => Comment::STATUS_PENDING]));
         Comment::create(array_replace($attributes, ['body' => 'Opći komentar trgovine', 'commentable_type' => null, 'commentable_id' => null]));
+        $this->artisan('watchline:configure-home')->assertSuccessful();
 
         $this->get('/')->assertOk()->assertSee('data-libermedia-home-reviews-carousel', false)
             ->assertSee('Uvezena recenzija sata')->assertSee('data-home-review-rating="4"', false)
             ->assertSee(route('products.show', ['slug' => 'watchline-test']).'#product-comments', false)
             ->assertSee('https://www.watchline.hr/image/catalog/watch.jpg', false)
-            ->assertDontSee('Recenzija koja čeka odobrenje')->assertDontSee('Opći komentar trgovine')
-            ->assertViewHas('featuredReviews', fn ($reviews) => $reviews->count() === 1);
+            ->assertDontSee('Recenzija koja čeka odobrenje')->assertDontSee('Opći komentar trgovine');
 
         $this->get(route('reviews.index'))->assertOk()->assertSee('Uvezena recenzija sata')
             ->assertSee('data-reviews-total="1"', false)

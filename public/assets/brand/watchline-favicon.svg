@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="20 -5 76 76">
+  <title>Watchline W</title>
+  <rect x="20" y="-5" width="76" height="76" rx="12" fill="#fff"/>
+  <polyline fill="#132A38" points="51.304,23.919 73.473,48.51 86.419,34.445 89.773,34.445 73.193,59.223 51.304,23.919"/>
+  <polyline fill="#0093DD" points="27.086,25.41 48.323,48.696 81.762,6.874 48.137,59.502 27.086,25.41"/>
+</svg>

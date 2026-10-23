@@ -16,6 +16,8 @@ use App\Models\Content\Blog\BlogPost;
 use App\Models\User;
 use App\Services\Catalog\CatalogFeatureService;
 use App\Services\Catalog\LibermediaSpecificationFilterIndex;
+use App\Services\Catalog\WatchlineCatalogFacets;
+use App\Services\Catalog\WatchlineCategoryBrandService;
 use App\Services\Content\ContentBlockResolver;
 use App\Services\Front\GuestStorefrontCache;
 use App\Services\Front\StorefrontProductSearch;
@@ -219,7 +221,7 @@ class CatalogController extends Controller
         string $search,
         int $limit
     ): array {
-        $query = Category::query()
+        $query = $this->categoryNavigationQuery(Category::query())
             ->where('scope', Category::SCOPE_CATALOG)
             ->currentlyVisible()
             ->whereHas('translations', function ($translationQuery) use ($locale, $fallbackLocale, $search): void {
@@ -434,6 +436,9 @@ class CatalogController extends Controller
             : null;
         $search = trim((string) $request->query('q', ''));
         $categorySlug = trim((string) $request->query('category', ''));
+        $isWatchlineManufacturerCategoryContext = $isManufacturerPage
+            && config('storefront.home') === 'watchline' && $categorySlug !== '';
+        $manufacturerCategoryContext = null;
         $manufacturerSlug = $isManufacturerPage
             ? (string) ($catalogManufacturerTranslation?->slug ?? '')
             : trim((string) $request->query('manufacturer', ''));
@@ -448,6 +453,22 @@ class CatalogController extends Controller
         $categoryScopeIds = $categorySlug !== ''
             ? $this->cachedCatalogCategoryScopeIds($locale, $fallbackLocale, $categorySlug)
             : null;
+        if ($isWatchlineManufacturerCategoryContext) {
+            $manufacturerCategoryContext = Category::query()
+                ->where('scope', Category::SCOPE_CATALOG)->currentlyVisible()
+                ->whereHas('translations', fn ($translations) => $translations
+                    ->where('scope', Category::SCOPE_CATALOG)
+                    ->whereIn('locale', [$locale, $fallbackLocale])->where('slug', $categorySlug))
+                ->with(['translations' => fn ($translations) => $translations
+                    ->where('scope', Category::SCOPE_CATALOG)->whereIn('locale', [$locale, $fallbackLocale])])
+                ->first();
+            // Context is validated live so a stale category-scope cache cannot broaden a brand page.
+            $categoryScopeIds = $manufacturerCategoryContext
+                ? $manufacturerCategoryContext->descendants()->where('scope', Category::SCOPE_CATALOG)
+                    ->currentlyVisible()->pluck('id')->prepend($manufacturerCategoryContext->id)
+                    ->map(fn ($id): int => (int) $id)->unique()->values()->all()
+                : [];
+        }
         $manufacturerId = $isManufacturerPage
             ? (int) $catalogManufacturer->id
             : ($manufacturerSlug !== ''
@@ -589,8 +610,9 @@ class CatalogController extends Controller
                 continue;
             }
 
-            $query->whereHas('attributes', function ($attributeQuery) use ($selectedAttributeId): void {
-                $attributeQuery->where('catalog_attributes.id', $selectedAttributeId);
+            $selectedAttributeIds = WatchlineCatalogFacets::selectedIds($attributeFilter, $selectedAttributeId);
+            $query->whereHas('attributes', function ($attributeQuery) use ($selectedAttributeIds): void {
+                $attributeQuery->whereIn('catalog_attributes.id', $selectedAttributeIds);
             });
         }
 
@@ -630,7 +652,25 @@ class CatalogController extends Controller
             ->withQueryString();
         app(PriceCatalogResolver::class)->preloadProducts($products->getCollection(), $request->user());
 
-        if ($promoOnly) {
+        if ($isWatchlineManufacturerCategoryContext) {
+            $categories = collect();
+            if ($manufacturerCategoryContext) {
+                $navigationQuery = $this->categoryNavigationQuery(Category::query()
+                    ->where('parent_id', $manufacturerCategoryContext->id));
+                if ($promoOnly) {
+                    $categories = $this->promotionCatalogCategories($navigationQuery, $locale, $fallbackLocale,
+                        $request->user(), $availableOnly, $manufacturerId);
+                } else {
+                    $navigationCategories = $navigationQuery->where('scope', Category::SCOPE_CATALOG)->currentlyVisible()
+                        ->with(['translations' => fn ($translations) => $translations
+                            ->where('scope', Category::SCOPE_CATALOG)->whereIn('locale', [$locale, $fallbackLocale])])
+                        ->orderBy('sort_order')->orderBy('id')->get();
+                    $categories = $this->withRecursiveCatalogProductCounts($navigationCategories,
+                        $this->hideOutOfStockProducts() || $availableOnly, $manufacturerId)
+                        ->filter(fn (Category $category): bool => (int) $category->products_count > 0)->values();
+                }
+            }
+        } elseif ($promoOnly) {
             $categories = $this->promotionCatalogCategories(
                 Category::query()->whereNull('parent_id'),
                 $locale,
@@ -662,6 +702,8 @@ class CatalogController extends Controller
             'isShopPage' => ! $isManufacturerPage && $this->frontendVariant($request) === 'desktop',
             'isManufacturerPage' => $isManufacturerPage,
             'manufacturer' => $catalogManufacturer,
+            'isWatchlineManufacturerCategoryContext' => $isWatchlineManufacturerCategoryContext,
+            'manufacturerCategoryContext' => $manufacturerCategoryContext,
             'category' => null,
             'products' => $products,
             'categories' => $categories,
@@ -789,7 +831,7 @@ class CatalogController extends Controller
 
         if ($showCategoryFilters) {
             $configuredOptionIds = $this->configuredFilterOptionIds();
-            $configuredAttributeGroups = array_values(array_unique([
+            $configuredAttributeGroups = WatchlineCatalogFacets::enabled() ? $this->configuredFilterAttributeGroups() : array_values(array_unique([
                 ...$this->configuredFilterAttributeGroups(),
                 'sastav',
                 'material',
@@ -877,8 +919,9 @@ class CatalogController extends Controller
                     continue;
                 }
 
-                $productsQuery->whereHas('attributes', function ($attributeQuery) use ($selectedAttributeId): void {
-                    $attributeQuery->where('catalog_attributes.id', $selectedAttributeId);
+                $selectedAttributeIds = WatchlineCatalogFacets::selectedIds($attributeFilter, $selectedAttributeId);
+                $productsQuery->whereHas('attributes', function ($attributeQuery) use ($selectedAttributeIds): void {
+                    $attributeQuery->whereIn('catalog_attributes.id', $selectedAttributeIds);
                 });
             }
 
@@ -1006,7 +1049,7 @@ class CatalogController extends Controller
 
         // Category navigation remains available when the product/filter panels are hidden.
         $childCategories = ($usesHerreraLayout || ($showCategoryFilters && ! $promoOnly))
-            ? $category->children()
+            ? $this->categoryNavigationQuery($category->children()->getQuery())
                 ->where('scope', Category::SCOPE_CATALOG)
                 ->currentlyVisible()
                 ->with(['translations' => fn ($q) => $q
@@ -1080,6 +1123,10 @@ class CatalogController extends Controller
             'attributeFilters' => $this->withSelectedFilters($attributeFilters, $selectedAttributeFilters),
             'subcategories' => $subcategories,
             'subcategoryCards' => $usesHerreraLayout ? $childCategories : collect(),
+            'categoryBrands' => config('storefront.home') === 'watchline' && app(CatalogFeatureService::class)->useManufacturers()
+                && $category->ancestors()->count() < 2
+                ? app(WatchlineCategoryBrandService::class)->forCategoryScope($categoryScopeIds, $locale, $fallbackLocale, $this->hideOutOfStockProducts())
+                : collect(),
             'breadcrumbCategories' => $breadcrumbCategories,
             'topBlocks' => $topBlocks,
             'bottomBlocks' => $bottomBlocks,
@@ -1189,7 +1236,7 @@ class CatalogController extends Controller
         bool $availableOnly,
         ?int $manufacturerId = null
     ): Collection {
-        $categories = $categoryQuery
+        $categories = $this->categoryNavigationQuery($categoryQuery)
             ->select(['id', 'code', 'parent_id', 'sort_order'])
             ->where('scope', Category::SCOPE_CATALOG)
             ->currentlyVisible()
@@ -1245,10 +1292,10 @@ class CatalogController extends Controller
         bool $availableOnly = false
     ) {
         $hideOutOfStock = $this->hideOutOfStockProducts() || $availableOnly;
-        $cacheKey = sprintf('front:catalog:categories:v2:%s:%s:%s', $locale, $fallbackLocale, $this->localAvailabilityOnly ? 'local-48h' : ($hideOutOfStock ? 'hide-oos' : 'all-stock'));
+        $cacheKey = sprintf('front:catalog:categories:v3:%s:%s:%s:%s', $locale, $fallbackLocale, $this->localAvailabilityOnly ? 'local-48h' : ($hideOutOfStock ? 'hide-oos' : 'all-stock'), config('storefront.home') === 'watchline' ? 'two-levels' : 'full-depth');
 
         return Cache::remember($this->publicSourceCacheKey($cacheKey), $this->publicSourceCacheSeconds(600), function () use ($locale, $fallbackLocale, $hideOutOfStock) {
-            return Category::query()
+            return $this->categoryNavigationQuery(Category::query())
                 ->select(['id', 'code', 'sort_order'])
                 ->where('scope', Category::SCOPE_CATALOG)
                 ->currentlyVisible()
@@ -1263,6 +1310,18 @@ class CatalogController extends Controller
                 ->filter(fn (Category $category): bool => (int) $category->products_count > 0)
                 ->values();
         });
+    }
+
+    private function categoryNavigationQuery(Builder $query): Builder
+    {
+        if (config('storefront.home') === 'watchline') {
+            $query->where(function (Builder $navigation): void {
+                $navigation->whereNull('categories.parent_id')
+                    ->orWhereIn('categories.parent_id', fn (QueryBuilder $roots) => $roots->select('id')->from('categories')->whereNull('parent_id'));
+            });
+        }
+
+        return $query;
     }
 
     private function cachedShopCatalogCategories(
@@ -1498,6 +1557,9 @@ class CatalogController extends Controller
      */
     private function configuredFilterOptionIds(): array
     {
+        if (WatchlineCatalogFacets::enabled()) {
+            return [];
+        }
         $raw = app(SystemSettingsService::class)->get('store_product_filter_option_ids', []);
 
         return collect(is_array($raw) ? $raw : [])
@@ -1513,6 +1575,9 @@ class CatalogController extends Controller
      */
     private function configuredFilterAttributeGroups(): array
     {
+        if (WatchlineCatalogFacets::enabled()) {
+            return WatchlineCatalogFacets::sourceGroupCodes();
+        }
         $raw = app(SystemSettingsService::class)->get('store_product_filter_attribute_group_codes', []);
 
         $autoGroups = \App\Support\StorefrontTheme::usesLibermediaBrand() ? LibermediaSpecificationFilterIndex::groupCodes() : [];
@@ -1712,6 +1777,28 @@ class CatalogController extends Controller
                     });
                 }
             };
+            if (WatchlineCatalogFacets::enabled()) {
+                $filters = app(WatchlineCatalogFacets::class)->definitions($locale, $fallbackLocale);
+                $ids = collect($filters)->flatMap(fn (array $filter) => collect($filter['values'])->flatMap(fn (array $value) => $value['attribute_ids']))->unique()->values()->all();
+                if ($ids === []) {
+                    return [];
+                }
+                $products = Product::query()->select('products.id');
+                $productScope($products);
+                $valueId = WatchlineCatalogFacets::valueIdExpression($filters, 'facet_attribute_links.attribute_id');
+                $counts = DB::table('catalog_attribute_product as facet_attribute_links')
+                    ->joinSub($products, 'facet_products', 'facet_products.id', '=', 'facet_attribute_links.product_id')
+                    ->whereIn('facet_attribute_links.attribute_id', $ids)
+                    ->selectRaw($valueId.' as value_id, COUNT(DISTINCT facet_products.id) as product_count')
+                    ->groupByRaw($valueId)->pluck('product_count', 'value_id')->all();
+
+                return collect($filters)->map(function (array $filter) use ($counts): array {
+                    $filter['values'] = collect($filter['values'])->filter(fn (array $value): bool => (int) ($counts[$value['id']] ?? 0) > 0)
+                        ->map(fn (array $value): array => $value + ['count' => (int) $counts[$value['id']]])->values()->all();
+
+                    return $filter;
+                })->filter(fn (array $filter): bool => $filter['values'] !== [])->values()->all();
+            }
             $attributes = Attribute::query()
                 ->whereIn('group_code', $groupCodes)
                 ->where('is_active', true)
@@ -1792,6 +1879,9 @@ class CatalogController extends Controller
         ?int $manufacturerId = null,
         bool $availableOnly = false
     ): array {
+        if (WatchlineCatalogFacets::enabled()) {
+            return [];
+        }
         $sizes = $this->cachedCatalogSizes(
             $locale,
             $fallbackLocale,
@@ -1912,6 +2002,8 @@ class CatalogController extends Controller
                 return [
                     'group_code' => $groupCode,
                     'value_id' => $valueId,
+                    'source_group_codes' => $filter['source_group_codes'] ?? [$groupCode],
+                    'value_ids' => WatchlineCatalogFacets::selectedIds($filter, $valueId),
                 ];
             })
             ->filter()
@@ -1932,7 +2024,7 @@ class CatalogController extends Controller
             ->values()
             ->all();
         $candidateAttributeIds = collect($attributeFilters)
-            ->flatMap(fn (array $filter): array => array_column((array) ($filter['values'] ?? []), 'id'))
+            ->flatMap(fn (array $filter) => collect($filter['values'] ?? [])->flatMap(fn (array $value): array => $value['attribute_ids'] ?? [(int) $value['id']]))
             ->map(fn ($id): int => (int) $id)
             ->filter(fn (int $id): bool => $id > 0)
             ->unique()
@@ -1949,6 +2041,7 @@ class CatalogController extends Controller
             'candidate_attributes' => $candidateAttributeIds,
             'selected_options' => $selectedOptions,
             'selected_attributes' => $selectedAttributes,
+            'attribute_aliases' => WatchlineCatalogFacets::valueIdExpression($attributeFilters, 'facet_attributes.id'),
         ];
         $cacheKey = 'front:catalog:refined-filter-availability:v2:'.sha1(
             json_encode($cachePayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: ''
@@ -1961,7 +2054,8 @@ class CatalogController extends Controller
             $selectedAttributes,
             $scopeIds,
             $manufacturerId,
-            $hideOutOfStock
+            $hideOutOfStock,
+            $attributeFilters
         ): array {
             $applyProductScope = function (QueryBuilder $query) use (
                 $scopeIds,
@@ -2023,7 +2117,7 @@ class CatalogController extends Controller
                             ->selectRaw('1')
                             ->from('catalog_attribute_product as selected_attribute_links')
                             ->whereColumn('selected_attribute_links.product_id', 'products.id')
-                            ->where('selected_attribute_links.attribute_id', (int) $selectedAttribute['value_id']);
+                            ->whereIn('selected_attribute_links.attribute_id', $selectedAttribute['value_ids']);
                     });
                 }
 
@@ -2062,20 +2156,21 @@ class CatalogController extends Controller
                 foreach ($selectedAttributes as $selectedAttribute) {
                     $attributeQuery->where(function (QueryBuilder $selectionQuery) use ($selectedAttribute): void {
                         $selectionQuery
-                            ->where('facet_attributes.group_code', (string) $selectedAttribute['group_code'])
+                            ->whereIn('facet_attributes.group_code', $selectedAttribute['source_group_codes'])
                             ->orWhereExists(function (QueryBuilder $existsQuery) use ($selectedAttribute): void {
                                 $existsQuery
                                     ->selectRaw('1')
                                     ->from('catalog_attribute_product as selected_attribute_links')
                                     ->whereColumn('selected_attribute_links.product_id', 'products.id')
-                                    ->where('selected_attribute_links.attribute_id', (int) $selectedAttribute['value_id']);
+                                    ->whereIn('selected_attribute_links.attribute_id', $selectedAttribute['value_ids']);
                             });
                     });
                 }
 
+                $attributeValueId = WatchlineCatalogFacets::valueIdExpression($attributeFilters, 'facet_attributes.id');
                 $attributeCounts = $attributeQuery
-                    ->selectRaw('facet_attributes.id as value_id, COUNT(DISTINCT products.id) as product_count')
-                    ->groupBy('facet_attributes.id')
+                    ->selectRaw($attributeValueId.' as value_id, COUNT(DISTINCT products.id) as product_count')
+                    ->groupByRaw($attributeValueId)
                     ->pluck('product_count', 'value_id')
                     ->map(fn ($count): int => (int) $count)
                     ->all();
@@ -2857,7 +2952,9 @@ class CatalogController extends Controller
 
     private function publicSourceCacheKey(string $key): string
     {
-        if (\App\Support\StorefrontTheme::usesLibermediaBrand()) {
+        if (WatchlineCatalogFacets::enabled()) {
+            $key .= ':watchline-facets:'.Cache::get(WatchlineCatalogFacets::REVISION_KEY, 'initial');
+        } elseif (\App\Support\StorefrontTheme::usesLibermediaBrand()) {
             $key .= ':spec-revision:'.Cache::get(LibermediaSpecificationFilterIndex::REVISION_KEY, 'initial');
         }
         if (! (bool) config('storefront_cache.enabled', false)) {
@@ -2880,6 +2977,7 @@ class CatalogController extends Controller
         return '"'.sha1(implode('|', [
             'desktop-catalog',
             (string) Cache::get(LibermediaSpecificationFilterIndex::REVISION_KEY, 'initial'),
+            (string) Cache::get(WatchlineCatalogFacets::REVISION_KEY, 'initial'),
             $scope,
             app()->getLocale(),
             $request->getRequestUri(),

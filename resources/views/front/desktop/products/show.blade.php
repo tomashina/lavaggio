@@ -169,7 +169,15 @@
             ->values();
     }
 
-    $firstCategory = ($productBreadcrumbCategories ?? collect())->last() ?? $product->categories->first();
+    $displayProductBreadcrumbCategories = $productBreadcrumbCategories ?? collect();
+    if (config('storefront.home') === 'watchline') {
+        $breadcrumbRootIds = $displayProductBreadcrumbCategories->whereNull('parent_id')->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $displayProductBreadcrumbCategories = $displayProductBreadcrumbCategories
+            ->filter(fn ($breadcrumbCategory) => ! $breadcrumbCategory->parent_id || in_array((int) $breadcrumbCategory->parent_id, $breadcrumbRootIds, true))
+            ->values();
+    }
+    $firstCategory = $displayProductBreadcrumbCategories->last()
+        ?? (config('storefront.home') === 'watchline' ? null : $product->categories->first());
     $firstCategoryTranslation = $firstCategory?->translations?->firstWhere('locale', $locale)
         ?? $firstCategory?->translations?->firstWhere('locale', $fallbackLocale);
     $fitFinderEnabled = (bool) ($storeSettings['product']['fit_finder_enabled'] ?? false);
@@ -213,7 +221,7 @@
                 <li><a href="{{ route('home') }}">{{ __('ui.front.desktop.footer.home') }}</a></li>
                 <li aria-hidden="true">/</li>
                 <li><a href="{{ route('shop.index') }}">{{ __('ui.shop.page_title') }}</a></li>
-                @foreach (($productBreadcrumbCategories ?? collect()) as $breadcrumbCategory)
+                @foreach ($displayProductBreadcrumbCategories as $breadcrumbCategory)
                     @php
                         $breadcrumbTranslation = $breadcrumbCategory->translations->firstWhere('locale', $locale)
                             ?? $breadcrumbCategory->translations->firstWhere('locale', $fallbackLocale)
@@ -315,7 +323,7 @@
 
         <aside class="product-detail-card">
             <div>
-                <div>
+                <div class="product-detail-heading">
                     @if ((int) ($reviewSummary['count'] ?? 0) > 0)
                         <div class="mb-2">
                             @include('front.partials.product-review-summary', [

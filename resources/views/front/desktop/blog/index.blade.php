@@ -20,7 +20,7 @@
                 </ol>
             </nav>
             <h1 class="text-2xl font-extrabold uppercase tracking-tight text-slate-900">{{ ($blogCategoryTranslation?->name ?? null) ?: __('ui.blog.title') }}</h1>
-            <p class="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">{{ $isLibermediaBlog ? 'Ideje za igru, učenje i odrastanje' : (str_contains(strtolower((string) ($storeSettings['branding']['store_name'] ?? '')), 'herrera') ? __('herrera.blog.subtitle') : __('ui.blog.subtitle')) }}</p>
+            <p class="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">{{ config('storefront.home') === 'watchline' ? 'Novosti i savjeti iz svijeta satova, naočala i nakita' : ($isLibermediaBlog ? 'Ideje za igru, učenje i odrastanje' : (str_contains(strtolower((string) ($storeSettings['branding']['store_name'] ?? '')), 'herrera') ? __('herrera.blog.subtitle') : __('ui.blog.subtitle'))) }}</p>
         </div>
     </section>
 

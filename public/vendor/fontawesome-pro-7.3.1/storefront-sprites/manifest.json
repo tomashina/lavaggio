@@ -5,6 +5,7 @@
         "arrow-up",
         "bag-shopping",
         "bars",
+        "bars-staggered",
         "check",
         "chevron-down",
         "chevron-right",
@@ -28,17 +29,22 @@
         "table-columns",
         "triangle-exclamation",
         "truck-fast",
+        "user",
         "xmark"
     ],
     "regular": [
+        "badge-check",
         "basket-shopping",
         "circle-user",
+        "credit-card",
         "magnifying-glass",
         "arrow-right",
         "envelope",
         "heart",
         "list-check",
         "phone",
+        "screwdriver-wrench",
+        "truck-fast",
         "user"
     ],
     "light": [

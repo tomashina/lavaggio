@@ -3,6 +3,7 @@
     $brandName = trim((string) ($manufacturerTranslation?->name ?? ''));
     $categoryName = trim((string) ($firstCategoryTranslation?->name ?? ''));
     $productAvailable = $product->storefrontIsPurchasable();
+    $isWatchlinePurchaseInformation = config('storefront.home') === 'watchline';
 @endphp
 
 <div class="product-purchase-information" data-product-purchase-information>
@@ -116,9 +117,12 @@
                             <span>{{ __('ui.product.shipping_price', ['price' => number_format((float) $method->price, 2).' €']) }}</span>
                         @endif
                         @if ($method->free_over !== null)
-                            <span>{{ __('ui.product.shipping_free_over', ['amount' => number_format((float) $method->free_over, 2).' €']) }}</span>
+                            <span>{{ __($isWatchlinePurchaseInformation ? 'ui.product.shipping_free_from' : 'ui.product.shipping_free_over', ['amount' => number_format((float) $method->free_over, 2).' €']) }}</span>
                         @endif
                     </div>
+                    @if ($isWatchlinePurchaseInformation && $method->free_over !== null && data_get($method->settings, 'subtotal_basis') === 'before_cart_discount')
+                        <p class="mt-2 text-xs text-slate-600">{{ __('ui.product.shipping_subtotal_before_cart_discount') }}</p>
+                    @endif
                     @endif
                     @endif
                 </article>

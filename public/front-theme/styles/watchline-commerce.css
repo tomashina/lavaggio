@@ -1,0 +1,178 @@
+/* Watchline colors for inherited product and commerce components. */
+
+html[data-theme] body.watchline-storefront .product-rating-track {
+    background-color: var(--wl-line);
+}
+
+html[data-theme] body.watchline-storefront .product-rating-track > span {
+    background-color: var(--wl-blue-dark);
+}
+
+html[data-theme] body.watchline-storefront .product-comment-stars {
+    color: var(--wl-line);
+}
+
+html[data-theme] body.watchline-storefront .product-rating-empty-stars {
+    color: var(--wl-muted);
+}
+
+html[data-theme] body.watchline-storefront .product-review-star.is-half {
+    background-image: linear-gradient(90deg, var(--wl-blue-dark) 50%, var(--wl-line) 50%);
+}
+
+html[data-theme] body.watchline-storefront .product-method-meta {
+    color: var(--wl-blue-dark);
+}
+
+html[data-theme] body.watchline-storefront [data-fit-finder-result-row].is-selected {
+    border-color: var(--wl-blue-dark);
+    background-color: var(--wl-paper);
+    color: var(--wl-ink);
+}
+
+html[data-theme] body.watchline-storefront .product-gallery-thumbnail {
+    border-color: var(--wl-line);
+}
+
+html[data-theme] body.watchline-storefront .product-gallery-thumbnail:is(:hover, :focus-visible, .is-active) {
+    border-color: var(--wl-blue-dark);
+}
+
+html[data-theme] body.watchline-storefront .product-floating-cart {
+    border-color: var(--wl-line);
+    border-top-color: var(--wl-blue-dark);
+}
+
+html[data-theme] body.watchline-storefront :is(.product-widget-card-cart, .product-widget-card-select):not(:disabled):not([aria-disabled="true"]) {
+    border-color: var(--wl-blue-dark);
+    background-color: var(--wl-blue-dark);
+    color: #fff;
+}
+
+html[data-theme] body.watchline-storefront :is(.product-widget-card-cart, .product-widget-card-select):is(:hover, :focus-visible):not(:disabled):not([aria-disabled="true"]) {
+    border-color: #00669c;
+    background-color: #00669c;
+    color: #fff;
+}
+
+html[data-theme] body.watchline-storefront .product-cart-modal-status-icon {
+    background-color: var(--wl-blue-dark);
+    box-shadow: 0 5px 14px rgb(0 119 181 / 18%);
+}
+
+html[data-theme] body.watchline-storefront .product-cart-modal-action-secondary:is(:hover, :focus-visible):not(:disabled):not([aria-disabled="true"]),
+html[data-theme] body.watchline-storefront .product-cart-modal-close:is(:hover, :focus-visible) {
+    background-color: var(--wl-paper);
+    color: #00669c;
+}
+
+html[data-theme] body.watchline-storefront :is(.store-auth-status, .product-cart-notice) {
+    border-color: var(--wl-blue-dark);
+    background-color: var(--wl-paper);
+    color: var(--wl-blue-dark);
+}
+
+html[data-theme] body.watchline-storefront .checkout-status-card--success {
+    border-color: var(--wl-blue-dark);
+}
+
+html[data-theme] body.watchline-storefront.mobile-cart-commerce-body .cart-mobile-summary {
+    border-color: var(--wl-line);
+    background-color: var(--wl-paper);
+}
+
+body.watchline-storefront.wl-boxnow-map-open {
+    overflow: hidden;
+}
+
+body.watchline-storefront dialog.wl-boxnow-dialog {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: #fff;
+    color: var(--wl-ink);
+}
+
+body.watchline-storefront dialog.wl-boxnow-dialog[open] {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+body.watchline-storefront .wl-boxnow-dialog::backdrop {
+    background: rgb(15 35 50 / 50%);
+}
+
+body.watchline-storefront .wl-boxnow-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 4rem;
+    padding: max(0.625rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 0.625rem max(1rem, env(safe-area-inset-left));
+    border-bottom: 1px solid var(--wl-line);
+    background: #fff;
+}
+
+body.watchline-storefront .wl-boxnow-dialog-header h2 {
+    margin: 0;
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+body.watchline-storefront .wl-boxnow-dialog-close {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--wl-line);
+    border-radius: 0.375rem;
+    background: #fff;
+    color: var(--wl-ink);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+body.watchline-storefront .wl-boxnow-dialog-close:is(:hover, :focus-visible) {
+    border-color: var(--wl-blue-dark);
+    background: var(--wl-paper);
+    color: var(--wl-blue-dark);
+}
+
+body.watchline-storefront .wl-boxnow-dialog-close:focus-visible {
+    outline: 2px solid var(--wl-blue-dark);
+    outline-offset: 2px;
+}
+
+body.watchline-storefront .wl-boxnow-dialog-close svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+body.watchline-storefront .wl-boxnow-dialog-map {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--wl-paper);
+}
+
+body.watchline-storefront .wl-boxnow-dialog-map > iframe[id^="boxnow_map_widget"] {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    border: 0;
+}

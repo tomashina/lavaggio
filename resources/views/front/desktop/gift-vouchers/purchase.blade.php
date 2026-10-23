@@ -7,7 +7,7 @@
 @section('content')
     <header class="lm-page-title">
         <p class="gift-voucher-eyebrow"><x-fa-icon name="gift" /> VAŠ POKLON BON</p>
-        <h1>{{ $order->status?->is_cancelled ? 'Narudžba poklon bona je otkazana.' : ($order->paid_at ? 'Hvala što darujete igru i veselje.' : 'Vaš poklon čeka potvrdu plaćanja.') }}</h1>
+        <h1>{{ $order->status?->is_cancelled ? 'Narudžba poklon bona je otkazana.' : ($order->paid_at ? (config('storefront.home') === 'watchline' ? 'Hvala što darujete Watchline.' : 'Hvala što darujete igru i veselje.') : 'Vaš poklon čeka potvrdu plaćanja.') }}</h1>
         <p>Narudžba <strong>{{ $order->order_number }}</strong></p>
     </header>
     <section class="gift-voucher-receipt gift-voucher-form-card">

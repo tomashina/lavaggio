@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Front;
 
+use App\Models\Catalog\Category\Category;
+use App\Models\Catalog\Manufacturer\Manufacturer;
 use App\Models\Catalog\Product\Product;
 use App\Models\Content\Blog\BlogPost;
 use App\Services\Settings\SystemSettingsService;
@@ -44,7 +46,7 @@ class SitemapFeatureTest extends TestCase
         $this->app->detectEnvironment(fn () => 'production');
         config(['app.url' => 'https://www.herrera.hr']);
 
-        foreach (['http://herrera-new.test', 'https://herrera.herrera.hr'] as $origin) {
+        foreach (['http://herrera-new.test', 'http://watchline-new.test', 'http://localhost', 'http://127.0.0.1', 'http://[::1]', 'https://herrera.herrera.hr'] as $origin) {
             $this->get($origin.'/robots.txt')->assertOk()
                 ->assertHeader('Content-Type', 'text/plain; charset=UTF-8')
                 ->assertHeader('X-Robots-Tag', 'noindex, nofollow')
@@ -77,5 +79,65 @@ class SitemapFeatureTest extends TestCase
             ->assertDontSee('/blog/disabled', false)->assertDontSee('/blog/future', false);
         app(SystemSettingsService::class)->put('catalog_use_blog', false);
         $this->get('/sitemap-blog-1.xml')->assertOk()->assertDontSee('/blog/published', false);
+    }
+
+    public function test_watchline_sitemap_lists_public_entry_pages_and_respects_disabled_features(): void
+    {
+        config(['app.url' => 'https://www.watchline.hr', 'app.locale' => 'hr', 'storefront.home' => 'watchline', 'gift_vouchers.enabled' => true]);
+        $settings = app(SystemSettingsService::class);
+        $settings->put('catalog_use_blog', true);
+        $settings->put('catalog_use_manufacturers', true);
+        $brand = Manufacturer::query()->create(['code' => 'test-brand', 'is_active' => true]);
+        $brand->translations()->create(['locale' => 'hr', 'name' => 'Test brand', 'slug' => 'test-brand']);
+
+        $response = $this->get('/sitemap-pages-1.xml')->assertOk();
+        $xml = simplexml_load_string($response->getContent());
+        $this->assertNotFalse($xml);
+        $locations = array_map('strval', $xml->xpath('//*[local-name()="loc"]'));
+        foreach (['/', '/shop', '/categories', '/contact', '/brendovi', '/blog', '/poklon-bon', '/savjeti-za-poklone', '/iskustva-kupaca'] as $path) {
+            $this->assertContains('https://www.watchline.hr'.$path, $locations);
+        }
+        $response->assertDontSee('/cart', false)->assertDontSee('/checkout', false)->assertDontSee('?category=', false);
+        $this->get('/sitemap-manufacturers-1.xml')->assertOk()->assertSee('/manufacturer/test-brand', false);
+
+        $settings->put('catalog_use_blog', false);
+        $settings->put('catalog_use_manufacturers', false);
+        config(['gift_vouchers.enabled' => false]);
+        $this->get('/sitemap-pages-1.xml')->assertOk()->assertDontSee('<loc>https://www.watchline.hr/blog</loc>', false)
+            ->assertDontSee('<loc>https://www.watchline.hr/brendovi</loc>', false)
+            ->assertDontSee('<loc>https://www.watchline.hr/poklon-bon</loc>', false);
+        $this->get('/sitemap-manufacturers-1.xml')->assertOk()->assertDontSee('/manufacturer/test-brand', false);
+    }
+
+    public function test_sitemap_preserves_hidden_seo_categories_and_uses_real_translation_modification_date(): void
+    {
+        config(['app.url' => 'https://www.watchline.hr', 'app.locale' => 'hr']);
+        $old = now()->subDays(10)->startOfSecond();
+        $new = now()->subDay()->startOfSecond();
+        $category = Category::query()->create(['code' => 'hidden-seo-category', 'scope' => Category::SCOPE_CATALOG, 'is_active' => true, 'show_in_menu' => false, 'updated_at' => $old]);
+        $category->translations()->create(['locale' => 'hr', 'name' => 'Ženski satovi Cluse', 'slug' => 'zenski-satovi-cluse', 'updated_at' => $new]);
+        // Translation timestamps are not mass assignable, just as in real edited rows.
+        $category->translations()->update(['updated_at' => $new]);
+        $category->update(['ends_at' => null]);
+        Category::query()->whereKey($category->id)->update(['updated_at' => $old]);
+
+        $response = $this->get('/sitemap-categories-1.xml')->assertOk()
+            ->assertSee('/category/zenski-satovi-cluse', false)->assertSee('<lastmod>'.$new->toAtomString().'</lastmod>', false);
+        $this->assertNotFalse(simplexml_load_string($response->getContent()));
+
+        $category->update(['ends_at' => now()->subHour()]);
+        $this->get('/sitemap-categories-1.xml')->assertOk()->assertDontSee('/category/zenski-satovi-cluse', false);
+    }
+
+    public function test_production_robots_blocks_private_routes_but_allows_facets_to_be_read_for_noindex(): void
+    {
+        $this->app->detectEnvironment(fn () => 'production');
+        config(['app.url' => 'https://www.watchline.hr']);
+        $response = $this->get('https://www.watchline.hr/robots.txt')->assertOk();
+        foreach (['/auth/', '/wishlist', '/checkout', '/poklon-bon/narudzba/', '/obavijesti-o-dostupnosti/odjava/'] as $path) {
+            $response->assertSee('Disallow: '.$path, false);
+        }
+        $response->assertDontSee('Disallow: /*?', false)->assertDontSee('Disallow: /manufacturer', false)
+            ->assertSee('Sitemap: https://www.watchline.hr/sitemap.xml', false);
     }
 }

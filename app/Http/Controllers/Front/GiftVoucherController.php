@@ -26,7 +26,8 @@ class GiftVoucherController extends Controller
     {
         abort_unless((bool) config('gift_vouchers.enabled', true), 404);
         $amounts = collect($giftVouchers->availableAmounts())->values();
-        $selectedAmount = (int) $request->query('amount', old('amount', config('gift_vouchers.default_amount', 30)));
+        $defaultAmount = config('storefront.home') === 'watchline' ? 50 : config('gift_vouchers.default_amount', 30);
+        $selectedAmount = (int) $request->query('amount', old('amount', $defaultAmount));
         if (! $amounts->contains($selectedAmount)) {
             $selectedAmount = (int) $amounts->first();
         }

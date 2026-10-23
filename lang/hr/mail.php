@@ -1,6 +1,16 @@
 <?php
 
 return [
+    'watchline_newsletter_coupon' => [
+        'subject' => 'Watchline: vaših :percent% popusta za prvu kupnju',
+        'title' => 'Vaš Watchline kod',
+        'eyebrow' => 'WATCHLINE NEWSLETTER',
+        'heading' => 'Hvala na prijavi!',
+        'intro' => 'Iskoristite osobni kod za dodatnih :percent% popusta na svoju prvu kupnju, uključujući artikle na akciji.',
+        'note' => 'Kod unesite u košarici. Vrijedi jednom, bez roka isteka, uz e-mail adresu kojom ste se prijavili. Ne vrijedi za kupnju poklon bona.',
+        'cta' => 'Istražite ponudu',
+        'footer' => 'Ovaj e-mail primili ste nakon prijave na Watchline newsletter.',
+    ],
     'newsletter_coupon' => [
         'subject' => 'Vaš 10% popust: :code',
         'title' => 'Newsletter kupon',

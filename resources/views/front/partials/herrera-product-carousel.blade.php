@@ -1,7 +1,9 @@
 @php
     $productCount = $products->count();
     $headingId = $carouselId.'-heading';
-    $showRelatedPromo = $kind === 'related' && $productCount === 5 && \App\Support\StorefrontTheme::usesLibermediaBrand();
+    $isWatchlinePromo = config('storefront.home') === 'watchline';
+    $showRelatedPromo = $kind === 'related' && $productCount === 5 && \App\Support\StorefrontTheme::usesLibermediaBrand()
+        && (! $isWatchlinePromo || config('gift_vouchers.enabled', true));
     $previousLabel = trim(str_replace(['&laquo;', '&raquo;'], '', __('pagination.previous')));
     $nextLabel = trim(str_replace(['&laquo;', '&raquo;'], '', __('pagination.next')));
     $carouselOptions = [
@@ -87,7 +89,7 @@
                 @endforeach
                 @if ($showRelatedPromo)
                     <li class="lm-product-promo-slot" data-product-promo-slot>
-                        @include('front.partials.libermedia-promo-card', ['promoType' => 'bundles'])
+                        @include('front.partials.libermedia-promo-card', ['promoType' => $isWatchlinePromo ? 'gift-voucher' : 'bundles'])
                     </li>
                 @endif
             </ul>

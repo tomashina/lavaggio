@@ -41,8 +41,10 @@ class B2CPromotionService
         $key = 'b2c.promotion-target-index.'.($user?->id ?? 0).'.'.hash('sha256', $coupon).'.'.(int) $history.'.'.spl_object_id($actions);
         $request = request();
         if (! $request->attributes->has($key)) {
-            $index = ['all' => []];
-            foreach ($actions as $action) {
+            $index = ['all' => [], 'models' => [], 'positions' => []];
+            foreach ($actions as $position => $action) {
+                $index['models'][(int) $action->id] = $action;
+                $index['positions'][(int) $action->id] = $position;
                 if ($action->target_type === CatalogAction::TARGET_ALL) {
                     $index['all'][(int) $action->id] = true;
 
@@ -69,9 +71,16 @@ class B2CPromotionService
             }
         }
 
-        // Preserve priority/exclusivity order while avoiding rescanning every
-        // promotion's complete target list for every card and historical price.
-        return $actions->filter(fn ($action): bool => isset($matches[(int) $action->id]));
+        // Lookup only matching IDs; filtering the full action collection here
+        // makes catalogue-wide price comparisons products × all promotions.
+        $ids = array_keys($matches);
+        usort($ids, fn (int $first, int $second): int => $index['positions'][$first] <=> $index['positions'][$second]);
+        $resolved = [];
+        foreach ($ids as $id) {
+            $resolved[$index['positions'][$id]] = $index['models'][$id];
+        }
+
+        return $actions::make($resolved);
     }
 
     public function filter(Builder $query, ?User $user = null): void

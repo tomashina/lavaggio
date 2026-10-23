@@ -3,6 +3,8 @@
 namespace Tests\Feature\Catalog;
 
 use App\Models\Catalog\Action\CatalogAction;
+use App\Models\Catalog\Category\Category;
+use App\Models\Catalog\Manufacturer\Manufacturer;
 use App\Models\Catalog\Product\Product;
 use App\Models\User;
 use App\Services\Catalog\ActionResolverService;
@@ -10,6 +12,7 @@ use App\Services\Catalog\B2CPromotionService;
 use App\Services\Pricing\B2BAccessService;
 use App\Services\Pricing\ProductGroupPriceResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -82,5 +85,54 @@ class B2CPromotionPerformanceTest extends TestCase
         CatalogAction::create($base + ['code' => 'business', 'audience_type' => 'user_group']);
         $this->assertNull(app(ActionResolverService::class)->resolveProductAction($p));
         $this->assertSame('coupon', app(ActionResolverService::class)->resolveProductAction($p, couponCode: 'save20')?->code);
+    }
+
+    public function test_direct_lookups_merge_all_target_types_once_and_retain_exclusivity_and_priority_order(): void
+    {
+        config(['commerce.b2c_only' => true]);
+        $category = Category::create(['code' => 'promotion-category', 'scope' => 'catalog', 'is_active' => true]);
+        $secondCategory = Category::create(['code' => 'promotion-second-category', 'scope' => 'catalog', 'is_active' => true]);
+        $brand = Manufacturer::create(['code' => 'promotion-brand', 'is_active' => true]);
+        $product = Product::create(['code' => 'all-targets', 'manufacturer_id' => $brand->id, 'base_price' => 100, 'is_active' => true]);
+        $product->categories()->attach([$category->id, $secondCategory->id]);
+        $product->load('categories');
+        $base = ['scope' => 'product', 'type' => 'percentage', 'discount_value' => 10, 'audience_type' => 'all', 'is_active' => true];
+        $global = CatalogAction::create($base + ['code' => 'all-exclusive', 'target_type' => 'all', 'is_exclusive' => true]);
+        $productAction = CatalogAction::create($base + ['code' => 'product-highest-priority', 'target_type' => 'product', 'priority' => 20]);
+        $productAction->targets()->create(['target_type' => 'product', 'target_id' => $product->id]);
+        $categoryAction = CatalogAction::create($base + ['code' => 'category-two-matching-targets', 'target_type' => 'category', 'priority' => 10]);
+        foreach ([$category, $secondCategory] as $target) {
+            $categoryAction->targets()->create(['target_type' => 'category', 'target_id' => $target->id]);
+        }
+        $brandAction = CatalogAction::create($base + ['code' => 'brand-action', 'target_type' => 'manufacturer', 'priority' => 5]);
+        $brandAction->targets()->create(['target_type' => 'manufacturer', 'target_id' => $brand->id]);
+        $unrelated = CatalogAction::create($base + ['code' => 'unrelated-high-priority', 'target_type' => 'product', 'priority' => 999]);
+        $unrelated->targets()->create(['target_type' => 'product', 'target_id' => $product->id + 100]);
+
+        $service = app(B2CPromotionService::class);
+        $expected = [$global->id, $productAction->id, $categoryAction->id, $brandAction->id];
+        $this->assertSame($expected, $service->forProduct($product)->pluck('id')->values()->all());
+        $this->assertSame($expected, $service->forProduct($product)->pluck('id')->values()->all());
+    }
+
+    public function test_lookup_contexts_keep_customer_coupon_and_history_separate_and_next_requests_see_changed_actions(): void
+    {
+        config(['commerce.b2c_only' => true]);
+        $product = Product::create(['code' => 'context-product', 'base_price' => 100, 'is_active' => true]);
+        $user = User::factory()->create();
+        $base = ['scope' => 'product', 'type' => 'percentage', 'discount_value' => 10, 'target_type' => 'all', 'is_active' => true];
+        $public = CatalogAction::create($base + ['code' => 'context-public', 'audience_type' => 'all']);
+        $private = CatalogAction::create($base + ['code' => 'context-user', 'audience_type' => 'user', 'user_id' => $user->id]);
+        $coupon = CatalogAction::create($base + ['code' => 'context-coupon', 'audience_type' => 'all', 'coupon_code' => 'CONTEXT10']);
+        $expired = CatalogAction::create($base + ['code' => 'context-expired', 'audience_type' => 'all', 'ends_at' => now()->subDay()]);
+        $service = app(B2CPromotionService::class);
+
+        $this->assertSame([$public->id], $service->forProduct($product)->pluck('id')->all());
+        $this->assertSame([$private->id, $public->id], $service->forProduct($product, $user)->pluck('id')->all());
+        $this->assertSame([$coupon->id, $public->id], $service->forProduct($product, coupon: 'context10')->pluck('id')->all());
+        $this->assertSame([$expired->id, $public->id], $service->forProduct($product, history: true)->pluck('id')->all());
+        $public->update(['is_active' => false]);
+        $this->app->instance('request', Request::create('/fresh-promotion-request'));
+        $this->assertCount(0, $service->forProduct($product));
     }
 }

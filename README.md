@@ -52,11 +52,13 @@ mysql --protocol=tcp -h 127.0.0.1 -P 33107 -u root watchline_snapshot_20261023 <
 
 Slike se zasad učitavaju izravno s `https://www.watchline.hr/image/`, uz prednost lokalnih originala ako se naknadno dodaju u `public/image`. Aktivne postavke su `LEGACY_MEDIA_ENABLED=true` i `LEGACY_MEDIA_ORIGIN=https://www.watchline.hr`. Za testnu instalaciju koristite isti izvor. U ovoj fazi nema masovnog preuzimanja slika.
 
-`STOREFRONT_THEME=herrera` zadržava raspored kopirane osnove, a `STOREFRONT_HOME=watchline` prikazuje Watchline sadržaj, a `STOREFRONT_BRAND=libermedia` zadržava izvorni Liber Media izgled, boje i komponente. Ovo je početna osnova; redizajn tek slijedi.
+`STOREFRONT_THEME=herrera` zadržava raspored kopirane osnove, a `STOREFRONT_HOME=watchline` prikazuje Watchline sadržaj, a `STOREFRONT_BRAND=libermedia` zadržava izvornu Liber Media osnovu i tipografiju. Watchline plava paleta uređuje se u `public/front-theme/styles/watchline.css`. Lokalni pregled ima odmah vidljive kategorije Satovi, Naočale i Nakit, CLUSE hero i poseban slajder ženskih satova prema završenim kupnjama te izvorne kartice Servis/Trgovina. Hero prikazuje samo stvarne odobrene recenzije pripadajućeg sata.
 
 Detaljna usporedba izvora i prijenosa: [docs/watchline-migration.md](docs/watchline-migration.md). Lokalni pristup administraciji nalazi se u privatnoj `.local/admin-access.txt`.
 
 Lokalni pregled koristi `MAIL_MAILER=log` i lokalni sigurni način rada. Poklon bon dostupan je u navigaciji. Slanje obavijesti i stvarna naplata nisu uključeni. Naslijeđene `libermedia:*`, `herrera:*`, integracije i deployment skripte zadržane su kao dio izvornog koda te zahtijevaju prilagodbu prije uporabe za Watchline. Uklonjen je automatski cPanel deployment za Liber Media.
+
+Izvorna četiri administratorska računa OpenCarta prenose se pri punom Watchline uvozu. Zasebno ih možete provjeriti naredbom `php artisan watchline:import-staff --dry-run` i prenijeti s `php artisan watchline:import-staff`, uz pokrenutu izdvojenu izvornu bazu. Administratorska prijava na `/login` prihvaća izvorno korisničko ime ili e-mail i postojeću lozinku. Izvorni hash i salt pohranjeni su šifrirano te se pri prvoj uspješnoj prijavi zamjenjuju Laravel hashom. Odvojeni lokalni administratorski račun i njegove pristupne podatke uvoz ne mijenja.
 
 ## Provjere
 

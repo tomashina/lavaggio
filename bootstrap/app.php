@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(\App\Http\Middleware\PreventPreviewIndexing::class);
         $middleware->prependToGroup('web', \App\Http\Middleware\ResolveHerreraLegacyUrl::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\CaptureWatchlineAbandonedCart::class);
 
         $middleware->prependToPriorityList(
             \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,

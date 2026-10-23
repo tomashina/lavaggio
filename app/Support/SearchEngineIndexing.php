@@ -8,7 +8,13 @@ class SearchEngineIndexing
 {
     public static function shouldBlock(Request $request): bool
     {
+        $host = strtolower($request->getHost());
+
         return ! app()->environment('production')
-            || in_array(strtolower($request->getHost()), ['herrera-new.test', 'herrera.herrera.hr', 'libermedia.agmedia.rocks'], true);
+            || $host === 'localhost'
+            || str_ends_with($host, '.localhost')
+            || str_ends_with($host, '.test')
+            || filter_var(trim($host, '[]'), FILTER_VALIDATE_IP) !== false
+            || in_array($host, ['herrera.herrera.hr', 'libermedia.agmedia.rocks'], true);
     }
 }

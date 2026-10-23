@@ -8,6 +8,8 @@ use App\Models\Catalog\Manufacturer\Manufacturer;
 use App\Models\Catalog\Product\Product;
 use App\Models\Content\Blog\BlogPost;
 use App\Models\Content\Page\InfoPage;
+use App\Models\Content\Support\Faq;
+use App\Services\Catalog\CatalogFeatureService;
 use App\Support\SearchEngineIndexing;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -23,7 +25,10 @@ class SitemapController extends Controller
             return response("User-agent: *\nDisallow: /\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
         }
 
-        return response("User-agent: *\nDisallow: /admin\nDisallow: /account\nDisallow: /cart\nDisallow: /checkout\nDisallow: /search\nDisallow: /api/\nSitemap: ".rtrim(config('app.url'), '/')."/sitemap.xml\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+        $privatePaths = ['/admin', '/account', '/auth/', '/login', '/register', '/cart', '/checkout', '/wishlist', '/search', '/api/', '/livewire/', '/watchline/cart-recovery/', '/watchline/messages/', '/poklon-bon/narudzba/', '/obavijesti-o-dostupnosti/odjava/'];
+        $rules = implode("\n", array_map(fn (string $path): string => 'Disallow: '.$path, $privatePaths));
+
+        return response("User-agent: *\n".$rules."\nSitemap: ".rtrim(config('app.url'), '/')."/sitemap.xml\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
     }
 
     public function index(): Response
@@ -54,7 +59,10 @@ class SitemapController extends Controller
             ->orderBy('id')->offset(($page - 1) * self::PAGE_SIZE)->limit(self::PAGE_SIZE)->get();
         $xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
         if ($kind === 'pages' && $page === 1) {
-            $xml .= '<url><loc>'.$this->escape($this->url('home')).'</loc></url>';
+            foreach ($this->publicRoutes() as $publicRoute) {
+                // Static pages have no reliable content modification timestamp.
+                $xml .= '<url><loc>'.$this->escape($this->url($publicRoute)).'</loc></url>';
+            }
         }
         foreach ($rows as $row) {
             $slug = $row->translations->first()?->slug;
@@ -62,8 +70,10 @@ class SitemapController extends Controller
                 continue;
             }
             $xml .= '<url><loc>'.$this->escape($this->url($route, ['slug' => $slug])).'</loc>';
-            if ($row->updated_at) {
-                $xml .= '<lastmod>'.$row->updated_at->toAtomString().'</lastmod>';
+            $lastModified = collect([$row->updated_at, $row->translations->first()?->updated_at])
+                ->filter()->sortByDesc(fn ($date): int => $date->getTimestamp())->first();
+            if ($lastModified) {
+                $xml .= '<lastmod>'.$lastModified->toAtomString().'</lastmod>';
             }
             $xml .= '</url>';
         }
@@ -76,15 +86,41 @@ class SitemapController extends Controller
         $query = match ($kind) {
             'products' => Product::query()->where('is_active', true),
             'categories' => Category::query()->where('scope', Category::SCOPE_CATALOG)->currentlyVisible(),
-            'manufacturers' => Manufacturer::query()->where('is_active', true),
+            'manufacturers' => Manufacturer::query()->where('is_active', true)
+                ->whereRaw(app(CatalogFeatureService::class)->useManufacturers() ? '1 = 1' : '1 = 0'),
             'pages' => InfoPage::query()->where('is_active', true)
                 ->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now())),
             'blog' => BlogPost::query()->where('is_active', true)
-                ->whereRaw(app(\App\Services\Catalog\CatalogFeatureService::class)->useBlog() ? '1 = 1' : '1 = 0')
+                ->whereRaw(app(CatalogFeatureService::class)->useBlog() ? '1 = 1' : '1 = 0')
                 ->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now())),
         };
 
         return $query->whereHas('translations', fn ($q) => $q->where('locale', config('app.locale'))->whereNotNull('slug')->where('slug', '<>', ''));
+    }
+
+    /** @return list<string> */
+    private function publicRoutes(): array
+    {
+        $features = app(CatalogFeatureService::class);
+        $routes = ['home', 'shop.index', 'categories.index', 'contact.create'];
+        if ($features->useManufacturers()) {
+            $routes[] = 'manufacturers.index';
+        }
+        if ($features->useBlog()) {
+            $routes[] = 'blog.index';
+        }
+        if (Faq::query()->where('is_active', true)->whereHas('translations', fn ($query) => $query->where('locale', config('app.locale')))->exists()) {
+            $routes[] = 'faq.index';
+        }
+        if ((bool) config('gift_vouchers.enabled', true)) {
+            $routes[] = 'gift-vouchers.create';
+        }
+        if (config('storefront.home') === 'watchline') {
+            $routes[] = 'gift-guide.index';
+            $routes[] = 'reviews.index';
+        }
+
+        return $routes;
     }
 
     private function url(string $name, array $parameters = []): string

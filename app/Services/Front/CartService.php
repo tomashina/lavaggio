@@ -676,6 +676,9 @@ class CartService
         $bestTaxDiscount = 0.0;
 
         foreach ($actions as $action) {
+            if (config('storefront.home') === 'watchline' && ! app(WatchlineNewsletterWelcomeService::class)->canApply($action, auth()->user())) {
+                continue;
+            }
             $eligibleLines = $this->eligibleCartDiscountLines($action, $lines);
             $eligibleSubtotal = round((float) $eligibleLines->sum('line_total'), 2);
 

@@ -57,6 +57,15 @@ use Spatie\Activitylog\Models\Activity;
 Route::get('storefront-settings.css', StorefrontStylesController::class)
     ->name('front.storefront.styles');
 
+// Signed customer actions for Watchline's opt-in message automations.
+Route::post('watchline/cart-contact', [\App\Http\Controllers\Front\WatchlineMessageAutomationController::class, 'capture'])
+    ->middleware('throttle:20,1')->name('watchline.messages.capture');
+Route::get('watchline/cart-recovery/{cart}', [\App\Http\Controllers\Front\WatchlineMessageAutomationController::class, 'recover'])
+    ->middleware(['signed', 'throttle:20,1'])->name('watchline.messages.recover');
+Route::get('watchline/messages/unsubscribe/{job}/{hash}', [\App\Http\Controllers\Front\WatchlineMessageAutomationController::class, 'unsubscribe'])
+    ->where('job', 'reviews|abandoned')->where('hash', '[a-f0-9]{64}')
+    ->middleware(['signed', 'throttle:20,1'])->name('watchline.messages.unsubscribe');
+
 Route::get('integrations/stock/{supplier}', \App\Http\Controllers\Integrations\StockSyncController::class)
     ->where('supplier', implode('|', array_keys(\App\Support\Integrations\Stock\StockSyncRegistry::all())))
     ->middleware('throttle:30,1')
@@ -578,6 +587,8 @@ Route::middleware(['admin.locale', 'auth', 'verified', 'admin.access', 'admin.ma
                 Route::view('eprel/settings', 'admin.integrations.eprel.settings')->name('eprel.settings');
                 Route::view('eprel/catalog', 'admin.integrations.eprel.catalog')->name('eprel.catalog');
                 Route::view('stock', 'admin.integrations.stock.index')->name('stock.index');
+                Route::view('watchline', 'admin.integrations.watchline.index')->name('watchline.index');
+                Route::view('wolt', 'admin.integrations.wolt.index')->name('wolt.index');
                 Route::view('supplier-catalog', 'admin.integrations.supplier-catalog.index')->name('supplier-catalog.index');
                 Route::view('eracuni', 'admin.integrations.eracuni.index')->name('eracuni.index');
                 Route::view('spreadsheet', 'admin.integrations.spreadsheet.index')->name('spreadsheet.index');

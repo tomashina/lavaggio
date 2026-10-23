@@ -343,6 +343,7 @@ class StoreSettingsService
             'button_label' => trim((string) $this->settings->get('store_newsletter_button_label', '')),
             'consent_label' => trim((string) $this->settings->get('store_newsletter_consent_label', '')),
             'coupon_enabled' => (bool) $this->settings->get('store_newsletter_coupon_enabled', true),
+            'coupon_percent' => max(1, min(100, (float) $this->settings->get('store_newsletter_coupon_percent', 10))),
         ];
     }
 

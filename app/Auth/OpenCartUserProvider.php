@@ -37,8 +37,11 @@ class OpenCartUserProvider extends EloquentUserProvider
             unset($credentials['login']);
 
             // Preserve OpenCart's username identity even when it looks like an email.
-            return parent::retrieveByCredentials($credentials + ['admin_username' => $identity])
-                ?? parent::retrieveByCredentials($credentials + ['email' => $identity]);
+            return parent::retrieveByCredentials($credentials + [
+                'admin_username' => fn ($query) => $query->whereRaw('LOWER(admin_username) = ?', [$identity]),
+            ]) ?? parent::retrieveByCredentials($credentials + [
+                'email' => fn ($query) => $query->whereRaw('LOWER(email) = ?', [$identity]),
+            ]);
         }
 
         if (isset($credentials['email']) && ! isset($credentials['account_type'])) {

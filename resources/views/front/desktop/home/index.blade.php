@@ -19,6 +19,9 @@
         $isHerreraHome = \App\Support\StorefrontTheme::usesHerreraLayout((string) ($storeSettings['branding']['store_name'] ?? config('app.name')));
         $isLibermediaHome = in_array(config('storefront.home'), ['libermedia', 'watchline'], true);
         $isWatchlineHome = config('storefront.home') === 'watchline';
+        $homeContentBlocks = $isWatchlineHome
+            ? $resolver->forPlacement('home.content', $locale, null, null, 'desktop')
+            : collect();
         $homeFallbackView = match (config('storefront.home')) {
             'libermedia' => 'front.partials.libermedia-home',
             'watchline' => 'front.partials.watchline-home',
@@ -62,7 +65,9 @@
                     'translation' => $previewTranslation,
                 ]]);
 
-                if ($previewPlacement === 'home.hero') {
+                if ($previewPlacement === 'home.content') {
+                    $homeContentBlocks = $previewItem;
+                } elseif ($previewPlacement === 'home.hero') {
                     $homeHeroBlocks = $previewItem;
                 } elseif ($previewPlacement === 'home.hero_benefits') {
                     $homeHeroBenefitsBlocks = $previewItem;
@@ -79,17 +84,26 @@
             }
         }
 
-        $useHerreraHomeFallback = $isHerreraHome && $homeHeroBlocks->isEmpty();
-        $hasHomeBrandsBlock = collect([$homeHeroBlocks, $homeHeroBenefitsBlocks, $homeCategoriesBlocks, $homeBeforeProductsBlocks, $homeAfterProductsBlocks, $homeBottomBlocks])
+        $useHerreraHomeFallback = $isHerreraHome && ($isWatchlineHome || $homeHeroBlocks->isEmpty());
+        $visibleHomePlacements = $isWatchlineHome
+            ? [$homeBeforeProductsBlocks, $homeAfterProductsBlocks, $homeBottomBlocks]
+            : [$homeHeroBlocks, $homeHeroBenefitsBlocks, $homeCategoriesBlocks, $homeBeforeProductsBlocks, $homeAfterProductsBlocks, $homeBottomBlocks];
+        $hasHomeBrandsBlock = collect($visibleHomePlacements)
             ->flatten(1)
             ->contains(fn ($item) => (string) data_get($item, 'block.type') === 'popular_brands');
     @endphp
 
-    @if ($homeHeroBlocks->isNotEmpty())
+    @if ($isWatchlineHome)
+        <section class="wl-home-opening" data-watchline-home-widgets>
+            @include('front.partials.herrera-home-placement', ['items' => $homeContentBlocks])
+        </section>
+    @else
+
+    @if (! $isWatchlineHome && $homeHeroBlocks->isNotEmpty())
         <section class="-mt-px" data-herrera-home-hero-placement>
             @include('front.partials.herrera-home-placement', ['items' => $homeHeroBlocks])
         </section>
-    @elseif ($useHerreraHomeFallback)
+    @elseif (! $isWatchlineHome && $useHerreraHomeFallback)
         @include($homeFallbackView, ['herreraHomeSection' => 'hero'])
     @endif
 
@@ -107,18 +121,18 @@
         @endif
     @endif
 
-    @if ($isHerreraHome && $homeCategoriesBlocks->isNotEmpty() && $homeCategoriesBlocks->every(fn ($item) => (string) data_get($item, 'block.type') === 'featured_categories'))
+    @if (! $isWatchlineHome && $isHerreraHome && $homeCategoriesBlocks->isNotEmpty() && $homeCategoriesBlocks->every(fn ($item) => (string) data_get($item, 'block.type') === 'featured_categories'))
         @include('front.partials.herrera-home-placement', ['items' => $homeCategoriesBlocks])
-    @elseif ($homeCategoriesBlocks->isNotEmpty())
+    @elseif (! $isWatchlineHome && $homeCategoriesBlocks->isNotEmpty())
         <section class="mt-8">
             @include('front.partials.herrera-home-placement', ['items' => $homeCategoriesBlocks])
         </section>
-    @elseif ($useHerreraHomeFallback && ! $hasManagedHerreraHomeCategories)
+    @elseif (! $isWatchlineHome && $useHerreraHomeFallback && ! $hasManagedHerreraHomeCategories)
         @include($homeFallbackView, ['herreraHomeSection' => 'categories'])
     @endif
 
     @if ($homeBeforeProductsBlocks->isNotEmpty())
-        <section class="mt-8">
+        <section class="{{ $isWatchlineHome ? 'wl-home-opening' : 'mt-8' }}">
             @include('front.partials.herrera-home-placement', ['items' => $homeBeforeProductsBlocks])
         </section>
     @endif
@@ -168,5 +182,6 @@
             <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Home</h1>
             <p class="mt-3 text-slate-600">Nema aktivnih content blokova za desktop home.</p>
         </section>
+    @endif
     @endif
 @endsection

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Front;
 
+use App\Models\Catalog\Manufacturer\Manufacturer;
 use App\Models\Catalog\Product\Product;
 use App\Services\Settings\SystemSettingsService;
 use DOMDocument;
@@ -84,7 +85,7 @@ class HerreraRelatedProductsCarouselFeatureTest extends TestCase
 
     public function test_libermedia_fills_only_one_missing_desktop_related_slot_without_adding_a_carousel_product(): void
     {
-        config(['storefront.theme' => 'herrera', 'commerce.b2b_only' => false]);
+        config(['storefront.theme' => 'herrera', 'storefront.home' => 'libermedia', 'commerce.b2b_only' => false]);
         app(SystemSettingsService::class)->put('store_brand_name', 'Liber Media');
         foreach ([4, 5] as $count) {
             $product = $this->product('main-'.$count);
@@ -98,6 +99,34 @@ class HerreraRelatedProductsCarouselFeatureTest extends TestCase
             $this->assertSame($count === 5 ? 1 : 0, $xpath->query('.//*[@data-product-promo-slot]', $carousel)->count());
             if ($count === 5) {
                 $this->assertSame(route('bundles.index'), $xpath->query('.//*[@data-product-promo-slot]/a', $carousel)->item(0)->getAttribute('href'));
+            }
+        }
+    }
+
+    public function test_watchline_related_fallback_and_rotating_templates_only_offer_enabled_gift_vouchers(): void
+    {
+        config(['storefront.theme' => 'herrera', 'storefront.brand' => 'libermedia', 'storefront.home' => 'watchline', 'commerce.b2b_only' => false, 'storefront_cache.enabled' => false]);
+        foreach ([true, false] as $enabled) {
+            config(['gift_vouchers.enabled' => $enabled]);
+            $suffix = $enabled ? 'gift-enabled' : 'gift-disabled';
+            $manufacturer = Manufacturer::create(['code' => 'related-'.$suffix, 'is_active' => true]);
+            $product = $this->product($suffix);
+            $related = collect(range(1, 5))->map(fn ($index) => $this->product($suffix.'-related-'.$index));
+            $product->update(['manufacturer_id' => $manufacturer->id]);
+            foreach ($related as $relatedProduct) {
+                $relatedProduct->update(['manufacturer_id' => $manufacturer->id]);
+            }
+            $response = $this->get(route('products.show', ['slug' => 'related-carousel-'.$suffix]))->assertOk()
+                ->assertDontSee('Kupi u kompletu i uštedi')->assertDontSee('Darujte igru i veselje.');
+            $xpath = $this->xpath($response->getContent());
+            $carousel = $xpath->query('//*[@data-herrera-related-products-splide]')->item(0);
+            $this->assertSame(5, $xpath->query('.//*[@data-product-card]', $carousel)->count());
+            $this->assertSame($enabled ? 1 : 0, $xpath->query('.//*[@data-product-promo-slot]', $carousel)->count());
+            $this->assertSame(0, $xpath->query('//template[@data-catalog-promo-template="bundles"]')->count());
+            $this->assertSame($enabled ? 1 : 0, $xpath->query('//template[@data-catalog-promo-template="gift-voucher"]')->count());
+            if ($enabled) {
+                $this->assertSame(route('gift-vouchers.create'), $xpath->query('.//*[@data-product-promo-slot]/a', $carousel)->item(0)->getAttribute('href'));
+                $response->assertSee('Darujte izbor satova, naočala i nakita.');
             }
         }
     }

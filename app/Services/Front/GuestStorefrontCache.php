@@ -33,7 +33,8 @@ class GuestStorefrontCache
 
     public function enabled(): bool
     {
-        return (bool) config('storefront_cache.enabled', false)
+        return ! app()->environment('local')
+            && (bool) config('storefront_cache.enabled', false)
             && (((bool) config('commerce.b2b_only', true)
                     && ! app(\App\Services\Pricing\B2BAccessService::class)->b2cEnabled())
                 || ((bool) config('storefront_cache.public_b2c_enabled', false)

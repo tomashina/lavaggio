@@ -629,7 +629,7 @@ class ResourceManager extends Component
             'form.keks_des_key' => ['nullable', 'string', 'max:255'],
             'form.keks_qr_type' => ['nullable', 'integer', 'min:1', 'max:9'],
             'form.keks_sell_base_url' => ['nullable', 'string', 'max:255'],
-            'form.keks_advice_auth_mode' => ['nullable', Rule::in(['none', 'token', 'basic', 'url_token'])],
+            'form.keks_advice_auth_mode' => ['nullable', Rule::in(['none', 'token', 'basic', 'url_token', 'legacy_query_credentials'])],
             'form.keks_advice_token' => ['nullable', 'string', 'max:255'],
             'form.keks_advice_username' => ['nullable', 'string', 'max:120'],
             'form.keks_advice_password' => ['nullable', 'string', 'max:255'],
@@ -1001,7 +1001,7 @@ class ResourceManager extends Component
         $qrType = max(1, (int) ($data['keks_qr_type'] ?? 1));
         $sellBaseUrl = trim((string) ($data['keks_sell_base_url'] ?? ''));
         $authMode = strtolower(trim((string) ($data['keks_advice_auth_mode'] ?? 'none')));
-        if (! in_array($authMode, ['none', 'token', 'basic', 'url_token'], true)) {
+        if (! in_array($authMode, ['none', 'token', 'basic', 'url_token', 'legacy_query_credentials'], true)) {
             $authMode = 'none';
         }
         $authToken = trim((string) ($data['keks_advice_token'] ?? ''));

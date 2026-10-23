@@ -11,6 +11,14 @@ return [
     |
     */
     'types' => [
+        'watchline_campaigns' => 'Watchline — tri prodajna bannera',
+        'watchline_locations' => 'Watchline — servis i trgovina',
+        'watchline_assurance' => 'Watchline — podrška kupcima',
+        'watchline_benefits' => 'Watchline — prednosti kupnje',
+        'watchline_products' => 'Watchline — proizvodi u nizu',
+        'watchline_brands' => 'Watchline — brandovi',
+        'watchline_reviews' => 'Watchline — iskustva kupaca',
+        'watchline_blog' => 'Watchline — novosti i blog',
         'banner' => 'Banner (Static)',
         'products' => 'Products Block (Selected)',
         'categories' => 'Categories Block (Selected)',
@@ -56,6 +64,8 @@ return [
     |
     */
     'placements' => [
+        'home.content' => 'Početna — svi blokovi',
+        'footer.benefits' => 'Podnožje — prednosti kupnje',
         'home.hero' => 'Home Hero',
         'home.hero_benefits' => 'Home Hero Benefits',
         'home.before_products' => 'Home Before Products',

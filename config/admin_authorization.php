@@ -226,6 +226,14 @@ return [
             'view' => ['integrations.stock.manage'],
             'mutate' => ['integrations.stock.manage'],
         ],
+        'admin.integrations.watchline.index' => [
+            'view' => ['integrations.stock.manage'],
+            'mutate' => ['integrations.stock.manage'],
+        ],
+        'admin.integrations.wolt.index' => [
+            'view' => ['integrations.stock.manage'],
+            'mutate' => ['integrations.stock.manage'],
+        ],
         'admin.integrations.eracuni.index' => [
             'view' => ['integrations.eracuni.manage'],
             'mutate' => ['integrations.eracuni.manage'],

@@ -21,7 +21,7 @@ class StorefrontController extends Controller
     {
         $featuredReviews = collect();
         $homeBlogPosts = collect();
-        if (in_array(config('storefront.home'), ['libermedia', 'watchline'], true)) {
+        if (config('storefront.home') === 'libermedia') {
             $locales = array_unique([app()->getLocale(), (string) config('app.fallback_locale', 'hr')]);
             $featuredReviews = Comment::query()
                 ->when(config('storefront.home') !== 'watchline', fn (Builder $query) => $query->where('is_featured', true))

@@ -28,6 +28,7 @@ use App\Observers\Sales\GiftVoucherOrderObserver;
 use App\Observers\Sales\OrderLoyaltyObserver;
 use App\Observers\Settings\LocalSettingObserver;
 use App\Services\Catalog\CatalogFeatureService;
+use App\Services\Catalog\WatchlineCatalogFacets;
 use App\Services\Content\ContentBlockResolver;
 use App\Services\Front\CartService;
 use App\Services\Front\GuestStorefrontCache;
@@ -86,6 +87,7 @@ class AppServiceProvider extends ServiceProvider
         // writes made while placing an order or changing stock/pricing directly.
         DB::listen(static function (QueryExecuted $query): void {
             app(GuestStorefrontCache::class)->onQueryExecuted($query);
+            WatchlineCatalogFacets::onQueryExecuted($query);
             if (preg_match('/^\s*(?:insert|update|delete|replace|truncate|alter|drop|create)\b/i', $query->sql) === 1) {
                 CartService::forgetRequestSnapshot();
             }
@@ -341,6 +343,8 @@ class AppServiceProvider extends ServiceProvider
         Language::observe(LocalSettingObserver::class);
         Order::observe(OrderLoyaltyObserver::class);
         Order::observe(GiftVoucherOrderObserver::class);
+        Order::created(fn (Order $order) => app(\App\Services\Integrations\Watchline\WatchlineMessageAutomationService::class)->markConverted($order));
+        Order::updated(fn (Order $order) => app(\App\Services\Front\WatchlineNewsletterWelcomeService::class)->releaseCancelledOrder($order));
 
         ContentBlock::observe(ContentCacheObserver::class);
         ContentBlockTranslation::observe(ContentCacheObserver::class);

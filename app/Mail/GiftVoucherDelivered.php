@@ -17,7 +17,9 @@ class GiftVoucherDelivered extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Poklon za vas: Liber Media poklon bon');
+        return new Envelope(subject: config('storefront.home') === 'watchline'
+            ? 'Poklon za vas: Watchline poklon bon'
+            : 'Poklon za vas: Liber Media poklon bon');
     }
 
     public function content(): Content

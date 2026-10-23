@@ -13,6 +13,10 @@ class GiftGuideController extends Controller
 {
     public function __invoke(Request $request)
     {
+        if (config('storefront.home') === 'watchline') {
+            return view('front.desktop.gift-guide.watchline', app(\App\Services\Front\WatchlineGiftGuideService::class)->search($request));
+        }
+
         $filters = $request->validate([
             'available_only' => 'nullable|boolean',
             'promo_only' => 'nullable|boolean',

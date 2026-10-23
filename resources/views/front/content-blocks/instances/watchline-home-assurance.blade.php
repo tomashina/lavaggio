@@ -1,14 +1,36 @@
-@php($watchlineHome = app(\App\Support\WatchlineHomeContent::class))
+@php
+    $watchlineAssurance = \App\Support\WatchlineWidgetSettings::forBlock(
+        ($block ?? null) instanceof \App\Models\Content\ContentBlock ? $block : new \App\Models\Content\ContentBlock(['type' => 'watchline_assurance']),
+        ($translation ?? null) instanceof \App\Models\Content\ContentBlockTranslation ? $translation : null,
+    );
+    $watchlineAssuranceDescription = (string) $watchlineAssurance['subtitle'];
+    $watchlineAssuranceHighlight = (string) $watchlineAssurance['subtitle_highlight'];
+    $watchlineAssuranceDescriptionParts = $watchlineAssuranceHighlight !== ''
+        ? explode($watchlineAssuranceHighlight, $watchlineAssuranceDescription, 2)
+        : [$watchlineAssuranceDescription];
+@endphp
 <section class="lm-assurance" aria-labelledby="lm-assurance-title" data-libermedia-assurance>
     <div class="lm-assurance-heading">
-        <span class="lm-assurance-seal"><img src="/assets/brand/libermedia-guarantee.svg" alt="" width="48" height="48" aria-hidden="true"></span>
-        <p class="lm-eyebrow">WATCHLINE</p>
-        <h2 id="lm-assurance-title">Vaš izbor. Naša podrška.</h2>
-        <p>Istražite <strong>satove, nakit i dodatke</strong> iz naše ponude. Za dodatne informacije o proizvodima, narudžbama, dostavi ili povratu javite se našoj korisničkoj podršci.</p>
+        @if ($watchlineAssurance['seal_image_url'] !== '')
+            <span class="lm-assurance-seal"><img src="{{ $watchlineAssurance['seal_image_url'] }}" alt="{{ $watchlineAssurance['seal_image_alt'] }}" width="48" height="48" @if ($watchlineAssurance['seal_image_alt'] === '') aria-hidden="true" @endif></span>
+        @endif
+        <p class="lm-eyebrow">{{ $watchlineAssurance['eyebrow'] }}</p>
+        <h2 id="lm-assurance-title">{!! nl2br(e((string) $watchlineAssurance['title'])) !!}</h2>
+        <p>{!! nl2br(e($watchlineAssuranceDescriptionParts[0])) !!}@if (count($watchlineAssuranceDescriptionParts) === 2)<strong>{!! nl2br(e($watchlineAssuranceHighlight)) !!}</strong>{!! nl2br(e($watchlineAssuranceDescriptionParts[1])) !!}@endif</p>
+        @if (($watchlineAssurance['cta_label'] ?? '') !== '' && ($watchlineAssurance['cta_url'] ?? '') !== '')
+            <a href="{{ $watchlineAssurance['cta_url'] }}">{{ $watchlineAssurance['cta_label'] }} <x-fa-icon :name="$watchlineAssurance['link_icon']" /></a>
+        @endif
     </div>
     <div class="lm-assurance-points">
-        <div><x-fa-icon name="heart" style="regular" /><h3>Odabrana ponuda</h3><p>Pronađite detalj za svoj stil.</p></div>
-        <div><x-fa-icon name="comments" style="regular" /><h3>Tu smo za vas</h3><p>Javite nam se za pomoć pri odabiru.</p></div>
-        <div><x-fa-icon name="rotate-left" style="regular" /><h3>Informacije o povratu</h3><p>Saznajte više prije kupnje.</p><a href="{{ $watchlineHome->informationUrl('uvjet') }}">Uvjeti kupnje <x-fa-icon name="arrow-right" /></a></div>
+        @foreach ([1, 2, 3] as $watchlineAssurancePoint)
+            <div>
+                <x-fa-icon :name="$watchlineAssurance['point_'.$watchlineAssurancePoint.'_icon']" style="regular" />
+                <h3>{!! nl2br(e((string) $watchlineAssurance['point_'.$watchlineAssurancePoint.'_title'])) !!}</h3>
+                <p>{!! nl2br(e((string) $watchlineAssurance['point_'.$watchlineAssurancePoint.'_description'])) !!}</p>
+                @if ($watchlineAssurance['point_'.$watchlineAssurancePoint.'_cta_label'] !== '' && $watchlineAssurance['point_'.$watchlineAssurancePoint.'_url'] !== '')
+                    <a href="{{ $watchlineAssurance['point_'.$watchlineAssurancePoint.'_url'] }}">{{ $watchlineAssurance['point_'.$watchlineAssurancePoint.'_cta_label'] }} <x-fa-icon :name="$watchlineAssurance['link_icon']" /></a>
+                @endif
+            </div>
+        @endforeach
     </div>
 </section>

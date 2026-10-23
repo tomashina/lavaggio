@@ -177,7 +177,7 @@ class LibermediaHomeReviewsTest extends TestCase
 
         Livewire::actingAs($admin)->test(CommentManager::class)
             ->call('edit', $comment->id)
-            ->assertSee('Prikaži na naslovnici')
+            ->assertSee('Izdvojeno')
             ->set('editForm.is_featured', true)
             ->call('saveEdit')->assertHasNoErrors();
         $this->get('/')->assertOk()->assertSee('Odabrano kroz administraciju');

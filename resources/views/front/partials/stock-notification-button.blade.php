@@ -1,3 +1,4 @@
+@include('front.partials.stock-notification-assets')
 @php
     $notificationParameters = !empty($notifyBundleId)
         ? ['bundle_id' => (int) $notifyBundleId]

@@ -276,6 +276,18 @@
 
             @if ($tab === 'newsletter')
                 <div class="grid gap-4 md:grid-cols-2">
+                    @if (config('storefront.home') === 'watchline')
+                        <div class="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            <label class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                <input type="checkbox" wire:model="form.store_newsletter_coupon_enabled" class="rounded border-slate-300" />
+                                Popust za prvu kupnju nakon nove prijave
+                            </label>
+                            <p class="mt-2 text-xs text-slate-600">Osobni kod vrijedi jednom, bez roka isteka, za novu newsletter prijavu i prvu kupnju. Pribraja se akcijskim cijenama. Postojeći pretplatnici ne dobivaju novi kod. Slanje poštuje opće postavke e-maila i zaštitu lokalne stranice.</p>
+                            <label class="mt-3 block text-xs font-semibold text-slate-500">Popust (%)</label>
+                            <input type="number" min="1" max="100" step="0.1" wire:model="form.store_newsletter_coupon_percent" class="mt-1 w-32 rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                            @error('form.store_newsletter_coupon_percent') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                        </div>
+                    @endif
                     <div class="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{{ __('Footer Newsletter Copy') }}</p>
                         <div class="mt-3 grid gap-3 md:grid-cols-2">

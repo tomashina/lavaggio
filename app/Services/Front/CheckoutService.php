@@ -17,6 +17,7 @@ use App\Models\Settings\Local\TaxRate;
 use App\Models\User;
 use App\Services\GiftVoucherService;
 use App\Services\Payments\CorvusPayFormService;
+use App\Services\Payments\KeksPayService;
 use App\Services\Payments\WSPayFormService;
 use App\Services\Pricing\B2BAccessService;
 use App\Services\Pricing\TaxPricingService;
@@ -24,6 +25,7 @@ use App\Services\Shipping\CroatianIslandDestinationClassifier;
 use App\Services\Shipping\ShippingCalculator;
 use App\Services\User\CustomerImpersonationService;
 use App\Services\User\StaffImpersonationService;
+use App\Support\BoxNowShipping;
 use App\Support\GlsShipping;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
@@ -54,12 +56,14 @@ class CheckoutService
         ?ShippingMethod $shippingMethod = null,
     ): Collection {
         $giftVouchers = app(GiftVoucherService::class);
-        if ($shippingMethod && $giftVouchers->currentCode() !== '') {
+        $payableTotal = $subtotal;
+        if ($shippingMethod) {
             $summary = $this->cart->summary();
             $shipping = $this->resolveShippingTotal($shippingMethod, $subtotal);
             $gross = round($subtotal + (float) ($summary['raw_tax_total'] ?? $summary['tax_total'] ?? 0)
                 + $shipping + $this->resolveShippingTaxTotal($shippingMethod, $shipping), 2);
             $quote = $giftVouchers->quote($gross);
+            $payableTotal = (float) $quote['remaining_total'];
             if ($quote['amount'] > 0 && $quote['remaining_total'] <= 0) {
                 return collect([$giftVouchers->internalPaymentMethod()]);
             }
@@ -67,6 +71,7 @@ class CheckoutService
         $zoneIds = $this->resolveGeoZoneIdsForAddress($countryCode, $regionCode, $postalCode);
         $corvusPay = app(CorvusPayFormService::class);
         $wspay = app(WSPayFormService::class);
+        $keks = app(KeksPayService::class);
 
         return PaymentMethod::query()
             ->where('is_active', true)
@@ -75,9 +80,15 @@ class CheckoutService
             ->get()
             ->filter(fn (PaymentMethod $method) => $corvusPay->canBeOffered($method))
             ->filter(fn (PaymentMethod $method) => $wspay->canBeOffered($method))
+            ->filter(fn (PaymentMethod $method) => $keks->canBeOffered($method))
+            ->filter(fn (PaymentMethod $method) => $this->freeCheckoutIsAvailable($method, $subtotal, $shippingMethod))
             ->filter(fn (PaymentMethod $method) => $this->paymentMethodMatchesShippingMethod($method, $shippingMethod))
             ->filter(fn (PaymentMethod $method) => $this->methodMatchesGeoZones($method->geo_zone_id, $zoneIds))
-            ->filter(fn (PaymentMethod $method) => $this->subtotalFits($subtotal, $method->min_subtotal, $method->max_subtotal))
+            ->filter(fn (PaymentMethod $method) => $this->subtotalFits(
+                data_get($method->settings, 'configured_from') === 'watchline-opencart' ? $payableTotal : $subtotal,
+                $method->min_subtotal,
+                $method->max_subtotal,
+            ))
             ->values();
     }
 
@@ -258,6 +269,9 @@ class CheckoutService
         if ($paymentMethod->code === GiftVoucherService::PAYMENT_CODE && ($giftVoucherTotal <= 0 || $grandTotal > 0)) {
             throw ValidationException::withMessages(['payment_method_code' => 'Poklon bon ne pokriva cijeli iznos narudžbe.']);
         }
+        if (($paymentMethod->code === 'free_checkout' || $paymentMethod->provider === 'free_checkout') && $grandTotal > 0) {
+            throw ValidationException::withMessages(['payment_method_code' => 'Plaćanje bez naplate dostupno je samo kada je ukupan iznos narudžbe 0 €.']);
+        }
 
         /** @var Currency|null $currency */
         $currency = Currency::query()
@@ -298,6 +312,8 @@ class CheckoutService
             $impersonation,
             $staffImpersonation,
         ): Order {
+            $welcomeService = app(WatchlineNewsletterWelcomeService::class);
+            $welcomeAction = $welcomeService->reserveForCheckout((string) ($summary['coupon_code'] ?? ''), (string) ($payload['customer_email'] ?? ''), $user, $summary);
             $delegation = $impersonation->validatedContext(request(), $user);
             $staffDelegation = $staffImpersonation->validatedContext(request(), $delegation['actor'] ?? $user);
             $orderActor = $staffDelegation['actor'] ?? $delegation['actor'] ?? $user;
@@ -371,6 +387,7 @@ class CheckoutService
                     ...($staffDelegationAudit ? ['staff_impersonation' => $staffDelegationAudit] : []),
                     'customer_type' => $user?->commerceCustomerType() ?? 'B2C',
                     'placed_from' => 'frontend_checkout',
+                    ...($welcomeAction ? ['watchline_newsletter_welcome' => ['action_id' => $welcomeAction->id, 'signup_id' => data_get($welcomeAction->payload, 'newsletter_signup_id')]] : []),
                     'coupon_code' => (string) ($summary['coupon_code'] ?? ''),
                     'monetary_precision' => $precision,
                     'gift_voucher_total' => $giftVoucherTotal,
@@ -409,6 +426,9 @@ class CheckoutService
                 'created_by' => $orderActor?->id,
                 'updated_by' => $orderActor?->id,
             ]);
+            if ($welcomeAction) {
+                $welcomeService->attachOrder($welcomeAction, $order);
+            }
             if ($delegation) {
                 app(\App\Services\User\CustomerCrmService::class)->recordSessionOrder(request(), $order, $delegation['actor']);
             }
@@ -538,9 +558,11 @@ class CheckoutService
                 'comment' => 'Order placed from storefront checkout.',
             ]);
 
-            if ($paymentMethod->code === GiftVoucherService::PAYMENT_CODE) {
+            if ($paymentMethod->code === GiftVoucherService::PAYMENT_CODE || ($paymentMethod->code === 'free_checkout' && $grandTotal <= 0)) {
                 $order->forceFill(['paid_at' => now()])->save();
-                $giftVouchers->syncOrder($order);
+                if ($paymentMethod->code === GiftVoucherService::PAYMENT_CODE) {
+                    $giftVouchers->syncOrder($order);
+                }
             }
 
             return $order;
@@ -614,6 +636,13 @@ class CheckoutService
 
     private function shippingSubtotal(ShippingMethod $method, float $afterDiscount, float $beforeDiscount): float
     {
+        if (data_get($method->settings, 'subtotal_basis') === 'before_cart_discount') {
+            $lines = $this->cart->lines();
+
+            return $lines->isEmpty() ? $afterDiscount
+                : round((float) $lines->sum('line_total') + (float) $lines->sum('line_tax_total'), 2);
+        }
+
         if (data_get($method->settings, 'subtotal_basis') !== 'before_discount') {
             return $afterDiscount;
         }
@@ -864,19 +893,18 @@ class CheckoutService
             return true;
         }
 
-        $settings = is_array($method->settings) ? $method->settings : [];
+        return BoxNowShipping::isReady($method);
+    }
 
-        return trim((string) ($settings['boxnow_partner_id'] ?? '')) !== ''
-            && (string) $method->service_type === 'parcel_locker'
-            && (string) $method->pricing_type === 'flat'
-            && (string) $method->missing_measurements_policy === 'block'
-            && (float) $method->max_weight_kg > 0
-            && (float) $method->max_length_cm > 0
-            && (float) $method->max_width_cm > 0
-            && (float) $method->max_height_cm > 0
-            && ! (bool) $method->allows_fragile
-            && ! (bool) $method->allows_oversized
-            && ! (bool) $method->allows_heavy;
+    private function freeCheckoutIsAvailable(PaymentMethod $method, float $subtotal, ?ShippingMethod $shippingMethod): bool
+    {
+        if ($method->code !== 'free_checkout' && $method->provider !== 'free_checkout') {
+            return true;
+        }
+
+        return $subtotal <= 0 && $shippingMethod !== null
+            && $this->resolveShippingTotal($shippingMethod, $subtotal) <= 0
+            && $this->resolvePaymentFeeTotal($method, $subtotal) <= 0;
     }
 
     private function nextOrderNumber(): string

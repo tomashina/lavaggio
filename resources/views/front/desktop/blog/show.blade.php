@@ -186,7 +186,7 @@
             @endif
 
             <div class="content-richtext">
-                {!! $translation?->body_html ?: '<p>Sadržaj članka trenutačno nije dostupan.</p>' !!}
+                {!! app(\App\Support\WatchlineArticleImages::class)->render((string) $translation?->body_html, $coverImageUrl !== '') ?: '<p>Sadržaj članka trenutačno nije dostupan.</p>' !!}
             </div>
             @include('front.partials.blog-share')
         </div>

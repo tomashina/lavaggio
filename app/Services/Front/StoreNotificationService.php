@@ -84,6 +84,9 @@ class StoreNotificationService
 
     public function sendNewsletterCoupon(string $email, string $locale = '', string $couponCode = 'BALI10'): void
     {
+        if (config('storefront.home') === 'watchline') {
+            return;
+        }
         $email = trim($email);
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return;

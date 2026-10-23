@@ -14,7 +14,7 @@
 @if ($products->isNotEmpty())
     @include('front.partials.splide-assets')
     <section class="herrera-home-section herrera-b2b-products lm-extra-products" aria-labelledby="{{ $lmProductHeadingId }}" data-libermedia-creative-products>
-        <div class="splide herrera-home-product-carousel" data-herrera-home-carousel data-continuous-card-carousel data-splide='@json($lmProductOptions)' aria-labelledby="{{ $lmProductHeadingId }}" style="--herrera-product-columns:6;--herrera-product-tablet-columns:4;--herrera-product-mobile-columns:2;">
+        <div class="splide herrera-home-product-carousel wl-product-carousel" data-herrera-home-carousel data-continuous-card-carousel data-splide='@json($lmProductOptions)' aria-labelledby="{{ $lmProductHeadingId }}">
             <div class="herrera-home-heading">
                 <div>
                     <p class="herrera-home-section-eyebrow">IZ WATCHLINE PONUDE</p>

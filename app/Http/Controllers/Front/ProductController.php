@@ -18,10 +18,13 @@ use App\Services\Content\ContentBlockResolver;
 use App\Services\Front\ProductColorVariantService;
 use App\Services\Front\WishlistService;
 use App\Services\Payments\CorvusPayFormService;
+use App\Services\Payments\KeksPayService;
+use App\Services\Payments\WSPayFormService;
 use App\Services\Pricing\PriceCatalogResolver;
 use App\Services\Pricing\ProductPricePresentationService;
 use App\Services\Pricing\TaxPricingService;
 use App\Services\Settings\SystemSettingsService;
+use App\Support\BoxNowShipping;
 use App\Support\CountryCatalog;
 use App\Support\ProductMaterialLabel;
 use Illuminate\Http\JsonResponse;
@@ -196,6 +199,7 @@ class ProductController extends Controller
 
         $categoryIds = $product->categories->pluck('id')->map(fn ($id) => (int) $id)->all();
         $isHerreraStorefront = str_contains(strtolower((string) app(SystemSettingsService::class)->get('store_brand_name', config('app.name', 'AG Shop'))), 'herrera');
+        $isWatchlineStorefront = config('storefront.home') === 'watchline';
         $relatedLimit = $isHerreraStorefront
             ? 12
             : max(4, $this->resolveGridCols($request, $this->defaultDesktopGridCols($request)));
@@ -258,11 +262,32 @@ class ProductController extends Controller
         $relatedIds = collect();
         $excludeIds = [(int) $product->id];
 
+        if ($isWatchlineStorefront && $product->manufacturer_id) {
+            $sales = DB::table('order_items as sale_items')
+                ->join('orders as sale_orders', 'sale_orders.id', '=', 'sale_items.order_id')
+                ->join('order_statuses as sale_statuses', 'sale_statuses.id', '=', 'sale_orders.status_id')
+                ->where('sale_items.quantity', '>', 0)
+                ->where('sale_statuses.is_cancelled', false)
+                ->where(fn ($query) => $query->whereIn('sale_statuses.code', ['herrera-oc-status-5', 'watchline-oc-status-5'])
+                    ->orWhere('sale_statuses.is_paid', true))
+                ->groupBy('sale_items.product_id')
+                ->selectRaw('sale_items.product_id, SUM(sale_items.quantity) as purchased_quantity');
+
+            $relatedIds = (clone $relatedSelectionQuery)->reorder()
+                ->where('products.manufacturer_id', $product->manufacturer_id)
+                ->leftJoinSub($sales, 'watchline_sales', 'watchline_sales.product_id', '=', 'products.id')
+                ->orderByRaw('COALESCE(watchline_sales.purchased_quantity, 0) DESC')
+                ->orderBy('products.id')
+                ->limit($relatedLimit)
+                ->pluck('products.id')
+                ->map(fn ($id): int => (int) $id);
+        }
+
         $explicitRelatedIds = collect($product->payload['related_product_ids'] ?? [])
             ->map(fn ($id): int => (int) $id)
             ->filter(fn ($id): bool => $id > 0 && $id !== (int) $product->id)
             ->unique()->values()->all();
-        if ($explicitRelatedIds !== []) {
+        if (! $isWatchlineStorefront && $explicitRelatedIds !== []) {
             $relatedIds = (clone $relatedSelectionQuery)->whereIn('id', $explicitRelatedIds)->pluck('products.id')
                 ->map(fn ($id): int => (int) $id)
                 ->sortBy(fn (int $id): int => array_search($id, $explicitRelatedIds, true))
@@ -270,7 +295,7 @@ class ProductController extends Controller
             $excludeIds = array_merge($excludeIds, $relatedIds->all());
         }
 
-        if ($categoryIds !== [] && $relatedIds->count() < $relatedLimit) {
+        if (! $isWatchlineStorefront && $categoryIds !== [] && $relatedIds->count() < $relatedLimit) {
             $productCategories = Category::query()
                 ->select(['id', 'parent_id', '_lft', '_rgt'])
                 ->where('scope', Category::SCOPE_CATALOG)
@@ -351,7 +376,7 @@ class ProductController extends Controller
             }
         }
 
-        if ($relatedIds->count() < $relatedLimit) {
+        if (! $isWatchlineStorefront && $relatedIds->count() < $relatedLimit) {
             $latestFallback = (clone $relatedSelectionQuery)
                 ->whereNotIn('id', $excludeIds)
                 ->limit($relatedLimit - $relatedIds->count())
@@ -439,7 +464,6 @@ class ProductController extends Controller
         $fitFinderSelection = $this->resolveFitFinderSelection($request, $product);
         $colorVariants = app(ProductColorVariantService::class)->variantsFor($product, $locale, $fallbackLocale);
         $shippingMethods = ShippingMethod::query()
-            ->select(['id', 'code', 'name', 'description', 'pricing_type', 'price', 'free_over', 'min_subtotal', 'max_subtotal', 'geo_zone_id', 'settings', 'sort_order'])
             ->where('is_active', true)
             ->with(['geoZone:id,name', 'geoZone.countries:id,geo_zone_id,country_code'])
             ->orderBy('sort_order')
@@ -453,6 +477,10 @@ class ProductController extends Controller
             ->orderBy('id')
             ->get()
             ->filter(fn (PaymentMethod $method): bool => app(CorvusPayFormService::class)->canBeOffered($method))
+            ->filter(fn (PaymentMethod $method): bool => config('storefront.home') !== 'watchline'
+                || (app(WSPayFormService::class)->canBeOffered($method) && app(KeksPayService::class)->canBeOffered($method)))
+            ->reject(fn (PaymentMethod $method): bool => config('storefront.home') === 'watchline'
+                && ($method->code === 'free_checkout' || $method->provider === 'free_checkout'))
             ->reject(fn (PaymentMethod $method): bool => in_array(
                 strtolower(trim((string) $method->code)),
                 ['quote_request', 'manual_quote'],
@@ -493,10 +521,16 @@ class ProductController extends Controller
 
     private function groupShippingMethodsForProduct(Collection $methods, string $locale): Collection
     {
-        if (\App\Support\StorefrontTheme::usesLibermediaBrand()) {
+        $isWatchline = config('storefront.home') === 'watchline';
+        if ($isWatchline) {
+            // Product information lists configured services and their terms, without
+            // requiring a cart, destination selection or an external shipping quote.
+            $methods = $methods->filter(fn (ShippingMethod $method): bool => (strtolower((string) $method->carrier) !== 'boxnow'
+                && ! in_array(strtolower(trim((string) $method->code)), ['boxnow', 'box_now'], true))
+                || BoxNowShipping::isReady($method))->values();
+        } elseif (\App\Support\StorefrontTheme::usesLibermediaBrand()) {
             // The imported base cost is a fallback; xshippingpro ranges are authoritative.
-            $methods = $methods->filter(fn (ShippingMethod $method): bool =>
-                data_get($method->settings, 'import_source') === 'libermedia'
+            $methods = $methods->filter(fn (ShippingMethod $method): bool => data_get($method->settings, 'import_source') === 'libermedia'
                 && in_array('HR', data_get($method->settings, 'destination_country_codes', []), true)
             )->map(function (ShippingMethod $method): ShippingMethod {
                 $ranges = collect(data_get($method->settings, 'opencart_xshippingpro.ranges', []));
@@ -506,6 +540,7 @@ class ProductController extends Controller
                     $method->price = (float) $paid['cost'];
                 }
                 $method->free_over = $free !== null && $paid !== null ? (float) $paid['end'] : null;
+
                 return $method;
             })->values();
         }
@@ -514,6 +549,15 @@ class ProductController extends Controller
         $countryNameKey = str_starts_with($locale, 'hr') ? 'name_hr' : 'name_en';
         $displayNet = app(\App\Services\Pricing\B2BAccessService::class)->displaysNet(auth()->user());
         $taxPricing = app(TaxPricingService::class);
+
+        if ($isWatchline) {
+            $methods->each(function (ShippingMethod $method) use ($countryNames, $countryNameKey): void {
+                $method->setAttribute('storefront_destinations', $method->geoZone?->countries
+                    ->pluck('country_code')->unique()
+                    ->map(fn (string $code): string => (string) data_get($countryNames->get($code), $countryNameKey, $code))
+                    ->implode(', ') ?? '');
+            });
+        }
 
         return $methods->groupBy(function (ShippingMethod $method): string {
             $sourceId = data_get($method->settings, 'source_method_id');

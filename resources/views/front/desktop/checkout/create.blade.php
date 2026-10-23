@@ -5,6 +5,7 @@
 
 @section('content')
     @php
+        $watchlineCartContactEnabled = app(\App\Services\Integrations\Watchline\WatchlineMessageAutomationService::class)->cartCaptureEnabled();
         $showShippingAddress = old('ship_to_different_address') === '1' || old('use_billing_for_shipping') === '0';
         $selectedShippingCode = (string) old('shipping_method_code', (string) ($checkoutTotals['shipping_method_code'] ?? $shippingMethods->first()?->code ?? ''));
         $selectedPaymentCode = (string) old('payment_method_code', (string) ($checkoutTotals['payment_method_code'] ?? $paymentMethods->first()?->code ?? ''));
@@ -112,7 +113,7 @@
 
     <div class="mb-4 {{ $errors->has('cart') ? '' : 'hidden' }} border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700" role="alert" aria-live="polite" data-checkout-top-error>{{ $errors->first('cart') }}</div>
 
-    <form method="POST" action="{{ route('checkout.store') }}" class="checkout-layout" novalidate data-address-autofill data-address-source="{{ $placesAssetUrl }}" data-checkout-form data-checkout-options-url="{{ route('checkout.options') }}" data-ga4-checkout-form data-ga4-currency="EUR" data-ga4-value="{{ number_format((float) ($checkoutTotals['grand_total'] ?? $summary['grand_total'] ?? 0), 2, '.', '') }}" data-ga4-items='@json($ga4Items, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)' data-success-fallback="{{ route('checkout.success.latest') }}">
+    <form method="POST" action="{{ route('checkout.store') }}" class="checkout-layout" novalidate data-address-autofill data-address-source="{{ $placesAssetUrl }}" data-checkout-form data-checkout-options-url="{{ route('checkout.options') }}" @if ($watchlineCartContactEnabled) data-watchline-cart-contact-url="{{ route('watchline.messages.capture') }}" @endif data-ga4-checkout-form data-ga4-currency="EUR" data-ga4-value="{{ number_format((float) ($checkoutTotals['grand_total'] ?? $summary['grand_total'] ?? 0), 2, '.', '') }}" data-ga4-items='@json($ga4Items, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)' data-success-fallback="{{ route('checkout.success.latest') }}">
         @csrf
 
         <div class="checkout-stack">
@@ -268,7 +269,8 @@
                         <legend class="sr-only">{{ __('ui.checkout.labels.shipping_method') }} <x-front.required-mark /></legend>
                         <div class="grid gap-2" data-checkout-shipping-options>
                             @foreach ($shippingMethods as $method)
-                                <label class="checkout-option-card flex cursor-pointer items-start justify-between gap-3 px-3 py-2.5 text-sm">
+                                <div class="checkout-option-card checkout-shipping-option" data-shipping-option-card>
+                                <label class="flex cursor-pointer items-start justify-between gap-3 px-3 py-2.5 text-sm">
                                     <span class="inline-flex min-w-0 items-start gap-2">
                                         <input
                                             type="radio"
@@ -295,9 +297,11 @@
                                             : \App\Support\Currency::format((float) ($method->resolved_price ?? $method->price)) }}
                                     </span>
                                 </label>
+                                </div>
                             @endforeach
                         </div>
 
+                        <div class="hidden" data-shipping-panels>
                         <div class="checkout-inline-panel mt-3 hidden p-3" data-boxnow-panel>
                             <input type="hidden" name="shipping_boxnow_locker_id" value="{{ $selectedBoxNowLockerId }}" data-boxnow-locker-id>
                             <input type="hidden" name="shipping_boxnow_locker_name" value="{{ $selectedBoxNowLockerName }}" data-boxnow-locker-name>
@@ -348,6 +352,7 @@
                             @error('shipping_gls_dpm_id')
                                 <p class="mt-2 text-xs font-semibold text-rose-600">{{ $message }}</p>
                             @enderror
+                        </div>
                         </div>
                     </fieldset>
                 </div>
@@ -526,12 +531,29 @@
     </form>
     @include('front.partials.checkout-discount-forms')
 
-    <div id="boxnow-widget-root"></div>
+    @if (config('storefront.home') === 'watchline')
+        <dialog id="boxnow-widget-root" class="wl-boxnow-dialog" data-watchline-boxnow-dialog aria-labelledby="boxnow-map-title">
+            <div class="wl-boxnow-dialog-header">
+                <h2 id="boxnow-map-title">{{ __('Odaberite BOX NOW paketomat') }}</h2>
+                <button type="button" class="wl-boxnow-dialog-close" data-boxnow-close autofocus aria-label="{{ __('Zatvori kartu paketomata') }}">
+                    <span>{{ __('Zatvori') }}</span>
+                    <x-fa-icon name="xmark" style="regular" :inline="true" />
+                </button>
+            </div>
+            <div id="boxnow-widget-map" class="wl-boxnow-dialog-map"></div>
+        </dialog>
+        <button type="button" data-boxnow-widget-trigger hidden tabindex="-1" aria-hidden="true"></button>
+    @else
+        <div id="boxnow-widget-root"></div>
+    @endif
     <gls-dpm-dialog id="gls-dpm-dialog" country="hr" language="hr"></gls-dpm-dialog>
     </div>
 @endsection
 
 @push('scripts')
+    @if ($watchlineCartContactEnabled)
+        <script defer src="{{ asset('front-theme/scripts/watchline-cart-contact.js') }}?v={{ filemtime(public_path('front-theme/scripts/watchline-cart-contact.js')) }}"></script>
+    @endif
     <script defer src="{{ asset('front-theme/scripts/gift-vouchers.js') }}?v={{ filemtime(public_path('front-theme/scripts/gift-vouchers.js')) }}"></script>
     <script defer src="{{ asset('front-theme/scripts/checkout-discounts.js') }}?v={{ filemtime(public_path('front-theme/scripts/checkout-discounts.js')) }}"></script>
     <script defer src="{{ asset('front-theme/scripts/address-autofill.js') }}?v={{ filemtime(public_path('front-theme/scripts/address-autofill.js')) }}"></script>
@@ -557,6 +579,7 @@
             const r1Oib = document.querySelector('[data-r1-oib]');
             const optionsUrl = checkoutForm?.dataset.checkoutOptionsUrl || '';
             const shippingOptionsRoot = checkoutForm?.querySelector('[data-checkout-shipping-options]');
+            const shippingPanels = checkoutForm?.querySelector('[data-shipping-panels]');
             const paymentOptionsRoot = checkoutForm?.querySelector('[data-checkout-payment-options]');
             const topErrorBox = document.querySelector('[data-checkout-top-error]');
             const boxNowPanel = checkoutForm?.querySelector('[data-boxnow-panel]');
@@ -595,6 +618,11 @@
             let optionsAbortController = null;
             let optionsRefreshTimer = null;
             let boxNowScriptLoaded = false;
+            let boxNowWidgetPromise = null;
+            const boxNowDialog = document.querySelector('[data-watchline-boxnow-dialog]');
+            const boxNowMap = document.getElementById('boxnow-widget-map');
+            const boxNowWidgetTrigger = document.querySelector('[data-boxnow-widget-trigger]');
+            let boxNowReturnFocus = null;
             let glsWidgetPromise = null;
 
             const syncCustomerNames = function () {
@@ -645,6 +673,12 @@
                 }
 
                 const currentlySelected = shippingOptionsRoot.querySelector('input[name="shipping_method_code"]:checked')?.value || '';
+                [boxNowPanel, glsDpmPanel].forEach(function (panel) {
+                    if (panel && shippingPanels) {
+                        panel.classList.add('hidden');
+                        shippingPanels.appendChild(panel);
+                    }
+                });
                 if (!Array.isArray(methods) || methods.length === 0) {
                     shippingOptionsRoot.innerHTML = '<div class="text-sm text-rose-600">{{ __('ui.checkout.labels.no_shipping_methods') }}</div>';
                     return;
@@ -662,13 +696,14 @@
                     const descriptionHtml = description
                         ? '<span class="mt-1 block whitespace-pre-line text-xs leading-relaxed text-slate-600">' + escapeHtml(description) + '</span>'
                         : '';
-                    return '<label class="checkout-option-card flex cursor-pointer items-start justify-between gap-3 px-3 py-2.5 text-sm">'
+                    return '<div class="checkout-option-card checkout-shipping-option" data-shipping-option-card>'
+                        + '<label class="flex cursor-pointer items-start justify-between gap-3 px-3 py-2.5 text-sm">'
                         + '<span class="inline-flex min-w-0 items-start gap-2">'
                         + '<input type="radio" name="shipping_method_code" value="' + escapeHtml(method.code) + '" data-is-boxnow="' + isBoxNow + '" data-boxnow-partner-id="' + partnerId + '" data-is-gls-dpm="' + isGlsDpm + '" data-gls-dpm-filter-type="' + glsDpmFilterType + '" class="mt-0.5 h-4 w-4 shrink-0 border-slate-300 text-slate-900 focus:ring-0" required ' + (checked ? 'checked' : '') + '>'
                         + '<span class="min-w-0"><span class="font-semibold text-slate-900">' + escapeHtml(method.name) + '</span>' + descriptionHtml + '</span>'
                         + '</span>'
                         + '<span class="shrink-0 whitespace-nowrap text-slate-600">' + escapeHtml(method.price_formatted || '') + '</span>'
-                        + '</label>';
+                        + '</label></div>';
                 }).join('');
 
                 toggleBoxNowPanel();
@@ -745,6 +780,15 @@
                 return shippingOptionsRoot?.querySelector('input[name="shipping_method_code"]:checked') || null;
             };
 
+            const placeShippingPanel = function (panel, active) {
+                const card = active ? selectedShippingInput()?.closest('[data-shipping-option-card]') : null;
+                const destination = card || shippingPanels;
+                if (panel && destination) {
+                    destination.appendChild(panel);
+                    panel.classList.toggle('hidden', !card);
+                }
+            };
+
             const toggleBoxNowPanel = function () {
                 if (!boxNowPanel) {
                     return;
@@ -752,7 +796,7 @@
 
                 const selected = selectedShippingInput();
                 const isBoxNow = selected?.dataset?.isBoxnow === '1' || selected?.dataset?.isBoxnow === 'true';
-                boxNowPanel.classList.toggle('hidden', !isBoxNow);
+                placeShippingPanel(boxNowPanel, isBoxNow);
             };
 
             const toggleGlsDpmPanel = function () {
@@ -764,7 +808,7 @@
                 const isGlsDpm = selected?.dataset?.isGlsDpm === '1' || selected?.dataset?.isGlsDpm === 'true';
                 const filterType = String(selected?.dataset?.glsDpmFilterType || '').trim();
 
-                glsDpmPanel.classList.toggle('hidden', !isGlsDpm);
+                placeShippingPanel(glsDpmPanel, isGlsDpm);
 
                 if (!glsDpmDialog) {
                     return;
@@ -779,34 +823,56 @@
 
             const initBoxNowWidget = function () {
                 if (boxNowScriptLoaded) {
-                    return;
+                    return Promise.resolve(true);
+                }
+                if (boxNowWidgetPromise) {
+                    return boxNowWidgetPromise;
                 }
 
                 const partnerSource = shippingOptionsRoot?.querySelector('input[name="shipping_method_code"][data-is-boxnow="1"]');
                 const partnerId = String(partnerSource?.dataset?.boxnowPartnerId || '').trim();
                 if (partnerId === '') {
-                    return;
+                    return Promise.resolve(false);
                 }
 
                 window._bn_map_widget_config = {
                     partnerId: partnerId,
-                    parentElement: '#boxnow-widget-root',
-                    buttonSelector: '[data-boxnow-open]',
-                    type: 'popup',
+                    parentElement: boxNowDialog ? '#boxnow-widget-map' : '#boxnow-widget-root',
+                    buttonSelector: boxNowDialog ? '[data-boxnow-widget-trigger]' : '[data-boxnow-open]',
+                    type: boxNowDialog ? 'iframe' : 'popup',
+                    // Vendor iframe autoclose hides the map without posting the selected locker.
+                    // The enclosing Watchline dialog closes after receiving the selected locker.
+                    autoclose: !boxNowDialog,
+                    autoselect: true,
                     afterSelect: function (selection) {
-                        updateBoxNowSelection(selection || {});
+                        if (selection && typeof selection === 'object' && (selection.boxnowLockerId || selection.id)) {
+                            updateBoxNowSelection(selection);
+                            boxNowDialog?.close();
+                        } else if (selection === 'closeIframe' || selection?.boxnowClose === 'yes') {
+                            boxNowDialog?.close();
+                        }
                     },
                 };
 
-                const script = document.createElement('script');
-                script.src = 'https://widget-cdn.boxnow.hr/map-widget/client/v5.js';
-                script.async = true;
-                script.defer = true;
-                script.onerror = function () {
-                    alert(@json(__('ui.checkout.boxnow.widget_unavailable')));
-                };
-                document.head.appendChild(script);
-                boxNowScriptLoaded = true;
+                boxNowWidgetPromise = new Promise(function (resolve) {
+                    const script = document.createElement('script');
+                    script.src = 'https://widget-cdn.boxnow.hr/map-widget/client/v5.js';
+                    script.async = true;
+                    script.defer = true;
+                    script.onload = function () {
+                        boxNowScriptLoaded = true;
+                        resolve(true);
+                    };
+                    script.onerror = function () {
+                        boxNowWidgetPromise = null;
+                        script.remove();
+                        alert(@json(__('ui.checkout.boxnow.widget_unavailable')));
+                        resolve(false);
+                    };
+                    document.head.appendChild(script);
+                });
+
+                return boxNowWidgetPromise;
             };
 
             const ensureGlsWidgetLoaded = function () {
@@ -819,11 +885,22 @@
                 }
 
                 glsWidgetPromise = new Promise(function (resolve, reject) {
+                    const timeout = setTimeout(function () {
+                        glsWidgetPromise = null;
+                        reject(new Error('GLS widget registration timed out.'));
+                    }, 15000);
                     const script = document.createElement('script');
                     script.type = 'module';
                     script.src = 'https://map.gls-hungary.com/widget/gls-dpm.js';
-                    script.onload = resolve;
+                    script.onload = function () {
+                        // The GLS entry script loads its custom element in a second module.
+                        window.customElements.whenDefined('gls-dpm-dialog').then(function () {
+                            clearTimeout(timeout);
+                            resolve();
+                        });
+                    };
                     script.onerror = function () {
+                        clearTimeout(timeout);
                         glsWidgetPromise = null;
                         reject(new Error('GLS widget load failed.'));
                     };
@@ -837,8 +914,8 @@
                 const lockerId = String(selection?.boxnowLockerId || selection?.id || '');
                 const lockerAddress = String(selection?.boxnowLockerAddressLine1 || selection?.addressLine1 || '');
                 const lockerPostal = String(selection?.boxnowLockerPostalCode || selection?.postalCode || '');
-                const lockerCity = String(selection?.boxnowLockerCity || selection?.city || '');
-                const lockerName = String(selection?.boxnowLockerDescription || selection?.name || '');
+                const lockerCity = String(selection?.boxnowLockerCity || selection?.city || selection?.boxnowLockerAddressLine2 || selection?.addressLine2 || '');
+                const lockerName = String(selection?.boxnowLockerName || selection?.boxnowLockerDescription || selection?.name || '');
 
                 if (boxNowLockerId) boxNowLockerId.value = lockerId;
                 if (boxNowLockerName) boxNowLockerName.value = lockerName;
@@ -1112,11 +1189,54 @@
                     scheduleOptionsRefresh();
                 }
             });
-            boxNowOpenButton?.addEventListener('click', function () {
+            boxNowOpenButton?.addEventListener('click', async function (event) {
+                event.preventDefault();
                 const selected = selectedShippingInput();
                 const partnerId = String(selected?.dataset?.boxnowPartnerId || '').trim();
                 if (partnerId === '') {
                     alert(@json(__('ui.checkout.boxnow.partner_missing')));
+                    return;
+                }
+                if (!boxNowDialog || boxNowDialog.open) {
+                    return;
+                }
+                boxNowReturnFocus = event.currentTarget;
+                boxNowOpenButton.disabled = true;
+                try {
+                    if (!await initBoxNowWidget()) {
+                        return;
+                    }
+                    boxNowMap?.replaceChildren();
+                    boxNowWidgetTrigger?.click();
+                    const frame = boxNowMap?.querySelector('iframe[id^="boxnow_map_widget"]');
+                    if (!frame) {
+                        alert(@json(__('ui.checkout.boxnow.widget_unavailable')));
+                        return;
+                    }
+                    frame.title = @json(__('BOX NOW — odabir paketomata'));
+                    boxNowDialog.showModal();
+                    document.body.classList.add('wl-boxnow-map-open');
+                } finally {
+                    boxNowOpenButton.disabled = false;
+                }
+            });
+            boxNowDialog?.querySelector('[data-boxnow-close]')?.addEventListener('click', function () {
+                boxNowDialog.close();
+            });
+            const dismissBoxNowDialog = function (event) {
+                if (!boxNowDialog?.open || (event.type !== 'cancel' && event.key !== 'Escape')) {
+                    return;
+                }
+                event.preventDefault();
+                boxNowDialog.close();
+            };
+            boxNowDialog?.addEventListener('keydown', dismissBoxNowDialog);
+            boxNowDialog?.addEventListener('cancel', dismissBoxNowDialog);
+            boxNowDialog?.addEventListener('close', function () {
+                boxNowMap?.replaceChildren();
+                document.body.classList.remove('wl-boxnow-map-open');
+                if (boxNowReturnFocus?.isConnected) {
+                    boxNowReturnFocus.focus();
                 }
             });
             glsDpmOpenButton?.addEventListener('click', async function () {

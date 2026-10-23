@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Front;
 
+use App\Models\Catalog\Category\Category;
+use App\Models\Catalog\Manufacturer\Manufacturer;
 use App\Models\Catalog\Product\Product;
 use App\Services\Settings\SystemSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,7 +17,7 @@ class LibermediaCatalogPromoTest extends TestCase
     {
         parent::setUp();
         app()->setLocale('hr');
-        config(['storefront.theme' => 'herrera', 'storefront.brand' => 'libermedia', 'commerce.b2c_only' => true, 'commerce.b2b_only' => false, 'storefront_cache.enabled' => false, 'gift_vouchers.enabled' => true]);
+        config(['storefront.theme' => 'herrera', 'storefront.brand' => 'libermedia', 'storefront.home' => 'libermedia', 'commerce.b2c_only' => true, 'commerce.b2b_only' => false, 'storefront_cache.enabled' => false, 'gift_vouchers.enabled' => true]);
         app(SystemSettingsService::class)->putMany([
             'store_brand_name' => 'Liber Media', 'store_pricing_b2c_enabled' => true,
             'store_product_desktop_default_cols' => 5, 'front_category_products_per_page_desktop' => 24,
@@ -75,6 +77,51 @@ class LibermediaCatalogPromoTest extends TestCase
         $this->get(route('shop.index'))->assertOk()->assertDontSee('data-libermedia-catalog-promos', false)
             ->assertDontSee('libermedia-catalog-promos.js', false)
             ->assertDontSee('libermedia-catalog-promos.css', false);
+    }
+
+    public function test_watchline_catalog_category_and_brand_promotions_only_offer_the_gift_voucher(): void
+    {
+        config(['storefront.home' => 'watchline', 'app.locale' => 'hr', 'app.fallback_locale' => 'hr']);
+        app(SystemSettingsService::class)->put('catalog_use_manufacturers', true);
+        $category = Category::create(['code' => 'watchline-promo-watches', 'scope' => 'catalog', 'is_active' => true]);
+        $category->translations()->create(['locale' => 'hr', 'scope' => 'catalog', 'name' => 'Satovi', 'slug' => 'watchline-promo-watches']);
+        $manufacturer = Manufacturer::create(['code' => 'watchline-promo-brand', 'is_active' => true]);
+        $manufacturer->translations()->create(['locale' => 'hr', 'name' => 'Brand satova', 'slug' => 'watchline-promo-brand']);
+        $this->products(4);
+        foreach (Product::all() as $product) {
+            $product->categories()->attach($category);
+            $product->update(['manufacturer_id' => $manufacturer->id]);
+        }
+
+        foreach ([route('shop.index'), route('categories.show', ['slug' => 'watchline-promo-watches']), route('manufacturers.show', ['slug' => 'watchline-promo-brand'])] as $url) {
+            $response = $this->get($url);
+            $this->assertSame(200, $response->status(), $url);
+            $response->assertSee('Poklon bon')
+                ->assertSee('Darujte izbor satova, naočala i nakita.')
+                ->assertDontSee('Kupi u kompletu i uštedi')->assertDontSee('Darujte igru i veselje.');
+            $xpath = $this->xpath($response->getContent());
+            $this->assertSame(1, $xpath->query('//template[@data-catalog-promo-template]')->length);
+            $this->assertSame(0, $xpath->query('//template[@data-catalog-promo-template="bundles"]')->length);
+            $this->assertSame(route('gift-vouchers.create'), $xpath->query('//template[@data-catalog-promo-template="gift-voucher"]/a')->item(0)->getAttribute('href'));
+            $this->assertCount(4, $response->viewData('products'));
+        }
+
+        $directory = $this->get(route('categories.index'))->assertOk()
+            ->assertSee('data-watchline-category-gift-voucher', false)
+            ->assertSee('Darujte izbor satova, naočala i nakita.')
+            ->assertDontSee('Odaberi dob, interese i budžet.')
+            ->assertDontSee('data-libermedia-category-bundle', false);
+        $this->assertSame(route('gift-vouchers.create'), $this->xpath($directory->getContent())->query('//*[@data-watchline-category-gift-voucher]')->item(0)->getAttribute('href'));
+    }
+
+    public function test_watchline_does_not_fall_back_to_bundles_when_gift_vouchers_are_disabled(): void
+    {
+        config(['storefront.home' => 'watchline', 'gift_vouchers.enabled' => false]);
+        $this->products(4);
+        $response = $this->get(route('shop.index'))->assertOk()
+            ->assertDontSee('data-catalog-promo-template=', false)
+            ->assertDontSee('Kupi u kompletu i uštedi');
+        $this->assertCount(4, $response->viewData('products'));
     }
 
     private function products(int $count): void

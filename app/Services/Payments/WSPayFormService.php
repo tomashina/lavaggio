@@ -396,6 +396,11 @@ class WSPayFormService
      */
     private function permitsConfiguredMode(array $settings): bool
     {
+        if (app()->environment('local') && (bool) config('commerce.local_safe_mode')
+            && filter_var($settings['local_preview_only'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            return true;
+        }
+
         if (! app()->environment('local') || ! StorefrontTheme::usesLibermediaBrand()) {
             return true;
         }

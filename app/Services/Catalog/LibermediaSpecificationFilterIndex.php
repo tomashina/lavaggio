@@ -26,7 +26,7 @@ class LibermediaSpecificationFilterIndex
 
     public function enabled(): bool
     {
-        return StorefrontTheme::usesLibermediaBrand();
+        return config('storefront.home') !== 'watchline' && StorefrontTheme::usesLibermediaBrand();
     }
 
     public static function groupCodes(): array

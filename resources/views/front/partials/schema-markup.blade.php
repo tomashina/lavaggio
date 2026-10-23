@@ -1,4 +1,5 @@
 @php
+    $watchlineSeo = config('storefront.home') === 'watchline';
     $schemaSettings = $storeSettings['schema'] ?? [];
     $schemaEnabled = (bool) ($schemaSettings['enabled'] ?? true);
     if (! $schemaEnabled) {
@@ -19,21 +20,25 @@
     $locale = (string) ($locale ?? app()->getLocale());
     $fallbackLocale = (string) ($fallbackLocale ?? config('app.locale'));
     $siteUrl = url('/');
-    $currentUrl = url()->current();
+    $schemaPagination = isset($products) && $products instanceof \Illuminate\Contracts\Pagination\Paginator ? $products
+        : (isset($posts) && $posts instanceof \Illuminate\Contracts\Pagination\Paginator ? $posts
+            : (isset($reviews) && $reviews instanceof \Illuminate\Contracts\Pagination\Paginator ? $reviews
+                : (isset($pages) && $pages instanceof \Illuminate\Contracts\Pagination\Paginator ? $pages : null)));
+    $currentUrl = $watchlineSeo ? \App\Support\WatchlineSeo::canonical(request(), $schemaPagination) : url()->current();
     $brand = $storeSettings['branding'] ?? [];
     $footer = $storeSettings['footer'] ?? [];
     $og = $storeSettings['og'] ?? [];
     $seo = $storeSettings['seo'] ?? [];
 
-    $text = static function (mixed $value, int $limit = 300): string {
-        $plain = trim((string) strip_tags((string) $value));
+    $text = static function (mixed $value, int $limit = 300) use ($watchlineSeo): string {
+        $plain = trim(strip_tags(html_entity_decode((string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
         if ($plain === '') {
             return '';
         }
 
         $plain = preg_replace('/\s+/u', ' ', $plain) ?: $plain;
 
-        return \Illuminate\Support\Str::limit($plain, $limit, '');
+        return \Illuminate\Support\Str::limit($plain, $limit, '', $watchlineSeo);
     };
 
     $nonEmpty = static fn (mixed $value): bool => trim((string) $value) !== '';
@@ -167,12 +172,34 @@
             }
         }
 
-        if (request()->routeIs('products.show') && isset($firstCategory) && $firstCategory) {
+        if ($watchlineSeo && request()->routeIs('products.show')) {
+            $schemaProductCategories = $displayProductBreadcrumbCategories ?? $productBreadcrumbCategories ?? collect();
+            $schemaRootIds = $schemaProductCategories->whereNull('parent_id')->pluck('id')->all();
+            foreach ($schemaProductCategories as $schemaCategory) {
+                if ($schemaCategory->parent_id && ! in_array($schemaCategory->parent_id, $schemaRootIds)) { continue; }
+                $schemaCategoryTranslation = $schemaCategory->translations->firstWhere('locale', $locale)
+                    ?? $schemaCategory->translations->firstWhere('locale', $fallbackLocale);
+                if (! $schemaCategoryTranslation?->slug) { continue; }
+                $breadcrumbItems[] = ['@type' => 'ListItem', 'position' => $position++, 'name' => $schemaCategoryTranslation->name,
+                    'item' => route('categories.show', ['slug' => $schemaCategoryTranslation->slug])];
+            }
+        }
+
+        if (! $watchlineSeo && request()->routeIs('products.show') && isset($firstCategory) && $firstCategory) {
             $catTranslation = $firstCategory->translations?->firstWhere('locale', $locale)
                 ?? $firstCategory->translations?->firstWhere('locale', $fallbackLocale);
             $catName = (string) ($catTranslation?->name ?? $firstCategory->code);
             $catUrl = route('categories.show', ['slug' => $catTranslation?->slug ?? $firstCategory->id]);
             $breadcrumbItems[] = ['@type' => 'ListItem', 'position' => $position++, 'name' => $catName, 'item' => $catUrl];
+        }
+
+        if ($watchlineSeo && request()->routeIs('manufacturers.show') && isset($manufacturer)) {
+            $manufacturerTr = $manufacturer->translations->firstWhere('locale', $locale) ?? $manufacturer->translations->firstWhere('locale', $fallbackLocale);
+            $breadcrumbItems[] = ['@type' => 'ListItem', 'position' => $position++, 'name' => 'Brendovi', 'item' => route('manufacturers.index')];
+            $breadcrumbItems[] = ['@type' => 'ListItem', 'position' => $position++, 'name' => $manufacturerTr?->name ?: $manufacturer->code, 'item' => $currentUrl];
+        }
+        if ($watchlineSeo && request()->routeIs('gift-guide.index')) {
+            $breadcrumbItems[] = ['@type' => 'ListItem', 'position' => $position++, 'name' => 'Tražiš poklon?', 'item' => route('gift-guide.index')];
         }
 
         if (request()->routeIs('blog.*')) {
@@ -254,6 +281,14 @@
         ];
     }
 
+    if ($watchlineSeo && request()->routeIs('manufacturers.show', 'gift-guide.index') && (bool) ($schemaSettings['category_enabled'] ?? true)) {
+        $collectionTr = isset($manufacturer) ? ($manufacturer->translations->firstWhere('locale', $locale) ?? $manufacturer->translations->firstWhere('locale', $fallbackLocale)) : null;
+        $schemas[] = ['@context' => 'https://schema.org', '@type' => 'CollectionPage', '@id' => $currentUrl.'#webpage',
+            'url' => $currentUrl, 'isPartOf' => ['@id' => $siteUrl.'#website'],
+            'name' => request()->routeIs('gift-guide.index') ? 'Tražiš poklon? – Watchline' : $text($collectionTr?->meta_title ?: $collectionTr?->name, 191),
+            'description' => request()->routeIs('gift-guide.index') ? 'Pronađite sat, sunčane naočale ili nakit prema osobi kojoj darujete i svom budžetu.' : $text($collectionTr?->meta_description ?: $collectionTr?->description ?: $defaultDescription)];
+    }
+
     if (request()->routeIs('categories.index') && (bool) ($schemaSettings['category_enabled'] ?? true)) {
         $schemas[] = [
             '@context' => 'https://schema.org',
@@ -276,7 +311,7 @@
         ];
     }
 
-    if ((bool) ($schemaSettings['itemlist_enabled'] ?? true) && request()->routeIs('shop.index') && isset($products) && $products instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator) {
+    if ((bool) ($schemaSettings['itemlist_enabled'] ?? true) && (request()->routeIs('shop.index') || ($watchlineSeo && request()->routeIs('manufacturers.show', 'gift-guide.index'))) && isset($products) && $products instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator) {
         $items = collect($products->items())
             ->take($itemListLimit)
             ->map(function ($row, int $index) use ($locale, $fallbackLocale) {
@@ -296,7 +331,8 @@
             $schemas[] = [
                 '@context' => 'https://schema.org',
                 '@type' => 'ItemList',
-                'name' => __('ui.shop.page_title'),
+                'name' => $watchlineSeo && request()->routeIs('gift-guide.index') ? 'Prijedlozi za vaš odabir'
+                    : ($watchlineSeo && isset($manufacturerTr) ? (string) $manufacturerTr->name : __('ui.shop.page_title')),
                 'itemListElement' => $items,
             ];
         }
@@ -363,13 +399,13 @@
             'url' => $currentUrl,
         ];
         if ($canViewPrices) {
-            $schemaPrice = app(\App\Services\Pricing\ProductPricePresentationService::class)->forProduct($product, auth()->user());
+            $schemaPrice = $pricePresentation ?? app(\App\Services\Pricing\ProductPricePresentationService::class)->forProduct($product, auth()->user());
             $productSchema['offers'] = [
                 '@type' => 'Offer',
                 'url' => $currentUrl,
                 'priceCurrency' => strtoupper((string) ($schemaSettings['product_currency'] ?? 'EUR')),
                 'price' => number_format((float) ($schemaPrice['display_current'] ?? $schemaPrice['current_gross']), 2, '.', ''),
-                'availability' => (int) $product->stock_qty > 0
+                'availability' => ($watchlineSeo ? $product->storefrontIsPurchasable() : (int) $product->stock_qty > 0)
                     ? 'https://schema.org/InStock'
                     : 'https://schema.org/OutOfStock',
             ];
@@ -382,34 +418,56 @@
                 ];
             }
         }
+        if ($watchlineSeo) {
+            $productSchema['@id'] = $currentUrl.'#product';
+            $productSchema = array_merge($productSchema, \App\Support\WatchlineSeo::identifiers($product));
+            if (isset($productSchema['offers'])) { $productSchema['offers']['seller'] = ['@id' => $siteUrl.'#organization']; }
+        }
         if ($manufacturerName) {
             $productSchema['brand'] = ['@type' => 'Brand', 'name' => $manufacturerName];
         }
         if ($productImages->isNotEmpty()) {
-            $productSchema['image'] = $productImages->map($absolute)->take(8)->values()->all();
-        } elseif ($defaultImage !== '') {
+            $productSchema['image'] = $productImages->map($absolute)->unique()->take(8)->values()->all();
+        } elseif (! $watchlineSeo && $defaultImage !== '') {
             $productSchema['image'] = [$absolute($defaultImage)];
         }
 
         try {
-            $ratingStats = $product->comments()
-                ->status(\App\Models\Content\Support\Comment::STATUS_APPROVED)
-                ->whereNotNull('rating')
-                ->selectRaw('AVG(rating) as avg_rating, COUNT(*) as rating_count')
-                ->first();
-            $ratingCount = (int) ($ratingStats->rating_count ?? 0);
-            $avgRating = (float) ($ratingStats->avg_rating ?? 0);
+            if ($watchlineSeo && isset($reviewDistribution)) {
+                $ratingCount = array_sum($reviewDistribution);
+                $ratingTotal = collect($reviewDistribution)->map(fn ($count, $rating) => (int) $rating * (int) $count)->sum();
+                $avgRating = $ratingCount > 0 ? $ratingTotal / $ratingCount : 0;
+            } else {
+                $ratingStats = $product->comments()->status(\App\Models\Content\Support\Comment::STATUS_APPROVED)
+                    ->when($watchlineSeo, fn ($query) => $query->whereNull('parent_id')->whereIn('locale', [$locale, $fallbackLocale])->whereBetween('rating', [1, 5]))
+                    ->whereNotNull('rating')->selectRaw('AVG(rating) as avg_rating, COUNT(*) as rating_count')->first();
+                $ratingCount = (int) ($ratingStats->rating_count ?? 0);
+                $avgRating = (float) ($ratingStats->avg_rating ?? 0);
+            }
             if ($ratingCount > 0 && $avgRating > 0) {
                 $productSchema['aggregateRating'] = [
                     '@type' => 'AggregateRating',
                     'ratingValue' => number_format($avgRating, 2, '.', ''),
                     'reviewCount' => $ratingCount,
+                    'bestRating' => 5,
+                    'worstRating' => 1,
                 ];
             }
         } catch (\Throwable) {
             // Keep schema output even if comments table is unavailable.
         }
 
+        if ($watchlineSeo && isset($comments)) {
+            $schemaReviews = $comments->filter(fn ($comment) => $comment->status === \App\Models\Content\Support\Comment::STATUS_APPROVED
+                && ! $comment->parent_id && in_array($comment->locale, [$locale, $fallbackLocale], true)
+                && $comment->rating >= 1 && $comment->rating <= 5 && trim((string) $comment->author_name) !== ''
+                && trim((string) $comment->body) !== '')->take(5)->map(fn ($comment) => [
+                    '@type' => 'Review', 'author' => ['@type' => 'Person', 'name' => $text($comment->author_name, 120)],
+                    'reviewBody' => $text($comment->body, 2000),
+                    'reviewRating' => ['@type' => 'Rating', 'ratingValue' => (int) $comment->rating, 'bestRating' => 5, 'worstRating' => 1],
+                ])->values()->all();
+            if ($schemaReviews !== []) { $productSchema['review'] = $schemaReviews; }
+        }
         $schemas[] = $productSchema;
     }
 
@@ -417,7 +475,7 @@
         $translation = $post->translations->firstWhere('locale', $locale)
             ?? $post->translations->firstWhere('locale', $fallbackLocale);
         $authorName = trim((string) ($schemaSettings['blog_author_name'] ?? ''));
-        if ($authorName === '') {
+        if ($authorName === '' && ! $watchlineSeo) {
             $authorName = trim((string) ($post->creator?->name ?? ''));
         }
         if ($authorName === '') {
@@ -428,13 +486,19 @@
             '@context' => 'https://schema.org',
             '@type' => 'BlogPosting',
             'headline' => $text($translation?->meta_title ?: $translation?->title ?: $post->code, 191),
-            'description' => $text($translation?->meta_description ?: $translation?->excerpt ?: $defaultDescription, 320),
+            'description' => $text($translation?->meta_description ?: $translation?->excerpt ?: ($watchlineSeo ? $translation?->body_html : '') ?: $defaultDescription, 320),
             'datePublished' => optional($post->published_at)->toIso8601String(),
             'dateModified' => optional($post->updated_at)->toIso8601String(),
             'mainEntityOfPage' => $currentUrl,
-            'author' => ['@type' => 'Person', 'name' => $authorName],
+            'author' => ['@type' => $watchlineSeo && $authorName === $businessName ? 'Organization' : 'Person', 'name' => $authorName],
             'publisher' => ['@type' => 'Organization', 'name' => $businessName],
         ];
+        if ($watchlineSeo) {
+            $blogSchema['@id'] = $currentUrl.'#article';
+            $blogSchema['publisher']['@id'] = $siteUrl.'#organization';
+            if (! $blogSchema['datePublished']) { unset($blogSchema['datePublished']); }
+            if (! $blogSchema['dateModified']) { unset($blogSchema['dateModified']); }
+        }
         if ($authorUrl !== '') {
             $blogSchema['author']['url'] = $authorUrl;
         }
@@ -473,13 +537,17 @@
         ];
         if (isset($posts) && $posts instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator) {
             $items = collect($posts->items())
-                ->map(function ($item) use ($locale, $fallbackLocale, $text) {
+                ->map(function ($item) use ($locale, $fallbackLocale, $text, $watchlineSeo) {
                     $tr = $item->translations->firstWhere('locale', $locale)
                         ?? $item->translations->firstWhere('locale', $fallbackLocale);
                     if (! $tr) {
                         return null;
                     }
 
+                    if ($watchlineSeo) {
+                        return ['@type' => 'BlogPosting', '@id' => route('blog.show', ['slug' => $tr->slug]).'#article',
+                            'url' => route('blog.show', ['slug' => $tr->slug]), 'headline' => $text($tr->title, 191)];
+                    }
                     return [
                         '@type' => 'ListItem',
                         'position' => null,
@@ -492,7 +560,7 @@
 
             if ($items->isNotEmpty()) {
                 $list = $items->map(function (array $entry, int $index): array {
-                    $entry['position'] = $index + 1;
+                    if (($entry['@type'] ?? '') === 'ListItem') { $entry['position'] = $index + 1; }
                     return $entry;
                 })->all();
                 $blogIndex['blogPost'] = $list;
@@ -544,7 +612,7 @@
         $schemas[] = $pageSchema;
     }
 
-    if ((request()->routeIs('home') || request()->routeIs('faq.index')) && (bool) ($schemaSettings['faq_enabled'] ?? true)) {
+    if (((! $watchlineSeo && request()->routeIs('home')) || request()->routeIs('faq.index')) && (bool) ($schemaSettings['faq_enabled'] ?? true)) {
         try {
             $faqLimit = max(1, min(20, (int) ($schemaSettings['faq_limit'] ?? 8)));
             $faqGroup = trim((string) ($schemaSettings['faq_group'] ?? ''));
@@ -592,5 +660,5 @@
 @endphp
 
 @foreach ($schemas as $schema)
-    <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
+    <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE) !!}</script>
 @endforeach

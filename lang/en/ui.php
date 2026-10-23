@@ -150,6 +150,9 @@ return [
                 'button' => 'Sign me up',
                 'consent' => 'I accept terms of use and data processing for newsletter.',
                 'status' => [
+                    'already_subscribed' => 'This email address is already subscribed. No new code has been issued.',
+                    'welcome_sent' => 'Thank you for subscribing! Your first-purchase code has been emailed to you.',
+                    'welcome_pending' => 'Thank you for subscribing! Delivery of your personal code is currently pending.',
                     'subscribed' => 'Thank you! You have been successfully signed up for the newsletter.',
                     'saved_with_sync_issue' => 'Signup was saved, but sync with the newsletter service is currently unavailable.',
                     'failed' => 'Newsletter signup is currently unavailable. Please try again soon.',
@@ -263,6 +266,8 @@ return [
         'shipping_quote' => 'The shipping price is confirmed after the request is submitted.',
         'shipping_calculated_at_checkout' => 'Calculated at checkout based on the address and weight.',
         'shipping_free_over' => 'Free for orders over :amount',
+        'shipping_free_from' => 'Free for orders from :amount',
+        'shipping_subtotal_before_cart_discount' => 'The free shipping threshold uses product prices after product promotions and before coupons.',
         'shipping_destinations' => 'Destinations: :destinations',
         'shipping_order_up_to' => 'Orders up to :amount',
         'shipping_order_from' => 'Orders from :amount',
@@ -375,6 +380,7 @@ return [
         ],
     ],
     'cart' => [
+        'welcome_coupon_ineligible' => 'This code is valid for your first purchase using your newsletter subscription email address.',
         'page_title' => 'Cart',
         'title' => 'Cart',
         'subtitle' => 'Review products before checkout.',

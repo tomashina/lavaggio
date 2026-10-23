@@ -41,6 +41,14 @@ class HerreraLegacyUrlTest extends TestCase
         $this->assertNull(HerreraLegacyUrlService::normalizePath('//evil.test'));
     }
 
+    public function test_watchline_retired_pages_keep_gone_status_and_correct_brand(): void
+    {
+        config(['storefront.home' => 'watchline']);
+        $this->alias('/stari-watchline-sat', 'product_id=999', 'unresolved');
+        $this->get('/stari-watchline-sat')->assertStatus(410)->assertHeader('X-Robots-Tag', 'noindex')
+            ->assertSee('Watch Line')->assertDontSee('Herrera')->assertSee('href="/shop"', false);
+    }
+
     public function test_dynamic_category_prefix_is_accepted_only_when_prefix_is_a_known_category(): void
     {
         $this->product();

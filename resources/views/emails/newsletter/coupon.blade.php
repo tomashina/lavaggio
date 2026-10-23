@@ -1,9 +1,10 @@
+@php($copy = !empty($watchline) ? 'mail.watchline_newsletter_coupon' : 'mail.newsletter_coupon')
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ __('mail.newsletter_coupon.title') }}</title>
+    <title>{{ __($copy.'.title') }}</title>
     <style>
         body { margin:0; padding:0; background:#f3f4f6; font-family:Arial, Helvetica, sans-serif; color:#0f172a; }
         a, a:link, a:visited { color:#0f172a !important; text-decoration:none !important; }
@@ -19,6 +20,12 @@
         .coupon { display:inline-block; margin:22px 0 10px; padding:14px 28px; border:2px dashed #0f172a; font-size:26px; font-weight:900; letter-spacing:.16em; }
         .cta { display:inline-block; margin-top:16px; padding:12px 22px; background:#0f172a; color:#ffffff !important; font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
         .foot { padding:16px 20px; border-top:1px solid #e5e7eb; color:#64748b; font-size:12px; text-align:center; }
+        @if (!empty($watchline))
+        .head { background:#132a38; border-color:#132a38; }
+        .head .store { color:#ffffff; }
+        .coupon { border-color:#0093dd; color:#0077b5; background:#edf6fc; }
+        .cta { background:#0077b5; }
+        @endif
     </style>
 </head>
 <body>
@@ -32,16 +39,16 @@
             </div>
 
             <div class="content">
-                <p class="eyebrow">{{ __('mail.newsletter_coupon.eyebrow') }}</p>
-                <h1 class="title">{{ __('mail.newsletter_coupon.heading') }}</h1>
-                <p class="text">{{ __('mail.newsletter_coupon.intro') }}</p>
+                <p class="eyebrow">{{ __($copy.'.eyebrow') }}</p>
+                <h1 class="title">{{ __($copy.'.heading') }}</h1>
+                <p class="text">{{ __($copy.'.intro', ['percent' => $discount_percent ?? 10]) }}</p>
                 <div class="coupon">{{ $coupon_code }}</div>
-                <p class="text">{{ __('mail.newsletter_coupon.note') }}</p>
-                <a href="{{ $shop_url }}" class="cta">{{ __('mail.newsletter_coupon.cta') }}</a>
+                <p class="text">{{ __($copy.'.note') }}</p>
+                <a href="{{ $shop_url }}" class="cta">{{ __($copy.'.cta') }}</a>
             </div>
 
             <div class="foot">
-                {{ __('mail.newsletter_coupon.footer', ['store' => $store_name]) }}
+                {{ __($copy.'.footer', ['store' => $store_name]) }}
             </div>
         </div>
     </div>

@@ -161,6 +161,16 @@
     background: var(--checkout-surface);
 }
 
+.checkout-shipping-option > label {
+    min-height: 52px;
+}
+
+.checkout-shipping-option > .checkout-inline-panel {
+    margin-top: 0;
+    border: 0;
+    border-top: 1px solid var(--checkout-border);
+}
+
 .checkout-primary-button {
     display: inline-flex;
     min-height: 52px;

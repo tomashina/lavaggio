@@ -1224,7 +1224,10 @@
                     $integrationsEracuniActive = request()->routeIs('admin.integrations.eracuni.*');
                     $integrationsSpreadsheetActive = request()->routeIs('admin.integrations.spreadsheet.*');
                     $integrationsMediaActive = request()->routeIs('admin.integrations.media.*');
-                    $integrationsOpen = $integrationsSupplierCatalogActive || $integrationsEprelActive || $integrationsStockActive || $integrationsEracuniActive || $integrationsSpreadsheetActive || $integrationsMediaActive;
+                    $isWatchlineIntegrations = config('storefront.home') === 'watchline';
+                    $integrationsWatchlineActive = request()->routeIs('admin.integrations.watchline.*');
+                    $integrationsWoltActive = request()->routeIs('admin.integrations.wolt.*');
+                    $integrationsOpen = $integrationsSupplierCatalogActive || $integrationsEprelActive || $integrationsStockActive || $integrationsEracuniActive || $integrationsSpreadsheetActive || $integrationsMediaActive || $integrationsWatchlineActive || $integrationsWoltActive;
                     $canManageEprel = auth()->user() && (
                         auth()->user()->isA('superadmin')
                         || auth()->user()->can('integrations.eprel.settings.manage')
@@ -1749,6 +1752,15 @@
                                 </span>
                             </summary>
                             <div class="ml-3 mt-1 space-y-1 border-l border-slate-200 pl-4">
+                                @if ($isWatchlineIntegrations && $canManageStock)
+                                    <a href="{{ route('admin.integrations.watchline.index') }}" class="sidebar-dropdown-link block rounded-lg font-medium {{ $integrationsWatchlineActive ? 'is-active-leaf' : 'text-slate-700 hover:bg-slate-100' }}">
+                                        <span class="flex items-center gap-2"><span class="sidebar-dot"></span><span>GATH i automatizacije</span></span>
+                                    </a>
+                                    <a href="{{ route('admin.integrations.wolt.index') }}" class="sidebar-dropdown-link block rounded-lg font-medium {{ $integrationsWoltActive ? 'is-active-leaf' : 'text-slate-700 hover:bg-slate-100' }}">
+                                        <span class="flex items-center gap-2"><span class="sidebar-dot"></span><span>Wolt povezivanje</span></span>
+                                    </a>
+                                @endif
+                                @if (! $isWatchlineIntegrations)
                                 @if ($canManageStock)
                                     <a href="{{ route('admin.integrations.supplier-catalog.index') }}" class="sidebar-dropdown-link block rounded-lg font-medium {{ $integrationsSupplierCatalogActive ? 'is-active-leaf' : 'text-slate-700 hover:bg-slate-100' }}">
                                         <span class="flex items-center gap-2"><span class="sidebar-dot"></span><span>{{ __('Artikli dobavljača') }}</span></span>
@@ -1762,6 +1774,7 @@
                                         <span class="flex items-center gap-2"><span class="sidebar-dot"></span><span>{{ __('e-Računi katalog') }}</span></span>
                                     </a>
                                 @endif
+                                @endif
                                 @if ($canManageSpreadsheet)
                                     <a href="{{ route('admin.integrations.spreadsheet.index') }}" class="sidebar-dropdown-link block rounded-lg font-medium {{ $integrationsSpreadsheetActive ? 'is-active-leaf' : 'text-slate-700 hover:bg-slate-100' }}">
                                         <span class="flex items-center gap-2"><span class="sidebar-dot"></span><span>{{ __('Excel i CSV uvoz') }}</span></span>
@@ -1772,7 +1785,7 @@
                                         <span class="flex items-center gap-2"><span class="sidebar-dot"></span><span>{{ __('Uvoz slika') }}</span></span>
                                     </a>
                                 @endif
-                                @if ($canManageEprel)
+                                @if ($canManageEprel && ! $isWatchlineIntegrations)
                                 <a href="{{ route('admin.integrations.eprel.catalog') }}" class="sidebar-dropdown-link block rounded-lg font-medium {{ request()->routeIs('admin.integrations.eprel.catalog') ? 'is-active-leaf' : 'text-slate-700 hover:bg-slate-100' }}">
                                     <span class="flex items-center gap-2"><span class="sidebar-dot"></span><span>EPREL katalog</span></span>
                                 </a>

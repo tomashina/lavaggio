@@ -150,6 +150,9 @@ return [
                 'button' => 'Prijavi me',
                 'consent' => 'Prihvaćam uvjete korištenja i obradu podataka za newsletter.',
                 'status' => [
+                    'already_subscribed' => 'Ova je e-mail adresa već prijavljena na newsletter. Novi kod nije izdan.',
+                    'welcome_sent' => 'Hvala na prijavi! Osobni kod za prvu kupnju poslan je na vaš e-mail.',
+                    'welcome_pending' => 'Hvala na prijavi! Slanje osobnog koda trenutačno je na čekanju.',
                     'subscribed' => 'Hvala! Uspješno ste prijavljeni na newsletter.',
                     'saved_with_sync_issue' => 'Prijava je spremljena, ali sinkronizacija s newsletter servisom trenutno nije uspjela.',
                     'failed' => 'Newsletter prijava trenutno nije moguća. Pokušajte ponovno uskoro.',
@@ -264,6 +267,8 @@ return [
         'shipping_quote' => 'Cijena dostave potvrđuje se nakon slanja upita.',
         'shipping_calculated_at_checkout' => 'Izračunava se u košarici prema adresi i težini.',
         'shipping_free_over' => 'Besplatno za narudžbe iznad :amount',
+        'shipping_free_from' => 'Besplatno za narudžbe od :amount',
+        'shipping_subtotal_before_cart_discount' => 'Prag besplatne dostave računa se prema vrijednosti artikala nakon akcijskih cijena, a prije kupona.',
         'shipping_destinations' => 'Odredišta: :destinations',
         'shipping_order_up_to' => 'Narudžbe do :amount',
         'shipping_order_from' => 'Narudžbe od :amount',
@@ -376,6 +381,7 @@ return [
         ],
     ],
     'cart' => [
+        'welcome_coupon_ineligible' => 'Ovaj je kod namijenjen prvoj kupnji uz e-mail adresu s newsletter prijave.',
         'page_title' => 'Košarica',
         'title' => 'Košarica',
         'subtitle' => 'Provjerite proizvode prije završetka kupnje.',

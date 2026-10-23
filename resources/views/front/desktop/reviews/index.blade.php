@@ -1,6 +1,6 @@
 @extends('front.desktop.layouts.store')
 
-@section('title', 'Iskustva kupaca – Liber Media')
+@section('title', 'Iskustva kupaca – '.(config('storefront.home') === 'watchline' ? 'Watch Line' : 'Liber Media'))
 @section('main_class', 'mx-auto w-full max-w-7xl px-6 pt-0 pb-0')
 
 @push('styles')
@@ -18,7 +18,7 @@
                 </nav>
                 <p class="lm-home-reviews-eyebrow">ISKUSTVA KUPACA</p>
                 <h1 id="lm-reviews-page-title">Što kažu naši kupci</h1>
-                <p>Stvarna iskustva s našim proizvodima, za lakši odabir igre i učenja.</p>
+                <p>{{ config('storefront.home') === 'watchline' ? 'Pročitajte iskustva kupaca s našim satovima, naočalama i nakitom.' : 'Stvarna iskustva s našim proizvodima, za lakši odabir igre i učenja.' }}</p>
             </div>
             @if ($reviewCount > 0)
                 <div class="lm-reviews-page-summary" aria-label="Ukupne ocjene kupaca">
@@ -39,7 +39,7 @@
             <div class="lm-reviews-page-empty">
                 <x-fa-icon name="comment" style="light" aria-hidden="true" />
                 <h2>{{ $reviewCount > 0 ? 'Na ovoj stranici nema recenzija' : 'Još nema objavljenih recenzija' }}</h2>
-                <p>{{ $reviewCount > 0 ? 'Vratite se na prvu stranicu i pročitajte iskustva naših kupaca.' : 'Istražite našu ponudu i pronađite nešto za igru i učenje.' }}</p>
+                <p>{{ $reviewCount > 0 ? 'Vratite se na prvu stranicu i pročitajte iskustva naših kupaca.' : (config('storefront.home') === 'watchline' ? 'Istražite našu ponudu satova, naočala i nakita.' : 'Istražite našu ponudu i pronađite nešto za igru i učenje.') }}</p>
                 <a href="{{ $reviewCount > 0 ? route('reviews.index') : route('shop.index') }}">{{ $reviewCount > 0 ? 'Prva stranica recenzija' : 'Istraži proizvode' }} <x-fa-icon name="arrow-right" /></a>
             </div>
         @endif
