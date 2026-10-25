@@ -65,7 +65,8 @@ class CacheGuestStorefront
     {
         if (! $this->cache->enabled() || ! $request->isMethod('GET')
             || ! $request->routeIs(...(array) config('storefront_cache.routes', []))
-            || $request->ajax() || $request->expectsJson() || $request->headers->has('Authorization')
+            || $request->ajax() || $request->expectsJson()
+            || ($request->headers->has('Authorization') && ! $this->allowsVerifiedStagingBasicAuth($request))
             || $request->headers->has('If-None-Match') || $request->headers->has('If-Modified-Since')
             || $request->headers->has('Range') || ! $request->hasSession()
             || $request->user() !== null || ! $this->safeSession($request)
@@ -82,6 +83,34 @@ class CacheGuestStorefront
         }
 
         return true;
+    }
+
+    private function allowsVerifiedStagingBasicAuth(Request $request): bool
+    {
+        if (! (bool) config('storefront_cache.staging_basic_auth_enabled', false)
+            || ! app()->environment('staging')
+            || config('app.url') !== 'https://new.watchline.hr'
+            || $request->getSchemeAndHttpHost() !== 'https://new.watchline.hr'
+            || strcasecmp((string) $request->server->get('AUTH_TYPE', ''), 'Basic') !== 0) {
+            return false;
+        }
+
+        // Only the web server's authenticated identity is trusted. PHP_AUTH_USER
+        // alone can be populated from an unverified client Authorization header.
+        $remoteUser = $request->server->get('REMOTE_USER');
+        if (! is_string($remoteUser) || trim($remoteUser) === ''
+            || ! preg_match('/\ABasic ([A-Za-z0-9+\/]+={0,2})\z/iD', (string) $request->header('Authorization'), $matches)) {
+            return false;
+        }
+
+        $credentials = base64_decode($matches[1], true);
+        if ($credentials === false || preg_match('/[\x00-\x1f\x7f]/', $credentials)) {
+            return false;
+        }
+        $parts = explode(':', $credentials, 2);
+
+        return count($parts) === 2 && $parts[0] !== '' && $parts[1] !== ''
+            && hash_equals($remoteUser, $parts[0]);
     }
 
     private function safeSession(Request $request): bool

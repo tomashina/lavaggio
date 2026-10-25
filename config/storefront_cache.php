@@ -3,6 +3,7 @@
 return [
     'enabled' => env('STOREFRONT_CACHE_ENABLED', false),
     'public_b2c_enabled' => env('STOREFRONT_PUBLIC_B2C_CACHE', false),
+    'staging_basic_auth_enabled' => env('STOREFRONT_STAGING_BASIC_AUTH_CACHE', false),
     'store' => env('STOREFRONT_CACHE_STORE', 'file'),
     'ttl_seconds' => (int) env('STOREFRONT_CACHE_TTL', 120),
     'max_html_bytes' => 3 * 1024 * 1024,

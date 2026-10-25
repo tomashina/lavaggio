@@ -3,6 +3,7 @@
 namespace App\Services\Catalog;
 
 use App\Models\Catalog\Action\CatalogAction;
+use App\Models\Catalog\Action\CatalogActionTarget;
 use App\Models\Catalog\Product\Product;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +13,13 @@ use Illuminate\Support\Collection;
 class B2CPromotionService
 {
     public function actions(?User $user = null, string $coupon = '', bool $history = false): Collection
+    {
+        $set = $this->promotionSet($user, $coupon, $history);
+
+        return $this->hydrateMatches($set, array_keys($set->positions));
+    }
+
+    private function promotionSet(?User $user, string $coupon = '', bool $history = false): \stdClass
     {
         $key = 'b2c.promotions.'.($user?->id ?? 0).'.'.hash('sha256', $coupon).'.'.(int) $history;
         $request = request();
@@ -23,76 +31,73 @@ class B2CPromotionService
             ->where('discount_value', '>', 0)
             ->where(fn ($q) => $q->where('audience_type', 'all')->when($user, fn ($q) => $q->orWhere(fn ($q) => $q->where('audience_type', 'user')->where('user_id', $user->id))))
             ->where(fn ($q) => $q->whereNull('coupon_code')->orWhere('coupon_code', '')->when($coupon !== '', fn ($q) => $q->orWhereRaw('UPPER(coupon_code) = ?', [strtoupper($coupon)])))
-            ->with('targets')->orderByDesc('is_exclusive')->orderByDesc('priority')->orderByDesc('id');
+            ->orderByDesc('is_exclusive')->orderByDesc('priority')->orderByDesc('id');
         if ($history) {
             $query->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', now()->subDays(30)));
         } else {
             $query->active();
         }
-        $actions = $query->get();
-        $request->attributes->set($key, $actions);
+        // A catalogue may contain thousands of independent product schedules.
+        // Keep their complete database attributes, but only hydrate the few
+        // actions and targets actually needed by the products being displayed.
+        $rows = $query->toBase()->get();
+        $set = (object) ['rows' => [], 'targets' => [], 'models' => [], 'positions' => [], 'all' => [], 'matches' => [], 'filters' => [],
+            'actionModel' => $query->getModel(), 'targetModel' => new CatalogActionTarget];
+        foreach ($rows as $position => $row) {
+            $id = (int) $row->id;
+            $set->rows[$id] = $row;
+            $set->positions[$id] = $position;
+            if ($row->target_type === CatalogAction::TARGET_ALL) {
+                $set->all[$id] = true;
+            }
+        }
+        if ($set->rows !== []) {
+            $targets = CatalogActionTarget::query()->whereIntegerInRaw('action_id', array_keys($set->rows))
+                ->orderBy('sort_order')->orderBy('id')->toBase()->get();
+            foreach ($targets as $target) {
+                $actionId = (int) $target->action_id;
+                $targetId = (int) $target->target_id;
+                $set->targets[$actionId][] = $target;
+                $set->filters[$target->target_type][$targetId] = true;
+                if ($set->rows[$actionId]->target_type === $target->target_type) {
+                    $set->matches[$target->target_type][$targetId][$actionId] = true;
+                }
+            }
+        }
+        $request->attributes->set($key, $set);
 
-        return $actions;
+        return $set;
     }
 
     public function forProduct(Product $product, ?User $user = null, string $coupon = '', bool $history = false): Collection
     {
-        $actions = $this->actions($user, $coupon, $history);
-        $key = 'b2c.promotion-target-index.'.($user?->id ?? 0).'.'.hash('sha256', $coupon).'.'.(int) $history.'.'.spl_object_id($actions);
-        $request = request();
-        if (! $request->attributes->has($key)) {
-            $index = ['all' => [], 'models' => [], 'positions' => []];
-            foreach ($actions as $position => $action) {
-                $index['models'][(int) $action->id] = $action;
-                $index['positions'][(int) $action->id] = $position;
-                if ($action->target_type === CatalogAction::TARGET_ALL) {
-                    $index['all'][(int) $action->id] = true;
-
-                    continue;
-                }
-                foreach ($action->targets as $target) {
-                    if ($target->target_type === $action->target_type) {
-                        $index[$action->target_type][(int) $target->target_id][(int) $action->id] = true;
-                    }
-                }
-            }
-            $request->attributes->set($key, $index);
-        }
-        $index = $request->attributes->get($key);
-        $matches = $index['all']
-            + ($index[CatalogAction::TARGET_PRODUCT][(int) $product->id] ?? [])
-            + ($index[CatalogAction::TARGET_MANUFACTURER][(int) $product->manufacturer_id] ?? []);
-        if (! empty($index[CatalogAction::TARGET_CATEGORY])) {
+        $set = $this->promotionSet($user, $coupon, $history);
+        $matches = $set->all
+            + ($set->matches[CatalogAction::TARGET_PRODUCT][(int) $product->id] ?? [])
+            + ($set->matches[CatalogAction::TARGET_MANUFACTURER][(int) $product->manufacturer_id] ?? []);
+        if (! empty($set->matches[CatalogAction::TARGET_CATEGORY])) {
             $categoryIds = $product->relationLoaded('categories')
                 ? $product->categories->modelKeys()
                 : $product->categories()->pluck('categories.id')->all();
             foreach ($categoryIds as $categoryId) {
-                $matches += $index[CatalogAction::TARGET_CATEGORY][(int) $categoryId] ?? [];
+                $matches += $set->matches[CatalogAction::TARGET_CATEGORY][(int) $categoryId] ?? [];
             }
         }
 
         // Lookup only matching IDs; filtering the full action collection here
         // makes catalogue-wide price comparisons products × all promotions.
-        $ids = array_keys($matches);
-        usort($ids, fn (int $first, int $second): int => $index['positions'][$first] <=> $index['positions'][$second]);
-        $resolved = [];
-        foreach ($ids as $id) {
-            $resolved[$index['positions'][$id]] = $index['models'][$id];
-        }
-
-        return $actions::make($resolved);
+        return $this->hydrateMatches($set, array_keys($matches));
     }
 
     public function filter(Builder $query, ?User $user = null): void
     {
-        $actions = $this->actions($user);
-        if ($actions->contains('target_type', CatalogAction::TARGET_ALL)) {
+        $set = $this->promotionSet($user);
+        if ($set->all !== []) {
             return;
         }
-        $targets = $actions->flatMap->targets;
-        $products = $targets->where('target_type', CatalogAction::TARGET_PRODUCT)->pluck('target_id')->unique()->values()->all();
-        $categories = $targets->where('target_type', CatalogAction::TARGET_CATEGORY)->pluck('target_id')->unique()->values()->all();
-        $manufacturers = $targets->where('target_type', CatalogAction::TARGET_MANUFACTURER)->pluck('target_id')->unique()->values()->all();
+        $products = array_keys($set->filters[CatalogAction::TARGET_PRODUCT] ?? []);
+        $categories = array_keys($set->filters[CatalogAction::TARGET_CATEGORY] ?? []);
+        $manufacturers = array_keys($set->filters[CatalogAction::TARGET_MANUFACTURER] ?? []);
         $query->where(function ($q) use ($products, $categories, $manufacturers): void {
             $q->whereIn('products.id', $products);
             if ($manufacturers) {
@@ -102,5 +107,25 @@ class B2CPromotionService
                 $q->orWhereIn('products.id', fn ($sub) => $sub->select('product_id')->from('category_product')->whereIn('category_id', $categories));
             }
         });
+    }
+
+    private function hydrateMatches(\stdClass $set, array $ids): Collection
+    {
+        usort($ids, fn (int $first, int $second): int => $set->positions[$first] <=> $set->positions[$second]);
+        $resolved = [];
+        $actionModel = $set->actionModel;
+        $targetModel = $set->targetModel;
+        foreach ($ids as $id) {
+            if (! isset($set->models[$id])) {
+                $action = $actionModel->newFromBuilder((array) $set->rows[$id]);
+                $targets = array_map(fn ($target) => $targetModel->newFromBuilder((array) $target), $set->targets[$id] ?? []);
+                $action->setRelation('targets', $targetModel->newCollection($targets));
+                $set->models[$id] = $action;
+                unset($set->rows[$id], $set->targets[$id]);
+            }
+            $resolved[$set->positions[$id]] = $set->models[$id];
+        }
+
+        return $actionModel->newCollection($resolved);
     }
 }

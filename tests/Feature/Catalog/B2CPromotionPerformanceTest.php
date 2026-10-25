@@ -3,6 +3,7 @@
 namespace Tests\Feature\Catalog;
 
 use App\Models\Catalog\Action\CatalogAction;
+use App\Models\Catalog\Action\CatalogActionTarget;
 use App\Models\Catalog\Category\Category;
 use App\Models\Catalog\Manufacturer\Manufacturer;
 use App\Models\Catalog\Product\Product;
@@ -14,6 +15,7 @@ use App\Services\Pricing\ProductGroupPriceResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class B2CPromotionPerformanceTest extends TestCase
@@ -134,5 +136,52 @@ class B2CPromotionPerformanceTest extends TestCase
         $public->update(['is_active' => false]);
         $this->app->instance('request', Request::create('/fresh-promotion-request'));
         $this->assertCount(0, $service->forProduct($product));
+    }
+
+    public function test_filters_and_product_lookups_only_hydrate_matching_schedules_without_losing_model_attributes(): void
+    {
+        $product = Product::create(['code' => 'lazy-promotions', 'base_price' => 100, 'is_active' => true]);
+        $base = ['scope' => 'product', 'type' => 'percentage', 'discount_value' => 15, 'target_type' => 'product', 'audience_type' => 'all', 'is_active' => true];
+        $matching = CatalogAction::create($base + ['code' => 'matching-schedule', 'priority' => 20, 'starts_at' => now()->subDay(), 'payload' => ['source' => ['schedule' => 123]], 'usage_limit' => 7]);
+        $matching->targets()->createMany([
+            ['target_type' => 'product', 'target_id' => $product->id + 100, 'sort_order' => 2],
+            ['target_type' => 'product', 'target_id' => $product->id, 'sort_order' => 1],
+        ]);
+        foreach (range(1, 30) as $number) {
+            $unrelated = CatalogAction::create($base + ['code' => 'unrelated-schedule-'.$number]);
+            $unrelated->targets()->create(['target_type' => 'product', 'target_id' => $product->id + 1000 + $number]);
+        }
+        $matching->refresh();
+
+        $retrievedActions = [];
+        $retrievedTargets = [];
+        Event::listen('eloquent.retrieved: '.CatalogAction::class, function ($action) use (&$retrievedActions): void {
+            $retrievedActions[] = $action->id;
+        });
+        Event::listen('eloquent.retrieved: '.CatalogActionTarget::class, function ($target) use (&$retrievedTargets): void {
+            $retrievedTargets[] = $target->id;
+        });
+
+        DB::enableQueryLog();
+        $service = app(B2CPromotionService::class);
+        $query = Product::query();
+        $service->filter($query);
+        $this->assertSame([], $retrievedActions, 'Filtering must not hydrate every schedule in the catalogue.');
+        $resolved = $service->forProduct($product)->first();
+        $this->assertSame([$matching->id], $retrievedActions);
+        $this->assertCount(2, $retrievedTargets);
+        $this->assertInstanceOf(CatalogAction::class, $resolved);
+        $this->assertSame($matching->getAttributes(), $resolved->getAttributes());
+        $this->assertSame(['source' => ['schedule' => 123]], $resolved->payload);
+        $this->assertTrue($resolved->starts_at->equalTo($matching->starts_at));
+        $this->assertTrue($resolved->relationLoaded('targets'));
+        $this->assertSame([$product->id, $product->id + 100], $resolved->targets->pluck('target_id')->all());
+        $this->assertSame($resolved, $service->forProduct($product)->first());
+        $this->assertCount(2, DB::getQueryLog(), 'The raw index and hydrated matches must share the same two reads.');
+
+        $this->assertCount(31, $service->actions());
+        $this->assertCount(31, $retrievedActions, 'The public full-collection API must still return all normal models.');
+        $this->assertCount(2, DB::getQueryLog());
+        DB::disableQueryLog();
     }
 }

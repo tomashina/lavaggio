@@ -87,6 +87,101 @@ class GuestStorefrontCacheTest extends TestCase
         $this->assertStringNotContainsString($first->session()->token(), $response->getContent());
     }
 
+    public function test_opted_in_verified_staging_basic_auth_shares_only_guest_html_with_each_sessions_csrf(): void
+    {
+        $this->enableStagingBasicCache();
+        $first = $this->verifiedStagingBasicRequest();
+        $second = $this->verifiedStagingBasicRequest();
+        $renders = 0;
+        $render = function (Request $request) use (&$renders): Response {
+            $renders++;
+
+            return $this->html('<input name="_token" value="'.$request->session()->token().'">');
+        };
+
+        $miss = $this->middleware->handle($first, $render);
+        $hit = $this->middleware->handle($second, $render);
+
+        $this->assertSame('MISS', $miss->headers->get('X-Storefront-Cache'));
+        $this->assertSame('HIT', $hit->headers->get('X-Storefront-Cache'));
+        $this->assertSame(1, $renders);
+        $this->assertNotSame($first->session()->token(), $second->session()->token());
+        $this->assertStringContainsString($second->session()->token(), $hit->getContent());
+        $this->assertStringNotContainsString($first->session()->token(), $hit->getContent());
+        $this->assertSame([], $hit->headers->getCookies());
+        $this->assertStringContainsString('no-store', $hit->headers->get('Cache-Control'));
+        $key = $this->cache->key($first, [], 'default');
+        $entry = $this->cache->get($key);
+        $this->assertNotNull($entry);
+        $this->assertStringNotContainsString('staging-reviewer', $key.serialize($entry));
+        $this->assertStringNotContainsString((string) $first->header('Authorization'), $key.serialize($entry));
+    }
+
+    #[DataProvider('disallowedStagingBasicContexts')]
+    public function test_staging_basic_exception_rejects_unverified_or_out_of_scope_authorization(string $context): void
+    {
+        $this->enableStagingBasicCache();
+        $request = $this->verifiedStagingBasicRequest();
+        match ($context) {
+            'default off' => config(['storefront_cache.staging_basic_auth_enabled' => false]),
+            'production' => app()->instance('env', 'production'),
+            'local' => app()->instance('env', 'local'),
+            'wrong app url' => config(['app.url' => 'https://watchline.hr']),
+            'app url with path' => config(['app.url' => 'https://new.watchline.hr/']),
+            'wrong host' => $request->headers->set('Host', 'watchline.hr'),
+            'wrong port' => $request->headers->set('Host', 'new.watchline.hr:8443'),
+            'plain http' => $request->server->set('HTTPS', 'off'),
+            'bearer' => $request->headers->set('Authorization', 'Bearer private'),
+            'missing upstream user' => $request->server->remove('REMOTE_USER'),
+            'empty upstream user' => $request->server->set('REMOTE_USER', ' '),
+            'missing upstream auth type' => $request->server->remove('AUTH_TYPE'),
+            'wrong upstream auth type' => $request->server->set('AUTH_TYPE', 'Digest'),
+            'different upstream user' => $request->server->set('REMOTE_USER', 'someone-else'),
+            'php auth user alone' => $this->useUnverifiedPhpAuth($request),
+            'missing credentials' => $request->headers->set('Authorization', 'Basic '),
+            'invalid base64' => $request->headers->set('Authorization', 'Basic !!!'),
+            'empty username' => $request->headers->set('Authorization', 'Basic '.base64_encode(':test-password')),
+            'empty password' => $request->headers->set('Authorization', 'Basic '.base64_encode('staging-reviewer:')),
+            'missing separator' => $request->headers->set('Authorization', 'Basic '.base64_encode('staging-reviewer')),
+            'control bytes' => $request->headers->set('Authorization', 'Basic '.base64_encode("staging-reviewer:test\npassword")),
+        };
+
+        $response = $this->middleware->handle($request, fn () => $this->html('uncached'));
+        $this->assertSame('BYPASS', $response->headers->get('X-Storefront-Cache'));
+    }
+
+    public static function disallowedStagingBasicContexts(): array
+    {
+        $contexts = [
+            'default off', 'production', 'local', 'wrong app url', 'app url with path',
+            'wrong host', 'wrong port', 'plain http', 'bearer', 'missing upstream user',
+            'empty upstream user', 'missing upstream auth type', 'wrong upstream auth type',
+            'different upstream user', 'php auth user alone', 'missing credentials', 'invalid base64',
+            'empty username', 'empty password', 'missing separator', 'control bytes',
+        ];
+
+        return array_combine($contexts, array_map(static fn (string $context): array => [$context], $contexts));
+    }
+
+    public function test_staging_basic_auth_does_not_cache_logged_in_or_cart_sessions(): void
+    {
+        $this->enableStagingBasicCache();
+        $this->middleware->handle($this->verifiedStagingBasicRequest(), fn () => $this->html('public guest'));
+
+        foreach ([
+            $this->verifiedStagingBasicRequest(user: new User(['name' => 'Customer'])),
+            $this->verifiedStagingBasicRequest(state: ['front' => ['cart' => ['items' => [42 => 2]]]]),
+        ] as $request) {
+            $response = $this->middleware->handle($request, fn () => $this->html('private session'));
+            $this->assertSame('BYPASS', $response->headers->get('X-Storefront-Cache'));
+            $this->assertStringContainsString('private session', $response->getContent());
+        }
+
+        $guest = $this->middleware->handle($this->verifiedStagingBasicRequest(), fn () => $this->html('unexpected'));
+        $this->assertSame('HIT', $guest->headers->get('X-Storefront-Cache'));
+        $this->assertStringNotContainsString('private session', $guest->getContent());
+    }
+
     public function test_opted_in_public_store_caches_guest_prices_but_bypasses_carts_and_accounts(): void
     {
         config(['commerce.b2b_only' => false, 'commerce.b2c_only' => true, 'storefront_cache.public_b2c_enabled' => true]);
@@ -297,6 +392,36 @@ class GuestStorefrontCacheTest extends TestCase
         $this->assertSame('BYPASS', $broken->headers->get('X-Storefront-Cache'));
         $this->assertStringContainsString('live despite cache failure', $broken->getContent());
         $this->cache->invalidate();
+    }
+
+    private function enableStagingBasicCache(): void
+    {
+        app()->instance('env', 'staging');
+        config([
+            'app.url' => 'https://new.watchline.hr',
+            'commerce.b2b_only' => false,
+            'commerce.b2c_only' => true,
+            'commerce.local_safe_mode' => true,
+            'storefront_cache.public_b2c_enabled' => true,
+            'storefront_cache.staging_basic_auth_enabled' => true,
+        ]);
+    }
+
+    private function verifiedStagingBasicRequest(array $state = [], ?User $user = null): Request
+    {
+        $request = $this->request(host: 'new.watchline.hr', state: $state, user: $user,
+            headers: ['Authorization' => 'Basic '.base64_encode('staging-reviewer:test-password')]);
+        $request->server->set('REMOTE_USER', 'staging-reviewer');
+        $request->server->set('AUTH_TYPE', 'Basic');
+
+        return $request;
+    }
+
+    private function useUnverifiedPhpAuth(Request $request): void
+    {
+        $request->server->remove('REMOTE_USER');
+        $request->server->set('PHP_AUTH_USER', 'staging-reviewer');
+        $request->server->set('PHP_AUTH_PW', 'test-password');
     }
 
     private function request(

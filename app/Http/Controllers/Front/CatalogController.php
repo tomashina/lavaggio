@@ -1788,9 +1788,13 @@ class CatalogController extends Controller
                 $products = Product::query()->select('products.id');
                 $productScope($products);
                 $valueId = WatchlineCatalogFacets::valueIdExpression($filters, 'facet_attribute_links.attribute_id');
-                $counts = DB::table('catalog_attribute_product as facet_attribute_links')
+                // Materialize the distinct facet links before applying the
+                // category scope. Flattening both sets makes SQLite probe every
+                // attribute/product combination in a wide catalogue category.
+                $links = DB::table('catalog_attribute_product')->select(['attribute_id', 'product_id'])
+                    ->whereIn('attribute_id', $ids)->distinct();
+                $counts = DB::query()->fromSub($links, 'facet_attribute_links')
                     ->joinSub($products, 'facet_products', 'facet_products.id', '=', 'facet_attribute_links.product_id')
-                    ->whereIn('facet_attribute_links.attribute_id', $ids)
                     ->selectRaw($valueId.' as value_id, COUNT(DISTINCT facet_products.id) as product_count')
                     ->groupByRaw($valueId)->pluck('product_count', 'value_id')->all();
 

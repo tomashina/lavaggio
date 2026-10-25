@@ -50,3 +50,19 @@ Provjera stvarnog izvornog direktorija na hostingu potvrdila je **14.344 neprazn
 Tek nakon potvrđenog prijenosa tih 14.344 originala, **samo staging** koristi `LEGACY_MEDIA_ENABLED=false` uz osvježen konfiguracijski cache. Ta vrijednost isključuje udaljeni fallback: provjereni neprazni lokalni originali i dalje se prikazuju, a navedene nepostojeće/prazne fotografije ne dodaju se kao neispravni udaljeni URL-ovi galerije. Postavka ne briše datoteke ni metapodatke i ne mijenja postojeći lokalni razvojni shop ili produkcijski OpenCart. Prije budućeg live prelaska ponovno provjeriti medije prema svježim podacima; ova staging provjera nije dokaz buduće potpunosti.
 
 Nakon primjene provjeriti HTTPS, statusne odgovore, `/robots.txt`, `X-Robots-Tag: noindex`, assete, spremljene uploadove i da su svi outbound prekidači ostali isključeni. Ova skripta nije produkcijski deploy niti dokaz završnog svježeg uvoza.
+
+## Ubrzanje testne instalacije
+
+PHP 8.4 na računu imao je isključen OPcache. Uključen je isključivo modul za verziju 8.4 preko službenog korisničkog `selectorctl --enable-user-extensions=opcache --version=8.4 --user=watchline`; nije mijenjana zadana verzija računa. Provjera je potvrdila učitan modul i uključenu provjeru promjena datoteka. Konfiguracija PHP-a 7.3 ostala je identična i postojeći OpenCart vratio je HTTP 200. Za postupak koristiti [CloudLinux korisničke CLI opcije](https://docs.cloudlinux.com/cloudlinuxos/command-line_tools/#selectorctl), bez globalnih opcija ili promjene verzije cijelog računa.
+
+Predmemorija javnih podataka i stranica uključuje se samo u privatnom staging `.env`:
+
+```dotenv
+STOREFRONT_CACHE_ENABLED=true
+STOREFRONT_PUBLIC_B2C_CACHE=true
+STOREFRONT_CACHE_STORE=file
+STOREFRONT_CACHE_TTL=120
+STOREFRONT_STAGING_BASIC_AUTH_CACHE=true
+```
+
+Posljednja zastavica zadano je isključena. Iznimka vrijedi samo za točan staging HTTPS origin i Basic autorizaciju koju je web server potvrdio kroz `AUTH_TYPE` i `REMOTE_USER`; nepodudaranje se sigurno zaobilazi. Prijavljeni korisnici, košarice i druge osobne sesije i dalje zaobilaze dijeljeni HTML. Detalji artikala zadržavaju zasebnu povijest pregledavanja i cijene. Nema javnog HTTP/CDN cacheiranja sesija.
