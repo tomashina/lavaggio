@@ -39,10 +39,13 @@ To provjerava **samo odabrane putanje**, uključujući točna velika/mala slova,
 Nakon pregleda može se pripremiti rsync **suha proba** s točno tim popisom i prethodno potvrđenim odredištem:
 
 ```sh
-rsync -anR --no-links --from0 \
+rsync -anR --no-owner --no-group --no-links --safe-links \
+  --chmod=D755,F644 --from0 \
   --files-from=/PRIVATE/MANIFEST/opencart-originals.files0 \
   -- /home/watchline/public_html/image/ /home/watchline/new.watchline.hr/image/
 ```
+
+Prije stvarnog kopiranja odredišni `image` korijen mora biti stvarni direktorij, bez symlinka ili aliasa prema izvornom OpenCartu. Nakon stvaranja izričito postaviti `chmod 755 /home/watchline/new.watchline.hr/image` i potvrditi dopuštenja: privatni shell `umask 077` može ostaviti taj korijen na `0700`, a rsync `--chmod` za navedene datoteke ne ispravlja nužno već postojeći vršni direktorij. Poddirektoriji trebaju biti `0755`, javne datoteke `0644`; privatni runtime i baza ostaju zatvoreni.
 
 `/PRIVATE/MANIFEST` treba zamijeniti stvarnom privatnom izlaznom mapom. Ovaj primjer ima `-n` i ništa ne kopira. Stvarni prijenos je zaseban pregledan korak; naredba manifesta ga ne pokreće. Ne dodavati `--delete`. Native popis koristi zaseban korijen `storage/app/public/`. Javni `storage` link i Git resursi pripremaju se pri objavi aplikacije.
 
