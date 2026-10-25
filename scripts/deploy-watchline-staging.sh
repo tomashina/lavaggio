@@ -183,7 +183,9 @@ WATCHLINE_BUILD_CHECK
 printf '%s\n' "Mode: $([[ "$apply" == true ]] && printf APPLY || printf DRY-RUN)" "Revision: $revision" \
     "Runtime tracked files: $runtime_count; bytes: $runtime_bytes" "Public tracked files: $public_count; bytes: $public_bytes" \
     'Original product images and native uploads: excluded; no public --delete.'
-du -sh -- "$runtime_root" "$public_root"
+# The offline image worker atomically renames these short-lived files while a
+# deployment plan may inspect disk usage. Ignore only its temporary entries.
+du -sh --exclude='.variant-*' --exclude='.index-*' -- "$runtime_root" "$public_root"
 df -h -- "$runtime_root" "$public_root"
 "$php_bin" "$composer_phar" check-platform-reqs --no-dev --lock --working-dir="$source_root"
 rsync_options=(-a --no-owner --no-group --checksum --from0 --stats --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r)
