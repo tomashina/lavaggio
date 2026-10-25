@@ -74,7 +74,7 @@ class WatchlineHeroService
                 $product = $products->get($rank->product_id);
                 $translation = $product?->translations->firstWhere('locale', $locales[0])
                     ?? $product?->translations->firstWhere('locale', $locales[1] ?? $locales[0]);
-                $image = $product ? LegacyCatalogImage::first($product) : null;
+                $image = $product ? LegacyCatalogImage::first($product, width: 960) : null;
                 if (! $product || ! $translation?->slug || ! $image) {
                     continue;
                 }
@@ -115,7 +115,7 @@ class WatchlineHeroService
             return [
                 'product' => $product, 'brand' => $brand, 'title' => $title,
                 'model' => $model,
-                'image' => LegacyCatalogImage::first($product), 'url' => route('products.show', ['slug' => $translation->slug]),
+                'image' => LegacyCatalogImage::first($product, width: 960), 'url' => route('products.show', ['slug' => $translation->slug]),
                 'price' => $price['can_view_price'] ? number_format((float) $price['display_current'], 2, ',', '.').' €' : null,
                 'old_price' => $price['can_view_price'] && $price['display_old'] !== null ? number_format((float) $price['display_old'], 2, ',', '.').' €' : null,
                 'in_stock' => (float) $product->stock_qty > 0,

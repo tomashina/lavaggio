@@ -89,6 +89,7 @@ class ProductCard extends Component
         $hoverImageUrl = $hoverImageUrl720 ?? $hoverImageUrl480 ?? $hoverImageUrl320 ?? ($hoverMedia ? (string) $hoverMedia->getUrl() : null);
         $imageOriginalUrl = $mainMedia ? (string) $mainMedia->getUrl() : null;
         $hoverImageOriginalUrl = $hoverMedia ? (string) $hoverMedia->getUrl() : null;
+        $usesLegacyImages = ! $imageUrl;
 
         if (! $imageUrl) {
             $legacyImages = LegacyCatalogImage::gallery($this->product);
@@ -113,6 +114,22 @@ class ProductCard extends Component
         $imageHeight = max(1, (int) ($mainMedia?->height ?? 640));
         $hoverImageWidth = max(1, (int) ($hoverMedia?->width ?? $imageWidth));
         $hoverImageHeight = max(1, (int) ($hoverMedia?->height ?? $imageHeight));
+        $cartImageUrl = $imageOriginalUrl ?? $imageUrl;
+        if ($usesLegacyImages) {
+            if ($variant = LegacyCatalogImage::responsiveVariant($imageOriginalUrl)) {
+                $imageUrl = $variant['url'];
+                $imageSrcset = $variant['srcset'];
+                $imageWidth = $variant['width'];
+                $imageHeight = $variant['height'];
+                $cartImageUrl = $variant['thumb'];
+            }
+            if ($variant = LegacyCatalogImage::responsiveVariant($hoverImageOriginalUrl)) {
+                $hoverImageUrl = $variant['url'];
+                $hoverImageSrcset = $variant['srcset'];
+                $hoverImageWidth = $variant['width'];
+                $hoverImageHeight = $variant['height'];
+            }
+        }
 
         $visibleOptionRows = $this->product->visibleOptionRows();
         $availableOptionRows = $this->product->availableOptionRows();
@@ -194,7 +211,7 @@ class ProductCard extends Component
             'productBrand' => $manufacturerName,
             'productCategory' => $categoryName,
             'imageUrl' => $imageUrl,
-            'cartImageUrl' => $imageOriginalUrl ?? $imageUrl,
+            'cartImageUrl' => $cartImageUrl,
             'imageUrl320' => $imageUrl320,
             'imageSrcset' => $imageSrcset,
             'imageSizes' => $imageSizes,

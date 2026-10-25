@@ -119,14 +119,20 @@
 
     if ($gallery->isEmpty()) {
         $gallery = \App\Support\Media\LegacyCatalogImage::gallery($product)
-            ->map(static fn (string $url, int $index): array => [
-                'id' => 'legacy-'.$index,
-                'full' => $url,
-                'display' => $url,
-                'display_srcset' => '',
-                'thumb' => $url,
-                'alt' => (string) ($translation?->name ?? $product->code),
-            ]);
+            ->map(static function (string $url, int $index) use ($translation, $product): array {
+                $variant = \App\Support\Media\LegacyCatalogImage::responsiveVariant($url, 960);
+
+                return [
+                    'id' => 'legacy-'.$index,
+                    'full' => $url,
+                    'display' => $variant['url'] ?? $url,
+                    'display_srcset' => $variant['srcset'] ?? '',
+                    'thumb' => $variant['thumb'] ?? $url,
+                    'width' => $variant['width'] ?? 960,
+                    'height' => $variant['height'] ?? 960,
+                    'alt' => (string) ($translation?->name ?? $product->code),
+                ];
+            });
     }
 
     $allOptionRows = $product->visibleOptionRows();
@@ -275,8 +281,8 @@
                                             sizes="(max-width: 900px) calc(100vw - 2rem), 720px"
                                             alt="{{ $image['alt'] }}"
                                             class="product-gallery-slide-image"
-                                            width="960"
-                                            height="960"
+                                            width="{{ $image['width'] ?? 960 }}"
+                                            height="{{ $image['height'] ?? 960 }}"
                                             decoding="async"
                                         >
                                     </button>

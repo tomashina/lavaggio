@@ -6,6 +6,7 @@ use App\Models\Catalog\Category\Category;
 use App\Models\Catalog\Manufacturer\Manufacturer;
 use App\Models\Catalog\Product\Product;
 use App\Models\Content\Blog\BlogPost;
+use App\Services\Import\WatchlineImageVariantService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -18,7 +19,7 @@ class LegacyCatalogImage
     }
 
     /** A safe original catalog URL, without a server-side network request. */
-    public static function url(mixed $source): ?string
+    public static function url(mixed $source, ?int $width = null): ?string
     {
         $path = self::path($source);
         if ($path === null) {
@@ -30,7 +31,9 @@ class LegacyCatalogImage
         $encoded = implode('/', array_map('rawurlencode', explode('/', $path)));
 
         if ($local !== false && str_starts_with($local, $root.'/') && is_file($local) && filesize($local) > 0) {
-            return asset('image/'.$encoded);
+            $variant = $width === null ? null : self::variant($path, $width);
+
+            return $variant['url'] ?? asset('image/'.$encoded);
         }
 
         $origin = self::origin();
@@ -40,8 +43,39 @@ class LegacyCatalogImage
             : null;
     }
 
+    /** Only existing offline variants; never generates files or contacts a provider. */
+    public static function variant(mixed $source, int $width): ?array
+    {
+        $path = self::path($source);
+        // Gallery URLs have already been localized. Accept only known shop
+        // image origins here; source() still enforces a real local original.
+        if ($path === null && is_string($source)) {
+            $reference = WatchlineMediaReference::classify($source);
+            $path = ($reference['kind'] ?? '') === 'opencart' ? ($reference['path'] ?? null) : null;
+        }
+
+        return $path === null ? null : app(WatchlineImageVariantService::class)->variant($path, $width);
+    }
+
+    /** Truthful width descriptors, including sources smaller than a requested width. */
+    public static function responsiveVariant(mixed $source, int $preferredWidth = 480): ?array
+    {
+        $small = self::variant($source, 480);
+        $large = self::variant($source, 960);
+        $selected = $preferredWidth >= 960 ? ($large ?? $small) : ($small ?? $large);
+        if ($selected === null) {
+            return null;
+        }
+
+        return $selected + [
+            'srcset' => collect([$small, $large])->filter()->unique('width')
+                ->map(fn ($variant) => $variant['url'].' '.$variant['width'].'w')->implode(', '),
+            'thumb' => self::variant($source, 160)['url'] ?? $selected['url'],
+        ];
+    }
+
     /** Prefer usable uploaded media; only imported OpenCart records have a fallback. */
-    public static function first(Model $model, array $conversions = [], bool $preferWebp = false): ?string
+    public static function first(Model $model, array $conversions = [], bool $preferWebp = false, ?int $width = null): ?string
     {
         $collections = match (true) {
             $model instanceof Product => ['product_main', 'product_gallery'],
@@ -76,17 +110,17 @@ class LegacyCatalogImage
                 ->map(fn ($media) => (int) $media->getCustomProperty('preview_product_id', 0))
                 ->first(fn ($id) => $id > 0);
             if ($previewProductId && ($product = Product::query()->find($previewProductId))) {
-                if ($image = self::first($product, $conversions, $preferWebp)) {
+                if ($image = self::first($product, $conversions, $preferWebp, $width)) {
                     return $image;
                 }
             }
         }
 
-        return self::url(data_get($model->payload, 'opencart.image'));
+        return self::url(data_get($model->payload, 'opencart.image'), $width);
     }
 
     /** @return Collection<int, string> */
-    public static function gallery(Product $product): Collection
+    public static function gallery(Product $product, ?int $width = null): Collection
     {
         $gallery = data_get($product->payload, 'opencart.gallery_images', []);
 
@@ -94,7 +128,7 @@ class LegacyCatalogImage
             ->merge(collect(is_array($gallery) ? $gallery : [])
                 ->sortBy(fn ($item) => is_array($item) ? ($item['sort_order'] ?? 0) : 0)
                 ->map(fn ($item) => is_array($item) ? ($item['image'] ?? null) : $item))
-            ->map(static fn ($path): ?string => self::url($path))
+            ->map(static fn ($path): ?string => self::url($path, $width))
             ->filter()
             ->unique()
             ->values();

@@ -8,4 +8,8 @@ return [
     'origin' => env('LEGACY_MEDIA_ORIGIN', 'https://www.herrera.hr'),
     // Originals copied here at the final media-transfer step win over live URLs.
     'local_root' => public_path('image'),
+    // Offline generated local variants are optional; originals stay the default.
+    'variants_enabled' => env('LEGACY_MEDIA_VARIANTS_ENABLED', false),
+    'variants_quality' => 82,
+    'variants_index_root' => storage_path('app/private/watchline/image-variants'),
 ];
