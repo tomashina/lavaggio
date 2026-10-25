@@ -1390,7 +1390,7 @@ class StorefrontFrontFeatureTest extends TestCase
         ]);
     }
 
-    public function test_footer_newsletter_uses_enabled_recaptcha_settings(): void
+    public function test_footer_newsletter_configures_its_recaptcha_loader_when_enabled(): void
     {
         app(SystemSettingsService::class)->putMany([
             'store_captcha_recaptcha_v3_enabled' => true,
@@ -1403,7 +1403,25 @@ class StorefrontFrontFeatureTest extends TestCase
             ->assertOk()
             ->assertSee('data-recaptcha-site-key="test-site-key"', false)
             ->assertSee('data-recaptcha-action="newsletter_footer"', false)
-            ->assertSee('https://www.google.com/recaptcha/api.js?render=test-site-key', false);
+            ->assertSee("newsletterCaptchaScript.src = 'https://www.google.com/recaptcha/api.js?render='", false)
+            ->assertSee('encodeURIComponent("test-site-key")', false)
+            ->assertSee("newsletterForm.addEventListener('focusin', loadNewsletterCaptcha", false)
+            ->assertSee("newsletterForm.addEventListener('pointerdown', loadNewsletterCaptcha", false)
+            ->assertDontSee('<script src="https://www.google.com/recaptcha/api.js', false);
+    }
+
+    public function test_footer_newsletter_does_not_configure_its_recaptcha_loader_when_disabled(): void
+    {
+        app(SystemSettingsService::class)->putMany([
+            'store_captcha_recaptcha_v3_enabled' => false,
+            'store_captcha_recaptcha_v3_site_key' => 'test-site-key',
+            'store_captcha_recaptcha_v3_secret_key' => 'test-secret-key',
+        ]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertDontSee('data-recaptcha-site-key=', false)
+            ->assertDontSee('https://www.google.com/recaptcha/api.js?render=', false);
     }
 
     public function test_newsletter_form_validates_enabled_recaptcha(): void

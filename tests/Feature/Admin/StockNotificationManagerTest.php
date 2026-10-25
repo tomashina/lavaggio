@@ -24,7 +24,7 @@ class StockNotificationManagerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['stock_notifications.emails_enabled' => true]);
+        config(['stock_notifications.enabled' => true, 'stock_notifications.emails_enabled' => true]);
         Mail::fake();
     }
 

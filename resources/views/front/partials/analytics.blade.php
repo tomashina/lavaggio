@@ -1,10 +1,11 @@
 @php
     $analytics = $storeSettings['analytics'] ?? [];
     $cookies = $storeSettings['cookies'] ?? [];
-    $analyticsEnabled = (bool) ($analytics['enabled'] ?? false);
+    $analyticsRuntimeAllowed = app()->environment('production') && ! (bool) config('commerce.local_safe_mode', false);
+    $analyticsEnabled = $analyticsRuntimeAllowed && (bool) ($analytics['enabled'] ?? false);
     $ga4Id = trim((string) ($analytics['ga4_measurement_id'] ?? ''));
     $cookieConsentEnabled = (bool) ($cookies['enabled'] ?? true);
-    $metaPixelId = '2376960792811713';
+    $metaPixelId = $analyticsRuntimeAllowed ? '2376960792811713' : '';
 @endphp
 
 @if ($analyticsEnabled && $ga4Id !== '')

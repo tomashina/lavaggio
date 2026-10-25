@@ -23,7 +23,7 @@ class StockNotificationSubscriptionTest extends TestCase
     {
         parent::setUp();
         app()->setLocale('hr');
-        config(['commerce.b2b_only' => false, 'stock_notifications.emails_enabled' => true]);
+        config(['commerce.b2b_only' => false, 'stock_notifications.enabled' => true, 'stock_notifications.emails_enabled' => true]);
         Mail::fake();
     }
 

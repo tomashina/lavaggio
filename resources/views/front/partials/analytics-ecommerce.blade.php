@@ -1,8 +1,9 @@
 @php
     $analytics = $storeSettings['analytics'] ?? [];
-    $analyticsEnabled = (bool) ($analytics['enabled'] ?? false);
+    $analyticsRuntimeAllowed = app()->environment('production') && ! (bool) config('commerce.local_safe_mode', false);
+    $analyticsEnabled = $analyticsRuntimeAllowed && (bool) ($analytics['enabled'] ?? false);
     $ga4Id = trim((string) ($analytics['ga4_measurement_id'] ?? ''));
-    $metaPixelId = '2376960792811713';
+    $metaPixelId = $analyticsRuntimeAllowed ? '2376960792811713' : '';
     $hasGa4 = $analyticsEnabled && $ga4Id !== '';
     $hasMetaPixel = $metaPixelId !== '';
 @endphp
