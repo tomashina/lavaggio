@@ -14,7 +14,6 @@
         "kalnoy/nestedset": "^6.0",
         "laravel/ai": "^0.1.5",
         "laravel/framework": "^12.0",
-        "laravel/horizon": "^5.44",
         "laravel/pennant": "^1.19",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^2.10.1",
