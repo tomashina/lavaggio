@@ -136,6 +136,7 @@ public_bytes=0
 runtime_count=0
 public_count=0
 # Git tracked files only. No source images, ignored snapshots, private files or native uploads.
+git -C "$source_root" ls-files -z > "$work_dir/tracked.list"
 while IFS= read -r -d '' file; do
     case "$file" in
         .git*|.env*|.local/*|.agents/*|.codex/*|.cpanel.yml|auth.json|node_modules/*|vendor/*|storage/*|tests/*|docs/*|bootstrap/cache/*|database/database.sqlite*|database/sql/*|public/image/*|public/cache/*|public/storage|public/storage/*|public/hot|image/*|temp/*|tmp/*|output/*|outputs/*|*.sql|*.sql.gz) continue ;;
@@ -152,7 +153,7 @@ while IFS= read -r -d '' file; do
         destination="$destination/$component"
         [[ ! -L "$destination" ]] || fail "Refusing to follow a deployment destination symlink: $relative"
     done
-done < <(git -C "$source_root" ls-files -z)
+done < "$work_dir/tracked.list"
 
 # Native media is physically public; no Apache traversal into the private runtime is required.
 if [[ -e "$runtime_root/public" || -L "$runtime_root/public" ]]; then
