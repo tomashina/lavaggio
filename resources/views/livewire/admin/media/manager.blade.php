@@ -13,6 +13,24 @@
         </div>
     @else
         <div class="space-y-4">
+            @if ($importedProductImages->isNotEmpty())
+                <section class="rounded-xl border border-cyan-200 bg-cyan-50 p-4" data-admin-imported-product-images>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h3 class="text-sm font-semibold text-slate-800">{{ __('Fotografije iz stare trgovine') }}</h3>
+                        <span class="admin-chip">{{ __('Uvezeno · pregled') }}</span>
+                        <span class="admin-chip">{{ $importedProductImages->count() }}</span>
+                    </div>
+                    <p class="mt-2 text-sm text-slate-600">{{ __('Ove se fotografije prikazuju na stranici proizvoda dok ne dodate nove fotografije ispod. Izvorne fotografije ovdje su dostupne za pregled.') }}</p>
+                    <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                        @foreach ($importedProductImages as $importedImage)
+                            <a href="{{ $importedImage }}" target="_blank" rel="noopener noreferrer" class="overflow-hidden rounded-lg border border-slate-200 bg-white p-2" wire:key="imported-product-image-{{ $loop->index }}">
+                                <img src="{{ $importedImage }}" alt="{{ __('Fotografija :number', ['number' => $loop->iteration]) }}" width="320" height="320" class="aspect-square w-full object-contain" loading="lazy" decoding="async" data-admin-imported-product-image>
+                                <span class="mt-2 block text-center text-xs font-semibold text-slate-600">{{ __('Fotografija :number', ['number' => $loop->iteration]) }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
             @foreach ($collections as $collectionName => $collectionConfig)
                 @php
                     $collectionMedia = $mediaByCollection[$collectionName] ?? collect();

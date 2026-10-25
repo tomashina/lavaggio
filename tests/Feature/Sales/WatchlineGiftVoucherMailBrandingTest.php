@@ -24,9 +24,9 @@ class WatchlineGiftVoucherMailBrandingTest extends TestCase
         $html = $mail->render();
 
         $this->assertSame('Poklon za vas: Watchline poklon bon', $mail->envelope()->subject);
-        $this->assertStringContainsString(asset('assets/brand/watchline-logo-on-dark.svg'), $html);
+        $this->assertStringContainsString(asset('assets/brand/watchline-mail-logo.png'), $html);
         $this->assertStringContainsString('alt="Watchline"', $html);
-        $this->assertStringContainsString('background:#101b2d', $html);
+        $this->assertStringContainsString('background:#edf6fc', $html);
         $this->assertStringContainsString('Poklon bon Watchline', $html);
         $this->assertStringContainsString('50,00 €', $html);
         $this->assertStringContainsString('WATCHLINE-FIXTURE-GIFT', $html);
@@ -41,7 +41,7 @@ class WatchlineGiftVoucherMailBrandingTest extends TestCase
     {
         $html = $this->purchaseHtml();
 
-        $this->assertStringContainsString(asset('assets/brand/watchline-logo-on-dark.svg'), $html);
+        $this->assertStringContainsString(asset('assets/brand/watchline-mail-logo.png'), $html);
         $this->assertStringContainsString('Hvala što darujete poseban trenutak.', $html);
         $this->assertStringContainsString('WATCHLINE-MAIL-FIXTURE', $html);
         $this->assertStringContainsString('50,00 €', $html);

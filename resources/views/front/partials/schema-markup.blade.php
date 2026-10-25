@@ -1,7 +1,8 @@
 @php
     $watchlineSeo = config('storefront.home') === 'watchline';
     $schemaSettings = $storeSettings['schema'] ?? [];
-    $schemaEnabled = (bool) ($schemaSettings['enabled'] ?? true);
+    $schemaErrorPage = $watchlineSeo && isset($exception) && $exception instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface && $exception->getStatusCode() >= 400;
+    $schemaEnabled = (bool) ($schemaSettings['enabled'] ?? true) && ! $schemaErrorPage;
     if (! $schemaEnabled) {
         $schemaSettings = array_merge($schemaSettings, [
             'org_enabled' => false,

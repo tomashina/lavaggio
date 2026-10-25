@@ -1,0 +1,358 @@
+/* Watchline staff authentication; other storefronts retain their own appearance. */
+body.watchline-auth {
+    --commerce-accent: #007cb8;
+    --commerce-accent-hover: #006ca2;
+    --commerce-accent-soft: #edf7fc;
+    --commerce-orange: #0093dd;
+    --commerce-border: #dbe9f1;
+    --commerce-border-strong: #baceda;
+    --commerce-ink: #152333;
+    --commerce-muted: #526778;
+    --commerce-form-surface: #fff;
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    min-height: 100vh;
+    min-height: 100svh;
+    flex-direction: column;
+    margin: 0;
+    background: #edf7fc;
+    color: var(--commerce-ink);
+    font-family: "Sora", Arial, Helvetica, sans-serif;
+}
+
+body.watchline-auth::before {
+    position: fixed;
+    z-index: -1;
+    inset: 0;
+    background: url("/assets/brand/watchline-pattern.svg?v=continuous-w-1") center / cover no-repeat;
+    content: "";
+    pointer-events: none;
+}
+
+body.watchline-auth .store-auth-header {
+    flex: 0 0 auto;
+    margin-bottom: 32px;
+    border-top: 3px solid #0093dd;
+    border-bottom: 1px solid #dce8ef;
+    background: #fff;
+}
+
+body.watchline-auth .store-auth-header-inner {
+    width: min(calc(100% - 64px), 1200px);
+    min-height: 96px;
+    gap: 24px;
+}
+
+body.watchline-auth .store-auth-brand-logo {
+    width: 168px;
+    max-width: 100%;
+    height: 82px;
+    max-height: 82px;
+    object-fit: contain;
+    object-position: left center;
+}
+
+body.watchline-auth .store-auth-back-link {
+    min-height: 44px;
+    color: #526778;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+body.watchline-auth .store-auth-back-link:hover,
+body.watchline-auth .store-auth-footer a:hover {
+    color: #007cb8;
+}
+
+body.watchline-auth .store-auth-back-link:focus-visible,
+body.watchline-auth .store-auth-footer a:focus-visible {
+    outline: 3px solid rgb(0 147 221 / 24%);
+    outline-offset: 4px;
+}
+
+body.watchline-auth .store-auth-main {
+    width: min(calc(100% - 40px), 460px);
+    min-width: 0;
+    flex: 0 0 auto;
+    margin: auto;
+    border: 1px solid #d7e5ee;
+    border-radius: 14px;
+    background: #fff;
+    padding: 32px;
+    box-shadow: 0 16px 50px rgb(20 67 95 / 7%), 0 2px 6px rgb(20 67 95 / 3%);
+}
+
+body.watchline-auth .store-auth-hero {
+    max-width: none;
+    margin-bottom: 26px !important;
+    padding: 0;
+    text-align: left !important;
+}
+
+body.watchline-auth .store-auth-hero::before {
+    display: none;
+}
+
+body.watchline-auth .store-auth-hero h1 {
+    margin: 0;
+    color: #152333;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -.04em;
+    line-height: 1.22;
+}
+
+body.watchline-auth .store-auth-hero > p {
+    margin: 10px 0 0;
+    color: #526778;
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+body.watchline-auth :is(.store-auth-layout, .store-auth-legacy-layout) {
+    display: block;
+    min-width: 0;
+}
+
+body.watchline-auth .store-auth-card {
+    min-width: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+}
+
+body.watchline-auth .store-auth-form {
+    gap: 18px;
+    margin-top: 0;
+}
+
+body.watchline-auth .store-auth-field {
+    gap: 7px;
+}
+
+body.watchline-auth .store-auth-field > label {
+    color: #334c5f;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+body.watchline-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
+    min-width: 0;
+    min-height: 48px;
+    border: 1px solid #baceda;
+    border-radius: 7px;
+    background: #fff;
+    padding: 11px 13px;
+    color: #152333;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.4;
+    box-shadow: none;
+}
+
+body.watchline-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):hover {
+    border-color: #7dabbf;
+    background: #fff;
+}
+
+body.watchline-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):focus {
+    border-color: #007cb8;
+    outline: 3px solid rgb(0 147 221 / 16%);
+    outline-offset: 1px;
+    background: #fff;
+    box-shadow: none;
+}
+
+body.watchline-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])[aria-invalid="true"] {
+    border-color: #be123c;
+}
+
+body.watchline-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])[aria-invalid="true"]:focus {
+    outline-color: rgb(190 18 60 / 14%);
+}
+
+body.watchline-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):-webkit-autofill {
+    -webkit-text-fill-color: #152333;
+    caret-color: #152333;
+    box-shadow: 0 0 0 1000px #f3faff inset;
+}
+
+body.watchline-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):autofill {
+    background: #f3faff;
+    color: #152333;
+}
+
+body.watchline-auth .store-auth-form-options {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+body.watchline-auth .store-auth-checkbox {
+    min-height: 28px;
+    gap: 8px;
+    color: #526778;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+body.watchline-auth .store-auth-checkbox input {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+    border: 1px solid #a7bfce;
+    border-radius: 4px;
+    accent-color: #007cb8;
+    color: #007cb8;
+}
+
+body.watchline-auth .store-auth-checkbox input:focus-visible {
+    outline: 3px solid rgb(0 147 221 / 20%);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+body.watchline-auth .store-auth-hint {
+    max-width: 185px;
+    color: #647987;
+    font-size: 11px;
+    line-height: 1.5;
+    text-align: right;
+}
+
+body.watchline-auth .store-auth-submit {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid #007cb8;
+    border-radius: 7px;
+    background: #007cb8;
+    padding: 12px 18px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+body.watchline-auth .store-auth-submit:hover {
+    border-color: #006ca2;
+    background: #006ca2;
+    color: #fff;
+}
+
+body.watchline-auth .store-auth-submit:focus-visible {
+    outline: 3px solid rgb(0 147 221 / 28%);
+    outline-offset: 3px;
+}
+
+body.watchline-auth .store-auth-error {
+    margin: 0;
+    color: #be123c;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+body.watchline-auth .store-auth-status {
+    margin: 0 0 18px;
+    border: 1px solid #cce7f6;
+    border-radius: 7px;
+    background: #edf7fc;
+    padding: 11px 13px;
+    color: #17618a;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+body.watchline-auth .store-auth-footer {
+    width: min(calc(100% - 64px), 1200px);
+    min-height: 64px;
+    flex: 0 0 auto;
+    margin-top: 32px;
+    border-top: 1px solid #d5e5ee;
+    color: #647987;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+body.watchline-auth .store-auth-footer a {
+    color: #526778;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    body.watchline-auth::before {
+        background-position: 56% center;
+        background-size: auto 100%;
+    }
+
+    body.watchline-auth .store-auth-header {
+        margin-bottom: 24px;
+    }
+
+    body.watchline-auth .store-auth-header-inner {
+        width: calc(100% - 32px);
+        min-height: 80px;
+        gap: 12px;
+    }
+
+    body.watchline-auth .store-auth-brand-logo {
+        width: 140px;
+        height: 68px;
+        max-height: 68px;
+    }
+
+    body.watchline-auth .store-auth-back-link {
+        min-width: 44px;
+        justify-content: center;
+    }
+
+    body.watchline-auth .store-auth-main {
+        width: calc(100% - 32px);
+        border-radius: 12px;
+        padding: 25px 23px;
+    }
+
+    body.watchline-auth .store-auth-hero {
+        margin-bottom: 23px !important;
+    }
+
+    body.watchline-auth .store-auth-hero h1 {
+        font-size: 25px;
+    }
+
+    body.watchline-auth .store-auth-hero > p {
+        font-size: 12px;
+    }
+
+    body.watchline-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
+        font-size: 16px;
+    }
+
+    body.watchline-auth .store-auth-hint {
+        max-width: 155px;
+    }
+
+    body.watchline-auth .store-auth-footer {
+        width: calc(100% - 32px);
+        min-height: 64px;
+        gap: 12px;
+        margin-top: 24px;
+        font-size: 10px;
+    }
+
+    body.watchline-auth .store-auth-footer a {
+        flex: 0 0 auto;
+        font-size: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.watchline-auth :is(input, button, a) {
+        transition: none;
+    }
+}

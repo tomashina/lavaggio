@@ -158,6 +158,7 @@
                         </button>
                     </div>
 
+                    @unless (config('storefront.home') === 'watchline')
                     <div class="mt-5 border-t border-slate-200 pt-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{{ __('Pravila dostave kategorije') }}</p>
                         <p class="mt-1 text-sm text-slate-600">{{ __('Oznake se primjenjuju na sve artikle u ovoj kategoriji i kombiniraju s oznakama pojedinog artikla.') }}</p>
@@ -171,6 +172,7 @@
                         </div>
                         @error('form.shipping_labels.*') <p class="mt-2 text-xs text-rose-600">{{ $message }}</p> @enderror
                     </div>
+                    @endunless
                 </div>
             @endif
         </div>

@@ -160,11 +160,32 @@ class Form extends Component
 
     public function setTab(string $tab): void
     {
-        if (! in_array($tab, ['content', 'seo', 'media', 'energy', 'catalog', 'attributes', 'logistics', 'b2b'], true)) {
+        if (! in_array($tab, ['content', 'seo', 'media', 'energy', 'catalog', 'attributes', 'logistics', 'b2b', 'options', 'promotion'], true)) {
+            return;
+        }
+
+        if ($tab === 'options' && (! $this->isWatchlineEditor() || ! $this->useOptions())) {
+            return;
+        }
+
+        if ($tab === 'promotion' && ! $this->useProductPromotions()) {
+            return;
+        }
+
+        if ($this->isWatchlineEditor() && in_array($tab, ['energy', 'logistics', 'b2b'], true)) {
             return;
         }
 
         $this->activeTab = $tab;
+    }
+
+    public function updatedActiveTab(): void
+    {
+        if (($this->isWatchlineEditor() && in_array($this->activeTab, ['energy', 'logistics', 'b2b'], true))
+            || ($this->activeTab === 'options' && (! $this->isWatchlineEditor() || ! $this->useOptions()))
+            || ($this->activeTab === 'promotion' && ! $this->useProductPromotions())) {
+            $this->activeTab = 'content';
+        }
     }
 
     public function addAttributeGroup(): void
@@ -242,7 +263,8 @@ class Form extends Component
         }
 
         $validated = $this->validate($this->rules());
-        if (! $this->validateCommerceRows($validated) || ! $this->validateEnergyRows($validated)) {
+        if (! $this->isWatchlineEditor()
+            && (! $this->validateCommerceRows($validated) || ! $this->validateEnergyRows($validated))) {
             return null;
         }
 
@@ -276,25 +298,29 @@ class Form extends Component
             $productData = [
                 'code' => trim((string) $validated['form']['code']),
                 'sku' => trim((string) $validated['form']['sku']) !== '' ? trim((string) $validated['form']['sku']) : null,
-                'barcode' => trim((string) ($validated['form']['barcode'] ?? '')) ?: null,
-                'unit_of_measure' => (string) $validated['form']['unit_of_measure'],
-                'minimum_order_quantity' => (int) $validated['form']['minimum_order_quantity'],
-                'order_quantity_step' => (int) $validated['form']['order_quantity_step'],
                 'is_active' => (bool) $validated['form']['is_active'],
                 'tax_rate_id' => ($validated['form']['tax_rate_id'] ?? null)
                     ? (int) $validated['form']['tax_rate_id']
-                    : $this->defaultTaxRateId(),
+                    : ($this->isWatchlineEditor() ? null : $this->defaultTaxRateId()),
                 'base_price' => (float) $validated['form']['base_price'],
                 'stock_qty' => (int) $validated['form']['stock_qty'],
-                'weight_kg' => $validated['form']['weight_kg'] ?? null,
-                'length_cm' => $validated['form']['length_cm'] ?? null,
-                'width_cm' => $validated['form']['width_cm'] ?? null,
-                'height_cm' => $validated['form']['height_cm'] ?? null,
-                'shipping_labels' => array_values($validated['form']['shipping_labels'] ?? []),
-                'energy_label_required' => (bool) ($validated['form']['energy_label_required'] ?? false),
                 'payload' => $payload,
                 'updated_by' => $userId,
             ];
+            if (! $this->isWatchlineEditor()) {
+                $productData += [
+                    'barcode' => trim((string) ($validated['form']['barcode'] ?? '')) ?: null,
+                    'unit_of_measure' => (string) $validated['form']['unit_of_measure'],
+                    'minimum_order_quantity' => (int) $validated['form']['minimum_order_quantity'],
+                    'order_quantity_step' => (int) $validated['form']['order_quantity_step'],
+                    'weight_kg' => $validated['form']['weight_kg'] ?? null,
+                    'length_cm' => $validated['form']['length_cm'] ?? null,
+                    'width_cm' => $validated['form']['width_cm'] ?? null,
+                    'height_cm' => $validated['form']['height_cm'] ?? null,
+                    'shipping_labels' => array_values($validated['form']['shipping_labels'] ?? []),
+                    'energy_label_required' => (bool) ($validated['form']['energy_label_required'] ?? false),
+                ];
+            }
             if ($this->useManufacturers()) {
                 $productData['manufacturer_id'] = $validated['form']['manufacturer_id'] ?: null;
             }
@@ -327,7 +353,11 @@ class Form extends Component
                     'is_primary' => $index === 0,
                 ];
             }
-            $product->categories()->sync($syncPayload);
+            $existingCategoryIds = $product->categories()->orderBy('category_product.sort_order')
+                ->pluck('categories.id')->map(fn ($id): int => (int) $id)->all();
+            if (! $this->isWatchlineEditor() || $existingCategoryIds !== array_keys($syncPayload)) {
+                $product->categories()->sync($syncPayload);
+            }
 
             if ($this->useAttributes()) {
                 $this->syncManualAttributes(
@@ -336,21 +366,23 @@ class Form extends Component
                 );
             }
 
-            $packageIdsByCode = $this->syncPackages(
-                $product,
-                $validated['packages'] ?? [],
-                $userId,
-            );
-            $this->syncGroupPrices(
-                $product,
-                $validated['groupPrices'] ?? [],
-                $packageIdsByCode,
-                $userId,
-            );
-            $this->syncEnergyDeclarations(
-                $product,
-                $validated['energyDeclarations'] ?? [],
-            );
+            if (! $this->isWatchlineEditor()) {
+                $packageIdsByCode = $this->syncPackages(
+                    $product,
+                    $validated['packages'] ?? [],
+                    $userId,
+                );
+                $this->syncGroupPrices(
+                    $product,
+                    $validated['groupPrices'] ?? [],
+                    $packageIdsByCode,
+                    $userId,
+                );
+                $this->syncEnergyDeclarations(
+                    $product,
+                    $validated['energyDeclarations'] ?? [],
+                );
+            }
 
             activity('catalog_products')
                 ->performedOn($product)
@@ -793,6 +825,8 @@ class Form extends Component
             'isEdit' => (bool) $this->productId,
             'useAttributes' => $this->useAttributes(),
             'useOptions' => $this->useOptions(),
+            'watchlineProductEditor' => $this->isWatchlineEditor(),
+            'useProductPromotions' => $this->useProductPromotions(),
             'useManufacturers' => $this->useManufacturers(),
             'unitOptions' => Product::unitOptions(),
             'shippingLabelOptions' => Product::shippingLabelOptions(),
@@ -981,6 +1015,17 @@ class Form extends Component
             ];
         }
 
+        if ($this->isWatchlineEditor()) {
+            $hiddenFields = ['barcode', 'unit_of_measure', 'minimum_order_quantity', 'order_quantity_step',
+                'weight_kg', 'length_cm', 'width_cm', 'height_cm', 'shipping_labels', 'energy_label_required'];
+            foreach (array_keys($rules) as $key) {
+                if (in_array(explode('.', $key)[0], ['packages', 'groupPrices', 'energyDeclarations'], true)
+                    || (str_starts_with($key, 'form.') && in_array(explode('.', $key)[1], $hiddenFields, true))) {
+                    unset($rules[$key]);
+                }
+            }
+        }
+
         return $rules;
     }
 
@@ -1016,7 +1061,9 @@ class Form extends Component
         $this->form['is_active'] = (bool) $product->is_active;
         $this->form['is_new'] = ProductNewLabel::isNew($product);
         $this->form['is_popular'] = ProductPopularityLabel::isPopular($product);
-        $this->form['tax_rate_id'] = $product->tax_rate_id ? (int) $product->tax_rate_id : $this->defaultTaxRateId();
+        $this->form['tax_rate_id'] = $product->tax_rate_id
+            ? (int) $product->tax_rate_id
+            : ($this->isWatchlineEditor() ? null : $this->defaultTaxRateId());
         $this->form['base_price'] = (float) $product->base_price;
         $this->form['stock_qty'] = (int) $product->stock_qty;
         $this->form['weight_kg'] = $product->weight_kg;
@@ -2115,6 +2162,15 @@ class Form extends Component
             array_map('intval', $submittedIds),
             fn (int $id): bool => $id > 0,
         )));
+        if ($this->isWatchlineEditor()) {
+            $existingIds = $product->attributes()->pluck('catalog_attributes.id')
+                ->map(fn ($id): int => (int) $id)->sort()->values()->all();
+            $sortedSubmittedIds = collect($submittedIds)->sort()->values()->all();
+            if ($existingIds === $sortedSubmittedIds) {
+                return;
+            }
+        }
+
         $submittedAttributes = Attribute::query()
             ->whereIn('id', $submittedIds)
             ->get(['id', 'payload'])
@@ -2149,6 +2205,20 @@ class Form extends Component
         if ($manualPayload !== []) {
             $product->attributes()->syncWithoutDetaching($manualPayload);
         }
+    }
+
+    private function isWatchlineEditor(): bool
+    {
+        return config('storefront.home') === 'watchline';
+    }
+
+    private function useProductPromotions(): bool
+    {
+        $user = auth()->user();
+
+        return $this->isWatchlineEditor() && app(CatalogFeatureService::class)->useActions()
+            && $user && ($user->isA('superadmin')
+                || ($user->can('admin.access') && $user->can('catalog.products.update') && $user->can('catalog.actions.view')));
     }
 
     private function useOptions(): bool

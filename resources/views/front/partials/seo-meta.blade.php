@@ -1,5 +1,6 @@
 @php
     $watchlineSeo = config('storefront.home') === 'watchline';
+    $seoErrorPage = $watchlineSeo && isset($exception) && $exception instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface && $exception->getStatusCode() >= 400;
     $seoSettings = $storeSettings['seo'] ?? [];
     $ogSettings = $storeSettings['og'] ?? [];
     $brandSettings = $storeSettings['branding'] ?? [];
@@ -187,6 +188,11 @@
     }
     if ($paginationNumber > 1) {
         $title .= ' – Stranica '.$paginationNumber;
+    }
+    if ($seoErrorPage) {
+        $title = $sectionTitle !== '' ? $sectionTitle : 'Stranica nije pronađena';
+        $canonicalUrl = '';
+        $ogType = 'website';
     }
 @endphp
 

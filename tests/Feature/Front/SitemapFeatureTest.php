@@ -81,6 +81,18 @@ class SitemapFeatureTest extends TestCase
         $this->get('/sitemap-blog-1.xml')->assertOk()->assertDontSee('/blog/published', false);
     }
 
+    public function test_blog_sitemap_does_not_include_a_translated_slug_whose_article_page_is_not_visible(): void
+    {
+        config(['app.url' => 'https://www.watchline.hr', 'app.locale' => 'hr', 'storefront.home' => 'watchline']);
+        app()->setLocale('hr');
+        app(SystemSettingsService::class)->put('catalog_use_blog', true);
+        $post = BlogPost::query()->create(['code' => 'empty-title', 'is_active' => true]);
+        $post->translations()->create(['locale' => 'hr', 'title' => '   ', 'slug' => 'empty-title']);
+
+        $this->get('/blog/empty-title')->assertNotFound();
+        $this->get('/sitemap-blog-1.xml')->assertOk()->assertDontSee('/blog/empty-title', false);
+    }
+
     public function test_watchline_sitemap_lists_public_entry_pages_and_respects_disabled_features(): void
     {
         config(['app.url' => 'https://www.watchline.hr', 'app.locale' => 'hr', 'storefront.home' => 'watchline', 'gift_vouchers.enabled' => true]);

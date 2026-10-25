@@ -88,6 +88,7 @@
         <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-pages.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-pages.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-commerce.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-commerce.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline.css')) }}">
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-notice-bars.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-notice-bars.css')) }}">
     @endif
 </head>
 @php
@@ -114,13 +115,15 @@
     $benefitsBar = is_array($storeSettings['benefits_bar'] ?? null)
         ? $storeSettings['benefits_bar']
         : [
-            'enabled' => true,
-            'items' => [
+            'enabled' => ! $watchlineStorefront,
+            'items' => $watchlineStorefront ? [] : [
                 'Više od **50 000 proizvoda** u ponudi',
                 'Plaćanje karticama do **12 rata bez naknada**',
                 '**Dostava** u roku **3-5 radnih dana**',
             ],
         ];
+    $announcementEnabled = (bool) ($storeSettings['announcement']['enabled'] ?? ! $watchlineStorefront)
+        && (! $watchlineStorefront || trim((string) ($storeSettings['announcement']['text'] ?? '')) !== '');
     $searchAutocompleteEnabled = (bool) app(\App\Services\Settings\SystemSettingsService::class)
         ->get('store_search_autocomplete_enabled', false);
 @endphp
@@ -130,7 +133,7 @@
         <span class="herrera-page-loader-dots"><span></span><span></span><span></span></span>
     </div>
 @endif
-@if ((bool) ($storeSettings['announcement']['enabled'] ?? true))
+@if ($announcementEnabled)
     @php
         $announcementText = (string) ($storeSettings['announcement']['text'] ?? __('ui.front.desktop.promo_bar'));
         $announcementUrl = trim((string) ($storeSettings['announcement']['url'] ?? ''));
@@ -141,10 +144,11 @@
 
 <header class="site-main-header sticky top-0 z-40 bg-white">
     @include('front.partials.customer-impersonation')
-    @if ($topBar['is_enabled'])
-        <div class="site-top-bar hidden lg:block">
+    @if ($topBar['is_enabled'] || ($watchlineStorefront && $announcementEnabled))
+        <div class="site-top-bar {{ $watchlineStorefront ? 'watchline-utility-top-bar'.($announcementEnabled ? ' has-announcement' : '') : 'hidden lg:block' }}">
             <div class="site-top-bar-shell storefront-container">
                 <div class="site-top-bar-inner storefront-header-container {{ $herreraStorefront ? 'herrera-layout-container' : '' }}">
+                    @if ($topBar['is_enabled'])
                     <nav class="site-top-bar-links" aria-label="{{ __('admin.content.navigation.top_bar_title') }}">
                         @foreach ($topBar['links'] as $link)
                             @if ($link['is_active'])
@@ -163,9 +167,10 @@
                             @endif
                         @endforeach
                     </nav>
+                    @endif
 
-                    @if ($herreraStorefront && (bool) ($storeSettings['announcement']['enabled'] ?? true))
-                        <div class="site-top-bar-announcement" data-herrera-topbar-announcement>
+                    @if (($herreraStorefront || $watchlineStorefront) && $announcementEnabled)
+                        <div class="site-top-bar-announcement" data-herrera-topbar-announcement @if ($watchlineStorefront) data-watchline-topbar-announcement @endif>
                             @if ($announcementUrl !== '')
                                 <a href="{{ $announcementUrl }}" @if($announcementNewTab) target="_blank" rel="noopener noreferrer" @endif>{{ $announcementText }}</a>
                             @else
@@ -174,6 +179,7 @@
                         </div>
                     @endif
 
+                    @if ($topBar['is_enabled'])
                     <div class="site-top-bar-socials">
                         @foreach ($topBar['socials'] as $social)
                             @continue(! $social['is_active'])
@@ -209,6 +215,7 @@
                             </a>
                         @endforeach
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -481,36 +488,12 @@
     </div>
     @endunless
 
-    @if ((bool) ($benefitsBar['enabled'] ?? true) && !empty($benefitsBar['items']))
-        <div class="store-benefits-shell storefront-container">
-            <div class="store-benefits-bar" aria-label="{{ __('Prednosti kupnje') }}" aria-live="off" data-store-benefits-rotator>
-                @foreach ($benefitsBar['items'] as $benefitIndex => $benefitItem)
-                    @php
-                        $benefitSegments = preg_split(
-                            '/(\*\*.+?\*\*)/u',
-                            (string) $benefitItem,
-                            -1,
-                            PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY
-                        ) ?: [(string) $benefitItem];
-                    @endphp
-                    <p class="store-benefits-item {{ $benefitIndex === 0 ? 'is-active' : '' }}" data-store-benefit-item>
-                        <span class="store-benefits-copy">
-                            @foreach ($benefitSegments as $benefitSegment)
-                                @if (str_starts_with($benefitSegment, '**') && str_ends_with($benefitSegment, '**') && mb_strlen($benefitSegment) > 4)
-                                    <strong>{{ mb_substr($benefitSegment, 2, mb_strlen($benefitSegment) - 4) }}</strong>
-                                @else
-                                    {{ $benefitSegment }}
-                                @endif
-                            @endforeach
-                        </span>
-                    </p>
-                @endforeach
-            </div>
-        </div>
-    @endif
+    @unless ($watchlineStorefront)
+        @include('front.partials.store-benefits-bar')
+    @endunless
 
-    @if ((bool) ($storeSettings['announcement']['enabled'] ?? true))
-        <div class="store-announcement-shell storefront-container {{ $herreraStorefront ? 'herrera-layout-container'.($topBar['is_enabled'] ? ' herrera-announcement-in-topbar' : '') : '' }}">
+    @if ($announcementEnabled && ! $watchlineStorefront)
+        <div class="store-announcement-shell storefront-container {{ $herreraStorefront ? 'herrera-layout-container'.($topBar['is_enabled'] && ! $watchlineStorefront ? ' herrera-announcement-in-topbar' : '') : '' }}">
             <div class="store-announcement-bar {{ $announcementScrollEnabled ? 'is-scrolling' : '' }} py-2 text-center text-xs font-semibold uppercase tracking-wide">
                 @if ($announcementUrl !== '')
                     <a href="{{ $announcementUrl }}" class="store-announcement-content hover:underline" @if($announcementNewTab) target="_blank" rel="noopener noreferrer" @endif>
@@ -528,6 +511,10 @@
 </header>
 
 <div class="site-main-header-spacer" aria-hidden="true" data-site-main-header-spacer></div>
+
+@if ($watchlineStorefront)
+    @include('front.partials.store-benefits-bar')
+@endif
 
 @php
     $mainClasses = trim(($herreraStorefront ? 'herrera-main herrera-layout-container ' : '').$__env->yieldContent('main_class', 'mx-auto w-full max-w-7xl px-6 py-8'));

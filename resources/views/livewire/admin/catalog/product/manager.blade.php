@@ -91,7 +91,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <span class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{{ __('Moduli') }}</span>
                 <span class="admin-chip">{{ __('Atributi') }}: {{ $features['catalog_use_attributes'] ? __('ON') : __('OFF') }}</span>
-                @if ($features['catalog_use_options'])
+                @if ($features['catalog_use_options'] && config('storefront.home') !== 'watchline')
                     <span class="admin-chip">{{ __('Opcije') }}: {{ __('ON') }}</span>
                 @endif
                 <span class="admin-chip">{{ __('Brendovi') }}: {{ $features['catalog_use_manufacturers'] ? __('ON') : __('OFF') }}</span>
@@ -102,7 +102,7 @@
                 @if ($features['catalog_use_attributes'])
                     <a href="{{ route('admin.attributes', ['locale' => $locale]) }}" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">{{ __('Atributi') }}</a>
                 @endif
-                @if ($features['catalog_use_options'])
+                @if ($features['catalog_use_options'] && config('storefront.home') !== 'watchline')
                     <a href="{{ route('admin.options', ['locale' => $locale]) }}" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">{{ __('Opcije') }}</a>
                 @endif
                 @if ($features['catalog_use_manufacturers'])
@@ -139,9 +139,11 @@
                         @php
                             $tr = $row->translations->first();
                             $mainMedia = $row->getFirstMedia('product_main') ?: $row->getFirstMedia('product_gallery');
-                            $mainThumb = $mainMedia
-                                ? ($mainMedia->hasGeneratedConversion('thumb_100x100') ? $mainMedia->getUrl('thumb_100x100') : $mainMedia->getUrl())
-                                : null;
+                            $mainThumb = config('storefront.home') === 'watchline'
+                                ? \App\Support\Media\LegacyCatalogImage::first($row, ['thumb_100x100', 'card_320w'])
+                                : ($mainMedia
+                                    ? ($mainMedia->hasGeneratedConversion('thumb_100x100') ? $mainMedia->getUrl('thumb_100x100') : $mainMedia->getUrl())
+                                    : null);
                             $categoryRows = $row->categories->values();
                         @endphp
                         <tr class="align-top">
@@ -200,7 +202,16 @@
                                 @endif
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums text-slate-800">
-                                {{ \App\Support\Currency::format((float) $row->base_price, $row->currency_code ?? null) }}
+                                @php($publicPrice = $publicPrices[(int) $row->id] ?? null)
+                                @if ($publicPrice && $publicPrice['has_promotional_discount'])
+                                    <div data-admin-public-promotion="{{ $row->id }}">
+                                        <span class="block text-[10px] font-semibold text-cyan-700">{{ __('Akcijska cijena') }}</span>
+                                        <span class="block text-sm font-bold text-cyan-800" data-admin-public-current-price>{{ \App\Support\Currency::format((float) $publicPrice['current_gross'], $row->currency_code ?? 'EUR') }}</span>
+                                        <del class="mt-0.5 block text-xs font-normal text-slate-500" aria-label="{{ __('Redovna cijena') }}" data-admin-public-regular-price>{{ \App\Support\Currency::format((float) $publicPrice['old_gross'], $row->currency_code ?? 'EUR') }}</del>
+                                    </div>
+                                @else
+                                    {{ \App\Support\Currency::format((float) $row->base_price, $row->currency_code ?? null) }}
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <span class="inline-flex min-w-9 justify-center rounded-full px-2 py-1 text-xs font-semibold tabular-nums {{ $row->stock_qty <= 0 ? 'bg-rose-100 text-rose-700' : ($row->stock_qty <= 5 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800') }}">
@@ -234,7 +245,7 @@
                                     >
                                         <x-fa-icon name="pen-to-square" class="h-4 w-4" />
                                     </a>
-                                    @if ($features['catalog_use_options'])
+                                    @if ($features['catalog_use_options'] && config('storefront.home') !== 'watchline')
                                         <a href="{{ route('admin.products.options', ['product' => $row->id, 'locale' => $locale]) }}" class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">
                                             {{ __('Option Values') }}
                                         </a>

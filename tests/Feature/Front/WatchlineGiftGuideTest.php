@@ -67,7 +67,7 @@ class WatchlineGiftGuideTest extends TestCase
             ->assertSee('data-watchline-gift-guide', false)->assertSee('Za nju')->assertSee('Za njega')->assertSee('Za djecu')
             ->assertSee('Do 300 €')->assertSee('Više od 300 €')->assertSee('Sunčane naočale')
             ->assertDontSee('Dob djeteta')->assertDontSee('Sve male avanture')->assertDontSee('Liber Media')
-            ->assertSee(route('gift-vouchers.create'), false)->assertSee('watchline-gift-guide.js', false);
+            ->assertDontSee('data-watchline-gift-voucher', false)->assertSee('watchline-gift-guide.js', false);
         $this->assertEqualsCanonicalizing([$watch->id, $glasses->id, $jewel->id], $response->viewData('products')->pluck('id')->all());
         $xpath = $this->xpath($response->getContent());
         $this->assertSame(3, $xpath->query('//*[@data-watchline-gift-guide]//*[@data-product-card]')->length);
@@ -175,11 +175,29 @@ class WatchlineGiftGuideTest extends TestCase
         $this->assertSame('watchline-gift-filters', $xpath->query('//*[@data-watchline-gift-guide]//input[@name="promo_only"]')->item(0)->getAttribute('form'));
     }
 
+    public function test_default_pagination_links_do_not_turn_clean_pages_into_filtered_noindex_pages(): void
+    {
+        app(SystemSettingsService::class)->put('front_category_products_per_page_desktop', 1);
+        $this->product('default-page-one', 'women');
+        $this->product('default-page-two', 'women');
+        $this->app['env'] = 'production';
+
+        $first = $this->get('https://www.watchline.hr/savjeti-za-poklone')->assertOk();
+        $pagination = $first->viewData('products');
+        parse_str((string) parse_url($pagination->nextPageUrl(), PHP_URL_QUERY), $query);
+        $this->assertSame(['page' => '2'], $query);
+        $this->assertSame('all', $first->viewData('filters')['recipient']);
+        $this->assertSame(5, $first->viewData('filters')['cols']);
+        $this->get($pagination->nextPageUrl())->assertOk()
+            ->assertSee('<link rel="canonical" href="https://www.watchline.hr/savjeti-za-poklone?page=2">', false)
+            ->assertSee('<meta name="robots" content="index,follow">', false);
+    }
+
     public function test_disabled_vouchers_are_not_promoted_and_other_brands_keep_their_original_gift_page(): void
     {
         $this->product('guide-watch', 'women');
         config(['gift_vouchers.enabled' => false]);
-        $this->get(route('gift-guide.index'))->assertOk()->assertDontSee('data-watchline-gift-voucher', false);
+        $this->get(route('gift-guide.index'))->assertOk()->assertDontSee('data-catalog-promo-card', false);
         config(['storefront.home' => 'libermedia']);
         $this->get(route('gift-guide.index'))->assertOk()->assertViewIs('front.desktop.gift-guide.index')
             ->assertSee('Dob djeteta')->assertDontSee('data-watchline-gift-guide', false);

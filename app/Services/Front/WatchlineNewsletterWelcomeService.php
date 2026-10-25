@@ -96,7 +96,7 @@ class WatchlineNewsletterWelcomeService
         try {
             Mail::to($claim['signup']->email)->locale($claim['signup']->locale ?: 'hr')->send(new NewsletterCouponMail(
                 couponCode: $claim['action']->coupon_code, storeName: 'Watchline', shopUrl: route('shop.index'),
-                logoUrl: asset('assets/brand/watchline-logo-on-dark.svg'), discountPercent: (float) $claim['action']->discount_value, watchline: true,
+                logoUrl: asset('assets/brand/watchline-mail-logo.png'), discountPercent: (float) $claim['action']->discount_value, watchline: true,
             ));
         } catch (Throwable $exception) {
             $status = 'failed';

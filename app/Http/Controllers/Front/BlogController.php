@@ -58,6 +58,7 @@ class BlogController extends Controller
             ->orderByDesc('published_at')
             ->orderByDesc('id')
             ->paginate(30)->withQueryString();
+        \App\Support\WatchlineSeo::ensureValidPagination($posts);
 
         $topBlocks = app(ContentBlockResolver::class)->forPlacement('blog.top', $locale, null, null, $variant);
         $bottomBlocks = app(ContentBlockResolver::class)->forPlacement('blog.bottom', $locale, null, null, $variant);

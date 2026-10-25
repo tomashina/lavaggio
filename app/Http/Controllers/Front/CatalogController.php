@@ -650,6 +650,7 @@ class CatalogController extends Controller
         $products = $query
             ->paginate($this->shopPerPage($request), total: $this->searchPaginationTotal($request, $query, $search))
             ->withQueryString();
+        \App\Support\WatchlineSeo::ensureValidPagination($products);
         app(PriceCatalogResolver::class)->preloadProducts($products->getCollection(), $request->user());
 
         if ($isWatchlineManufacturerCategoryContext) {
@@ -1024,6 +1025,7 @@ class CatalogController extends Controller
             ))->withQueryString();
         }
 
+        \App\Support\WatchlineSeo::ensureValidPagination($products);
         app(PriceCatalogResolver::class)->preloadProducts($products->getCollection(), $request->user());
 
         $categories = $showCategoryFilters

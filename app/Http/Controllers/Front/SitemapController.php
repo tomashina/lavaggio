@@ -90,9 +90,8 @@ class SitemapController extends Controller
                 ->whereRaw(app(CatalogFeatureService::class)->useManufacturers() ? '1 = 1' : '1 = 0'),
             'pages' => InfoPage::query()->where('is_active', true)
                 ->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now())),
-            'blog' => BlogPost::query()->where('is_active', true)
-                ->whereRaw(app(CatalogFeatureService::class)->useBlog() ? '1 = 1' : '1 = 0')
-                ->where(fn ($q) => $q->whereNull('published_at')->orWhere('published_at', '<=', now())),
+            'blog' => BlogPost::query()->visibleOnBlog([(string) config('app.locale')])
+                ->whereRaw(app(CatalogFeatureService::class)->useBlog() ? '1 = 1' : '1 = 0'),
         };
 
         return $query->whereHas('translations', fn ($q) => $q->where('locale', config('app.locale'))->whereNotNull('slug')->where('slug', '<>', ''));

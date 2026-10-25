@@ -46,10 +46,10 @@ class OptionValuesManager extends Component
     /** @var array<int, array{id:int|null,option_value_id:int|null,parent_option_value_id:int|null,sku:string,stock_qty:int,price_override:string,is_active:bool}> */
     public array $rows = [];
 
-    public function mount(int $productId): void
+    public function mount(int $productId, ?string $locale = null): void
     {
         $this->productId = $productId;
-        $this->locale = (string) (request()->query('locale') ?: config('app.locale', 'en'));
+        $this->locale = (string) ($locale ?: request()->query('locale') ?: config('app.locale', 'en'));
 
         $this->loadProductContext();
         $this->loadExistingRows();

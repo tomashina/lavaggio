@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
-use App\Models\Catalog\Category\Category;
 use App\Http\Controllers\Front\Concerns\ResolvesFrontendView;
+use App\Models\Catalog\Category\Category;
 use App\Models\Content\Page\InfoPage;
 use App\Services\Content\ContentBlockResolver;
 use Illuminate\Http\Request;
@@ -45,6 +45,7 @@ class PageController extends Controller
             ->orderByDesc('id')
             ->paginate(12)
             ->withQueryString();
+        \App\Support\WatchlineSeo::ensureValidPagination($pages);
 
         $topBlocks = app(ContentBlockResolver::class)->forPlacement(
             placement: 'page-category.top',
@@ -94,7 +95,7 @@ class PageController extends Controller
             ->sortBy(fn (InfoPage $candidate): int => $this->pageMatchScore($candidate, $slug, (string) $locale, $fallbackLocale))
             ->first();
 
-        abort_if(!$page, 404);
+        abort_if(! $page, 404);
 
         $selectedTranslation = $this->pickTranslation($page, $slug, (string) $locale, $fallbackLocale);
 
@@ -146,7 +147,7 @@ class PageController extends Controller
     private function pageMatchScore(InfoPage $page, string $slug, string $locale, string $fallbackLocale): int
     {
         $translation = $this->pickTranslation($page, $slug, $locale, $fallbackLocale);
-        if (!$translation) {
+        if (! $translation) {
             return 99;
         }
 

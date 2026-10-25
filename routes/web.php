@@ -770,6 +770,7 @@ Route::post('logout', function (Request $request) {
 })->middleware('auth')->name('logout');
 
 require __DIR__.'/auth.php';
+require __DIR__.'/watchline-mail-preview.php';
 
 // Retained OpenCart aliases are resolved before routing by middleware.
 // A registered fallback makes that middleware run for formerly unregistered

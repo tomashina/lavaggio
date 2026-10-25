@@ -14,8 +14,9 @@ class StorefrontStylesService
         $appearance = $this->navigation->appearance();
         $topBar = $this->navigation->topBar();
         $announcement = $this->storeSettings->announcement();
+        $watchline = config('storefront.home') === 'watchline';
 
-        return sprintf(
+        $css = sprintf(
             ':root{--storefront-container-width:%dpx;--header-content-width:%dpx;--navigation-item-height:%dpx;--navigation-font-size:%dpx;--header-logo-height:%dpx;--navigation-background-color:%s;--navigation-text-color:%s;--navigation-highlight-color:%s;--top-bar-height:%dpx;--top-bar-font-size:%dpx;--top-bar-background-color:%s;--top-bar-text-color:%s;--top-bar-border-color:%s;--store-announcement-background-color:%s;--store-announcement-text-color:%s;--store-announcement-duration:%ds;}',
             $appearance['container_width'],
             $appearance['header_content_width'],
@@ -30,10 +31,20 @@ class StorefrontStylesService
             $topBar['background_color'],
             $topBar['text_color'],
             $topBar['border_color'],
-            $announcement['background_color'],
-            $announcement['text_color'],
-            $announcement['scroll_duration_seconds'],
+            $watchline ? '#0077b5' : $announcement['background_color'],
+            $watchline ? '#ffffff' : $announcement['text_color'],
+            $watchline ? 18 : $announcement['scroll_duration_seconds'],
         );
+
+        if ($watchline) {
+            $css .= sprintf(
+                'body.watchline-storefront{--watchline-info-background:%s;--watchline-info-text:%s;}',
+                $announcement['background_color'],
+                $announcement['text_color'],
+            );
+        }
+
+        return $css;
     }
 
     public function version(?string $css = null): string

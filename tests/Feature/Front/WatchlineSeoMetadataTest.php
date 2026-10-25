@@ -162,6 +162,30 @@ class WatchlineSeoMetadataTest extends TestCase
         $this->assertStringNotContainsString('utm_source', $schema['url']);
     }
 
+    public function test_real_product_response_preserves_custom_seo_fields_in_its_narrow_translation_load(): void
+    {
+        $product = $this->product();
+        $product->translations()->first()->update([
+            'meta_title' => 'Poseban SEO naslov sata – Watchline',
+            'meta_description' => 'Spremljeni opis odabranog sata za pretraživanje.',
+        ]);
+
+        $this->get('/product/fixture-watch')->assertOk()
+            ->assertSee('<title>Poseban SEO naslov sata – Watchline</title>', false)
+            ->assertSee('<meta name="description" content="Spremljeni opis odabranog sata za pretraživanje.">', false)
+            ->assertSee('<meta property="og:title" content="Poseban SEO naslov sata – Watchline">', false)
+            ->assertSee('<h1', false)->assertSee('Fixture Watch');
+    }
+
+    public function test_production_authentication_pages_are_noindex_even_without_the_storefront_meta_partial(): void
+    {
+        $this->app['env'] = 'production';
+        foreach (['/login', '/register', '/forgot-password'] as $path) {
+            $this->get('https://www.watchline.hr'.$path)->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+        }
+        $this->get('https://www.watchline.hr/contact')->assertOk()->assertHeaderMissing('X-Robots-Tag');
+    }
+
     public function test_blog_topic_pagination_and_blog_post_entities_keep_the_actual_editorial_identity(): void
     {
         $post = BlogPost::create(['code' => 'topic-post', 'is_active' => true]);

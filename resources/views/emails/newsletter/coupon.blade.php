@@ -1,3 +1,6 @@
+@if (config('storefront.home') === 'watchline')
+    @include('emails.watchline/newsletter')
+@else
 @php($copy = !empty($watchline) ? 'mail.watchline_newsletter_coupon' : 'mail.newsletter_coupon')
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -54,3 +57,5 @@
     </div>
 </body>
 </html>
+
+@endif

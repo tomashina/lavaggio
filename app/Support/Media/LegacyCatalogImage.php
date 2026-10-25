@@ -11,6 +11,12 @@ use Illuminate\Support\Collection;
 
 class LegacyCatalogImage
 {
+    /** Validated original path for local media inventories and transfers. */
+    public static function relativePath(mixed $source): ?string
+    {
+        return self::path($source);
+    }
+
     /** A safe original catalog URL, without a server-side network request. */
     public static function url(mixed $source): ?string
     {

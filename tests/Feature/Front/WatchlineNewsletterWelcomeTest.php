@@ -125,7 +125,7 @@ class WatchlineNewsletterWelcomeTest extends TestCase
             $render = $mail->render();
 
             return $mail->hasTo('mail@example.test') && $mail->watchline && $mail->discountPercent === 12.5
-                && str_contains($render, 'watchline-logo-on-dark.svg') && str_contains($render, '12.5%')
+                && str_contains($render, 'watchline-mail-logo.png') && str_contains($render, '12.5%')
                 && ! str_contains($render, 'BALI') && ! str_contains($render, 'LIBERMEDIA');
         });
         Mail::assertSentCount(1);

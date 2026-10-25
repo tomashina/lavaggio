@@ -49,6 +49,8 @@ class WatchlineGiftGuideService
             'sort' => $validated['sort'] ?? 'default', 'cols' => (int) ($validated['cols'] ?? 5),
         ];
         $locales = array_values(array_unique([app()->getLocale(), (string) config('app.fallback_locale', 'hr')]));
+        $needsPrice = $filters['budget'] !== 'all' || $filters['promo_only'] || in_array($filters['sort'], ['price_low', 'price_high'], true);
+        $leanCandidates = ! $needsPrice && $filters['sort'] === 'default';
         $categories = Category::query()->where('scope', Category::SCOPE_CATALOG)->currentlyVisible()->with('translations')->get();
         $typeRoots = match ($filters['type']) {
             'watches' => [66], 'sunglasses' => [67], 'jewelry' => [70], default => [66, 67, 70],
@@ -61,28 +63,33 @@ class WatchlineGiftGuideService
         $sales = DB::table('order_items as gift_items')
             ->join('orders as gift_orders', 'gift_orders.id', '=', 'gift_items.order_id')
             ->join('order_statuses as gift_statuses', 'gift_statuses.id', '=', 'gift_orders.status_id')
-            ->whereColumn('gift_items.product_id', 'products.id')->where('gift_items.quantity', '>', 0)
+            ->where('gift_items.quantity', '>', 0)
             ->where('gift_statuses.is_cancelled', false)
             ->where(fn ($query) => $query->whereIn('gift_statuses.code', ['herrera-oc-status-5', 'watchline-oc-status-5'])->orWhere('gift_statuses.is_paid', true))
-            ->selectRaw('COALESCE(SUM(gift_items.quantity), 0)');
-        $query = Product::query()->select('products.*')->addSelect(['gift_sales' => $sales])
+            ->groupBy('gift_items.product_id')
+            ->selectRaw('gift_items.product_id, SUM(gift_items.quantity) as purchased_quantity');
+        $query = Product::query()->select($leanCandidates ? ['products.id', 'products.manufacturer_id'] : ['products.*'])
+            ->leftJoinSub($sales, 'gift_sales_totals', fn ($join) => $join->on('gift_sales_totals.product_id', '=', 'products.id'))
+            ->selectRaw('COALESCE(gift_sales_totals.purchased_quantity, 0) as gift_sales')
             ->visibleOnStorefront(app(CatalogFeatureService::class)->hideOutOfStockProducts())
             ->availableWithin48Hours($filters['available_only'])
             ->whereHas('translations', fn ($query) => $query->whereIn('locale', $locales)->whereNotNull('slug')->where('slug', '!=', ''))
             ->whereHas('categories', fn ($query) => $query->whereIn('categories.id', $typeIds))
             ->when($recipientIds !== null, fn ($query) => $query->whereHas('categories', fn ($query) => $query->whereIn('categories.id', $recipientIds)))
-            ->with([
+            ->with('manufacturer.translations')
+            ->when(! $leanCandidates, fn ($query) => $query->with([
                 'translations' => fn ($query) => $query->select(['id', 'product_id', 'locale', 'slug', 'name']),
-                'taxRate', 'manufacturer.translations', 'categories',
-            ])->orderByDesc('gift_sales')->orderBy('products.id');
+                'taxRate', 'categories',
+            ]))->orderByDesc('gift_sales')->orderBy('products.id');
         if ($filters['promo_only'] && config('commerce.b2c_only')) {
             app(B2CPromotionService::class)->filter($query, $request->user());
         }
         $priceValues = [];
-        $needsPrice = $filters['budget'] !== 'all' || $filters['promo_only'] || in_array($filters['sort'], ['price_low', 'price_high'], true);
         $defaultTaxRate = TaxRate::query()->where('is_active', true)->orderByDesc('is_default')->orderBy('sort_order')->orderBy('id')->first();
         $candidates = $query->get();
-        $this->loadDefaultTaxRate($candidates, $defaultTaxRate);
+        if (! $leanCandidates) {
+            $this->loadDefaultTaxRate($candidates, $defaultTaxRate);
+        }
         $eligible = $candidates->filter(function (Product $product) use ($request, $filters, $needsPrice, &$priceValues): bool {
             if (! $needsPrice) {
                 return true;
@@ -143,7 +150,12 @@ class WatchlineGiftGuideService
             $this->loadDefaultTaxRate($cardData, $defaultTaxRate);
             $pageProducts = $pageProducts->map(fn (Product $product) => $cardData->get($product->id));
         }
-        $products = new LengthAwarePaginator($pageProducts, $selected->count(), $perPage, $page, ['path' => $request->url(), 'query' => $filters, 'fragment' => 'preporuke']);
+        $paginationQuery = array_diff_assoc($filters, [
+            'recipient' => 'all', 'type' => 'all', 'budget' => 'all', 'brand' => null,
+            'available_only' => false, 'promo_only' => false, 'sort' => 'default', 'cols' => 5,
+        ]);
+        $products = new LengthAwarePaginator($pageProducts, $selected->count(), $perPage, $page, ['path' => $request->url(), 'query' => $paginationQuery, 'fragment' => 'preporuke']);
+        \App\Support\WatchlineSeo::ensureValidPagination($products);
 
         return [
             'products' => $products, 'filters' => $filters, 'giftBrands' => $giftBrands,

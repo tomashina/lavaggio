@@ -1,3 +1,6 @@
+@if (config('storefront.home') === 'watchline')
+    @include('emails.watchline/order')
+@else
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -200,3 +203,5 @@
     </div>
 </body>
 </html>
+
+@endif

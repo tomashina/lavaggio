@@ -87,6 +87,26 @@ body.watchline-storefront .product-detail-card [data-product-availability] { gap
 body.watchline-storefront .product-detail-card [data-product-availability] > div { padding: 7px 10px; }
 body.watchline-storefront .product-detail-card [data-product-detail-form] { margin-top: 14px; }
 
+/* Matching gift labels in both page heading bands. */
+body.watchline-storefront .lm-page-title > :is(.gift-voucher-eyebrow, .wl-gift-eyebrow) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    margin: 0 auto 10px;
+    color: var(--wl-blue-dark);
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: .09em;
+    line-height: 1.5;
+}
+body.watchline-storefront .lm-page-title > :is(.gift-voucher-eyebrow, .wl-gift-eyebrow) > svg {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--wl-blue);
+}
+
 /* Gift voucher purchase, preview and redemption. */
 body.watchline-storefront .gift-voucher-amount-presets > button { border-color: var(--wl-line); color: var(--wl-blue-dark); }
 body.watchline-storefront .gift-voucher-amount-presets > button:not([aria-pressed=true]):hover { border-color: var(--wl-blue); background-color: var(--wl-paper); color: #00669c; }

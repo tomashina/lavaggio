@@ -126,7 +126,7 @@ class ProductController extends Controller
                     ->orderBy('order_column')
                     ->orderBy('id'),
                 'translations' => fn ($q) => $q
-                    ->select(['id', 'product_id', 'locale', 'slug', 'name', 'excerpt', 'description', 'payload'])
+                    ->select(['id', 'product_id', 'locale', 'slug', 'name', 'excerpt', 'description', 'meta_title', 'meta_description', 'payload'])
                     ->whereIn('locale', [$locale, $fallbackLocale]),
                 'categories.translations' => fn ($q) => $q->whereIn('locale', [$locale, $fallbackLocale]),
                 'manufacturer.translations' => fn ($q) => $q->whereIn('locale', [$locale, $fallbackLocale]),

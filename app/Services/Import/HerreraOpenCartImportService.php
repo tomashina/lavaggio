@@ -243,11 +243,15 @@ class HerreraOpenCartImportService
 
     private function guardFinalSync(array $stages): void
     {
+        $watchlineCandidate = WatchlineFinalSyncSafety::frozenMySqlSource($this->source->getConfig());
+        if ($watchlineCandidate) {
+            WatchlineFinalSyncSafety::assertCandidate(DB::connection()->getConfig());
+        }
         if (in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)
             && ! preg_match('/^herrera_(?:rehearsal|cutover)_target_[a-z0-9_]+$/', DB::connection()->getDatabaseName())) {
             throw new RuntimeException('Final sync writes are restricted to generated isolated rehearsal or cutover target databases.');
         }
-        if (in_array($this->source->getDriverName(), ['mysql', 'mariadb'], true)
+        if (! $watchlineCandidate && in_array($this->source->getDriverName(), ['mysql', 'mariadb'], true)
             && ! preg_match('/^herrera_(?:(?:rehearsal|cutover)_source_[a-z0-9_]+|live_snapshot_[a-z0-9_]+)$/', $this->snapshot)) {
             throw new RuntimeException('Final sync reads are restricted to named isolated frozen source snapshots.');
         }

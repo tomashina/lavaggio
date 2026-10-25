@@ -62,12 +62,14 @@ class StoreSettingsService
      */
     public function announcement(): array
     {
+        $watchline = config('storefront.home') === 'watchline';
+
         return [
-            'enabled' => (bool) $this->settings->get('store_announcement_enabled', true),
-            'text' => (string) $this->settings->get('store_announcement_text', __('ui.front.desktop.promo_bar')),
+            'enabled' => (bool) $this->settings->get('store_announcement_enabled', ! $watchline),
+            'text' => (string) $this->settings->get('store_announcement_text', $watchline ? '' : __('ui.front.desktop.promo_bar')),
             'url' => trim((string) $this->settings->get('store_announcement_url', '')),
             'new_tab' => (bool) $this->settings->get('store_announcement_new_tab', false),
-            'scroll_enabled' => (bool) $this->settings->get('store_announcement_scroll_enabled', false),
+            'scroll_enabled' => ! $watchline && (bool) $this->settings->get('store_announcement_scroll_enabled', false),
             'scroll_duration_seconds' => $this->settings->getInt('store_announcement_scroll_duration_seconds', 18, 6, 60),
             'background_color' => $this->hexColor($this->settings->get('store_announcement_background_color', '#000000'), '#000000'),
             'text_color' => $this->hexColor($this->settings->get('store_announcement_text_color', '#ffffff'), '#ffffff'),
@@ -79,12 +81,14 @@ class StoreSettingsService
      */
     public function benefitsBar(): array
     {
+        $watchline = config('storefront.home') === 'watchline';
+
         return [
-            'enabled' => (bool) $this->settings->get('store_benefits_bar_enabled', true),
+            'enabled' => (bool) $this->settings->get('store_benefits_bar_enabled', ! $watchline),
             'items' => collect([
-                $this->settings->get('store_benefits_bar_item_1', 'Više od **50 000 proizvoda** u ponudi'),
-                $this->settings->get('store_benefits_bar_item_2', 'Plaćanje karticama do **12 rata bez naknada**'),
-                $this->settings->get('store_benefits_bar_item_3', '**Dostava** u roku **3-5 radnih dana**'),
+                $this->settings->get('store_benefits_bar_item_1', $watchline ? '' : 'Više od **50 000 proizvoda** u ponudi'),
+                $this->settings->get('store_benefits_bar_item_2', $watchline ? '' : 'Plaćanje karticama do **12 rata bez naknada**'),
+                $this->settings->get('store_benefits_bar_item_3', $watchline ? '' : '**Dostava** u roku **3-5 radnih dana**'),
             ])
                 ->map(fn ($item): string => trim((string) $item))
                 ->filter()

@@ -9,6 +9,7 @@ use App\Models\Catalog\Product\Product;
 use App\Models\Catalog\Product\ProductTranslation;
 use App\Models\Content\Support\Comment;
 use App\Services\Catalog\CatalogFeatureService;
+use App\Services\Pricing\ProductPricePresentationService;
 use App\Services\Settings\SystemSettingsService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -234,6 +235,8 @@ class Manager extends Component
         $features = app(CatalogFeatureService::class)->all();
         $useAttributes = (bool) ($features['catalog_use_attributes'] ?? false);
         $useManufacturers = (bool) ($features['catalog_use_manufacturers'] ?? false);
+        $showPublicPromotions = config('storefront.home') === 'watchline'
+            && config('commerce.b2c_only');
 
         $perPage = app(SystemSettingsService::class)->getInt(
             'admin_items_per_page',
@@ -268,6 +271,7 @@ class Manager extends Component
                     ->orderBy('order_column')
                     ->orderBy('id'),
             ])
+            ->when($showPublicPromotions, fn ($query) => $query->with('taxRate'))
             ->when($useManufacturers, function ($query): void {
                 $query->with([
                     'manufacturer.translations' => fn ($q) => $q->where('locale', $this->locale),
@@ -341,9 +345,18 @@ class Manager extends Component
 
         $rows = $query
             ->paginate($perPage);
+        $publicPrices = [];
+        if ($showPublicPromotions) {
+            $prices = app(ProductPricePresentationService::class);
+            foreach ($rows as $product) {
+                // The administrator's account-specific prices are not public shop prices.
+                $publicPrices[(int) $product->id] = $prices->forProduct($product, user: null);
+            }
+        }
 
         return view('livewire.admin.catalog.product.manager', [
             'rows' => $rows,
+            'publicPrices' => $publicPrices,
             'features' => $features,
             'perPage' => $perPage,
             'stateOptions' => $this->stateOptions,

@@ -704,7 +704,9 @@ class CheckoutController extends Controller
                 'last_name' => (string) ($validated['shipping_last_name'] ?? ''),
                 'company' => (string) ($validated['shipping_company'] ?? ''),
                 'oib' => (string) ($validated['shipping_oib'] ?? ''),
-                'vat_id' => (string) ($validated['shipping_vat_id'] ?? ''),
+                ...(config('storefront.home') === 'watchline' && ! $request->exists('shipping_vat_id')
+                    ? []
+                    : ['vat_id' => (string) ($validated['shipping_vat_id'] ?? '')]),
                 'phone' => (string) ($validated['customer_phone'] ?? ''),
                 'address_line_1' => (string) ($validated['shipping_address_line_1'] ?? ''),
                 'address_line_2' => (string) ($validated['shipping_address_line_2'] ?? ''),

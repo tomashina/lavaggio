@@ -26,7 +26,7 @@ class StockNotificationDeliveryTest extends TestCase
         parent::setUp();
         app()->setLocale('hr');
         config([
-            'commerce.b2b_only' => false, 'stock_notifications.emails_enabled' => true,
+            'commerce.b2b_only' => false, 'stock_notifications.enabled' => true, 'stock_notifications.emails_enabled' => true,
             'stock_notifications.retry_minutes' => 5, 'stock_notifications.max_attempts' => 3,
         ]);
         Mail::fake();

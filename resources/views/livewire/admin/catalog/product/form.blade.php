@@ -13,7 +13,7 @@
         </div>
     </div>
 
-    <form wire:submit="save" class="space-y-6">
+    <div class="space-y-6">
         <div class="admin-panel admin-form-panel p-3 sm:p-4">
             <div class="flex flex-wrap gap-2">
                 <button type="button" wire:click="setTab('content')" class="rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] {{ $activeTab === 'content' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100' }}">
@@ -25,9 +25,11 @@
                 <button type="button" wire:click="setTab('media')" class="rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] {{ $activeTab === 'media' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100' }}">
                     {{ __('Media') }}
                 </button>
+                @unless ($watchlineProductEditor)
                 <button type="button" wire:click="setTab('energy')" class="rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] {{ $activeTab === 'energy' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100' }}">
                     {{ __('Energetske oznake') }}
                 </button>
+                @endunless
                 <button type="button" wire:click="setTab('catalog')" class="rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] {{ $activeTab === 'catalog' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100' }}">
                     {{ __('Kategorije') }}
                 </button>
@@ -36,15 +38,57 @@
                         {{ __('Atributi') }}
                     </button>
                 @endif
+                @if ($watchlineProductEditor && $useOptions)
+                    <button type="button" wire:click="setTab('options')" class="rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] {{ $activeTab === 'options' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100' }}">
+                        {{ __('Opcije') }}
+                    </button>
+                @endif
+                @if ($useProductPromotions)
+                    <button type="button" wire:click="setTab('promotion')" class="rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] {{ $activeTab === 'promotion' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100' }}">
+                        {{ __('Akcija') }}
+                    </button>
+                @endif
+                @unless ($watchlineProductEditor)
                 <button type="button" wire:click="setTab('logistics')" class="rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] {{ $activeTab === 'logistics' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100' }}">
                     {{ __('Logistika') }}
                 </button>
+                @endunless
+                @unless ($watchlineProductEditor)
                 <button type="button" wire:click="setTab('b2b')" class="rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] {{ $activeTab === 'b2b' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100' }}">
                     {{ __('B2B cijene') }}
                 </button>
+                @endunless
             </div>
         </div>
 
+        @if ($watchlineProductEditor && $useOptions && $activeTab === 'options')
+            @if ($productId)
+                <livewire:admin.catalog.product.option-values-manager
+                    :product-id="$productId"
+                    :locale="$form['locale']"
+                    :wire:key="'product-option-values-manager-'.$productId.'-'.$form['locale']"
+                />
+            @else
+                <div class="admin-panel admin-form-panel p-6">
+                    <p class="text-sm text-slate-600">{{ __('Najprije spremite artikl kako biste dodali opcije.') }}</p>
+                    <button type="button" wire:click="setTab('content')" class="mt-3 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">{{ __('Sadržaj') }}</button>
+                </div>
+            @endif
+        @elseif ($useProductPromotions && $activeTab === 'promotion')
+            @if ($productId)
+                <livewire:admin.catalog.product.promotion-manager
+                    :product-id="$productId"
+                    :locale="$form['locale']"
+                    :wire:key="'product-promotion-manager-'.$productId.'-'.$form['locale']"
+                />
+            @else
+                <div class="admin-panel admin-form-panel p-6">
+                    <p class="text-sm text-slate-600">{{ __('Najprije spremite artikl kako biste dodali akciju.') }}</p>
+                    <button type="button" wire:click="setTab('content')" class="mt-3 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">{{ __('Sadržaj') }}</button>
+                </div>
+            @endif
+        @else
+        <form wire:submit="save" class="space-y-6">
         @if ($activeTab === 'content')
         <div class="admin-panel admin-form-panel p-6">
             <p class="admin-section-title">{{ __('Core Data') }}</p>
@@ -83,6 +127,9 @@
                 <div style="grid-column: span 4;">
                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Tax Class') }}</label>
                     <select wire:model="form.tax_rate_id" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                        @if ($watchlineProductEditor)
+                            <option value="">{{ __('Bez porezne klase') }}</option>
+                        @endif
                         @foreach ($this->taxRateOptions as $taxRate)
                             <option value="{{ $taxRate->id }}">{{ $taxRate->name }} ({{ rtrim(rtrim(number_format((float) $taxRate->rate, 2), '0'), '.') }}{{ $taxRate->rate_type === 'percent' ? '%' : '' }})</option>
                         @endforeach
@@ -210,7 +257,7 @@
         />
         @endif
 
-        @if ($activeTab === 'energy')
+        @if ($activeTab === 'energy' && ! $watchlineProductEditor)
         @php
             $energyMediaCollections = $this->energyMediaCollections;
             $eprelLookupContext = $this->eprelLookupContext;
@@ -544,7 +591,7 @@
         </div>
         @endif
 
-        @if ($activeTab === 'logistics')
+        @if ($activeTab === 'logistics' && ! $watchlineProductEditor)
         <div class="admin-panel admin-form-panel p-6">
             <div class="flex items-center justify-between gap-3">
                 <div>
@@ -683,7 +730,7 @@
         </div>
         @endif
 
-        @if ($activeTab === 'b2b')
+        @if ($activeTab === 'b2b' && ! $watchlineProductEditor)
         <div class="space-y-6">
             <div class="admin-panel admin-form-panel p-6">
                 <div class="flex items-center justify-between gap-3">
@@ -814,7 +861,7 @@
 
         @if ($activeTab === 'catalog')
         <div class="admin-panel admin-form-panel p-6">
-            <p class="admin-section-title">{{ __('Kategorije i opcije') }}</p>
+            <p class="admin-section-title">{{ $watchlineProductEditor ? __('Kategorije') : __('Kategorije i opcije') }}</p>
             <div class="mt-4 rounded-xl border border-slate-200 p-4">
                 <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Categories (order defines primary)') }}</p>
                 <input type="text" wire:model.live.debounce.250ms="categorySearch" class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="{{ __('Pretraga kategorija...') }}">
@@ -844,7 +891,7 @@
                 @error('form.category_ids.*') <p class="mt-2 text-xs text-rose-600">{{ $message }}</p> @enderror
             </div>
 
-            @if ($useOptions)
+            @if ($useOptions && ! $watchlineProductEditor)
                 <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                     <div class="flex items-center justify-between gap-2">
                         <div>
@@ -984,5 +1031,7 @@
                 {{ __('Cancel') }}
             </button>
         </div>
-    </form>
+        </form>
+        @endif
+    </div>
 </div>

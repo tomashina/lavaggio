@@ -1,3 +1,6 @@
+@if (config('storefront.home') === 'watchline')
+    @include('emails.watchline/gift-purchase')
+@else
 @php
     $isWatchlineGift = config('storefront.home') === 'watchline';
     $giftPaper = $isWatchlineGift ? '#edf6fc' : '#eff4eb';
@@ -36,3 +39,5 @@
         </td></tr>
     </table>
 </td></tr></table></body></html>
+
+@endif

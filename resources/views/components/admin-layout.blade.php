@@ -1310,8 +1310,8 @@
                         'comments' => $canAdminAbility('content.comments.view'),
                         'blocks' => $canAdminAbility('content.blocks.view'),
                         'navigation' => $canAdminAbility('content.navigation.view'),
-                        'supplier_catalogs' => $canAdminAbility('content.supplier_catalogs.manage'),
-                        'references' => $canAdminAbility('content.references.view'),
+                        'supplier_catalogs' => ! $isWatchlineIntegrations && $canAdminAbility('content.supplier_catalogs.manage'),
+                        'references' => ! $isWatchlineIntegrations && $canAdminAbility('content.references.view'),
                     ];
                     $localSettingResources = array_filter([
                         'payment-methods' => __('admin.layout.menu.payment_methods'),
@@ -1741,7 +1741,7 @@
                     </details>
                     @endif
 
-                    @if ($canManageEprel || $canManageStock || $canManageEracuni || $canManageSpreadsheet || $canManageMedia)
+                    @if ($isWatchlineIntegrations ? $canManageStock : ($canManageEprel || $canManageStock || $canManageEracuni || $canManageSpreadsheet || $canManageMedia))
                         <details class="group rounded-lg" @if($integrationsOpen) open @endif>
                             <summary class="sidebar-dropdown-summary flex cursor-pointer list-none items-center justify-between rounded-lg font-medium [&::-webkit-details-marker]:hidden [&::marker]:content-[''] {{ $integrationsOpen ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100' }}">
                                 <span class="flex items-center gap-2">
@@ -1775,12 +1775,12 @@
                                     </a>
                                 @endif
                                 @endif
-                                @if ($canManageSpreadsheet)
+                                @if ($canManageSpreadsheet && ! $isWatchlineIntegrations)
                                     <a href="{{ route('admin.integrations.spreadsheet.index') }}" class="sidebar-dropdown-link block rounded-lg font-medium {{ $integrationsSpreadsheetActive ? 'is-active-leaf' : 'text-slate-700 hover:bg-slate-100' }}">
                                         <span class="flex items-center gap-2"><span class="sidebar-dot"></span><span>{{ __('Excel i CSV uvoz') }}</span></span>
                                     </a>
                                 @endif
-                                @if ($canManageMedia)
+                                @if ($canManageMedia && ! $isWatchlineIntegrations)
                                     <a href="{{ route('admin.integrations.media.index') }}" class="sidebar-dropdown-link block rounded-lg font-medium {{ $integrationsMediaActive ? 'is-active-leaf' : 'text-slate-700 hover:bg-slate-100' }}">
                                         <span class="flex items-center gap-2"><span class="sidebar-dot"></span><span>{{ __('Uvoz slika') }}</span></span>
                                     </a>

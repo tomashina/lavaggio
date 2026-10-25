@@ -1,0 +1,77 @@
+/* The announcement belongs to the existing pale utility bar. */
+html[data-theme] body.watchline-storefront .watchline-utility-top-bar {
+    display: block !important;
+}
+
+html[data-theme] body.watchline-storefront .watchline-utility-top-bar .site-top-bar-shell {
+    height: auto;
+}
+
+html[data-theme] body.watchline-storefront .watchline-utility-top-bar .site-top-bar-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr) minmax(0, 1fr);
+    column-gap: 16px;
+    height: auto;
+    min-height: 32px;
+}
+
+html[data-theme] body.watchline-storefront .watchline-utility-top-bar .site-top-bar-links {
+    grid-column: 1;
+    grid-row: 1;
+    padding-inline: 0;
+}
+
+html[data-theme] body.watchline-storefront .watchline-utility-top-bar .site-top-bar-socials {
+    grid-column: 3;
+    grid-row: 1;
+    padding-inline: 0;
+}
+
+html[data-theme] body.watchline-storefront [data-watchline-topbar-announcement] {
+    display: block;
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    max-width: none;
+    padding-block: 4px;
+    color: #46545f;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Only the lower, non-sticky info bar uses the saved colors. */
+html[data-theme] body.watchline-storefront .store-benefits-shell {
+    position: static;
+    background: var(--watchline-info-background, #0077b5);
+    color: var(--watchline-info-text, #fff);
+}
+
+html[data-theme] body.watchline-storefront :is(.store-benefits-bar, .store-benefits-copy, .store-benefits-copy strong) {
+    color: var(--watchline-info-text, #fff);
+}
+
+html[data-theme] body.watchline-storefront .store-benefits-item + .store-benefits-item::before {
+    background: currentColor;
+}
+
+@media (max-width: 1023px) {
+    html[data-theme] body.watchline-storefront .watchline-utility-top-bar:not(.has-announcement) {
+        display: none !important;
+    }
+
+    html[data-theme] body.watchline-storefront .watchline-utility-top-bar .site-top-bar-inner {
+        display: block;
+    }
+
+    html[data-theme] body.watchline-storefront .watchline-utility-top-bar :is(.site-top-bar-links, .site-top-bar-socials) {
+        display: none;
+    }
+
+    html[data-theme] body.watchline-storefront [data-watchline-topbar-announcement] {
+        padding-block: 6px;
+    }
+}

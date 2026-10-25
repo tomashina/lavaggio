@@ -915,7 +915,7 @@
                 <div class="grid gap-4 md:grid-cols-2">
                     <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 md:col-span-2">
                         <input type="checkbox" wire:model="form.store_announcement_enabled" class="rounded border-slate-300 text-cyan-700 focus:ring-cyan-500" />
-                        {{ __('Show top announcement bar') }}
+                        {{ __(config('storefront.home') === 'watchline' ? 'Prikaži obavijest u sredini gornje trake' : 'Show top announcement bar') }}
                     </label>
                     <div class="md:col-span-2">
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Text') }}</label>
@@ -930,10 +930,11 @@
                         <input type="checkbox" wire:model="form.store_announcement_new_tab" class="rounded border-slate-300 text-cyan-700 focus:ring-cyan-500" />
                         {{ __('Open link in new tab') }}
                     </label>
-                    <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 md:col-span-2">
-                        <input type="checkbox" wire:model="form.store_announcement_scroll_enabled" class="rounded border-slate-300 text-cyan-700 focus:ring-cyan-500" />
-                        {{ __('Scroll text from right to left') }}
-                    </label>
+                    @unless (config('storefront.home') === 'watchline')
+                        <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 md:col-span-2">
+                            <input type="checkbox" wire:model="form.store_announcement_scroll_enabled" class="rounded border-slate-300 text-cyan-700 focus:ring-cyan-500" />
+                            {{ __('Scroll text from right to left') }}
+                        </label>
                     <div class="md:col-span-2">
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Animation speed') }}</label>
                         <div class="flex items-center gap-3">
@@ -955,12 +956,25 @@
                         <input type="color" wire:model="form.store_announcement_text_color" class="h-10 w-20 cursor-pointer rounded-xl border border-slate-300 bg-white p-1" />
                         @error('form.store_announcement_text_color') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                     </div>
+                    @endunless
 
                     <div class="mt-2 border-t border-slate-200 pt-6 md:col-span-2">
                         <h3 class="text-base font-bold text-slate-900">{{ __('Info traka ispod navigacije') }}</h3>
-                        <p class="mt-1 text-xs text-slate-600">{{ __('Dio poruke između **dvije zvjezdice** prikazuje se podebljano u boji naglaska.') }}</p>
-                        <p class="mt-1 text-xs text-slate-600">{{ __('Boja pozadine i boja teksta iznad primjenjuju se i na ovu info traku.') }}</p>
+                        <p class="mt-1 text-xs text-slate-600">{{ __('Dio poruke između **dvije zvjezdice** prikazuje se podebljano.') }}</p>
+                        <p class="mt-1 text-xs text-slate-600">{{ __(config('storefront.home') === 'watchline' ? 'Boje se primjenjuju samo na ovu donju info traku. Gornja obavijest zadržava izgled zaglavlja.' : 'Boja pozadine i boja teksta iznad primjenjuju se i na ovu info traku.') }}</p>
                     </div>
+                    @if (config('storefront.home') === 'watchline')
+                        <div>
+                            <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Background color') }}</label>
+                            <input type="color" wire:model="form.store_announcement_background_color" class="h-10 w-20 cursor-pointer rounded-xl border border-slate-300 bg-white p-1" />
+                            @error('form.store_announcement_background_color') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Text color') }}</label>
+                            <input type="color" wire:model="form.store_announcement_text_color" class="h-10 w-20 cursor-pointer rounded-xl border border-slate-300 bg-white p-1" />
+                            @error('form.store_announcement_text_color') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                        </div>
+                    @endif
                     <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 md:col-span-2">
                         <input type="checkbox" wire:model="form.store_benefits_bar_enabled" class="rounded border-slate-300 text-cyan-700 focus:ring-cyan-500" />
                         {{ __('Prikaži info traku ispod glavne navigacije') }}

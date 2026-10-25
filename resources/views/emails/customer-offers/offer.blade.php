@@ -1,3 +1,6 @@
+@if (config('storefront.home') === 'watchline')
+    @include('emails.watchline/offer')
+@else
 <!doctype html>
 <html lang="{{ $offer->locale }}"><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;color:#24343b">
 <p>{{ __('customer_offers.mail_greeting', ['name' => data_get($offer->customer_snapshot, 'company')]) }}</p>
@@ -6,3 +9,5 @@
 @if($offer->intro)<p>{{ $offer->intro }}</p>@endif
 <p>{{ __('customer_offers.mail_closing') }}<br>{{ config('app.name') }}</p>
 </body></html>
+
+@endif

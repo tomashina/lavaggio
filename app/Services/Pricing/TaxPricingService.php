@@ -44,12 +44,18 @@ class TaxPricingService
             }
         }
 
-        return TaxRate::query()
-            ->where('is_active', true)
-            ->orderByDesc('is_default')
-            ->orderBy('sort_order')
-            ->orderBy('id')
-            ->first();
+        $request = request();
+        $cacheKey = 'pricing.default-active-tax-rate';
+        if (! $request->attributes->has($cacheKey)) {
+            $request->attributes->set($cacheKey, TaxRate::query()
+                ->where('is_active', true)
+                ->orderByDesc('is_default')
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->first());
+        }
+
+        return $request->attributes->get($cacheKey);
     }
 
     public function grossFromNet(float $netAmount, ?Product $product = null, ?TaxRate $taxRate = null, ?User $user = null): float

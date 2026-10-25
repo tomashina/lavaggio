@@ -208,7 +208,7 @@ new #[Layout('layouts.guest')] class extends Component
                     <span>{{ __('ui.auth.login.remember') }}</span>
                 </label>
 
-                <span class="text-sm text-slate-600">{{ __('ui.auth.login.admin_hint') }}</span>
+                <span class="store-auth-hint text-sm text-slate-600">{{ __('ui.auth.login.admin_hint') }}</span>
             </div>
 
             <x-input-error :messages="$errors->get('recaptchaToken')" class="store-auth-error" />

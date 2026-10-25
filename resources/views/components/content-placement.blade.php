@@ -43,7 +43,9 @@
         $blogIds = $blockItems->where('item_type', 'blog')->pluck('item_id')->map(fn ($id) => (int) $id)->all();
 
         $products = collect();
-        if ($productIds !== []) {
+        $watchlineAutomaticProducts = (string) $block->type === 'watchline_products'
+            && (\App\Support\WatchlineWidgetSettings::forBlock($block, $translation)['source'] ?? 'manual') !== 'manual';
+        if ($productIds !== [] && ! $watchlineAutomaticProducts) {
             $products = \App\Models\Catalog\Product\Product::query()
                 ->withStorefrontEnergyData()
                 ->visibleOnStorefront($hideOutOfStockProducts)

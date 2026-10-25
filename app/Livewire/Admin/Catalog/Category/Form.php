@@ -116,8 +116,10 @@ class Form extends Component
         $translationPayload['short_description'] = (string) ($validated['form']['short_description'] ?? '');
 
         $userId = auth()->id();
+        $watchline = config('storefront.home') === 'watchline';
 
-        DB::transaction(function () use ($validated, $payload, $translationPayload, $userId, $wasEditing): void {
+        DB::transaction(function () use ($validated, $payload, $translationPayload, $userId, $wasEditing, $watchline): void {
+            $category = $this->categoryId ? Category::query()->findOrFail($this->categoryId) : null;
             $scope = $validated['form']['scope'];
             $parentId = $validated['form']['parent_id'] ? (int) $validated['form']['parent_id'] : null;
             $payload = is_array($payload) ? $payload : [];
@@ -125,11 +127,13 @@ class Form extends Component
             if ($scope === Category::SCOPE_CATALOG) {
                 $payload[Category::PAYLOAD_SHOW_FILTERS] = (bool) $validated['form']['catalog_show_filters'];
                 $payload[Category::PAYLOAD_SHOW_PRODUCTS] = (bool) $validated['form']['catalog_show_products'];
-                $shippingLabels = array_values($validated['form']['shipping_labels'] ?? []);
-                if ($shippingLabels !== []) {
-                    $payload[Category::PAYLOAD_SHIPPING_LABELS] = $shippingLabels;
-                } else {
-                    unset($payload[Category::PAYLOAD_SHIPPING_LABELS]);
+                if (! $watchline) {
+                    $shippingLabels = array_values($validated['form']['shipping_labels'] ?? []);
+                    if ($shippingLabels !== []) {
+                        $payload[Category::PAYLOAD_SHIPPING_LABELS] = $shippingLabels;
+                    } else {
+                        unset($payload[Category::PAYLOAD_SHIPPING_LABELS]);
+                    }
                 }
             } else {
                 unset(
@@ -137,6 +141,14 @@ class Form extends Component
                     $payload[Category::PAYLOAD_SHOW_PRODUCTS],
                     $payload[Category::PAYLOAD_SHIPPING_LABELS]
                 );
+            }
+
+            if ($watchline) {
+                unset($payload[Category::PAYLOAD_SHIPPING_LABELS]);
+                $existingPayload = $category?->payload;
+                if (is_array($existingPayload) && array_key_exists(Category::PAYLOAD_SHIPPING_LABELS, $existingPayload)) {
+                    $payload[Category::PAYLOAD_SHIPPING_LABELS] = $existingPayload[Category::PAYLOAD_SHIPPING_LABELS];
+                }
             }
 
             $categoryData = [
@@ -152,7 +164,6 @@ class Form extends Component
             ];
 
             if ($this->categoryId) {
-                $category = Category::query()->findOrFail($this->categoryId);
                 $scopeChanged = $category->scope !== $scope;
 
                 if ($scopeChanged && $category->children()->exists()) {
@@ -310,7 +321,7 @@ class Form extends Component
      */
     private function rules(): array
     {
-        return [
+        $rules = [
             'form.scope' => ['required', 'string', Rule::in(Category::availableScopes())],
             'form.parent_id' => [
                 'nullable',
@@ -354,6 +365,12 @@ class Form extends Component
             'form.meta_description' => ['nullable', 'string'],
             'form.translation_payload_text' => ['nullable', 'string'],
         ];
+
+        if (config('storefront.home') === 'watchline') {
+            unset($rules['form.shipping_labels'], $rules['form.shipping_labels.*']);
+        }
+
+        return $rules;
     }
 
     private function loadCategory(): void

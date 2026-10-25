@@ -6,7 +6,9 @@ use App\Models\Catalog\Product\Product;
 use App\Models\Content\Blog\BlogPost;
 use App\Models\Content\ContentBlock;
 use App\Services\Content\InstagramPostOEmbedService;
+use App\Support\Media\LegacyCatalogImage;
 use App\Support\Media\MediaProfileRegistry;
+use App\Support\Media\MediaUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -480,6 +482,9 @@ class Manager extends Component
     public function getCollectionsProperty(): array
     {
         $collections = MediaProfileRegistry::collectionsForModel($this->modelClass);
+        if (config('storefront.home') === 'watchline' && $this->modelClass === Product::class) {
+            return Arr::only($collections, ['product_main', 'product_gallery']);
+        }
         $record = $this->record;
 
         if (! $record instanceof ContentBlock) {
@@ -523,6 +528,21 @@ class Manager extends Component
         return $result;
     }
 
+    /** Imported originals remain read-only and are used only without native product photos. */
+    public function getImportedProductImagesProperty(): Collection
+    {
+        $record = $this->record;
+        if (config('storefront.home') !== 'watchline' || ! $record instanceof Product) {
+            return collect();
+        }
+
+        $hasNativeImages = $record->getMedia('*')
+            ->whereIn('collection_name', ['product_main', 'product_gallery'])
+            ->contains(fn (Media $media): bool => MediaUrl::hasUsableSource($media, ['card_720w', 'detail_960x960', 'thumb_100x100']));
+
+        return $hasNativeImages ? collect() : LegacyCatalogImage::gallery($record);
+    }
+
     public function getModelProfileProperty(): array
     {
         return MediaProfileRegistry::forModel($this->modelClass);
@@ -546,6 +566,7 @@ class Manager extends Component
             'collections' => $this->collections,
             'modelProfile' => $this->modelProfile,
             'mediaByCollection' => $mediaByCollection,
+            'importedProductImages' => $this->importedProductImages,
             'recordExists' => (bool) $this->record,
             'isDualImageCtaBlock' => $isDualImageCtaBlock,
             'isCategoryEditorialTilesBlock' => $isCategoryEditorialTilesBlock,
@@ -699,9 +720,12 @@ class Manager extends Component
             return null;
         }
 
-        return $record->media()
-            ->whereKey($mediaId)
-            ->first();
+        $query = $record->media()->whereKey($mediaId);
+        if (config('storefront.home') === 'watchline' && $record instanceof Product) {
+            $query->whereIn('collection_name', array_keys($this->collections));
+        }
+
+        return $query->first();
     }
 
     private function isImageMedia(Media $media): bool

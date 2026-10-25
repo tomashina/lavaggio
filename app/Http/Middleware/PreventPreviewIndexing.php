@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Support\SearchEngineIndexing;
+use App\Support\WatchlineSeo;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,7 +30,8 @@ class PreventPreviewIndexing
             $response->headers->remove('Last-Modified');
         }
 
-        if (SearchEngineIndexing::shouldBlock($request)
+        if ((SearchEngineIndexing::shouldBlock($request)
+                || (config('storefront.home') === 'watchline' && WatchlineSeo::isPrivate($request)))
             && stripos((string) $response->headers->get('X-Robots-Tag'), 'noindex') === false) {
             $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
         }

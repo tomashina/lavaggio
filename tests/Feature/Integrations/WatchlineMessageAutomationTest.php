@@ -145,7 +145,7 @@ class WatchlineMessageAutomationTest extends TestCase
         Mail::assertSent(WatchlineAutomationMail::class, function ($mail) use ($order): bool {
             $this->assertTrue($mail->hasTo($order->customer_email));
             $this->assertSame(route('products.show', ['slug' => 'ready-watch']).'#product-comments', $mail->messageData['products'][0]['url']);
-            $this->assertStringContainsString('watchline-logo-on-dark.svg', $mail->render());
+            $this->assertStringContainsString('watchline-mail-logo.png', $mail->render());
 
             return true;
         });

@@ -37,6 +37,7 @@ class ReviewController extends Controller
             ->orderByDesc('id')
             ->paginate(30)
             ->withQueryString();
+        \App\Support\WatchlineSeo::ensureValidPagination($reviews);
 
         return view('front.desktop.reviews.index', [
             'reviews' => $reviews,

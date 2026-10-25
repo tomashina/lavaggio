@@ -1,3 +1,6 @@
+@if (config('storefront.home') === 'watchline')
+    @include('emails.watchline/stock')
+@else
 <!doctype html>
 <html lang="hr">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ponovno dostupno | Liber Media</title></head>
@@ -20,3 +23,5 @@
         </table>
     </td></tr></table>
 </body></html>
+
+@endif

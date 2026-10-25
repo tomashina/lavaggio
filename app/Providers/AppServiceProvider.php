@@ -131,6 +131,9 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
 
+        ResetPassword::toMailUsing([\App\Support\Mail\WatchlineAuthMail::class, 'reset']);
+        \Illuminate\Auth\Notifications\VerifyEmail::toMailUsing([\App\Support\Mail\WatchlineAuthMail::class, 'verify']);
+
         RateLimiter::for('wholesale-api', static function (Request $request) {
             $perMinute = max(30, (int) env('WHOLESALE_API_RATE_LIMIT', 240));
             $key = (string) ($request->user()?->id ?: $request->ip());

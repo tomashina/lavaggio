@@ -288,6 +288,17 @@ class StoreSettings extends Component
         $this->locale = strtolower(trim((string) (request()->query('locale') ?: config('app.locale', 'en'))));
         $this->previousLocale = $this->locale;
 
+        if (config('storefront.home') === 'watchline') {
+            $this->form = array_replace($this->form, [
+                'store_announcement_enabled' => false,
+                'store_announcement_text' => '',
+                'store_benefits_bar_enabled' => false,
+                'store_benefits_bar_item_1' => '',
+                'store_benefits_bar_item_2' => '',
+                'store_benefits_bar_item_3' => '',
+            ]);
+        }
+
         foreach ($this->form as $key => $default) {
             $this->form[$key] = $settings->get($key, $default);
         }
@@ -302,7 +313,7 @@ class StoreSettings extends Component
         $this->loadLocalizedInputs($this->locale);
         $this->form = $this->sanitizeSelectableSettings($this->form);
 
-        if (trim((string) $this->form['store_announcement_text']) === '') {
+        if (config('storefront.home') !== 'watchline' && trim((string) $this->form['store_announcement_text']) === '') {
             $this->form['store_announcement_text'] = (string) __('ui.front.desktop.promo_bar');
         }
 
@@ -1283,8 +1294,13 @@ class StoreSettings extends Component
      */
     private function currentTabSettingKeys(): array
     {
+        $keys = array_keys($this->form);
+        if (config('storefront.home') === 'watchline') {
+            $keys = array_diff($keys, ['store_announcement_scroll_enabled', 'store_announcement_scroll_duration_seconds']);
+        }
+
         return array_values(array_filter(
-            array_keys($this->form),
+            $keys,
             fn (string $key): bool => match ($this->tab) {
                 'email' => str_starts_with($key, 'store_email_'),
                 'branding' => str_starts_with($key, 'store_brand_')

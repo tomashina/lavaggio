@@ -6,7 +6,9 @@
     }
 
     $authStoreName = trim((string) (($authBranding['store_name'] ?? null) ?: config('app.name', 'AG Shop')));
-    $isHerreraAuth = \App\Support\StorefrontTheme::usesHerreraLayout($authStoreName);
+    $isWatchlineAuth = config('storefront.home') === 'watchline';
+    $isHerreraAuth = $isWatchlineAuth || \App\Support\StorefrontTheme::usesHerreraLayout($authStoreName);
+    $isLibermediaAuth = ! $isWatchlineAuth && \App\Support\StorefrontTheme::usesLibermediaBrand($authStoreName);
     $authLogoUrl = trim((string) ($authBranding['logo_url'] ?? ''));
     $authLogoWidth = max(1, (int) ($authBranding['logo_width'] ?? 320));
     $authLogoHeight = max(1, (int) ($authBranding['logo_height'] ?? 145));
@@ -49,6 +51,10 @@
 
     <x-front.site-icons :branding="$authBranding" />
 
+    @if ($isWatchlineAuth)
+        <link rel="preload" href="{{ asset('assets/fonts/sora/Sora-Variable.woff2') }}" as="font" type="font/woff2" crossorigin>
+    @endif
+
     @unless ($isHerreraAuth)
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,11 +69,14 @@
     @if ($isHerreraAuth)
         <link rel="stylesheet" href="{{ asset('front-theme/styles/herrera-typography.css') }}?v={{ filemtime(public_path('front-theme/styles/herrera-typography.css')) }}">
     @endif
-    @if (\App\Support\StorefrontTheme::usesLibermediaBrand($authStoreName))
+    @if ($isLibermediaAuth)
         <link rel="stylesheet" href="{{ asset('front-theme/styles/libermedia.css') }}?v={{ filemtime(public_path('front-theme/styles/libermedia.css')) }}">
     @endif
+    @if ($isWatchlineAuth)
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-auth.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-auth.css')) }}">
+    @endif
 </head>
-<body class="commerce-body store-auth-body{{ $isHerreraAuth ? ' herrera-storefront' : '' }}{{ \App\Support\StorefrontTheme::usesLibermediaBrand($authStoreName) ? ' libermedia-storefront' : '' }}">
+<body class="commerce-body store-auth-body{{ $isHerreraAuth ? ' herrera-storefront' : '' }}{{ $isLibermediaAuth ? ' libermedia-storefront' : '' }}{{ $isWatchlineAuth ? ' watchline-auth' : '' }}">
     <header class="store-auth-header">
         <div class="store-auth-header-inner">
             <a href="{{ route('home') }}" class="store-auth-brand" aria-label="{{ $authStoreName }}">
@@ -85,7 +94,7 @@
                 @endif
             </a>
 
-            <a href="{{ route('home') }}" class="store-auth-back-link">
+            <a href="{{ route('home') }}" class="store-auth-back-link" aria-label="{{ __('ui.auth.back_to_store') }}">
                 <svg viewBox="0 0 20 20" aria-hidden="true">
                     <path d="M11.75 4.5 6.25 10l5.5 5.5M6.75 10H16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/>
                 </svg>

@@ -3,12 +3,26 @@
 namespace App\Support;
 
 use App\Models\Catalog\Product\Product;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\Request;
 
 /** Presentation-only SEO policy; never changes catalog facts or public visibility. */
 class WatchlineSeo
 {
+    public static function ensureValidPagination(LengthAwarePaginator $pagination): void
+    {
+        // An empty first page can be a useful filter result; later empty pages do not exist.
+        abort_if(config('storefront.home') === 'watchline' && $pagination->currentPage() > $pagination->lastPage(), 404);
+    }
+
+    public static function isPrivate(Request $request): bool
+    {
+        return $request->routeIs('admin.*', 'dashboard', 'profile', 'login', 'register', 'logout', 'password.*', 'verification.*',
+            'front.auth.*', 'account.*', 'front.account.*', 'cart.*', 'checkout.*', 'wishlist.*',
+            'gift-vouchers.purchase', 'watchline.messages.*', 'stock-notifications.*');
+    }
+
     public static function canonical(Request $request, ?Paginator $pagination = null): string
     {
         $query = [];
@@ -31,8 +45,7 @@ class WatchlineSeo
         if (preg_match('/\bnoindex\b/i', $configured)) {
             return $configured;
         }
-        $private = $request->routeIs('front.auth.*', 'account.*', 'front.account.*', 'cart.*', 'checkout.*', 'wishlist.*',
-            'gift-vouchers.purchase', 'watchline.messages.*', 'stock-notifications.*');
+        $private = self::isPrivate($request);
         $filtered = false;
         if ($request->routeIs('shop.index', 'categories.show', 'manufacturers.show', 'gift-guide.index', 'blog.index')) {
             foreach ($request->query() as $key => $value) {

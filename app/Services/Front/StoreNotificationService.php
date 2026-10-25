@@ -33,7 +33,9 @@ class StoreNotificationService
             return;
         }
 
-        $subject = '[Contact] '.($message->subject ?: 'New contact message');
+        $subject = config('storefront.home') === 'watchline'
+            ? '[Watchline] '.($message->subject ?: 'Nova poruka kupca')
+            : '[Contact] '.($message->subject ?: 'New contact message');
         $body = implode("\n", [
             'Name: '.(string) $message->name,
             'Email: '.(string) $message->email,
@@ -44,12 +46,17 @@ class StoreNotificationService
         ]);
 
         try {
-            Mail::raw($body, static function ($mail) use ($to, $subject, $message): void {
+            $callback = static function ($mail) use ($to, $subject, $message): void {
                 $mail->to($to)->subject($subject);
                 if (filter_var($message->email, FILTER_VALIDATE_EMAIL)) {
                     $mail->replyTo($message->email, (string) $message->name);
                 }
-            });
+            };
+            if (config('storefront.home') === 'watchline') {
+                Mail::send('emails.watchline.contact', ['contact' => $message, 'isReturn' => false], $callback);
+            } else {
+                Mail::raw($body, $callback);
+            }
         } catch (\Throwable $e) {
             Log::warning('Store contact notification failed: '.$e->getMessage());
         }
@@ -71,12 +78,17 @@ class StoreNotificationService
         $body = (string) $message->message;
 
         try {
-            Mail::raw($body, static function ($mail) use ($to, $subject, $message): void {
+            $callback = static function ($mail) use ($to, $subject, $message): void {
                 $mail->to($to)->subject($subject);
                 if (filter_var($message->email, FILTER_VALIDATE_EMAIL)) {
                     $mail->replyTo($message->email);
                 }
-            });
+            };
+            if (config('storefront.home') === 'watchline') {
+                Mail::send('emails.watchline.contact', ['contact' => $message, 'isReturn' => true], $callback);
+            } else {
+                Mail::raw($body, $callback);
+            }
         } catch (\Throwable $e) {
             Log::warning('Store return request notification failed: '.$e->getMessage());
         }
@@ -203,8 +215,9 @@ class StoreNotificationService
 
             $imageUrl = '';
             if ($item->relationLoaded('product') && $item->product) {
-                $imageUrl = (string) ($item->product->getFirstMediaUrl('product_main')
-                    ?: $item->product->getFirstMediaUrl('product_gallery'));
+                $imageUrl = (string) (config('storefront.home') === 'watchline'
+                    ? \App\Support\Media\LegacyCatalogImage::first($item->product)
+                    : ($item->product->getFirstMediaUrl('product_main') ?: $item->product->getFirstMediaUrl('product_gallery')));
             }
 
             $optionLabel = $this->buildOrderItemOptionLabel($item);
@@ -319,6 +332,9 @@ class StoreNotificationService
 
     private function formatMoney(float $value, string $currencyCode): string
     {
+        if (config('storefront.home') === 'watchline') {
+            return number_format($value, 2, ',', '.').' '.($currencyCode === 'EUR' ? '€' : $currencyCode);
+        }
         $symbol = $currencyCode === 'EUR' ? 'EUR' : $currencyCode;
 
         return number_format($value, 2, '.', ',').' '.$symbol;

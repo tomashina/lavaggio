@@ -2,6 +2,7 @@
 @section('title', 'Tražiš poklon? – Watchline')
 @push('styles')
     <link rel="stylesheet" href="{{ asset('front-theme/styles/category-catalog.css') }}?v={{ filemtime(public_path('front-theme/styles/category-catalog.css')) }}">
+    <link rel="stylesheet" href="{{ asset('front-theme/styles/libermedia-catalog-promos.css') }}?v={{ filemtime(public_path('front-theme/styles/libermedia-catalog-promos.css')) }}">
     <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-gift-guide.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-gift-guide.css')) }}">
 @endpush
 @push('scripts')
@@ -15,7 +16,14 @@
         <p>Pronađite sat, sunčane naočale ili nakit prema osobi kojoj darujete i svom budžetu.</p>
     </header>
 
-    <section class="wl-gift-filter-panel" aria-label="Pronađite poklon">
+    <section class="wl-gift-filter-panel" aria-labelledby="watchline-gift-form-title">
+        <div class="wl-gift-filter-heading">
+            <span class="wl-gift-filter-icon" aria-hidden="true"><x-fa-icon name="gift" style="solid" /></span>
+            <div>
+                <h2 id="watchline-gift-form-title">Pronađite pravi poklon</h2>
+                <p>Odaberite osobu, vrstu poklona i budžet.</p>
+            </div>
+        </div>
         <form id="watchline-gift-filters" action="{{ route('gift-guide.index') }}#preporuke" method="GET" class="wl-gift-filters">
             <fieldset class="wl-gift-recipients"><legend>Kome darujete?</legend>
                 <div class="wl-gift-choices">@foreach($recipientOptions as $value => $label)
@@ -53,6 +61,9 @@
         @if($products->isNotEmpty())
             <div class="catalog-lined-grid wl-gift-product-grid wl-gift-product-grid--{{ $filters['cols'] }}" data-catalog-grid data-catalog-mobile-cols="2" data-continuous-card-grid>
                 @foreach($products as $product)<x-front.desktop.product-card :product="$product" :locale="$locale" :fallback-locale="$fallbackLocale" :lined="true" :flat="true" />@endforeach
+                @if($filters['cols'] === 5 && $products->count() % 5 === 4 && config('gift_vouchers.enabled', true))
+                    @include('front.partials.libermedia-promo-card', ['promoType' => 'gift-voucher'])
+                @endif
             </div>
             <div class="wl-gift-pagination">{{ $products->links() }}</div>
         @else
@@ -60,12 +71,5 @@
         @endif
     </section>
 
-    @if(config('gift_vouchers.enabled', true))
-        <aside class="wl-gift-voucher" aria-labelledby="watchline-gift-voucher-title" data-watchline-gift-voucher>
-            <x-fa-icon name="gift" style="solid" />
-            <div><p class="wl-gift-eyebrow">DARUJTE MOGUĆNOST IZBORA</p><h2 id="watchline-gift-voucher-title">Njihov stil. Njihov odabir.</h2><p>Watchline poklon bon za satove, sunčane naočale i nakit.</p></div>
-            <a href="{{ route('gift-vouchers.create') }}">Odaberi poklon bon <x-fa-icon name="arrow-right" style="solid" /></a>
-        </aside>
-    @endif
 </div>
 @endsection

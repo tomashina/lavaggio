@@ -1,3 +1,6 @@
+@if (config('storefront.home') === 'watchline')
+    @include('emails.watchline/gift-delivered')
+@else
 @php
     $isWatchlineGift = config('storefront.home') === 'watchline';
     $giftBrand = $isWatchlineGift ? 'Watchline' : 'Liber Media';
@@ -38,3 +41,5 @@
         <tr><td style="padding:20px 32px;background:{{ $giftPaper }};border-radius:0 0 16px 16px;text-align:center;font-size:12px;line-height:1.7;color:{{ $giftMuted }}">{{ $isWatchlineGift ? 'Watchline · Satovi, nakit i sunčane naočale.' : 'Liber Media · Igra, učenje i mali veliki trenuci.' }}</td></tr>
     </table>
 </td></tr></table></body></html>
+
+@endif
