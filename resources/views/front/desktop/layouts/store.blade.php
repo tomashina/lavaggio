@@ -13,7 +13,7 @@
         $storefrontAssetVersion = app(\App\Support\AssetVersion::class)->current();
     @endphp
     @if (\App\Support\StorefrontTheme::usesHerreraLayout((string) ($storeSettings['branding']['store_name'] ?? config('app.name'))))
-        @unless (\App\Support\StorefrontTheme::usesLibermediaBrand())
+        @unless (\App\Support\StorefrontTheme::usesLibermediaBrand() && config('storefront.home') !== 'watchline')
         <script data-storefront-page-reveal-boot>
             (() => {
                 const root = document.documentElement;
@@ -129,8 +129,15 @@
 @endphp
 <body class="storefront {{ $herreraStorefront ? 'herrera-storefront' : '' }}{{ \App\Support\StorefrontTheme::usesLibermediaBrand($storeBrandName) ? ' libermedia-storefront' : '' }}{{ config('storefront.home') === 'watchline' ? ' watchline-storefront' : '' }} min-h-screen overflow-x-hidden bg-white text-slate-900 antialiased @yield('body_class')">
 @if ($herreraStorefront)
-    <div class="herrera-page-loader" data-storefront-page-loader aria-hidden="true">
+    <div class="herrera-page-loader" data-storefront-page-loader @if ($watchlineStorefront) data-watchline-page-loader @endif aria-hidden="true">
+        @if ($watchlineStorefront)
+            <div class="watchline-page-loader-content">
+                <img src="{{ asset('assets/brand/watchline-logo.svg') }}?v={{ filemtime(public_path('assets/brand/watchline-logo.svg')) }}" alt="" width="225" height="110" decoding="async">
+        @endif
         <span class="herrera-page-loader-dots"><span></span><span></span><span></span></span>
+        @if ($watchlineStorefront)
+            </div>
+        @endif
     </div>
 @endif
 @if ($announcementEnabled)

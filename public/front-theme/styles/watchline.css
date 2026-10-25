@@ -58,6 +58,10 @@ html[data-theme] body.watchline-storefront {
 }
 
 body.watchline-storefront [hidden] { display: none !important; }
+body.watchline-storefront .herrera-page-loader { background: #fff; }
+body.watchline-storefront .watchline-page-loader-content { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+body.watchline-storefront .watchline-page-loader-content > img { display: block; width: min(48vw, 190px); height: auto; }
+body.watchline-storefront .herrera-page-loader-dots > span { background: var(--wl-blue-dark); }
 body.watchline-storefront :is(.wl-widget-subtitle, .herrera-home-section-subtitle) { margin: 10px 0 0; color: var(--wl-muted); font-size: 13px; line-height: 1.6; }
 body.watchline-storefront .herrera-brand-carousel[data-watchline-brand-columns="1"] { --herrera-brand-columns: 1; --herrera-brand-laptop-columns: 1; --herrera-brand-tablet-columns: 1; --herrera-brand-mobile-columns: 1; }
 body.watchline-storefront .herrera-brand-carousel[data-watchline-brand-columns="2"] { --herrera-brand-columns: 2; --herrera-brand-laptop-columns: 2; --herrera-brand-tablet-columns: 2; --herrera-brand-mobile-columns: 2; }
