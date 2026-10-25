@@ -30,6 +30,8 @@ STOCK_NOTIFICATIONS_EMAILS_ENABLED=false
 
 Potreban je već provjereni PHP `/opt/alt/php84/usr/bin/php` i privatni, prethodno checksumom provjeren Composer `/home/watchline/.local/bin/composer-2.10.3.phar`. Skripta provjerava zahtjeve iz lock datoteke; ne zaobilaziti nedostajuće ekstenzije. Postojeći `.htaccess` poddomene mora sadržavati `SetHandler application/x-httpd-alt-php84___lsphp`. Objavljeni Laravel `.htaccess` zadržava taj handler i postojeću cPanel BasicAuth zaštitu direktorija; ne mijenja se globalni PHP niti MultiPHP postavka. Postojeći `.user.ini` ostaje sačuvan. Javni resursi izričito dobivaju direktorije 755 i datoteke 644 čak i kada je Git izvor privatan; vršni runtime ostaje 700.
 
+Na ovoj testnoj domeni zasebni `new.watchline.hr/.user.ini` postavlja `memory_limit=256M`; ne mijenjaju se globalni PHP ni OpenCart. Široki upit vodiča za poklone lokalno je dosegnuo 122,5 MiB, pa 128 MiB ostavlja premalo prostora. Stvarnu web vrijednost provjeriti kroz autentificirani HTTPS, bez javnog `phpinfo()` prikaza.
+
 Iz registriranog repozitorija prvo pregledati plan:
 
 ```sh
@@ -42,5 +44,9 @@ Bez `--apply` izvode se samo provjere, privremeni privatni popisi, prikaz velič
 Javni direktorij sadrži samo javne resurse i zaseban `index.php` s izričitom privatnom runtime putanjom za održavanje, autoload i bootstrap. `runtime/public` pokazuje na javni direktorij kako bi `public_path()` radio i iz konzole. Za native uploadove fizički direktorij je `new.watchline.hr/storage`, a privatni `storage/app/public` pokazuje prema njemu. Skripta odbija postojeću drugačiju poveznicu ili direktorij s native medijima: njih treba prethodno pažljivo premjestiti, bez prepisivanja uploadova.
 
 Nema `--delete` nad javnim direktorijem. Izvorni `image/catalog`, cache slika i ostali ignorirani podaci ne kopiraju se kroz Git deployment; potrebni mediji prenose se zasebnim provjerenim manifestom. Izostavljeni su nepotrebni izvorni generirani kategorijski PNG-ovi. Font Awesome originalni spriteovi ostaju jer ih renderer još koristi kao rezervu za dinamičke ikone. Ponavljanje preskače sadržajno nepromijenjene datoteke.
+
+Provjera stvarnog izvornog direktorija na hostingu potvrdila je **14.344 neprazna originala, ukupno 1.688.353.145 bajtova**, od 14.369 putanja iz manifesta. Preostalih 17 datoteka nedostaje i pripada neaktivnim artiklima/jednom neaktivnom blogu; osam datoteka postoji, ali je prazno, i predstavljaju dodatne fotografije u galerijama aktivnih artikala. Njihove glavne fotografije postoje. To su zatečene izvorne iznimke, a ne datoteke izgubljene prijenosom. Ne mijenjaju se zapisi kataloga, ne izmišljaju zamjenske fotografije i ne prenosi se cijeli OpenCart cache. Za selektivni popis i provjeru putanja koristiti [upute manifesta slika](watchline-media-manifest.md).
+
+Tek nakon potvrđenog prijenosa tih 14.344 originala, **samo staging** koristi `LEGACY_MEDIA_ENABLED=false` uz osvježen konfiguracijski cache. Ta vrijednost isključuje udaljeni fallback: provjereni neprazni lokalni originali i dalje se prikazuju, a navedene nepostojeće/prazne fotografije ne dodaju se kao neispravni udaljeni URL-ovi galerije. Postavka ne briše datoteke ni metapodatke i ne mijenja postojeći lokalni razvojni shop ili produkcijski OpenCart. Prije budućeg live prelaska ponovno provjeriti medije prema svježim podacima; ova staging provjera nije dokaz buduće potpunosti.
 
 Nakon primjene provjeriti HTTPS, statusne odgovore, `/robots.txt`, `X-Robots-Tag: noindex`, assete, spremljene uploadove i da su svi outbound prekidači ostali isključeni. Ova skripta nije produkcijski deploy niti dokaz završnog svježeg uvoza.
