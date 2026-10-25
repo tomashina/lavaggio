@@ -77,6 +77,9 @@ body.watchline-storefront .wl-product-carousel {
     --herrera-product-mobile-columns: 2;
 }
 body.watchline-storefront .wl-product-carousel .splide__slide { width: calc(100% / var(--herrera-product-columns)); }
+/* Keep horizontal lines on every moving slide, including loop clones: the
+   track overlay alone can be clipped while Safari composites the carousel. */
+body.watchline-storefront [data-continuous-card-carousel] .splide__slide { border-top: 1px solid #e2eaec; border-bottom: 1px solid #e2eaec; }
 @media (max-width: 1279px) {
     body.watchline-storefront .wl-product-carousel .splide__slide { width: calc(100% / var(--herrera-product-tablet-columns)); }
 }

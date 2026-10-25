@@ -133,7 +133,7 @@
             @include('front.partials.splide-assets')
 
             <div class="mt-4">
-                <div id="products-carousel-{{ $block->id }}" class="splide" data-products-carousel-splide data-continuous-card-carousel>
+                <div id="products-carousel-{{ $block->id }}" class="splide" data-products-carousel-splide data-continuous-card-carousel data-desktop-cols="{{ $preferredGridCols }}" data-mobile-cols="{{ $mobileDefaultCols }}">
                     <div class="splide__track">
                         <ul class="splide__list">
                             @foreach ($products as $product)
@@ -168,10 +168,11 @@
                                     el.dataset.splideReady = '1';
 
                                     const count = el.querySelectorAll('.splide__slide').length;
-                                    const mobilePerPage = {{ $mobileDefaultCols }};
-                                    const preferredDesktopPerPage = {{ $preferredGridCols }};
+                                    const mobilePerPage = Number.parseInt(el.dataset.mobileCols || '2', 10) || 2;
+                                    const preferredDesktopPerPage = Number.parseInt(el.dataset.desktopCols || '4', 10) || 4;
                                     const continuousCards = document.body.classList.contains('herrera-storefront');
                                     const desktopGap = preferredDesktopPerPage >= 5 ? '1rem' : '1.25rem';
+                                    const watchlineCards = document.body.classList.contains('watchline-storefront') && el.matches('[data-continuous-card-carousel]');
                                     new window.Splide(el, {
                                         type: count > 1 ? 'loop' : 'slide',
                                         perPage: Math.min(Math.max(1, preferredDesktopPerPage), Math.max(1, count)),
@@ -182,7 +183,8 @@
                                         pagination: false,
                                         arrows: count > 1,
                                         updateOnMove: true,
-                                        speed: 520,
+                                        speed: watchlineCards ? 420 : 520,
+                                        ...(watchlineCards ? { easing: 'cubic-bezier(0.25, 1, 0.5, 1)' } : {}),
                                         breakpoints: {
                                             1536: { perPage: Math.min(Math.min(Math.max(1, preferredDesktopPerPage), 5), Math.max(1, count)) },
                                             1280: { perPage: Math.min(Math.min(Math.max(1, preferredDesktopPerPage), 4), Math.max(1, count)) },

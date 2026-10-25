@@ -6,7 +6,7 @@
     $reviewAuthor = trim((string) ($featuredReview->author_name ?: $featuredReview->user?->name)) ?: __('ui.product.comments_anonymous');
     $reviewInitial = mb_strtoupper(mb_substr($reviewAuthor, 0, 1));
     $reviewRating = (int) $featuredReview->rating;
-    $reviewProductImage = \App\Support\Media\LegacyCatalogImage::first($reviewProduct, ['thumb_100x100', 'card_320w']);
+    $reviewProductImage = \App\Support\Media\LegacyCatalogImage::first($reviewProduct, ['thumb_100x100', 'card_320w'], width: 160);
 @endphp
     <article class="lm-home-review" data-home-review-rating="{{ $reviewRating }}">
         <div class="lm-home-review-rating" aria-label="{{ __('Ocjena :rating od 5', ['rating' => $reviewRating]) }}">

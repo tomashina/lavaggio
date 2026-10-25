@@ -27,7 +27,7 @@
                 @foreach ([1, 2] as $watchlineCampaignImage)
                     @if ($watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_url'] !== '')
                         <span class="wl-cluse-watch">
-                            <img src="{{ $watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_url'] }}" alt="{{ $watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_alt'] }}" width="1080" height="1080" loading="eager" fetchpriority="{{ $watchlineCampaignImage === 1 ? 'high' : 'auto' }}" data-watchline-cluse-image="{{ $watchlineCampaignImage }}">
+                            <img src="{{ \App\Support\WatchlineWidgetSettings::imageUrl($watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_url']) }}" alt="{{ $watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_alt'] }}" width="1080" height="1080" loading="eager" fetchpriority="{{ $watchlineCampaignImage === 1 ? 'high' : 'auto' }}" data-watchline-cluse-image="{{ $watchlineCampaignImage }}">
                         </span>
                     @endif
                 @endforeach
@@ -43,7 +43,7 @@
                 @endif
             </div>
             @if ($watchlineCampaign['mens_image_url'] !== '')
-                <a class="wl-campaign-visual" href="{{ $watchlineCampaign['mens_url'] }}" aria-label="{{ $watchlineCampaign['mens_image_link_label'] }}"><img class="lm-campaign-product lm-meli-product" src="{{ $watchlineCampaign['mens_image_url'] }}" alt="{{ $watchlineCampaign['mens_image_alt'] }}" width="698" height="931" loading="eager"></a>
+                <a class="wl-campaign-visual" href="{{ $watchlineCampaign['mens_url'] }}" aria-label="{{ $watchlineCampaign['mens_image_link_label'] }}"><img class="lm-campaign-product lm-meli-product" src="{{ \App\Support\WatchlineWidgetSettings::imageUrl($watchlineCampaign['mens_image_url']) }}" alt="{{ $watchlineCampaign['mens_image_alt'] }}" width="698" height="931" loading="eager"></a>
             @endif
         </article>
         <article class="lm-campaign lm-campaign--montessori wl-sunglasses-campaign">
@@ -56,7 +56,7 @@
                 @endif
             </div>
             @if ($watchlineCampaign['sunglasses_image_url'] !== '')
-                <a class="wl-campaign-visual" href="{{ $watchlineCampaign['sunglasses_url'] }}" aria-label="{{ $watchlineCampaign['sunglasses_image_link_label'] }}"><img class="lm-campaign-product lm-montessori-product" src="{{ $watchlineCampaign['sunglasses_image_url'] }}" alt="{{ $watchlineCampaign['sunglasses_image_alt'] }}" width="900" height="506" loading="eager"></a>
+                <a class="wl-campaign-visual" href="{{ $watchlineCampaign['sunglasses_url'] }}" aria-label="{{ $watchlineCampaign['sunglasses_image_link_label'] }}"><img class="lm-campaign-product lm-montessori-product" src="{{ \App\Support\WatchlineWidgetSettings::imageUrl($watchlineCampaign['sunglasses_image_url']) }}" alt="{{ $watchlineCampaign['sunglasses_image_alt'] }}" width="900" height="506" loading="eager"></a>
             @endif
         </article>
     </div>

@@ -17,7 +17,7 @@
             <article class="wl-place">
                 <div class="wl-place-photo">
                     @if ($watchlineLocations[$watchlineLocation.'_image_url'] !== '')
-                        <img src="{{ $watchlineLocations[$watchlineLocation.'_image_url'] }}" alt="{{ $watchlineLocations[$watchlineLocation.'_image_alt'] }}" width="750" height="470" loading="lazy" decoding="async">
+                        <img src="{{ \App\Support\WatchlineWidgetSettings::imageUrl($watchlineLocations[$watchlineLocation.'_image_url']) }}" alt="{{ $watchlineLocations[$watchlineLocation.'_image_alt'] }}" width="750" height="470" loading="lazy" decoding="async">
                     @endif
                     <span>{{ $watchlineLocations[$watchlineLocation.'_image_label'] }}</span>
                 </div>

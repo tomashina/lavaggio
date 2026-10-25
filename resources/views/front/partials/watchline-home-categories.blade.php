@@ -22,7 +22,7 @@
                     $watchlineCategoryTranslation = $watchlineCategory->translations->firstWhere('locale', $watchlineCategoryLocale) ?? $watchlineCategory->translations->first();
                     $watchlineCategorySlug = (string) $watchlineCategoryTranslation?->slug;
                     $watchlineCategoryDetail = $watchlineCategoryDetails[$watchlineCategorySlug] ?? ['label' => $watchlineCategoryTranslation?->name, 'description' => '', 'icon' => 'gem'];
-                    $watchlineCategoryImage = \App\Support\Media\LegacyCatalogImage::first($watchlineCategory) ?? $watchlineCategoryContent->categoryImage($watchlineCategory);
+                    $watchlineCategoryImage = \App\Support\Media\LegacyCatalogImage::first($watchlineCategory, width: 480) ?? $watchlineCategoryContent->categoryImage($watchlineCategory);
                 @endphp
                 @if ($watchlineCategorySlug !== '')
                     <a class="wl-category-card" href="{{ route('categories.show', ['slug' => $watchlineCategorySlug]) }}">

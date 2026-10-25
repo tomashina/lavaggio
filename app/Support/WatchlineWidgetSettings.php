@@ -4,9 +4,18 @@ namespace App\Support;
 
 use App\Models\Content\ContentBlock;
 use App\Models\Content\ContentBlockTranslation;
+use App\Support\Media\LegacyCatalogImage;
 
 class WatchlineWidgetSettings
 {
+    /** Rendering only: never replace the original URL in editable CMS settings. */
+    public static function imageUrl(mixed $value, int $width = 960): string
+    {
+        $source = self::safeUrl($value, true);
+
+        return LegacyCatalogImage::variant($source, $width)['url'] ?? $source;
+    }
+
     public static function defaults(string $type): array
     {
         return array_replace(

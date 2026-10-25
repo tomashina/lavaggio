@@ -364,6 +364,7 @@
             );
             const cardControls = Array.from(element.querySelectorAll('a, button, textarea, input, select, iframe'))
                 .map(function (node) { return [node, node.getAttribute('tabindex')]; });
+            const watchlineCards = document.body.classList.contains('watchline-storefront') && element.matches('[data-continuous-card-carousel]');
 
             new window.Splide(element, {
                 type: count > 1 ? 'loop' : 'slide',
@@ -375,7 +376,8 @@
                 pagination: false,
                 arrows: count > 1,
                 updateOnMove: true,
-                speed: 520,
+                speed: watchlineCards ? 420 : 520,
+                ...(watchlineCards ? { easing: 'cubic-bezier(0.25, 1, 0.5, 1)' } : {}),
                 breakpoints: {
                     1280: {
                         perPage: 4,

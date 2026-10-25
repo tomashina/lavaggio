@@ -2,10 +2,17 @@
 
 namespace Tests\Feature\Front;
 
+use App\Models\Catalog\Category\Category;
+use App\Models\Catalog\Manufacturer\Manufacturer;
 use App\Models\Catalog\Product\Product;
+use App\Models\Content\Blog\BlogPost;
+use App\Models\Content\ContentBlock;
+use App\Models\Content\Support\Comment;
 use App\Services\Import\WatchlineImageVariantService;
 use App\Services\Settings\SystemSettingsService;
 use App\Support\Media\LegacyCatalogImage;
+use App\Support\Media\ManufacturerLogo;
+use App\Support\WatchlineWidgetSettings;
 use App\View\Components\Front\Desktop\ProductCard;
 use DOMDocument;
 use DOMXPath;
@@ -249,6 +256,68 @@ class WatchlineImageVariantsTest extends TestCase
         $this->artisan('watchline:prepare-images', ['--limit' => '-1'])->assertFailed();
         $this->assertDatabaseCount('media', 0);
         $this->assertSame($path, $product->fresh()->payload['opencart']['image']);
+        Http::assertNothingSent();
+    }
+
+    public function test_editorial_blog_cards_and_imported_logos_use_existing_variants_only(): void
+    {
+        $path = $this->image('editorial.png', 1200, 800);
+        $post = BlogPost::create(['code' => 'variant-blog', 'is_active' => true, 'published_at' => now()->subDay(), 'payload' => ['opencart' => ['image' => $path]]]);
+        $post->translations()->create(['locale' => 'hr', 'title' => 'Stvarni članak', 'slug' => 'variant-blog']);
+        $brand = Manufacturer::create(['code' => 'variant-brand', 'is_active' => true, 'payload' => ['opencart' => ['image' => $path]]]);
+        $brand->translations()->create(['locale' => 'hr', 'name' => 'Originalni brand', 'slug' => 'variant-brand']);
+        $data = ['blogCardPost' => $post, 'blogCardLocale' => 'hr', 'blogCardFallbackLocale' => 'hr'];
+        $this->assertStringContainsString(LegacyCatalogImage::url($path), view('front.partials.herrera-blog-card', $data)->render());
+        app(WatchlineImageVariantService::class)->process([$path], true);
+        $small = LegacyCatalogImage::variant($path, 480);
+        $large = LegacyCatalogImage::variant($path, 960);
+        $html = view('front.partials.herrera-blog-card', $data)->render();
+        $this->assertStringContainsString('src="'.$small['url'].'"', $html);
+        $this->assertStringContainsString('srcset="'.$small['url'].' 480w, '.$large['url'].' 960w"', $html);
+        $this->assertSame($small['url'], ManufacturerLogo::resolve($brand)['url']);
+        $this->assertSame($path, $post->fresh()->payload['opencart']['image']);
+        config(['storefront.home' => 'libermedia']);
+        $this->assertStringContainsString('src="'.LegacyCatalogImage::url($path).'"', view('front.partials.herrera-blog-card', $data)->render());
+        $this->assertSame(LegacyCatalogImage::url($path), ManufacturerLogo::resolve($brand)['url']);
+        Http::assertNothingSent();
+    }
+
+    public function test_cms_rendering_optimizes_local_images_without_replacing_editable_settings_or_external_assets(): void
+    {
+        $path = $this->image('cms.png', 1200, 800);
+        $original = 'https://www.watchline.hr/image/'.$path;
+        $block = ContentBlock::create(['code' => 'variant-campaigns', 'name' => 'Kampanja', 'type' => 'watchline_campaigns', 'is_active' => true,
+            'payload' => ['watchline' => ['cluse_image_1_url' => $original, 'mens_image_url' => $original]]]);
+        $locations = new ContentBlock(['type' => 'watchline_locations', 'payload' => ['watchline' => ['shop_image_url' => $original]]]);
+        $this->assertSame($original, WatchlineWidgetSettings::imageUrl($original));
+        app(WatchlineImageVariantService::class)->process([$path], true);
+        $prepared = LegacyCatalogImage::variant($path, 960)['url'];
+        $this->assertSame($prepared, WatchlineWidgetSettings::imageUrl($original));
+        $this->assertSame($original, WatchlineWidgetSettings::forBlock($block, null)['cluse_image_1_url']);
+        $this->assertStringContainsString('src="'.$prepared.'"', view('front.content-blocks.instances.watchline-home-campaigns', ['block' => $block, 'translation' => null])->render());
+        $this->assertStringContainsString('src="'.$prepared.'"', view('front.content-blocks.instances.watchline-home-locations', ['block' => $locations, 'translation' => null])->render());
+        $this->assertSame($original, $block->fresh()->payload['watchline']['cluse_image_1_url']);
+        $this->assertSame('https://unrelated.test/photo.jpg', WatchlineWidgetSettings::imageUrl('https://unrelated.test/photo.jpg'));
+        $this->assertSame('/assets/brand/watchline-logo.svg', WatchlineWidgetSettings::imageUrl('/assets/brand/watchline-logo.svg'));
+        $this->assertSame('/storage/native.jpg', WatchlineWidgetSettings::imageUrl('/storage/native.jpg'));
+        $this->assertSame('', WatchlineWidgetSettings::imageUrl('javascript:alert(1)'));
+        Http::assertNothingSent();
+    }
+
+    public function test_home_category_cards_and_review_thumbnails_use_their_bounded_sizes(): void
+    {
+        $path = $this->image('public-card.png');
+        $product = $this->product('review', $path);
+        $category = Category::create(['code' => 'variant-category', 'scope' => 'catalog', 'is_active' => true, 'payload' => ['opencart' => ['image' => $path]]]);
+        $category->translations()->create(['locale' => 'hr', 'name' => 'Satovi', 'slug' => 'satovi']);
+        $review = Comment::create(['commentable_type' => Product::class, 'commentable_id' => $product->id, 'locale' => 'hr',
+            'author_name' => 'Fixture', 'body' => 'Stvarni dojam.', 'rating' => 5, 'status' => Comment::STATUS_APPROVED]);
+        app(WatchlineImageVariantService::class)->process([$path], true);
+        $thumb = LegacyCatalogImage::variant($path, 160)['url'];
+        $card = LegacyCatalogImage::variant($path, 480)['url'];
+        $this->assertStringContainsString('src="'.$card.'"', view('front.partials.watchline-home-categories')->render());
+        $this->assertStringContainsString('src="'.$thumb.'"', view('front.partials.libermedia-review-card', ['featuredReview' => $review])->render());
+        $this->assertSame($path, $category->fresh()->payload['opencart']['image']);
         Http::assertNothingSent();
     }
 

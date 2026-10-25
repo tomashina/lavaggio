@@ -45,6 +45,6 @@ class ManufacturerLogo
             return ['url' => null, 'variant' => ''];
         }
 
-        return ['url' => LegacyCatalogImage::first($manufacturer), 'variant' => ''];
+        return ['url' => LegacyCatalogImage::first($manufacturer, width: 480), 'variant' => ''];
     }
 }

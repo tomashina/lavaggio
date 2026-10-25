@@ -139,7 +139,7 @@ class WatchlineHomeContent
                 ->whereHas('categories', fn ($query) => $query->whereIn('categories.id', $ids))
                 ->whereNotNull('payload->opencart->image')->where('payload->opencart->image', '!=', '')
                 ->with('media')->orderByRaw('CASE WHEN stock_qty > 0 THEN 0 ELSE 1 END')->orderBy('id')->limit(8)->get();
-            $image = $products->map(fn (Product $product) => LegacyCatalogImage::first($product))->first(fn ($url) => $url !== null);
+            $image = $products->map(fn (Product $product) => LegacyCatalogImage::first($product, width: 480))->first(fn ($url) => $url !== null);
             request()->attributes->set($key, $image);
         }
 
@@ -166,7 +166,7 @@ class WatchlineHomeContent
     {
         $product = $this->products()->get($index % max(1, $this->products()->count()));
 
-        return $product ? LegacyCatalogImage::first($product) : null;
+        return $product ? LegacyCatalogImage::first($product, width: 960) : null;
     }
 
     public function productUrl(int $index): string

@@ -336,6 +336,7 @@
                                     const preferredDesktopPerPage = Number.parseInt(el.dataset.desktopCols || '4', 10) || 4;
                                     const continuousCards = document.body.classList.contains('herrera-storefront');
                                     const categoryProducts = el.dataset.categoryProductsMode === '1';
+                                    const watchlineCards = document.body.classList.contains('watchline-storefront') && el.matches('[data-continuous-card-carousel]');
                                     new window.Splide(el, {
                                         type: count > 1 ? 'loop' : 'slide',
                                         perPage: Math.min(Math.max(1, preferredDesktopPerPage), Math.max(1, count)),
@@ -346,7 +347,8 @@
                                         pagination: false,
                                         arrows: count > 1,
                                         updateOnMove: true,
-                                        speed: 520,
+                                        speed: watchlineCards ? 420 : 520,
+                                        ...(watchlineCards ? { easing: 'cubic-bezier(0.25, 1, 0.5, 1)' } : {}),
                                         breakpoints: {
                                             1536: { perPage: Math.min(Math.min(Math.max(1, preferredDesktopPerPage), 5), Math.max(1, count)) },
                                             1280: { perPage: Math.min(Math.min(Math.max(1, preferredDesktopPerPage), 4), Math.max(1, count)) },
