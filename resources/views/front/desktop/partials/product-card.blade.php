@@ -6,4 +6,5 @@
     :lined="(bool) ($lined ?? false)"
     :priority-image="(bool) ($priorityImage ?? false)"
     :heading-level="(int) ($headingLevel ?? 3)"
+    :image-sizes="$imageSizes ?? null"
 />

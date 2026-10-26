@@ -8,6 +8,8 @@
     if ($watchlineCampaignTitleTag === 'h1') {
         request()->attributes->set('watchline.campaign_heading_rendered', true);
     }
+    $watchlineMensImage = \App\Support\WatchlineWidgetSettings::imageData($watchlineCampaign['mens_image_url']);
+    $watchlineSunglassesImage = \App\Support\WatchlineWidgetSettings::imageData($watchlineCampaign['sunglasses_image_url']);
 @endphp
 <section class="lm-campaign-section" aria-label="{{ $watchlineCampaign['aria_label'] }}" data-libermedia-campaigns>
     <div class="lm-campaign-grid">
@@ -25,9 +27,10 @@
             </div>
             <a class="lm-campaign-bag-images" href="{{ $watchlineCampaign['cluse_url'] }}" aria-label="{{ $watchlineCampaign['cluse_image_link_label'] }}">
                 @foreach ([1, 2] as $watchlineCampaignImage)
+                    @php($watchlineCluseImage = \App\Support\WatchlineWidgetSettings::imageData($watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_url']))
                     @if ($watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_url'] !== '')
                         <span class="wl-cluse-watch">
-                            <img src="{{ \App\Support\WatchlineWidgetSettings::imageUrl($watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_url']) }}" alt="{{ $watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_alt'] }}" width="1080" height="1080" loading="eager" fetchpriority="{{ $watchlineCampaignImage === 1 ? 'high' : 'auto' }}" data-watchline-cluse-image="{{ $watchlineCampaignImage }}">
+                            <img src="{{ $watchlineCluseImage['url'] }}" @if ($watchlineCluseImage['srcset'] !== '') srcset="{{ $watchlineCluseImage['srcset'] }}" sizes="{{ \App\Support\Media\WatchlineImageSizes::campaign('cluse', $watchlineCluseImage) }}" @endif alt="{{ $watchlineCampaign['cluse_image_'.$watchlineCampaignImage.'_alt'] }}" width="1080" height="1080" loading="{{ $watchlineCampaignTitleTag === 'h1' ? 'eager' : 'lazy' }}" fetchpriority="{{ $watchlineCampaignTitleTag === 'h1' ? 'high' : 'auto' }}" decoding="async" data-watchline-cluse-image="{{ $watchlineCampaignImage }}">
                         </span>
                     @endif
                 @endforeach
@@ -43,7 +46,7 @@
                 @endif
             </div>
             @if ($watchlineCampaign['mens_image_url'] !== '')
-                <a class="wl-campaign-visual" href="{{ $watchlineCampaign['mens_url'] }}" aria-label="{{ $watchlineCampaign['mens_image_link_label'] }}"><img class="lm-campaign-product lm-meli-product" src="{{ \App\Support\WatchlineWidgetSettings::imageUrl($watchlineCampaign['mens_image_url']) }}" alt="{{ $watchlineCampaign['mens_image_alt'] }}" width="698" height="931" loading="eager"></a>
+                <a class="wl-campaign-visual" href="{{ $watchlineCampaign['mens_url'] }}" aria-label="{{ $watchlineCampaign['mens_image_link_label'] }}"><img class="lm-campaign-product lm-meli-product" src="{{ $watchlineMensImage['url'] }}" @if ($watchlineMensImage['srcset'] !== '') srcset="{{ $watchlineMensImage['srcset'] }}" sizes="{{ \App\Support\Media\WatchlineImageSizes::campaign('mens', $watchlineMensImage) }}" @endif alt="{{ $watchlineCampaign['mens_image_alt'] }}" width="698" height="931" loading="eager" decoding="async"></a>
             @endif
         </article>
         <article class="lm-campaign lm-campaign--montessori wl-sunglasses-campaign">
@@ -56,7 +59,7 @@
                 @endif
             </div>
             @if ($watchlineCampaign['sunglasses_image_url'] !== '')
-                <a class="wl-campaign-visual" href="{{ $watchlineCampaign['sunglasses_url'] }}" aria-label="{{ $watchlineCampaign['sunglasses_image_link_label'] }}"><img class="lm-campaign-product lm-montessori-product" src="{{ \App\Support\WatchlineWidgetSettings::imageUrl($watchlineCampaign['sunglasses_image_url']) }}" alt="{{ $watchlineCampaign['sunglasses_image_alt'] }}" width="900" height="506" loading="eager"></a>
+                <a class="wl-campaign-visual" href="{{ $watchlineCampaign['sunglasses_url'] }}" aria-label="{{ $watchlineCampaign['sunglasses_image_link_label'] }}"><img class="lm-campaign-product lm-montessori-product" src="{{ $watchlineSunglassesImage['url'] }}" @if ($watchlineSunglassesImage['srcset'] !== '') srcset="{{ $watchlineSunglassesImage['srcset'] }}" sizes="{{ \App\Support\Media\WatchlineImageSizes::campaign('sunglasses', $watchlineSunglassesImage) }}" @endif alt="{{ $watchlineCampaign['sunglasses_image_alt'] }}" width="900" height="506" loading="eager" decoding="async"></a>
             @endif
         </article>
     </div>

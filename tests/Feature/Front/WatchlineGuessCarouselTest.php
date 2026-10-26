@@ -78,6 +78,8 @@ class WatchlineGuessCarouselTest extends TestCase
         $response = $this->get('/')->assertOk()
             ->assertSee('data-watchline-widget="watchline-home-guess"', false)
             ->assertSeeInOrder(['data-watchline-cluse-products', 'data-watchline-guess-products'], false)
+            ->assertSee('watchline-home-carousels.js', false)
+            ->assertDontSee("document.querySelectorAll('[data-herrera-home-carousel]').forEach", false)
             ->assertSee('Novo u ponudi')->assertSee('GUESS satovi');
         $document = new \DOMDocument;
         @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
@@ -90,6 +92,17 @@ class WatchlineGuessCarouselTest extends TestCase
         $ids = array_map(fn ($card) => (int) $card->getAttribute('data-product-id'), iterator_to_array($cards));
         sort($ids);
         $this->assertSame([$first->id, $second->id], $ids);
+    }
+
+    public function test_product_related_carousels_keep_the_existing_initializer_instead_of_home_only_deferral(): void
+    {
+        $this->product('guess-detail');
+        $this->product('guess-related');
+
+        $this->get(route('products.show', ['slug' => 'guess-detail']))->assertOk()
+            ->assertSee('data-herrera-related-products-splide', false)
+            ->assertDontSee('watchline-home-carousels.js', false)
+            ->assertSee('front-theme/scripts/product-page.js', false);
     }
 
     private function manufacturer(string $code, string $name, string $slug): Manufacturer

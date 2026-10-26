@@ -869,6 +869,7 @@
                                     'lined' => true,
                                     'priorityImage' => $loop->first,
                                     'headingLevel' => 2,
+                                    'imageSizes' => config('storefront.home') === 'watchline' ? \App\Support\Media\WatchlineImageSizes::catalog($currentCols, $mobileCols, $showCategoryFilters) : null,
                                 ])
                             @endforeach
                         </div>

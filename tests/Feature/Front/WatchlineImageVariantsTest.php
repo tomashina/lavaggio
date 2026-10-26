@@ -12,6 +12,7 @@ use App\Services\Import\WatchlineImageVariantService;
 use App\Services\Settings\SystemSettingsService;
 use App\Support\Media\LegacyCatalogImage;
 use App\Support\Media\ManufacturerLogo;
+use App\Support\Media\WatchlineImageSizes;
 use App\Support\WatchlineWidgetSettings;
 use App\View\Components\Front\Desktop\ProductCard;
 use DOMDocument;
@@ -294,7 +295,7 @@ class WatchlineImageVariantsTest extends TestCase
         $prepared = LegacyCatalogImage::variant($path, 960)['url'];
         $this->assertSame($prepared, WatchlineWidgetSettings::imageUrl($original));
         $this->assertSame($original, WatchlineWidgetSettings::forBlock($block, null)['cluse_image_1_url']);
-        $this->assertStringContainsString('src="'.$prepared.'"', view('front.content-blocks.instances.watchline-home-campaigns', ['block' => $block, 'translation' => null])->render());
+        $this->assertStringContainsString('src="'.LegacyCatalogImage::variant($path, 480)['url'].'"', view('front.content-blocks.instances.watchline-home-campaigns', ['block' => $block, 'translation' => null])->render());
         $this->assertStringContainsString('src="'.$prepared.'"', view('front.content-blocks.instances.watchline-home-locations', ['block' => $locations, 'translation' => null])->render());
         $this->assertSame($original, $block->fresh()->payload['watchline']['cluse_image_1_url']);
         $this->assertSame('https://unrelated.test/photo.jpg', WatchlineWidgetSettings::imageUrl('https://unrelated.test/photo.jpg'));
@@ -319,6 +320,71 @@ class WatchlineImageVariantsTest extends TestCase
         $this->assertStringContainsString('src="'.$thumb.'"', view('front.partials.libermedia-review-card', ['featuredReview' => $review])->render());
         $this->assertSame($path, $category->fresh()->payload['opencart']['image']);
         Http::assertNothingSent();
+    }
+
+    public function test_campaigns_preserve_geometry_and_prioritize_both_opening_cluse_images_with_real_candidates(): void
+    {
+        $square = $this->image('campaign-square.png', 1080, 1080);
+        $portrait = $this->image('campaign-portrait.png', 698, 931);
+        app(WatchlineImageVariantService::class)->process([$square, $portrait], true);
+        $block = new ContentBlock(['type' => 'watchline_campaigns', 'payload' => ['watchline' => [
+            'cluse_image_1_url' => '/image/'.$square, 'cluse_image_2_url' => '/image/'.$square,
+            'mens_image_url' => '/image/'.$portrait, 'sunglasses_image_url' => 'https://unrelated.test/glasses.jpg',
+        ]]]);
+        request()->setRouteResolver(fn () => app('router')->getRoutes()->getByName('home'));
+        $html = view('front.content-blocks.instances.watchline-home-campaigns', ['block' => $block, 'translation' => null])->render();
+        $dom = new DOMDocument;
+        @$dom->loadHTML($html);
+        $xpath = new DOMXPath($dom);
+        $images = $xpath->query('//img[@data-watchline-cluse-image]');
+        $this->assertSame(2, $images->length);
+        foreach ($images as $image) {
+            $this->assertSame('high', $image->getAttribute('fetchpriority'));
+            $this->assertSame('eager', $image->getAttribute('loading'));
+            $this->assertSame('1080', $image->getAttribute('width'));
+            $this->assertSame('1080', $image->getAttribute('height'));
+            $this->assertSame(LegacyCatalogImage::variant($square, 480)['url'], $image->getAttribute('src'));
+            $this->assertStringContainsString(' 480w, ', $image->getAttribute('srcset'));
+            $this->assertStringContainsString('min(330px', $image->getAttribute('sizes'));
+        }
+        $mens = $xpath->query('//img[contains(@class,"lm-meli-product")]')->item(0);
+        $this->assertSame('698', $mens->getAttribute('width'));
+        $this->assertSame('931', $mens->getAttribute('height'));
+        $this->assertStringContainsString(' 698w', $mens->getAttribute('srcset'));
+        $this->assertStringContainsString('min(233px', $mens->getAttribute('sizes'));
+        $external = $xpath->query('//img[contains(@class,"lm-montessori-product")]')->item(0);
+        $this->assertSame('https://unrelated.test/glasses.jpg', $external->getAttribute('src'));
+        $this->assertFalse($external->hasAttribute('srcset'));
+        $this->assertFalse($external->hasAttribute('sizes'));
+        $this->assertSame('/image/'.$square, WatchlineWidgetSettings::forBlock($block, null)['cluse_image_1_url']);
+        $later = view('front.content-blocks.instances.watchline-home-campaigns', ['block' => $block, 'translation' => null])->render();
+        $this->assertStringNotContainsString('fetchpriority="high"', $later);
+        Http::assertNothingSent();
+    }
+
+    public function test_sizing_hints_follow_each_layout_instead_of_globally_assuming_six_columns(): void
+    {
+        $product = $this->product('sized', $this->image('sized.png'));
+        $default = (new ProductCard($product))->render()->getData()['imageSizes'];
+        $this->assertStringEndsWith('24vw', $default);
+        $carousel = WatchlineImageSizes::carousel();
+        $this->assertStringContainsString('(max-width: 1279px) calc((min(100vw, 1860px) - 48px) / 4)', $carousel);
+        $this->assertStringEndsWith('/ 6)', $carousel);
+        $this->assertSame($carousel, (new ProductCard($product, imageSizes: $carousel))->render()->getData()['imageSizes']);
+        $catalog = WatchlineImageSizes::catalog(5, 1, true);
+        $this->assertStringContainsString('(max-width: 639px) calc((min(100vw, 1860px) - 32px) / 1)', $catalog);
+        $this->assertStringContainsString('(max-width: 1535px) calc((min(100vw, 1860px) - 336px) / 4)', $catalog);
+        $this->assertStringEndsWith('/ 5)', $catalog);
+        $this->assertStringNotContainsString('336px', WatchlineImageSizes::catalog(4, 2, false));
+        $this->assertStringContainsString('(max-width: 1100px)', WatchlineImageSizes::giftGuide(5));
+        $this->assertStringEndsWith('/ 3)', WatchlineImageSizes::giftGuide(3));
+        $this->assertNotSame($catalog, $carousel);
+        $card = view('front.desktop.partials.product-card', ['product' => $product, 'imageSizes' => $carousel])->render();
+        $this->assertStringContainsString('sizes="'.$carousel.'"', $card);
+        config(['storefront.home' => 'libermedia']);
+        $this->assertSame($default, (new ProductCard($product))->render()->getData()['imageSizes']);
+        $source = 'https://unrelated.test/image.jpg';
+        $this->assertSame(['url' => $source, 'srcset' => '', 'width' => null, 'height' => null], WatchlineWidgetSettings::imageData($source));
     }
 
     private function image(string $name, int $width = 1000, int $height = 600, bool $transparent = false): string

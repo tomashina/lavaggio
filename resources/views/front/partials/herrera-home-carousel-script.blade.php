@@ -1,5 +1,8 @@
 @once
     @push('scripts')
+        @if (config('storefront.home') === 'watchline' && request()->routeIs('home'))
+        <script defer src="{{ asset('front-theme/scripts/watchline-home-carousels.js') }}?v={{ filemtime(public_path('front-theme/scripts/watchline-home-carousels.js')) }}"></script>
+        @else
         <script>
             (function () {
                 const init = function () {
@@ -48,5 +51,6 @@
                 }, 120);
             })();
         </script>
+        @endif
     @endpush
 @endonce

@@ -60,7 +60,7 @@
 
         @if($products->isNotEmpty())
             <div class="catalog-lined-grid wl-gift-product-grid wl-gift-product-grid--{{ $filters['cols'] }}" data-catalog-grid data-catalog-mobile-cols="2" data-continuous-card-grid>
-                @foreach($products as $product)<x-front.desktop.product-card :product="$product" :locale="$locale" :fallback-locale="$fallbackLocale" :lined="true" :flat="true" />@endforeach
+                @foreach($products as $product)<x-front.desktop.product-card :product="$product" :locale="$locale" :fallback-locale="$fallbackLocale" :lined="true" :flat="true" :image-sizes="\App\Support\Media\WatchlineImageSizes::giftGuide($filters['cols'])" />@endforeach
                 @if($filters['cols'] === 5 && $products->count() % 5 === 4 && config('gift_vouchers.enabled', true))
                     @include('front.partials.libermedia-promo-card', ['promoType' => 'gift-voucher'])
                 @endif

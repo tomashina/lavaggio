@@ -4,13 +4,15 @@ set -Eeuo pipefail
 umask 077
 
 apply=false
-case "${1:-}" in
-    '') ;;
-    --apply) apply=true ;;
-    --help|-h) printf '%s\n' 'Usage: bash scripts/deploy-watchline-staging.sh [--apply]' 'Without --apply, validate and show a copy plan only.'; exit 0 ;;
-    *) printf '%s\n' 'Unsupported argument. Only --apply or --help is accepted.' >&2; exit 1 ;;
-esac
-[[ $# -le 1 ]] || { printf '%s\n' 'Too many arguments.' >&2; exit 1; }
+allow_public_preview=false
+for argument in "$@"; do
+    case "$argument" in
+        --apply) apply=true ;;
+        --allow-public-preview) allow_public_preview=true ;;
+        --help|-h) printf '%s\n' 'Usage: bash scripts/deploy-watchline-staging.sh [--apply] [--allow-public-preview]' 'Without --apply, validate and show a copy plan only.' 'Use --allow-public-preview only with explicit approval to keep the existing public preview accessible for PageSpeed testing; existing BasicAuth is never removed.'; exit 0 ;;
+        *) printf '%s\n' 'Unsupported argument. Use --apply, --allow-public-preview or --help.' >&2; exit 1 ;;
+    esac
+done
 
 account_root=/home/watchline
 source_root=/home/watchline/repositories/watchline-new
@@ -45,8 +47,12 @@ revision="$(git -C "$source_root" rev-parse --verify HEAD)"
 [[ -f "$public_root/.htaccess" && ! -L "$public_root/.htaccess" ]] || fail 'The existing reviewed domain PHP handler is required.'
 grep -Eq '^[[:space:]]*SetHandler[[:space:]]+application/x-httpd-alt-php84___lsphp[[:space:]]*$' "$public_root/.htaccess" || fail 'The domain must already use the validated alt-PHP 8.4 LiteSpeed handler.'
 if ! grep -Eqi '^[[:space:]]*AuthType[[:space:]]+' "$public_root/.htaccess"; then
-    printf '%s\n' 'Access protection: MISSING. Enable cPanel Directory Privacy before --apply; dry-run does not create credentials.'
-    [[ "$apply" == false ]] || fail 'Publishing a real-data staging shop requires existing verified BasicAuth protection.'
+    if [[ "$allow_public_preview" == true ]]; then
+        printf '%s\n' 'Access protection: existing public preview explicitly accepted for PageSpeed testing. No authentication is removed; staging safety and noindex remain required.'
+    else
+        printf '%s\n' 'Access protection: MISSING. Enable cPanel Directory Privacy before --apply; dry-run does not create credentials.'
+        [[ "$apply" == false ]] || fail 'Publishing a real-data staging shop requires existing verified BasicAuth protection or explicit approval with --allow-public-preview.'
+    fi
 fi
 [[ -f "$runtime_root/.env" && ! -L "$runtime_root/.env" && -s "$runtime_root/database/database.sqlite" && ! -L "$runtime_root/database/database.sqlite" ]] || fail 'Prepare the private staging .env and a separate existing SQLite database first.'
 [[ -f "$source_root/public/build/manifest.json" && -f "$source_root/composer.lock" ]] || fail 'Commit a frontend build and Composer lock before deployment.'
@@ -265,4 +271,4 @@ WATCHLINE_PHP_HANDLER
 rsync -a --no-owner --no-group --checksum --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r --backup --backup-dir="$backup_root/public" "$work_dir/public-files/" "$public_root/"
 printf '%s\n' "Staging deployed: $revision" "Private changed-file backup: $backup_root" \
     'No database import/migration, seed, key rotation, mail activation, integration activation, production file or cron change was performed.' \
-    'Keep staging private; verify HTTPS, robots/noindex, assets, uploads and one safe page before sharing the preview.'
+    'Preserve the approved access policy; verify HTTPS, robots/noindex, assets, uploads and one safe page before sharing the preview.'

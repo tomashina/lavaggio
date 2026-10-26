@@ -26,6 +26,7 @@ class ProductCard extends Component
         public bool $lined = false,
         public bool $priorityImage = false,
         public int $headingLevel = 3,
+        public ?string $imageSizes = null,
     ) {}
 
     public function render(): View
@@ -74,9 +75,9 @@ class ProductCard extends Component
         $settings = app(SystemSettingsService::class);
         $preferWebp = (bool) $settings->get('store_images_use_webp', true);
         $mobileColumns = $settings->getInt('store_product_mobile_default_cols', 2, 1, 2);
-        $imageSizes = $mobileColumns === 1
+        $imageSizes = $this->imageSizes ?: ($mobileColumns === 1
             ? '(max-width: 767px) 88vw, (max-width: 1279px) 30vw, 24vw'
-            : '(max-width: 767px) 42vw, (max-width: 1279px) 30vw, 24vw';
+            : '(max-width: 767px) 42vw, (max-width: 1279px) 30vw, 24vw');
 
         $imageUrl720 = MediaUrl::conversionOrNull($mainMedia, 'card_720w', $preferWebp);
         $imageUrl480 = MediaUrl::conversionOrNull($mainMedia, 'card_480w', $preferWebp);

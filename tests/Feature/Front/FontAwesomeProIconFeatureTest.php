@@ -71,6 +71,41 @@ class FontAwesomeProIconFeatureTest extends TestCase
         }
     }
 
+    public function test_storefront_subsets_keep_the_original_glyphs_and_a_small_compressed_payload(): void
+    {
+        $basePath = public_path('vendor/fontawesome-pro-7.3.1');
+        $manifest = json_decode(file_get_contents($basePath.'/storefront-sprites/manifest.json'), true, flags: JSON_THROW_ON_ERROR);
+        $compressedBytes = 0;
+
+        foreach ($manifest as $style => $names) {
+            $original = new DOMDocument;
+            $original->load($basePath.'/sprites/'.$style.'.svg', LIBXML_NONET);
+            $originalSymbols = [];
+            foreach ($original->getElementsByTagName('symbol') as $symbol) {
+                $originalSymbols[$symbol->getAttribute('id')] = $symbol;
+            }
+
+            $source = file_get_contents($basePath.'/storefront-sprites/'.$style.'.svg');
+            $subset = new DOMDocument;
+            $subset->loadXML($source, LIBXML_NONET);
+            $this->assertSame(count($names), $subset->getElementsByTagName('symbol')->length);
+            $compressedBytes += strlen(gzencode($source, 6));
+
+            foreach ($subset->getElementsByTagName('symbol') as $symbol) {
+                $name = $symbol->getAttribute('id');
+                $this->assertArrayHasKey($name, $originalSymbols);
+                $expected = $originalSymbols[$name];
+                if ($name === 'bag-shopping' && in_array($style, ['solid', 'regular'], true)) {
+                    // Preserve the existing viewport correction for the full handle.
+                    $expected->setAttribute('viewBox', '0 -32 448 512');
+                }
+                $this->assertSame($original->saveXML($expected), $subset->saveXML($symbol), $style.'/'.$name);
+            }
+        }
+
+        $this->assertLessThan(32 * 1024, $compressedBytes, 'All common storefront icon styles should fit in a small transfer.');
+    }
+
     public function test_inline_icons_normalize_inputs_and_keep_the_existing_fallback_for_unbundled_symbols(): void
     {
         $this->assertSame(FontAwesomeIcon::inline('heart', 'regular'), FontAwesomeIcon::inline(' HEART ', ' REGULAR '));

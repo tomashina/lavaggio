@@ -47,7 +47,7 @@
                 <div class="splide__list">
                     @foreach ($guessProducts as $guessProduct)
                         <div class="splide__slide">
-                            <x-front.desktop.product-card :product="$guessProduct" :locale="app()->getLocale()" :fallback-locale="config('app.fallback_locale', 'hr')" :lined="true" :flat="true" />
+                            <x-front.desktop.product-card :product="$guessProduct" :locale="app()->getLocale()" :fallback-locale="config('app.fallback_locale', 'hr')" :lined="true" :flat="true" :image-sizes="\App\Support\Media\WatchlineImageSizes::carousel()" />
                         </div>
                     @endforeach
                 </div>

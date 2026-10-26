@@ -16,6 +16,16 @@ class WatchlineWidgetSettings
         return LegacyCatalogImage::variant($source, $width)['url'] ?? $source;
     }
 
+    /** Responsive rendering data; external/native images retain their source. */
+    public static function imageData(mixed $value): array
+    {
+        $source = self::safeUrl($value, true);
+        $variant = LegacyCatalogImage::responsiveVariant($source);
+
+        return ['url' => $variant['url'] ?? $source, 'srcset' => $variant['srcset'] ?? '',
+            'width' => $variant['width'] ?? null, 'height' => $variant['height'] ?? null];
+    }
+
     public static function defaults(string $type): array
     {
         return array_replace(

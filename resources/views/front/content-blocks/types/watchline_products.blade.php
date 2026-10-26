@@ -50,7 +50,7 @@
             </div>
             <div class="splide__track"><div class="splide__list">
                 @foreach ($widgetProducts as $widgetProduct)
-                    <div class="splide__slide"><x-front.desktop.product-card :product="$widgetProduct" :locale="$locale" :fallback-locale="$fallbackLocale" :lined="true" :flat="true" /></div>
+                    <div class="splide__slide"><x-front.desktop.product-card :product="$widgetProduct" :locale="$locale" :fallback-locale="$fallbackLocale" :lined="true" :flat="true" :image-sizes="\App\Support\Media\WatchlineImageSizes::carousel()" /></div>
                 @endforeach
             </div></div>
         </div>
