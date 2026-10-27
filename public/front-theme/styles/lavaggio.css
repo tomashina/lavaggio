@@ -353,6 +353,44 @@ body.lavaggio-storefront #cookie-consent-floating-button { background: var(--lav
 body.lavaggio-storefront #cookie-consent-floating-button:is(:hover, :focus-visible) { background: var(--lavaggio-primary-hover); box-shadow: 0 14px 26px rgb(132 138 196 / 28%); }
 body.lavaggio-storefront .scroll-to-top-button:hover { background: var(--lavaggio-primary-hover); color: #fff; }
 
+/* A more readable scale throughout the Lavaggio storefront. */
+html[data-theme] body.lavaggio-storefront {
+    font-size: 17px;
+    line-height: 1.6;
+}
+html[data-theme] body.lavaggio-storefront .text-xs { font-size: 14px; line-height: 1.5; }
+html[data-theme] body.lavaggio-storefront .text-sm { font-size: 16px; line-height: 1.5; }
+html[data-theme] body.lavaggio-storefront :is(input, select, textarea) { font-size: 16px; }
+
+html[data-theme] body.lavaggio-storefront :is(.lm-campaign-copy > p:not(.lm-eyebrow), .wl-widget-subtitle, .herrera-home-section-subtitle) {
+    font-size: 16px;
+    line-height: 1.7;
+}
+html[data-theme] body.lavaggio-storefront :is(.lm-eyebrow, .wl-eyebrow, .herrera-home-section-eyebrow) { font-size: 12px; }
+html[data-theme] body.lavaggio-storefront :is(.lm-button, .wl-hero-cta, .wl-section-heading > a, .herrera-home-products-link) { font-size: 15px; }
+html[data-theme] body.lavaggio-storefront .wl-cluse-perks li { font-size: 14px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-empty-copy { font-size: 17px; }
+html[data-theme] body.lavaggio-storefront .wl-campaign-title { font-size: clamp(28px, 2.2vw, 38px); }
+html[data-theme] body.lavaggio-storefront .lavaggio-main-campaign .wl-campaign-title { font-size: clamp(36px, 3vw, 50px); }
+html[data-theme] body.lavaggio-storefront :is(.herrera-home-heading h2, .wl-section-heading h2) { font-size: clamp(26px, 2vw, 34px); }
+html[data-theme] body.lavaggio-storefront .lm-page-title h1 { font-size: clamp(30px, 2.5vw, 42px); }
+
+html[data-theme] body.lavaggio-storefront .site-footer-newsletter h3 { font-size: clamp(26px, 2.2vw, 34px); }
+html[data-theme] body.lavaggio-storefront .site-footer-newsletter h3 + p { font-size: 17px; }
+html[data-theme] body.lavaggio-storefront .site-footer-newsletter input[type="email"] { font-size: 17px; }
+html[data-theme] body.lavaggio-storefront .site-footer-newsletter button[type="submit"] { font-size: 16px; }
+html[data-theme] body.lavaggio-storefront .site-footer-newsletter :is(label, form p) { font-size: 14px; }
+html[data-theme] body.lavaggio-storefront .site-footer :is(.site-footer-contact-title, .site-footer-column-title, .site-footer-mobile-links summary) { font-size: 18px; }
+html[data-theme] body.lavaggio-storefront .site-footer :is(.site-footer-contact-details p, .site-footer-contact-intro, .site-footer-link-list, .site-footer-mobile-links p, .site-footer-mobile-links a) { font-size: 15px; line-height: 1.7; }
+html[data-theme] body.lavaggio-storefront .site-footer .store-footer-bottom { font-size: 14px; }
+
+html[data-theme] body.lavaggio-storefront .watchline-category-child > a { font-size: 15px; }
+html[data-theme] body.lavaggio-storefront .watchline-category-child .watchline-category-child > a { font-size: 14px; }
+html[data-theme] body.lavaggio-storefront .product-card-title { font-size: 16px; }
+html[data-theme] body.lavaggio-storefront .product-card-brand { font-size: 13px; }
+html[data-theme] body.lavaggio-storefront .product-card-current-price { font-size: 21px; }
+html[data-theme] body.lavaggio-storefront .product-card-old-price { font-size: 14px; }
+
 @media (max-width: 767px) {
     body.lavaggio-storefront :is(.wl-hero, .lm-campaign, .wl-category-art),
     body.lavaggio-storefront .lm-campaign-grid > :is(.wl-mens-campaign, .wl-sunglasses-campaign) { background-size: auto 194px; }
@@ -361,6 +399,6 @@ body.lavaggio-storefront .scroll-to-top-button:hover { background: var(--lavaggi
 @media (max-width: 639px) {
     body.lavaggio-storefront .lavaggio-main-campaign { min-height: 360px; }
     body.lavaggio-storefront .lavaggio-main-campaign .lm-campaign-copy { padding-bottom: 26px; }
-    body.lavaggio-storefront .lavaggio-main-campaign .wl-campaign-title { font-size: 34px; }
+    html[data-theme] body.lavaggio-storefront .lavaggio-main-campaign .wl-campaign-title { font-size: 38px; }
     body.lavaggio-storefront :is(.lavaggio-care-campaign, .lavaggio-pro-campaign) .lm-campaign-copy { padding-right: 22px; }
 }
