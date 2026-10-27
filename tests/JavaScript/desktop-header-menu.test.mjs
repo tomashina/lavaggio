@@ -8,7 +8,7 @@ const script = readFileSync(new URL('../../public/front-theme/scripts/desktop-he
 function harness({ savedSections = {}, sectionKeys = Object.keys(savedSections), hrefs = [],
     currentPath = '/shop', parents = {}, linkSections = [], categoriesButton = false,
     headerSpacer = false, headerHeight = 176, compactHeaderHeight = 130, scrollY = 0,
-    herreraStorefront = false, mobileViewport = false,
+    herreraStorefront = false, mobileViewport = false, lavaggioStorefront = false,
     deferredCatalogMenu = false, catalogTriggerPresent = true, catalogTree = null } = {}) {
     const queuedToggles = new Set();
     class Element {
@@ -178,6 +178,7 @@ function harness({ savedSections = {}, sectionKeys = Object.keys(savedSections),
     document.createElement = document.createElementNS = () => new Element();
     document.createDocumentFragment = () => new Element();
     if (herreraStorefront) document.body.classList.add('herrera-storefront');
+    if (lavaggioStorefront) document.body.classList.add('lavaggio-storefront');
     const fontReadyCallbacks = [];
     document.fonts = { ready: { then(callback) { fontReadyCallbacks.push(callback); } } };
     document.querySelector = (selector) => ({
@@ -514,6 +515,33 @@ test('other storefront mobile headers retain their existing measured sticky beha
     assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '176px');
     page.header.expandedHeight = 200; page.window.emit('resize');
     assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '200px');
+});
+
+test('Lavaggio docks promptly on desktop and mobile, preserving flow and avoiding threshold flicker', () => {
+    for (const mobileViewport of [false, true]) {
+        const page = harness({ herreraStorefront: true, lavaggioStorefront: true, mobileViewport, headerSpacer: true });
+        assert.equal(page.header.classList.contains('is-sticky'), false);
+        assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '176px');
+        page.window.scrollY = 25; page.window.emit('scroll');
+        assert.equal(page.header.classList.contains('is-sticky'), true);
+        page.window.scrollY = 16; page.window.emit('scroll');
+        assert.equal(page.header.classList.contains('is-sticky'), true);
+        page.window.scrollY = 8; page.window.emit('scroll');
+        assert.equal(page.header.classList.contains('is-sticky'), false);
+    }
+});
+
+test('Lavaggio restored scroll and resizing retain the expanded spacer instead of the compact bar height', () => {
+    const page = harness({ herreraStorefront: true, lavaggioStorefront: true, mobileViewport: true, headerSpacer: true, scrollY: 300 });
+    assert.equal(page.header.classList.contains('is-sticky'), true);
+    assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '176px');
+    page.header.expandedHeight = 200;
+    page.window.emit('resize');
+    assert.equal(page.header.classList.contains('is-sticky'), true);
+    assert.equal(page.spacer.style.getPropertyValue('--site-main-header-expanded-height'), '200px');
+    page.window.scrollY = 0; page.window.emit('pageshow', { persisted: true });
+    assert.equal(page.header.classList.contains('is-sticky'), false);
+    assert.equal(page.window.listeners.get('scroll').length, 1);
 });
 
 test('restored scrolling reserves the expanded header height before compacting', () => {

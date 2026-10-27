@@ -27,7 +27,8 @@
 
         const spacer = document.querySelector('[data-site-main-header-spacer]');
         const preservesHeaderFlow = spacer instanceof HTMLElement;
-        const nativeStickyViewport = document.body.classList.contains('herrera-storefront')
+        const isLavaggioStorefront = document.body.classList.contains('lavaggio-storefront');
+        const nativeStickyViewport = document.body.classList.contains('herrera-storefront') && !isLavaggioStorefront
             ? window.matchMedia('(max-width: 1023px)')
             : null;
         const usesNativeStickyHeader = () => nativeStickyViewport?.matches === true;
@@ -63,8 +64,8 @@
             }
 
             syncExpandedHeaderHeight(remeasureSticky);
-            const stickAt = preservesHeaderFlow ? expandedHeaderHeight : 24;
-            const releaseAt = preservesHeaderFlow ? Math.max(24, expandedHeaderHeight - 16) : 24;
+            const stickAt = isLavaggioStorefront ? 24 : (preservesHeaderFlow ? expandedHeaderHeight : 24);
+            const releaseAt = isLavaggioStorefront ? 8 : (preservesHeaderFlow ? Math.max(24, expandedHeaderHeight - 16) : 24);
             const shouldStick = sticky
                 ? window.scrollY > releaseAt
                 : window.scrollY > stickAt;
