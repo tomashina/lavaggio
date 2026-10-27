@@ -95,6 +95,7 @@
     @if (config('storefront.home') === 'lavaggio')
         <link rel="preload" href="{{ asset('assets/lavaggio/fonts/Satoshi-Variable.woff2').'?v=e739aff9b4d0' }}" as="font" type="font/woff2" crossorigin>
         <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio.css')) }}">
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-header.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-header.css')) }}">
     @endif
 </head>
 @php
@@ -156,6 +157,9 @@
     @endphp
 @endif
 
+@if ($lavaggioStorefront)
+    @include('front.partials.lavaggio-header')
+@else
 <header class="site-main-header sticky top-0 z-40 bg-white">
     @include('front.partials.customer-impersonation')
     @if ($topBar['is_enabled'] || ($watchlineStorefront && $announcementEnabled))
@@ -523,6 +527,7 @@
         <span hidden data-header-rendered></span>
     @endif
 </header>
+@endif
 
 <div class="site-main-header-spacer" aria-hidden="true" data-site-main-header-spacer></div>
 
