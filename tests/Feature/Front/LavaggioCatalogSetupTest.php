@@ -8,6 +8,7 @@ use App\Services\Front\NavigationMenuService;
 use App\Services\Front\StoreSettingsService;
 use App\Services\Settings\SystemSettingsService;
 use Database\Seeders\LavaggioCatalogSeeder;
+use Database\Seeders\LavaggioNavigationImagesSeeder;
 use Database\Seeders\LavaggioStorefrontSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -88,5 +89,26 @@ class LavaggioCatalogSetupTest extends TestCase
         $columns = app(StoreSettingsService::class)->footer()['link_columns'];
         $this->assertCount(4, $columns[0]['links']);
         $this->assertSame(['Naša praonica'], array_column($columns[1]['links'], 'label'));
+    }
+
+    public function test_initial_photos_cover_all_roots_and_reseeding_preserves_replacements_and_removals(): void
+    {
+        $this->seed(LavaggioCatalogSeeder::class);
+        $navigation = app(NavigationMenuService::class);
+        $images = $navigation->categoryImages();
+        $roots = $navigation->primaryCategoryItems('hr');
+        $this->assertCount(5, $images);
+        foreach ($roots as $root) {
+            $this->assertNotEmpty($root['menu_image_url']);
+            $this->assertNotEmpty($root['menu_image_alt']);
+            $this->assertFileExists(public_path(ltrim((string) parse_url($root['menu_image_url'], PHP_URL_PATH), '/')));
+        }
+
+        $ids = array_keys($images);
+        $images[$ids[0]] = ['image_path' => 'navigation/categories/custom.webp', 'image_alt' => 'Moja nova fotografija'];
+        $images[$ids[1]]['image_path'] = '';
+        app(SystemSettingsService::class)->put(NavigationMenuService::CATEGORY_IMAGES_SETTINGS_KEY, $images);
+        $this->seed(LavaggioNavigationImagesSeeder::class);
+        $this->assertSame($images, $navigation->categoryImages());
     }
 }

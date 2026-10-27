@@ -20,6 +20,8 @@ class NavigationMenuService
 
     public const TOP_BAR_SETTINGS_KEY = 'front_navigation_top_bar';
 
+    public const CATEGORY_IMAGES_SETTINGS_KEY = 'front_navigation_category_images';
+
     /**
      * @var array<string, array<int, array<string, mixed>>>
      */
@@ -31,6 +33,44 @@ class NavigationMenuService
     public function primaryCategoryItems(string $locale): array
     {
         return array_values(array_filter($this->forLocale($locale), fn (array $item): bool => ($item['type'] ?? '') === 'category'));
+    }
+
+    /** @return array<int, array{image_path:string,image_alt:string}> */
+    public function categoryImages(): array
+    {
+        $images = $this->settings->get(self::CATEGORY_IMAGES_SETTINGS_KEY, []);
+        $normalized = [];
+
+        foreach (is_array($images) ? $images : [] as $categoryId => $image) {
+            if ((int) $categoryId <= 0 || ! is_array($image)) {
+                continue;
+            }
+
+            $normalized[(int) $categoryId] = [
+                'image_path' => trim((string) ($image['image_path'] ?? '')),
+                'image_alt' => trim((string) ($image['image_alt'] ?? '')),
+            ];
+        }
+
+        return $normalized;
+    }
+
+    public function categoryMenuImageUrl(string $path): string
+    {
+        $path = ltrim(trim($path), '/');
+        if ($path === '' || str_contains($path, '..')) {
+            return '';
+        }
+
+        if (str_starts_with($path, 'assets/')) {
+            return is_file(public_path($path)) ? asset($path) : '';
+        }
+
+        if (str_starts_with($path, 'storage/')) {
+            $path = substr($path, strlen('storage/'));
+        }
+
+        return Storage::disk('public')->exists($path) ? Storage::disk('public')->url($path) : '';
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -183,6 +223,7 @@ class NavigationMenuService
             ->keyBy('id');
 
         $resolved = [];
+        $categoryImages = $isLavaggioStore ? $this->categoryImages() : [];
 
         foreach ($items as $index => $item) {
             $type = (string) ($item['type'] ?? 'custom');
@@ -194,6 +235,11 @@ class NavigationMenuService
 
                 if ($category instanceof Category) {
                     $entry = $this->resolveCategoryItem($category, $item, $childrenByParentId, $locale, $fallbackLocale);
+                    if ($isLavaggioStore && $entry !== null) {
+                        $image = $categoryImages[(int) $category->id] ?? [];
+                        $entry['menu_image_url'] = $this->categoryMenuImageUrl((string) ($image['image_path'] ?? ''));
+                        $entry['menu_image_alt'] = trim((string) ($image['image_alt'] ?? '')) ?: $entry['label'];
+                    }
                 }
             } elseif ($type === 'catalog') {
                 $entry = [

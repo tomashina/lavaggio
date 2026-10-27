@@ -587,6 +587,31 @@ html[data-theme] body.lavaggio-storefront .lavaggio-catalog-content {
     padding: 28px 34px 32px;
 }
 
+html[data-theme] body.lavaggio-storefront .lavaggio-catalog-category.has-image:not([hidden]) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, min(43%, 400px));
+    align-items: start;
+    gap: clamp(28px, 3vw, 56px);
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-catalog-category-copy {
+    min-width: 0;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-catalog-category-image {
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--lavaggio-paper, #f3f3f9);
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-catalog-category-image > img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+}
+
 html[data-theme] body.lavaggio-storefront .lavaggio-catalog-category-title {
     display: inline-flex;
     align-items: center;

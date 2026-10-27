@@ -1,0 +1,75 @@
+{
+  "created_on": "2026-10-27",
+  "purpose": "Editable category menu illustrations; does not create product inventory.",
+  "source_page": "https://frosch.de/en/products-and-tips/laundry-care.html",
+  "assets": [
+    {
+      "path": "deterdzenti.webp",
+      "size": [
+        800,
+        600
+      ],
+      "use_case": "product-mockup",
+      "method": "built-in image_gen, composed from official product references",
+      "prompt": "Create a polished photorealistic ecommerce category photograph for a laundry-care shop mega-menu. Output landscape 4:3. Clean pale lavender (#f1f2f9) seamless studio backdrop and tabletop, soft natural studio shadows, premium uncluttered product arrangement, generous safe margins. Real tangible packaging, front-facing, camera at product height, clean crisp products. No headline, no graphic overlays, no watermark, no humans. Use the attached official Frosch detergent packshots as exact product references. Arrange THREE products: one mint-green Universal detergent bottle, one pink pomegranate Color detergent pouch, one pale green Aloe Vera detergent bottle. Extract only those front products from the supplied reference arrangements, do not duplicate their background bottles. Preserve the Frosch green frog and red Frosch wordmark and accurate original packaging/labels. Simple balanced product trio filling most of the frame, slightly varied heights, subtle white folded cotton towel low in front.",
+      "reference_sources": [
+        "https://frosch.de/produktdatenbank/produktbilder/frosch-de_frosch-universal-waschmittel_flasche-beutel_565y642py_producttipoverview-3.png",
+        "https://frosch.de/produktdatenbank/produktbilder/frosch-de_frosch_granatapfel-bunt-waschmittel_flasche-beutel_565y642py_producttipoverview-3.png",
+        "https://frosch.de/produktdatenbank/produktbilder/frosch-de_frosch-aloe-vera-sensitiv-waschmittel_flasche-beutel_565y642py_producttipoverview-4.png"
+      ]
+    },
+    {
+      "path": "uklanjanje-mrlja.webp",
+      "size": [
+        800,
+        600
+      ],
+      "use_case": "product-mockup",
+      "method": "built-in image_gen, composed from official product references",
+      "prompt": "Create a polished photorealistic ecommerce category photograph for a laundry-care shop mega-menu. Output landscape 4:3. Clean pale lavender (#f1f2f9) seamless studio backdrop and tabletop, soft natural studio shadows, premium uncluttered product arrangement, generous safe margins. Real tangible packaging, front-facing, camera at product height, clean crisp products. No headline, no graphic overlays, no watermark, no humans. Use the two attached official Frosch stain-removal product packshots as exact product references. Arrange ONE tall white trigger prewash stain-removal spray and ONE small active oxygen stain-remover bottle, preserve their original Frosch brand and label design. Add only a neatly folded white cotton fabric in foreground to convey fabric stain care. Preserve proportions: small 75ml bottle is less than half spray height. Balanced compact composition with soft pastel lavender backdrop. Product labels face camera; no stains or dirt, no extra bottles.",
+      "reference_sources": [
+        "https://frosch.de/produktdatenbank/produktbilder/frosch-de_frosch_wie_gallseife_flecken-und-vorwasch-spray_500ml_565y642py_producttipoverview.png",
+        "https://frosch.de/produktdatenbank/produktbilder/frosch-de_frosch-aktiv-sauerstoff-flecken-zwerg-75ml_565y642py_producttipoverview.png"
+      ]
+    },
+    {
+      "path": "mirisi-i-njega-rublja.webp",
+      "size": [
+        800,
+        600
+      ],
+      "use_case": "product-mockup",
+      "method": "built-in image_gen, composed from official product references",
+      "prompt": "Create a polished photorealistic ecommerce category photograph for a laundry-care shop mega-menu. Output landscape 4:3. Clean pale lavender (#f1f2f9) seamless studio backdrop and tabletop, soft natural studio shadows, premium uncluttered product arrangement, generous safe margins. Real tangible packaging, front-facing, camera at product height, clean crisp products. No headline, no graphic overlays, no watermark, no humans. Use the THREE attached official Frosch fabric-softener packshots as exact product references. Compose exactly these three upright bottles: creamy almond, pink hibiscus, blue cotton blossom. Preserve each original label with green frog and red Frosch wordmark and original bottle geometry, no duplicate variants. Bottles form a compact group on pale lavender surface. A small folded white towel and one delicate cotton stem at bottom edge support the laundry fragrance theme; packaging remains central and readable.",
+      "reference_sources": [
+        "https://frosch.de/produktdatenbank/produktbilder/frosch-de_frosch_mandelmilch_sensitiv-weichspueler-880ml_565y642py_producttipoverview.png",
+        "https://frosch.de/produktdatenbank/produktbilder/frosch-de_frosch-hibiskusbluete-sensitiv-weichspueler-880ml_565y642py_producttipoverview.png",
+        "https://frosch.de/produktdatenbank/produktbilder/frosch-de_frosch-baumwollbluete-sensitiv-weichspueler-880ml_565y642py_producttipoverview.png"
+      ]
+    },
+    {
+      "path": "higijena-i-odrzavanje.webp",
+      "size": [
+        800,
+        600
+      ],
+      "use_case": "product-mockup",
+      "method": "built-in image_gen, composed from official product references",
+      "prompt": "Create a polished photorealistic ecommerce category photograph for a laundry-care shop mega-menu. Output landscape 4:3. Clean pale lavender (#f1f2f9) seamless studio backdrop and tabletop, soft natural studio shadows, premium uncluttered product arrangement, generous safe margins. Real tangible packaging, front-facing, camera at product height, clean crisp products. No headline, no graphic overlays, no watermark, no humans. Use the attached official Frosch washing-machine hygiene cleaner Citrus box as an exact product reference. Show ONE yellow-and-green branded box prominently front-and-center with original Frosch logo and packaging intact. Beside it a neat white microfiber cloth, a small lemon slice, and softly blurred edge of a white front-loading washing machine in the far background. The actual cleaner box is main subject, must be visually large and crisp, no invented extra products, no claims or added text. Pale lavender and white setting.",
+      "reference_sources": [
+        "https://frosch.de/produktdatenbank/produktbilder/frosch_washing-machine-cleaner_citrus_250g_d_producttipoverview.png"
+      ]
+    },
+    {
+      "path": "pribor-i-dodaci-za-rublje.webp",
+      "size": [
+        800,
+        600
+      ],
+      "use_case": "product-mockup",
+      "method": "built-in image_gen, generated laundry accessory composition",
+      "prompt": "Create a polished photorealistic ecommerce category photograph for a laundry-care shop mega-menu. Output landscape 4:3. Clean pale lavender (#f1f2f9) seamless studio backdrop and tabletop, soft natural studio shadows, premium uncluttered product arrangement, generous safe margins. Real tangible packaging, front-facing, camera at product height, clean crisp products. No headline, no graphic overlays, no watermark, no humans. A curated combination of actual laundry accessories: three natural cream wool dryer balls, one white zippered mesh laundry bag folded behind them, a compact white electric fabric shaver with a lavender accent, and one reusable lint roller with pale wooden handle. Realistic objects, subtly grouped, unobstructed and recognisable. No detergent bottles. Neutral white and cream materials with restrained lavender accents, no brand names or text. Product photography composition filling the frame with breathing room.",
+      "reference_sources": []
+    }
+  ]
+}

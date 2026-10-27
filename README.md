@@ -30,6 +30,8 @@ Katalog proizvoda, brandovi, kupci, narudžbe i uvezeni sadržaj su prazni. Unes
 
 Kategorije u navigaciji „Web shop”, početnoj stranici i podnožju nastaju iz aktivnih kategorija u administraciji. Nazivi, poredak i podkategorije nisu ugrađeni u predloške. `LavaggioCatalogSeeder` ponovljivim unosom postavlja početnu strukturu iz [uputa](docs/lavaggio-requirements.md). Stupac „Web shop” u podnožju prikazuje glavne kategorije, a „Informacije” ostale poveznice iz navigacije. Poveznice na praonicu, usluge, cjenik, pitanja, blog i kontakt vode na postojeću stranicu lavaggio.hr.
 
+U administraciji **Sadržaj → Navigacija → Slike kategorija u Web shop izborniku** moguće je učitati, zamijeniti ili ukloniti fotografiju svake glavne kategorije i promijeniti njezin alt opis. Slike se mijenjaju zajedno s odabranom kategorijom u desktop izborniku. `LavaggioNavigationImagesSeeder` postavlja početnih pet fotografija samo ako kategorija još nema spremljen odabir; čuva zamjene i namjerna uklanjanja. Optimizirane slike, izvori referentnih fotografija i korišteni promptovi nalaze se u `public/assets/lavaggio/images/categories/`.
+
 Postavke brenda i početne stranice nalaze se u `system_settings`, početne vrijednosti u `LavaggioStorefrontSeeder`. Poruke se lokalno bilježe u zapisnik; plaćanja, dostavne metode i stare integracije nisu konfigurirani.
 
 Naredba `php artisan lavaggio:prepare-store` prikazuje pregled lokalnog čišćenja. Opcija `--execute` radi privatnu sigurnosnu kopiju i prazni trgovinu uz očuvanje administratorskog računa. Naredba dopušta samo izdvojenu lokalnu mapu `lavaggioshop` i njezinu SQLite bazu.

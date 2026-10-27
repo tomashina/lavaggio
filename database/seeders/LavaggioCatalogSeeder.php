@@ -19,6 +19,8 @@ class LavaggioCatalogSeeder extends Seeder
                 }
             }
         });
+
+        $this->call(LavaggioNavigationImagesSeeder::class);
     }
 
     private function saveCategory(array $definition, ?Category $parent, int $sortOrder): Category

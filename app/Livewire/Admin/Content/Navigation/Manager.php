@@ -25,12 +25,14 @@ class Manager extends Component
     /**
      * @var array{
      *     items: array<int, array<string, mixed>>,
+     *     category_images: array<int, array{image_path:string,image_alt:string}>,
      *     appearance: array{container_width:int,header_content_width:int,item_height:int,font_size:int,logo_height:int,background_color:string,text_color:string,highlight_color:string},
      *     top_bar: array<string, mixed>
      * }
      */
     public array $form = [
         'items' => [],
+        'category_images' => [],
         'appearance' => [
             'container_width' => 1860,
             'header_content_width' => 1400,
@@ -60,6 +62,9 @@ class Manager extends Component
     /** @var array<int, TemporaryUploadedFile|null> */
     public array $desktopPromoUploads = [];
 
+    /** @var array<int, TemporaryUploadedFile|null> */
+    public array $categoryMenuUploads = [];
+
     public function mount(): void
     {
         $this->locale = (string) (request()->query('locale') ?: config('app.locale', 'en'));
@@ -70,7 +75,20 @@ class Manager extends Component
         $this->form['items'] = $items;
         $this->form['appearance'] = $navigation->appearance();
         $this->form['top_bar'] = $navigation->topBar();
+        $this->form['category_images'] = $navigation->categoryImages();
+        if (config('storefront.home') === 'lavaggio') {
+            foreach (Category::query()->where('scope', Category::SCOPE_CATALOG)->whereNull('parent_id')->pluck('id') as $categoryId) {
+                $this->form['category_images'][$categoryId] ??= ['image_path' => '', 'image_alt' => ''];
+            }
+        }
         $this->syncInputsFromLocaleTranslations($this->locale);
+    }
+
+    public function updatedCategoryMenuUploads(mixed $upload, string $categoryId): void
+    {
+        $this->validateOnly('categoryMenuUploads.'.$categoryId, [
+            'categoryMenuUploads.'.$categoryId => ['nullable', 'image', 'max:4096'],
+        ]);
     }
 
     public function updatedLocale(): void
@@ -211,6 +229,9 @@ class Manager extends Component
 
         $validated = $this->validate([
             'form.items' => ['array'],
+            'form.category_images' => ['array'],
+            'form.category_images.*.image_path' => ['nullable', 'string', 'max:2048'],
+            'form.category_images.*.image_alt' => ['nullable', 'string', 'max:255'],
             'form.items.*.type' => ['required', 'in:catalog,category,page,blog,contact,faq,custom'],
             'form.items.*.label' => ['nullable', 'string', 'max:120'],
             'form.items.*.category_id' => ['nullable', 'integer', 'min:0'],
@@ -267,6 +288,7 @@ class Manager extends Component
             'form.top_bar.socials.*.is_active' => ['required', 'boolean'],
             'form.top_bar.socials.*.sort_order' => ['required', 'integer', 'min:0', 'max:9999'],
             'desktopPromoUploads.*' => ['nullable', 'image', 'max:4096'],
+            'categoryMenuUploads.*' => ['nullable', 'image', 'max:4096'],
         ]);
 
         $normalizedItems = [];
@@ -295,12 +317,33 @@ class Manager extends Component
             return;
         }
 
-        app(SystemSettingsService::class)->putMany([
+        $settings = [
             NavigationMenuService::SETTINGS_KEY => $normalizedItems,
             NavigationMenuService::APPEARANCE_SETTINGS_KEY => $validated['form']['appearance'],
             NavigationMenuService::TOP_BAR_SETTINGS_KEY => $validated['form']['top_bar'],
-        ]);
+        ];
+        if (config('storefront.home') === 'lavaggio') {
+            $images = [];
+            $categoryIds = Category::query()->where('scope', Category::SCOPE_CATALOG)->whereNull('parent_id')->pluck('id');
+            foreach ($categoryIds as $categoryId) {
+                $image = $validated['form']['category_images'][$categoryId] ?? [];
+                $imagePath = trim((string) ($image['image_path'] ?? ''));
+                $upload = $this->categoryMenuUploads[$categoryId] ?? null;
+                if ($upload instanceof TemporaryUploadedFile) {
+                    $imagePath = $upload->store('navigation/categories', 'public');
+                }
+
+                $images[(int) $categoryId] = [
+                    'image_path' => $imagePath,
+                    'image_alt' => trim((string) ($image['image_alt'] ?? '')),
+                ];
+            }
+            $settings[NavigationMenuService::CATEGORY_IMAGES_SETTINGS_KEY] = $images;
+            $this->form['category_images'] = $images;
+        }
+        app(SystemSettingsService::class)->putMany($settings);
         $this->desktopPromoUploads = [];
+        $this->categoryMenuUploads = [];
 
         $this->dispatch('notify', type: 'success', message: (string) __('admin.content.navigation.notify_saved'));
     }
@@ -313,6 +356,17 @@ class Manager extends Component
 
         $this->form['items'][$index]['desktop_promo_image_path'] = '';
         unset($this->desktopPromoUploads[$index]);
+    }
+
+    public function clearCategoryMenuImage(int $categoryId): void
+    {
+        if (! isset($this->form['category_images'][$categoryId])) {
+            return;
+        }
+
+        $this->form['category_images'][$categoryId]['image_path'] = '';
+        unset($this->categoryMenuUploads[$categoryId]);
+        $this->resetValidation('categoryMenuUploads.'.$categoryId);
     }
 
     public function render()
@@ -343,6 +397,17 @@ class Manager extends Component
             });
 
         $categoryMap = $categoryOptions->keyBy(fn (Category $category): int => (int) $category->id);
+
+        $categoryImageOptions = $categoryOptions
+            ->filter(fn (Category $category): bool => $category->parent_id === null)
+            ->sortBy(fn (Category $category): array => [(int) $category->sort_order, (int) $category->id])
+            ->map(fn (Category $category): array => [
+                'id' => (int) $category->id,
+                'label' => (string) $categoryNameById[(int) $category->id],
+                'image_url' => app(NavigationMenuService::class)->categoryMenuImageUrl((string) ($this->form['category_images'][$category->id]['image_path'] ?? '')),
+            ])
+            ->values()
+            ->all();
 
         $categoryOptions = $categoryOptions
             ->map(function (Category $category) use ($categoryNameById, $categoryMap): array {
@@ -391,6 +456,7 @@ class Manager extends Component
         return view('livewire.admin.content.navigation.manager', [
             'categoryOptions' => $categoryOptions,
             'pageOptions' => $pageOptions,
+            'categoryImageOptions' => $categoryImageOptions,
         ]);
     }
 
