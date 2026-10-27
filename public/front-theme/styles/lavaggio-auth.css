@@ -15,7 +15,7 @@ body.lavaggio-auth.lavaggio-storefront {
 }
 
 body.lavaggio-auth::before {
-    background: url("/assets/lavaggio/images/pattern/pattern-square.svg") center top / 1440px auto repeat-x;
+    background: url("/assets/lavaggio/images/pattern/pattern-square-faded.svg") center top / 1440px auto repeat-x;
 }
 
 body.lavaggio-auth .store-auth-header {

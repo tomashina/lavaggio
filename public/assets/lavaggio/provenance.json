@@ -25,11 +25,13 @@
     },
     {
       "path": "fonts/Satoshi-Variable.woff2",
-      "source": "https://www.lavaggio.hr/assets/lavaggio/fonts/fonts/Satoshi-Variable.woff2"
+      "source": "https://api.fontshare.com/v2/css?f[]=satoshi@variable&display=swap",
+      "sha256": "e739aff9b4d02c264341d6d4872edcda28e79373aeda936f659566a1cd3eb47f"
     },
     {
       "path": "fonts/Satoshi-VariableItalic.woff2",
-      "source": "https://www.lavaggio.hr/assets/lavaggio/fonts/fonts/Satoshi-VariableItalic.woff2"
+      "source": "https://api.fontshare.com/v2/css?f[]=satoshi@variable&display=swap",
+      "sha256": "e7b4e0ec5fbb156df444371d62c3506fe6256db6ffb55c4982dddbb44e2de351"
     },
     {
       "path": "favicon.svg",
@@ -42,6 +44,11 @@
     {
       "path": "apple-touch-icon.png",
       "source": "https://www.lavaggio.hr/apple-touch-icon.png"
+    },
+    {
+      "path": "images/pattern/pattern-square-faded.svg",
+      "derived_from": "images/pattern/pattern-square.svg",
+      "modification": "Grid opacity fades smoothly to transparent over the original 194px height."
     }
   ]
 }

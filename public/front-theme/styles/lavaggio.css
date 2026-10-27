@@ -2,7 +2,7 @@
    Keep the inherited shop layout; change its typography, colours and surfaces. */
 @font-face {
     font-family: "Satoshi";
-    src: url("/assets/lavaggio/fonts/Satoshi-Variable.woff2") format("woff2");
+    src: url("/assets/lavaggio/fonts/Satoshi-Variable.woff2?v=e739aff9b4d0") format("woff2");
     font-style: normal;
     font-weight: 300 900;
     font-display: swap;
@@ -10,7 +10,7 @@
 
 @font-face {
     font-family: "Satoshi";
-    src: url("/assets/lavaggio/fonts/Satoshi-VariableItalic.woff2") format("woff2");
+    src: url("/assets/lavaggio/fonts/Satoshi-VariableItalic.woff2?v=e7b4e0ec5fbb") format("woff2");
     font-style: italic;
     font-weight: 300 900;
     font-display: swap;
@@ -105,7 +105,7 @@ body.lavaggio-storefront {
     --lavaggio-line: #e2e8f0;
     --lavaggio-line-strong: #c2c5dc;
     --lavaggio-footer: #020617;
-    --lavaggio-pattern: url("/assets/lavaggio/images/pattern/pattern-square.svg");
+    --lavaggio-pattern: url("/assets/lavaggio/images/pattern/pattern-square-faded.svg");
     --herrera-font-family: "Satoshi", Arial, Helvetica, sans-serif;
     --font-sans: var(--herrera-font-family);
     --default-font-family: var(--herrera-font-family);
@@ -216,6 +216,18 @@ body.lavaggio-storefront :is(input, button, select, textarea, optgroup, .font-sa
     font-family: var(--herrera-font-family);
 }
 
+/* Match the source site's Satoshi heading metrics rather than the old shop's. */
+html[data-theme] body.lavaggio-storefront :is(h1, h2, h3, h4, .wl-campaign-title, .wl-section-heading h2, .herrera-home-heading h2, .lm-page-title h1) {
+    font-family: var(--herrera-font-family);
+    font-weight: 700;
+    letter-spacing: -.03em;
+    line-height: 1.25;
+}
+html[data-theme] body.lavaggio-storefront .site-main-header :is(.watchline-category-link, .herrera-primary-navigation a) {
+    font-weight: 600;
+    letter-spacing: normal;
+}
+
 body.lavaggio-storefront :is(.wl-hero-title, .wl-section-heading h2, .wl-campaign-title, .herrera-home-section-title, .lm-page-title h1) { color: var(--lavaggio-heading); }
 body.lavaggio-storefront :is(.wl-eyebrow, .wl-category-art > svg) { color: var(--lavaggio-primary); }
 body.lavaggio-storefront :focus-visible { outline-color: var(--lavaggio-primary); }
@@ -234,7 +246,6 @@ body.lavaggio-storefront .wl-hero { border-color: var(--lavaggio-line); }
 
 /* The official square pattern replaces the old monogram and photo backgrounds. */
 body.lavaggio-storefront :is(.site-top-bar, .wl-hero, .herrera-hero, .herrera-b2b-hero, .lm-campaign, .lm-assurance, .wl-category-art, .herrera-category-support, .libermedia-category-bundle, .lm-kindergarten-copy),
-body.lavaggio-storefront .herrera-header-layout .header-search-form,
 body.lavaggio-storefront :is(.herrera-catalog-heading-band, .herrera-brand-strip, .herrera-home-registration, .site-footer-newsletter, .lm-page-title, .lm-home-reviews, .reference-project-card)::before,
 body.lavaggio-storefront.account-commerce-body .commerce-main > .lm-page-title::before {
     background-image: var(--lavaggio-pattern);
@@ -247,7 +258,7 @@ body.lavaggio-storefront.account-commerce-body .commerce-main > .lm-page-title::
 body.lavaggio-storefront :is(.lavaggio-home, .lavaggio-home-opening, .lavaggio-home-campaigns) :is(.lm-campaign, .wl-mens-campaign, .wl-sunglasses-campaign),
 body.lavaggio-storefront .lm-campaign-grid > :is(.wl-mens-campaign, .wl-sunglasses-campaign) {
     border-color: var(--lavaggio-line);
-    background-color: var(--lavaggio-paper);
+    background-color: #fff;
     background-image: var(--lavaggio-pattern);
     background-size: 1440px auto;
     background-position: center top;
@@ -255,6 +266,7 @@ body.lavaggio-storefront .lm-campaign-grid > :is(.wl-mens-campaign, .wl-sunglass
 }
 
 body.lavaggio-storefront .lm-campaign-grid > :is(.wl-mens-campaign, .wl-sunglasses-campaign)::before { background-image: none; }
+body.lavaggio-storefront :is(.site-top-bar, .herrera-header-layout .header-search-form) { background-image: none; }
 body.lavaggio-storefront :is(.wl-mens-campaign, .wl-sunglasses-campaign) :is(.lm-campaign-title, .wl-campaign-title) { color: var(--lavaggio-heading); }
 body.lavaggio-storefront :is(.wl-mens-campaign, .wl-sunglasses-campaign) .lm-campaign-copy > p:not(.lm-eyebrow) { color: var(--lavaggio-muted); }
 body.lavaggio-storefront .lavaggio-main-campaign .lm-campaign-copy {
