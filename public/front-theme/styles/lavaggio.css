@@ -246,13 +246,32 @@ body.lavaggio-storefront .wl-hero { border-color: var(--lavaggio-line); }
 
 /* The official square pattern replaces the old monogram and photo backgrounds. */
 body.lavaggio-storefront :is(.site-top-bar, .wl-hero, .herrera-hero, .herrera-b2b-hero, .lm-campaign, .lm-assurance, .wl-category-art, .herrera-category-support, .libermedia-category-bundle, .lm-kindergarten-copy),
-body.lavaggio-storefront :is(.herrera-catalog-heading-band, .herrera-brand-strip, .herrera-home-registration, .site-footer-newsletter, .lm-page-title, .lm-home-reviews, .reference-project-card)::before,
-body.lavaggio-storefront.account-commerce-body .commerce-main > .lm-page-title::before {
+body.lavaggio-storefront :is(.herrera-brand-strip, .herrera-home-registration, .site-footer-newsletter, .lm-home-reviews, .reference-project-card)::before {
     background-image: var(--lavaggio-pattern);
     background-position: center top;
     background-repeat: repeat-x;
     background-size: 1440px auto;
     background-attachment: scroll;
+}
+
+html[data-theme] body.lavaggio-storefront :is(.herrera-catalog-heading-band, .lm-page-title),
+html[data-theme] body.lavaggio-storefront.account-commerce-body .commerce-main > .lm-page-title {
+    border-bottom: 0;
+    background-color: #fff;
+    background-image: none;
+    box-shadow: 0 0 0 100vmax #fff;
+}
+
+html[data-theme] body.lavaggio-storefront :is(.herrera-catalog-heading-band, .lm-page-title)::before,
+html[data-theme] body.lavaggio-storefront.account-commerce-body .commerce-main > .lm-page-title::before {
+    background-color: #fff;
+    background-image: none;
+}
+
+html[data-theme] body.lavaggio-storefront :is(.herrera-catalog-heading-band, .lm-page-title)::after,
+html[data-theme] body.lavaggio-storefront.account-commerce-body .commerce-main > .lm-page-title::after {
+    display: none;
+    content: none;
 }
 
 body.lavaggio-storefront :is(.lavaggio-home, .lavaggio-home-opening, .lavaggio-home-campaigns) :is(.lm-campaign, .wl-mens-campaign, .wl-sunglasses-campaign),

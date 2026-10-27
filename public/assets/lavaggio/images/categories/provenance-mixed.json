@@ -1,0 +1,102 @@
+{
+  "created_on": "2026-10-27",
+  "purpose": "Mixed-brand editable category menu illustrations, replacing the initial Frosch-only selections.",
+  "assets": [
+    {
+      "path": "deterdzenti-mix.webp",
+      "size": [
+        800,
+        600
+      ],
+      "method": "built-in image_gen, mixed-brand composition from product references",
+      "prompt": "Create a polished photorealistic ecommerce category photograph for a laundry-care shop mega-menu. Output landscape 4:3. Image 1 is ONLY a composition and photography style reference: keep the pale lavender (#f1f2f9) seamless studio backdrop and tabletop, gentle natural studio shadows and premium uncluttered arrangement. Replace its products with exactly the THREE distinct products specified below. Other attached images are exact packaging references. Preserve real product shapes, logos and label graphics, no invented branding, no merged labels. Products stand upright, labels face camera, whole products visible with safe margins. No headline, no graphic overlays, no watermark, no people. Show three different detergent BRANDS together: ONE white Ariel Mountain Spring liquid detergent jug, ONE white Persil Active Gel Deep Clean liquid detergent bottle with red cap, and ONE mint-green Frosch Universal detergent bottle (extract only the bottle from its supplied pair reference). Ariel and Persil are most prominent. No extra Frosch products. Compact balanced three-product grouping, a small folded white cotton towel low in front. Frosch bottle should be smaller than the large Ariel and Persil economy bottles. All three names ARIEL, Persil and Frosch remain clearly visible.",
+      "style_reference": "deterdzenti.webp",
+      "reference_sources": [
+        {
+          "source_page": "https://www.dm.hr/p/d/3070880/ariel-mountain-spring-tekuci-deterdzent-za-pranje-rublja-70-pranja",
+          "image_url": "https://products.dm-static.com/images/f_png%2Cq_90%2Cc_fit%2Ch_1600%2Cw_1600/v1747531054/assets/pas/images/93f6c812-e29b-4f6c-b2b7-34993cbfe1a3/ariel-mountain-spring-tekuci-deterdzent-za-pranje-rublja-70-pranja"
+        },
+        {
+          "source_page": "https://www.dm.hr/p/d/2560881/persil-deep-clean-universal-deterdzent-za-pranje-rublja-66-pranja",
+          "image_url": "https://products.dm-static.com/images/f_png%2Cq_90%2Cc_fit%2Ch_1600%2Cw_1600/v1747536761/assets/pas/images/4e2f7104-7ace-4c45-acb1-c542955c13b3/persil-deep-clean-universal-deterdzent-za-pranje-rublja-66-pranja"
+        },
+        {
+          "source_page": "https://frosch.de/en/products-and-tips/laundry-care.html",
+          "image_url": "https://frosch.de/produktdatenbank/produktbilder/frosch-de_frosch-universal-waschmittel_flasche-beutel_565y642py_producttipoverview-3.png"
+        }
+      ]
+    },
+    {
+      "path": "uklanjanje-mrlja-mix.webp",
+      "size": [
+        800,
+        600
+      ],
+      "method": "built-in image_gen, mixed-brand composition from product references",
+      "prompt": "Create a polished photorealistic ecommerce category photograph for a laundry-care shop mega-menu. Output landscape 4:3. Image 1 is ONLY a composition and photography style reference: keep the pale lavender (#f1f2f9) seamless studio backdrop and tabletop, gentle natural studio shadows and premium uncluttered arrangement. Replace its products with exactly the THREE distinct products specified below. Other attached images are exact packaging references. Preserve real product shapes, logos and label graphics, no invented branding, no merged labels. Products stand upright, labels face camera, whole products visible with safe margins. No headline, no graphic overlays, no watermark, no people. Show three different stain-removal BRANDS together: ONE tall vivid pink Vanish Oxi Action trigger spray, ONE slim white Dr. Beckmann Flecken Spray with blue trigger, and ONE small white Frosch active-oxygen stain remover bottle. Exactly these three products, preserve their actual reference packaging. Vanish and Dr. Beckmann are prominent; tiny 75ml Frosch bottle in front is smaller. Small neatly folded white cotton cloth at the edge. Clear recognizable brand names Vanish, Dr. Beckmann, Frosch.",
+      "style_reference": "uklanjanje-mrlja.webp",
+      "reference_sources": [
+        {
+          "source_page": "https://www.konzum.hr/web/products/vanish-oxi-action-sprej-500-ml",
+          "image_url": "https://d17zv3ray5yxvp.cloudfront.net/variants/ag26tx5tgaukfyqmeacmsdtpbwly/357327d81e7592a6661fbca6215a61db162ccd438802a608d05fb668bf373162"
+        },
+        {
+          "source_page": "https://www.konzum.hr/web/products/dr-beckmann-odstranjivac-mrlja-250-ml",
+          "image_url": "https://d17zv3ray5yxvp.cloudfront.net/variants/wmxmPyxrzSGS7315boK6dTGm/357327d81e7592a6661fbca6215a61db162ccd438802a608d05fb668bf373162"
+        },
+        {
+          "source_page": "https://frosch.de/en/products-and-tips/laundry-care.html",
+          "image_url": "https://frosch.de/produktdatenbank/produktbilder/frosch-de_frosch-aktiv-sauerstoff-flecken-zwerg-75ml_565y642py_producttipoverview.png"
+        }
+      ]
+    },
+    {
+      "path": "mirisi-i-njega-rublja-mix.webp",
+      "size": [
+        800,
+        600
+      ],
+      "method": "built-in image_gen, mixed-brand composition from product references",
+      "prompt": "Create a polished photorealistic ecommerce category photograph for a laundry-care shop mega-menu. Output landscape 4:3. Image 1 is ONLY a composition and photography style reference: keep the pale lavender (#f1f2f9) seamless studio backdrop and tabletop, gentle natural studio shadows and premium uncluttered arrangement. Replace its products with exactly the THREE distinct products specified below. Other attached images are exact packaging references. Preserve real product shapes, logos and label graphics, no invented branding, no merged labels. Products stand upright, labels face camera, whole products visible with safe margins. No headline, no graphic overlays, no watermark, no people. Show THREE DIFFERENT fabric-softener BRANDS together, exactly ONE each: Lenor Spring Awakening bottle with blue cap and white/blue orchid label, Coccolino Fresh Blue Splash pale-blue bottle with teddy bear, and pink Frosch Hibiskusblüte bottle. Preserve exact attached packaging, no other Frosch bottles. Lenor and Coccolino are most prominent, Frosch slightly smaller to one side. A small clean folded white towel and one delicate cotton stem at bottom edge. Clear visible brand names Lenor, Coccolino, Frosch.",
+      "style_reference": "mirisi-i-njega-rublja.webp",
+      "reference_sources": [
+        {
+          "source_page": "https://www.dm.hr/p/d/3065077/lenor-spring-awakening-omeksivac-za-rublje-71-pranje",
+          "image_url": "https://products.dm-static.com/images/f_auto,q_auto,c_fit,h_1000,w_1000/v1747531585/assets/pas/images/7bd356fa-cabf-4021-b95b-3f378f325592/lenor-spring-awakening-omeksivac-za-rublje-71-pranje"
+        },
+        {
+          "source_page": "https://www.dm-drogeriemarkt.ba/p/d/3135966/coccolino-omeksivac-za-ves-fresh-blue-splash-74-pranja",
+          "image_url": "https://products.dm-static.com/images/f_auto,q_auto,c_fit,h_1000,w_1000/v1782296022/assets/pas/images/542afc92-0fa0-4091-a68c-e319e6f8ae8b/coccolino-omeksivac-za-ves-fresh-blue-splash-74-pranja"
+        },
+        {
+          "source_page": "https://frosch.de/en/products-and-tips/laundry-care.html",
+          "image_url": "https://frosch.de/produktdatenbank/produktbilder/frosch-de_frosch-hibiskusbluete-sensitiv-weichspueler-880ml_565y642py_producttipoverview.png"
+        }
+      ]
+    },
+    {
+      "path": "higijena-i-odrzavanje-mix.webp",
+      "size": [
+        800,
+        600
+      ],
+      "method": "built-in image_gen, mixed-brand composition from product references",
+      "prompt": "Create a polished photorealistic ecommerce category photograph for a laundry-care shop mega-menu. Output landscape 4:3. Image 1 is ONLY a composition and photography style reference: keep the pale lavender (#f1f2f9) seamless studio backdrop and tabletop, gentle natural studio shadows and premium uncluttered arrangement. Replace its products with exactly the THREE distinct products specified below. Other attached images are exact packaging references. Preserve real product shapes, logos and label graphics, no invented branding, no merged labels. Products stand upright, labels face camera, whole products visible with safe margins. No headline, no graphic overlays, no watermark, no people. Show THREE DIFFERENT washing-machine-care BRANDS together, exactly ONE each: a tall blue Calgon Original Power 4in1 powder box, a turquoise/white Dr. Beckmann All-in-One washing-machine-cleaner bottle, and a smaller yellow/green Frosch Citrus hygiene-cleaner box. Preserve attached packaging exactly. Calgon and Dr. Beckmann lead the composition; Frosch box smaller on the right. A folded white microfiber cloth low at edge and a subtly blurred edge of white washing machine far behind. Each brand name visible and unobstructed. No extra bottles or products.",
+      "style_reference": "higijena-i-odrzavanje.webp",
+      "reference_sources": [
+        {
+          "source_page": "https://www.konzum.hr/web/products/calgon-protiv-talozenja-kamenca-700g",
+          "image_url": "https://d17zv3ray5yxvp.cloudfront.net/variants/xo2c160encmuuelwo8ycdu1bseai/357327d81e7592a6661fbca6215a61db162ccd438802a608d05fb668bf373162"
+        },
+        {
+          "source_page": "https://www.dr-beckmann.com/en-sg/household/washing-machine-cleaner/washing-machine-cleaner-all-in-one-53935-sg/",
+          "image_url": "https://www.dr-beckmann.com/fileadmin/SG/images/products/packshots/53935_SG-fa4b84c3a0a763d659b61adf864c57d8.png"
+        },
+        {
+          "source_page": "https://frosch.de/en/products-and-tips/laundry-care.html",
+          "image_url": "https://frosch.de/produktdatenbank/produktbilder/frosch_washing-machine-cleaner_citrus_250g_d_producttipoverview.png"
+        }
+      ]
+    }
+  ]
+}

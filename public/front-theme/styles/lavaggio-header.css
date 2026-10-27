@@ -27,6 +27,10 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header::before {
     pointer-events: none;
 }
 
+html[data-theme] body.lavaggio-storefront:has(.herrera-catalog-heading-band, .lm-page-title) .lavaggio-header::before {
+    max-height: calc(100% - var(--lavaggio-header-topbar-height, 32px));
+}
+
 html[data-theme] body.lavaggio-storefront .lavaggio-header + .site-main-header-spacer {
     display: none;
 }

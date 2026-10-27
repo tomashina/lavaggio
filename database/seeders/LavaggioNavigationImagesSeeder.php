@@ -13,10 +13,10 @@ class LavaggioNavigationImagesSeeder extends Seeder
     {
         $images = app(NavigationMenuService::class)->categoryImages();
         $defaults = [
-            'deterdzenti' => 'Kombinacija Frosch deterdženata za univerzalno, šareno i osjetljivo rublje',
-            'uklanjanje-mrlja' => 'Frosch sprej za predtretman i sredstvo za uklanjanje mrlja',
-            'mirisi-i-njega-rublja' => 'Frosch omekšivači s mirisom badema, hibiskusa i pamuka',
-            'higijena-i-odrzavanje' => 'Frosch Citrus sredstvo za higijenu i održavanje perilice',
+            'deterdzenti' => 'Deterdženti Ariel, Persil i Frosch',
+            'uklanjanje-mrlja' => 'Sredstva za uklanjanje mrlja Vanish, Dr. Beckmann i Frosch',
+            'mirisi-i-njega-rublja' => 'Omekšivači Lenor, Coccolino i Frosch',
+            'higijena-i-odrzavanje' => 'Sredstva za održavanje perilice Calgon, Dr. Beckmann i Frosch',
             'pribor-i-dodaci-za-rublje' => 'Mrežica za pranje, vunene kuglice, odstranjivač mucica i valjak za dlačice',
         ];
 
@@ -26,7 +26,7 @@ class LavaggioNavigationImagesSeeder extends Seeder
             // An explicit empty path is an administrator's choice to remove a photo.
             if ($categoryId && ! array_key_exists((int) $categoryId, $images)) {
                 $images[(int) $categoryId] = [
-                    'image_path' => '/assets/lavaggio/images/categories/'.$code.'.webp',
+                    'image_path' => '/assets/lavaggio/images/categories/'.$code.($code === 'pribor-i-dodaci-za-rublje' ? '' : '-mix').'.webp',
                     'image_alt' => $alt,
                 ];
             }
