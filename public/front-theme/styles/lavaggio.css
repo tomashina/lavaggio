@@ -413,6 +413,26 @@ html[data-theme] body.lavaggio-storefront .product-card-brand { font-size: 13px;
 html[data-theme] body.lavaggio-storefront .product-card-current-price { font-size: 21px; }
 html[data-theme] body.lavaggio-storefront .product-card-old-price { font-size: 14px; }
 
+html[data-theme] body.lavaggio-storefront .catalog-sidebar-heading {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+html[data-theme] body.lavaggio-storefront :is(.catalog-sidebar-category, .catalog-sidebar-option, .catalog-sidebar-active) {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+html[data-theme] body.lavaggio-storefront .catalog-sidebar-category.is-current { font-weight: 700; }
+html[data-theme] body.lavaggio-storefront .catalog-sidebar-category > span:first-child { min-width: 0; }
+html[data-theme] body.lavaggio-storefront :is(.catalog-sidebar-category > span:last-child, .catalog-sidebar-option-count) {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.7;
+}
+html[data-theme] body.lavaggio-storefront .catalog-desktop-sidebar :is(.catalog-price-range-value-label, .catalog-price-range-scale, .catalog-price-reset) { font-size: 14px; }
+html[data-theme] body.lavaggio-storefront .catalog-desktop-sidebar .catalog-price-range-value-amount { font-size: 17px; }
+
 @media (max-width: 767px) {
     body.lavaggio-storefront :is(.wl-hero, .lm-campaign, .wl-category-art),
     body.lavaggio-storefront .lm-campaign-grid > :is(.wl-mens-campaign, .wl-sunglasses-campaign) { background-size: auto 194px; }
