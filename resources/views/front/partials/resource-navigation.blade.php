@@ -13,7 +13,7 @@
         ['url' => route('supplier-catalogs.index'), 'label' => __('herrera_resources.catalogs_short')],
         ['url' => route('references.index'), 'label' => __('herrera_resources.references')],
     ];
-    if (in_array(config('storefront.home'), ['libermedia', 'watchline'], true)) {
+    if (in_array(config('storefront.home'), ['libermedia', 'watchline', 'lavaggio'], true)) {
         $resourceLinks = [];
     }
 @endphp

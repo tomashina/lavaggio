@@ -6,7 +6,8 @@
     }
 
     $authStoreName = trim((string) (($authBranding['store_name'] ?? null) ?: config('app.name', 'AG Shop')));
-    $isWatchlineAuth = config('storefront.home') === 'watchline';
+    $isLavaggioAuth = config('storefront.home') === 'lavaggio';
+    $isWatchlineAuth = in_array(config('storefront.home'), ['watchline', 'lavaggio'], true);
     $isHerreraAuth = $isWatchlineAuth || \App\Support\StorefrontTheme::usesHerreraLayout($authStoreName);
     $isLibermediaAuth = ! $isWatchlineAuth && \App\Support\StorefrontTheme::usesLibermediaBrand($authStoreName);
     $authLogoUrl = trim((string) ($authBranding['logo_url'] ?? ''));
@@ -51,7 +52,7 @@
 
     <x-front.site-icons :branding="$authBranding" />
 
-    @if ($isWatchlineAuth)
+    @if ($isWatchlineAuth && ! $isLavaggioAuth)
         <link rel="preload" href="{{ asset('assets/fonts/sora/Sora-Variable.woff2') }}" as="font" type="font/woff2" crossorigin>
     @endif
 
@@ -75,8 +76,13 @@
     @if ($isWatchlineAuth)
         <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-auth.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-auth.css')) }}">
     @endif
+    @if ($isLavaggioAuth)
+        <link rel="preload" href="{{ asset('assets/lavaggio/fonts/Satoshi-Variable.woff2') }}" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio.css')) }}">
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-auth.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-auth.css')) }}">
+    @endif
 </head>
-<body class="commerce-body store-auth-body{{ $isHerreraAuth ? ' herrera-storefront' : '' }}{{ $isLibermediaAuth ? ' libermedia-storefront' : '' }}{{ $isWatchlineAuth ? ' watchline-auth' : '' }}">
+<body class="commerce-body store-auth-body{{ $isHerreraAuth ? ' herrera-storefront' : '' }}{{ $isLibermediaAuth ? ' libermedia-storefront' : '' }}{{ $isWatchlineAuth ? ' watchline-auth' : '' }}{{ $isLavaggioAuth ? ' lavaggio-auth lavaggio-storefront' : '' }}">
     <header class="store-auth-header">
         <div class="store-auth-header-inner">
             <a href="{{ route('home') }}" class="store-auth-brand" aria-label="{{ $authStoreName }}">

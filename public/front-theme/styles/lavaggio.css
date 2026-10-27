@@ -1,0 +1,354 @@
+/* Lavaggio identity from https://www.lavaggio.hr/assets/lavaggio/css/theme.css.
+   Keep the inherited shop layout; change its typography, colours and surfaces. */
+@font-face {
+    font-family: "Satoshi";
+    src: url("/assets/lavaggio/fonts/Satoshi-Variable.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 300 900;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Satoshi";
+    src: url("/assets/lavaggio/fonts/Satoshi-VariableItalic.woff2") format("woff2");
+    font-style: italic;
+    font-weight: 300 900;
+    font-display: swap;
+}
+
+/* Recolour literal accents in inherited shop components; dimensions stay inherited. */
+body.lavaggio-storefront [data-continuous-card-carousel] .splide__slide { border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+body.lavaggio-storefront .site-main-header { border-bottom: 1px solid #e2e8f0; }
+body.lavaggio-storefront .site-top-bar { border-bottom: 1px solid #e2e8f0; }
+body.lavaggio-storefront .herrera-header-layout .header-search-form { border-color: #e2e8f0; }
+body.lavaggio-storefront .herrera-header-layout .header-search-form:focus-within { box-shadow: 0 0 0 2px #848ac40d; }
+body.lavaggio-storefront .herrera-header-layout .header-search-submit:is(:hover, :focus-visible) { background: #e9eaf5; }
+body.lavaggio-storefront .wl-hero { border: 1px solid #e2e8f0; }
+body.lavaggio-storefront .wl-hero-cta:hover { background: #13100d; }
+body.lavaggio-storefront .wl-eyebrow { color: #848ac4; }
+body.lavaggio-storefront .wl-category-card:hover { border-color: #a5aacd; }
+body.lavaggio-storefront .wl-category-art > svg { color: #848ac4; }
+body.lavaggio-storefront .wl-cluse-offer:hover { color: #13100d; }
+body.lavaggio-storefront .lm-home-review-stars .is-filled { color: #848ac4; }
+body.lavaggio-storefront .lm-home-review-avatar { background: #f3f3f9; }
+html[data-theme] body.lavaggio-storefront .site-footer a:is(:hover, :focus-visible) { color: #13100d; }
+html[data-theme] body.lavaggio-storefront .site-footer .wl-footer-benefits { border-bottom: 1px solid #e2e8f0; }
+
+@media (min-width: 1024px) {
+    body.lavaggio-storefront .site-main-header .herrera-header-layout::after { background: #f3f3f9; }
+}
+html[data-theme] body.lavaggio-storefront :is(.text-emerald-200, .text-green-200) { color: #dedff0; }
+html[data-theme] body.lavaggio-storefront :is(.border-emerald-200, .border-green-200) { border-color: #d7d9ed; }
+html[data-theme] body.lavaggio-storefront .hover\:text-emerald-900:hover { color: #13100d; }
+body.lavaggio-storefront .product-card-image-placeholder { color: #a5aacd; }
+body.lavaggio-storefront #cookie-consent-floating-button { box-shadow: 0 10px 22px rgb(132 138 196 / 22%); }
+body.lavaggio-storefront #cookie-consent-floating-button:is(:hover, :focus-visible) { box-shadow: 0 14px 26px rgb(132 138 196 / 28%); }
+body.lavaggio-storefront .gift-voucher-amount-presets > button:not([aria-pressed=true]):hover { color: #13100d; }
+body.lavaggio-storefront .gift-voucher-amount-presets > button[aria-pressed=true]:hover { border-color: #13100d; background-color: #13100d; }
+body.lavaggio-storefront .gift-voucher-code-row > .gift-voucher-apply-button:is(:hover, :focus-visible) { border-color: #13100d; background-color: #13100d; }
+body.lavaggio-storefront .gift-voucher-remove-button:is(:hover, :focus-visible) { color: #13100d; }
+body.lavaggio-storefront .gift-voucher-preview { box-shadow: 0 18px 38px #848ac414; }
+body.lavaggio-storefront .gift-voucher-preview > :is(.gift-voucher-preview-message, .gift-voucher-preview-sender) { color: #f2f2f9; }
+body.lavaggio-storefront .gift-voucher-preview > .gift-voucher-preview-gift { color: #dedff0; }
+body.lavaggio-storefront .stock-notify-button:is(:hover, :focus-visible) { border-color: #13100d; color: #13100d; }
+body.lavaggio-storefront .stock-notify-close:hover { background-color: #e9eaf5; color: #13100d; }
+body.lavaggio-storefront .stock-notify-back:is(:hover, :focus-visible) { color: #13100d; }
+body.lavaggio-storefront .stock-notify-status.is-success { border-color: #d7d9ed; }
+body.lavaggio-storefront .lm-gift-form button:hover { background-color: #13100d; }
+body.lavaggio-storefront .lm-gift-voucher > a:is(:hover, :focus-visible) { border-color: #13100d; background-color: #13100d; }
+body.lavaggio-storefront .herrera-category-tile[data-category-icon-tone] .herrera-category-tile-icon { box-shadow: 0 2px 8px #848ac40d; }
+body.lavaggio-storefront .herrera-category-tile.libermedia-category-bundle:hover { background-color: #e9eaf5; }
+body.lavaggio-storefront .lm-bundle-card { box-shadow: 0 2px 6px #848ac404; }
+body.lavaggio-storefront .lm-bundle-card:hover { border-color: #d7d9ed; box-shadow: 0 8px 28px #848ac40c; }
+body.lavaggio-storefront .lm-bundle-product-link:hover { color: #13100d; }
+body.lavaggio-storefront .lm-bundle-cart-button:not(:disabled):is(:hover, :focus-visible, :active),
+body.lavaggio-storefront .lm-bundle-cart-button.is-pending { border-color: #13100d; background-color: #13100d; }
+body.lavaggio-storefront .lm-bundles-empty > a:hover { color: #13100d; }
+body.lavaggio-storefront .blog-share .blog-share-button:is(:hover, :focus-visible) { border-color: #13100d; background-color: #13100d; }
+body.lavaggio-storefront .blog-discovery-heading > a:hover,
+body.lavaggio-storefront .blog-discovery .herrera-blog-card > a:hover :is(h2, h3) { color: #13100d; }
+body.lavaggio-storefront .store-text-link:hover,
+body.lavaggio-storefront .content-richtext a:hover,
+body.lavaggio-storefront .legal-warranty-notice:not(.legal-warranty-notice--footer) > a:hover,
+body.lavaggio-storefront .legal-warranty-modal-footer > a:hover { color: #13100d; }
+html[data-theme] body.lavaggio-storefront .catalog-parent-category-link:is(:hover, :focus-visible) {
+    color: #13100d;
+}
+html[data-theme] body.lavaggio-storefront :is(.product-widget-card-cart, .product-widget-card-select):is(:hover, :focus-visible):not(:disabled):not([aria-disabled="true"]) {
+    border-color: #13100d;
+    background-color: #13100d;
+}
+html[data-theme] body.lavaggio-storefront .product-cart-modal-status-icon {
+    box-shadow: 0 5px 14px rgb(132 138 196 / 18%);
+}
+html[data-theme] body.lavaggio-storefront .product-cart-modal-action-secondary:is(:hover, :focus-visible):not(:disabled):not([aria-disabled="true"]),
+html[data-theme] body.lavaggio-storefront .product-cart-modal-close:is(:hover, :focus-visible) {
+    color: #13100d;
+}
+body.lavaggio-storefront .wl-gift-filter-panel { border: 1px solid #c2c5dc; background: #f5f5fb; box-shadow: 0 8px 26px #848ac40a; }
+body.lavaggio-storefront .wl-gift-filter-icon { border: 1px solid #c2c5dc; }
+body.lavaggio-storefront .wl-gift-choices span { border: 1px solid #c2c5dc; }
+body.lavaggio-storefront .wl-gift-fields select { border: 1px solid #c2c5dc; }
+body.lavaggio-storefront .wl-gift-filter-actions button:hover { background: #13100d; }
+html[data-theme] body.lavaggio-storefront .store-benefits-shell {
+    background: var(--watchline-info-background, #848ac4);
+}
+
+html[data-theme] body.lavaggio-storefront,
+body.lavaggio-storefront {
+    --lavaggio-primary: #848ac4;
+    --lavaggio-primary-hover: #13100d;
+    --lavaggio-ink: #13100d;
+    --lavaggio-heading: #1e293b;
+    --lavaggio-muted: #64748b;
+    --lavaggio-paper: #f3f3f9;
+    --lavaggio-line: #e2e8f0;
+    --lavaggio-line-strong: #c2c5dc;
+    --lavaggio-footer: #020617;
+    --lavaggio-pattern: url("/assets/lavaggio/images/pattern/pattern-square.svg");
+    --herrera-font-family: "Satoshi", Arial, Helvetica, sans-serif;
+    --font-sans: var(--herrera-font-family);
+    --default-font-family: var(--herrera-font-family);
+    --cc-font-family: var(--herrera-font-family);
+    --wl-ink: var(--lavaggio-ink);
+    --wl-blue: var(--lavaggio-primary);
+    --wl-blue-dark: var(--lavaggio-primary);
+    --wl-header: var(--lavaggio-footer);
+    --wl-header-top: var(--lavaggio-paper);
+    --wl-bronze: var(--lavaggio-primary);
+    --wl-paper: var(--lavaggio-paper);
+    --wl-line: var(--lavaggio-line);
+    --wl-muted: var(--lavaggio-muted);
+    --wl-pattern-size: 1440px auto;
+    --watchline-info-background: var(--lavaggio-primary);
+    --watchline-info-text: #fff;
+    --reading-slate-900: var(--lavaggio-ink);
+    --reading-slate-800: var(--lavaggio-heading);
+    --reading-slate-700: #334155;
+    --reading-slate-600: #475569;
+    --reading-slate-500: var(--lavaggio-muted);
+    --libermedia-orange: var(--lavaggio-primary);
+    --libermedia-action: var(--lavaggio-primary);
+    --libermedia-action-hover: var(--lavaggio-primary-hover);
+    --libermedia-link: var(--lavaggio-primary);
+    --libermedia-green: var(--lavaggio-primary);
+    --libermedia-green-hover: var(--lavaggio-primary-hover);
+    --libermedia-button-green: var(--lavaggio-primary);
+    --libermedia-button-green-hover: var(--lavaggio-primary-hover);
+    --libermedia-ink: var(--lavaggio-ink);
+    --libermedia-muted: var(--lavaggio-muted);
+    --libermedia-cream: var(--lavaggio-paper);
+    --libermedia-sage: var(--lavaggio-paper);
+    --libermedia-surface: #fff;
+    --libermedia-surface-raised: #fafafc;
+    --libermedia-line: var(--lavaggio-line);
+    --libermedia-line-strong: var(--lavaggio-line-strong);
+    --libermedia-footer: var(--lavaggio-footer);
+    --libermedia-footer-text: #cbd5e1;
+    --libermedia-footer-accent: #aeb3db;
+    --libermedia-pattern: var(--lavaggio-pattern);
+    --lm-green: var(--lavaggio-primary);
+    --lm-orange: var(--lavaggio-primary);
+    --herrera-cyan: var(--lavaggio-primary);
+    --herrera-dark: var(--lavaggio-ink);
+    --herrera-action: var(--lavaggio-primary);
+    --herrera-soft: var(--lavaggio-paper);
+    --herrera-footer: var(--lavaggio-footer);
+    --herrera-form-surface: var(--lavaggio-paper);
+    --herrera-surface-pattern: var(--lavaggio-pattern);
+    --herrera-form-pattern-size: 1440px auto;
+    --storefront-bg: #fff;
+    --storefront-surface: #fff;
+    --storefront-surface-raised: #fafafc;
+    --storefront-surface-soft: var(--lavaggio-paper);
+    --storefront-text: var(--lavaggio-ink);
+    --storefront-muted: var(--lavaggio-muted);
+    --storefront-border: var(--lavaggio-line);
+    --storefront-border-strong: var(--lavaggio-line-strong);
+    --storefront-accent: var(--lavaggio-primary);
+    --storefront-button: var(--lavaggio-primary);
+    --storefront-button-hover: var(--lavaggio-primary-hover);
+    --storefront-focus: var(--lavaggio-primary);
+    --navigation-background-color: var(--lavaggio-primary);
+    --navigation-text-color: #fff;
+    --navigation-highlight-color: var(--lavaggio-primary-hover);
+    --store-announcement-background-color: var(--lavaggio-primary);
+    --store-announcement-text-color: #fff;
+    --category-ink: var(--lavaggio-ink);
+    --category-muted: var(--lavaggio-muted);
+    --category-line: var(--lavaggio-line);
+    --category-blue: var(--lavaggio-primary);
+    --brand-ink: var(--lavaggio-ink);
+    --brand-muted: var(--lavaggio-muted);
+    --brand-line: var(--lavaggio-line);
+    --brand-surface: var(--lavaggio-paper);
+    color-scheme: light;
+    background: #fff;
+    color: var(--lavaggio-ink);
+    font-family: var(--herrera-font-family);
+}
+
+html[data-theme] body.lavaggio-storefront :is(.commerce-main, .checkout-shell, .checkout-status-card, .mobile-checkout, .quick-order-builder) {
+    --commerce-accent: var(--lavaggio-primary);
+    --commerce-accent-hover: var(--lavaggio-primary-hover);
+    --commerce-accent-soft: var(--lavaggio-paper);
+    --commerce-orange: var(--lavaggio-primary);
+    --commerce-border: var(--lavaggio-line);
+    --commerce-border-strong: var(--lavaggio-line-strong);
+    --commerce-muted: var(--lavaggio-muted);
+    --commerce-ink: var(--lavaggio-ink);
+    --commerce-surface: var(--lavaggio-paper);
+    --commerce-form-surface: var(--lavaggio-paper);
+    --checkout-accent: var(--lavaggio-primary);
+    --checkout-accent-hover: var(--lavaggio-primary-hover);
+    --checkout-accent-soft: var(--lavaggio-paper);
+    --checkout-focus-ring: var(--lavaggio-primary);
+    --checkout-orange: var(--lavaggio-primary);
+    --checkout-border: var(--lavaggio-line);
+    --checkout-border-strong: var(--lavaggio-line-strong);
+    --checkout-muted: var(--lavaggio-muted);
+    --checkout-ink: var(--lavaggio-ink);
+    --checkout-surface: var(--lavaggio-paper);
+    --checkout-form-surface: var(--lavaggio-paper);
+}
+
+body.lavaggio-storefront :is(input, button, select, textarea, optgroup, .font-sans, .font-risingsun, .site-main-header, .site-main-nav-shell, .commerce-main, .site-footer) {
+    font-family: var(--herrera-font-family);
+}
+
+body.lavaggio-storefront :is(.wl-hero-title, .wl-section-heading h2, .wl-campaign-title, .herrera-home-section-title, .lm-page-title h1) { color: var(--lavaggio-heading); }
+body.lavaggio-storefront :is(.wl-eyebrow, .wl-category-art > svg) { color: var(--lavaggio-primary); }
+body.lavaggio-storefront :focus-visible { outline-color: var(--lavaggio-primary); }
+body.lavaggio-storefront .site-main-header { border-bottom-color: var(--lavaggio-line); box-shadow: 0 4px 18px rgb(19 16 13 / 2%); }
+body.lavaggio-storefront .site-top-bar { border-bottom-color: var(--lavaggio-line); }
+body.lavaggio-storefront :is(.site-top-bar-link, .site-top-bar-announcement, .site-top-bar-social-link) { color: #475569; }
+html[data-theme] body.lavaggio-storefront [data-watchline-topbar-announcement] { color: #475569; }
+body.lavaggio-storefront .herrera-header-layout .header-search-form { border-color: var(--lavaggio-line); }
+body.lavaggio-storefront .herrera-header-layout .header-search-form:focus-within { box-shadow: 0 0 0 2px rgb(132 138 196 / 12%); }
+body.lavaggio-storefront .herrera-header-layout .header-search-submit:is(:hover, :focus-visible) { background: #e9eaf5; color: var(--lavaggio-primary-hover); }
+body.lavaggio-storefront .watchline-category-menu { box-shadow: 0 18px 36px rgb(19 16 13 / 8%); }
+body.lavaggio-storefront .site-main-header :is(.watchline-category-link, .herrera-primary-navigation a) { font-weight: 700; }
+body.lavaggio-storefront .product-card-image-placeholder { background: var(--lavaggio-paper); color: #a5aacd; }
+body.lavaggio-storefront .wl-category-card:hover { border-color: var(--lavaggio-primary); }
+body.lavaggio-storefront .wl-hero { border-color: var(--lavaggio-line); }
+
+/* The official square pattern replaces the old monogram and photo backgrounds. */
+body.lavaggio-storefront :is(.site-top-bar, .wl-hero, .herrera-hero, .herrera-b2b-hero, .lm-campaign, .lm-assurance, .wl-category-art, .herrera-category-support, .libermedia-category-bundle, .lm-kindergarten-copy),
+body.lavaggio-storefront .herrera-header-layout .header-search-form,
+body.lavaggio-storefront :is(.herrera-catalog-heading-band, .herrera-brand-strip, .herrera-home-registration, .site-footer-newsletter, .lm-page-title, .lm-home-reviews, .reference-project-card)::before,
+body.lavaggio-storefront.account-commerce-body .commerce-main > .lm-page-title::before {
+    background-image: var(--lavaggio-pattern);
+    background-position: center top;
+    background-repeat: repeat-x;
+    background-size: 1440px auto;
+    background-attachment: scroll;
+}
+
+body.lavaggio-storefront :is(.lavaggio-home, .lavaggio-home-opening, .lavaggio-home-campaigns) :is(.lm-campaign, .wl-mens-campaign, .wl-sunglasses-campaign),
+body.lavaggio-storefront .lm-campaign-grid > :is(.wl-mens-campaign, .wl-sunglasses-campaign) {
+    border-color: var(--lavaggio-line);
+    background-color: var(--lavaggio-paper);
+    background-image: var(--lavaggio-pattern);
+    background-size: 1440px auto;
+    background-position: center top;
+    background-repeat: repeat-x;
+}
+
+body.lavaggio-storefront .lm-campaign-grid > :is(.wl-mens-campaign, .wl-sunglasses-campaign)::before { background-image: none; }
+body.lavaggio-storefront :is(.wl-mens-campaign, .wl-sunglasses-campaign) :is(.lm-campaign-title, .wl-campaign-title) { color: var(--lavaggio-heading); }
+body.lavaggio-storefront :is(.wl-mens-campaign, .wl-sunglasses-campaign) .lm-campaign-copy > p:not(.lm-eyebrow) { color: var(--lavaggio-muted); }
+body.lavaggio-storefront .lavaggio-main-campaign .lm-campaign-copy {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding-bottom: clamp(25px, 2.5vw, 44px);
+}
+body.lavaggio-storefront .lavaggio-main-campaign .wl-campaign-title {
+    max-width: 15ch;
+    white-space: normal;
+    text-wrap: balance;
+}
+body.lavaggio-storefront :is(.lavaggio-care-campaign, .lavaggio-pro-campaign) .lm-campaign-copy {
+    width: 100%;
+    max-width: none;
+    padding-right: 34px;
+}
+body.lavaggio-storefront :is(.lavaggio-care-campaign, .lavaggio-pro-campaign) .wl-campaign-title { max-width: 24ch; }
+body.lavaggio-storefront :is(.lavaggio-care-campaign, .lavaggio-pro-campaign) .lm-campaign-copy > p:not(.lm-eyebrow) { max-width: 46ch; }
+body.lavaggio-storefront .lavaggio-empty-copy { margin-top: 14px; color: var(--lavaggio-muted); font-size: 15px; line-height: 1.7; }
+body.lavaggio-storefront .site-footer-newsletter { background-color: var(--lavaggio-paper); box-shadow: 0 0 0 100vmax var(--lavaggio-paper); }
+body.lavaggio-storefront .site-footer-newsletter input[type="email"] { border-color: var(--lavaggio-line-strong); }
+
+/* Match the original site's dark footer without moving its shop columns. */
+html[data-theme] body.lavaggio-storefront .site-footer { --herrera-footer: var(--lavaggio-footer); background: var(--lavaggio-footer); color: #cbd5e1; }
+html[data-theme] body.lavaggio-storefront .site-footer :is(.site-footer-links, .site-footer-mobile-links, .site-footer-payments, .site-footer-benefits, .store-footer-bottom, .legal-warranty-notice--footer) { border-color: #293043; background: var(--lavaggio-footer); box-shadow: 0 0 0 100vmax var(--lavaggio-footer); }
+html[data-theme] body.lavaggio-storefront .site-footer :is(.site-footer-contact-title, .site-footer-column-title, .site-footer-benefit p, .site-footer-mobile-links > details > summary) { color: #fff; }
+html[data-theme] body.lavaggio-storefront .site-footer :is(.site-footer-contact-details, .site-footer-contact-intro, .site-footer-link-list, .store-footer-bottom, .legal-warranty-notice--footer a) { color: #cbd5e1; }
+html[data-theme] body.lavaggio-storefront .site-footer-mobile-links { --reading-slate-500: #a5aec0; --reading-slate-600: #cbd5e1; --reading-slate-700: #aeb3db; --reading-slate-900: #fff; }
+html[data-theme] body.lavaggio-storefront .site-footer-mobile-section { border-color: #293043; background: var(--lavaggio-footer); }
+html[data-theme] body.lavaggio-storefront .site-footer-mobile-links :is(p, summary > span) { color: #cbd5e1; }
+html[data-theme] body.lavaggio-storefront .site-footer :is(.site-footer-link-list a, .herrera-footer-socials a, .site-footer-mobile-links a, .legal-warranty-notice--footer svg),
+html[data-theme] body.lavaggio-storefront .site-footer a.site-footer-contact-phone,
+html[data-theme] body.lavaggio-storefront .site-footer .site-footer-mobile-links a[href^="tel:"] { --reading-slate-700: #aeb3db; --reading-slate-900: #aeb3db; color: #aeb3db; }
+html[data-theme] body.lavaggio-storefront .site-footer a:is(:hover, :focus-visible) { color: #fff; }
+html[data-theme] body.lavaggio-storefront .site-footer .site-footer-socials a { background: #20243c; color: #c4c8e4; }
+html[data-theme] body.lavaggio-storefront .site-footer .site-footer-socials a:is(:hover, :focus-visible) { background: var(--lavaggio-primary); color: #fff; }
+html[data-theme] body.lavaggio-storefront .site-footer .store-footer-creator-link img { filter: brightness(0) invert(1); }
+body.lavaggio-storefront :is(.lm-footer-benefits, .lm-footer-benefits .lm-benefits) { background: var(--lavaggio-footer); }
+html[data-theme] body.lavaggio-storefront .site-footer .wl-footer-benefits { border-color: #293043; }
+html[data-theme] body.lavaggio-storefront .wl-footer-benefits .lm-benefits > :is(a, div) { color: #fff; }
+html[data-theme] body.lavaggio-storefront .wl-footer-benefits .lm-benefits small { color: #cbd5e1; }
+html[data-theme] body.lavaggio-storefront .wl-footer-benefits .lm-benefits svg { color: #aeb3db; }
+
+/* Consent dialog and floating controls share the same local font and palette. */
+html[data-theme] body.lavaggio-storefront #cc-main {
+    --cc-font-family: var(--herrera-font-family);
+    --cookie-footer-blue: var(--lavaggio-primary);
+    --cookie-footer-blue-dark: var(--lavaggio-primary-hover);
+    --cookie-footer-orange: var(--lavaggio-primary);
+    --cookie-footer-orange-text: #fff;
+    --cc-bg: #fff;
+    --cc-primary-color: var(--lavaggio-ink);
+    --cc-secondary-color: var(--lavaggio-muted);
+    --cc-link-color: var(--lavaggio-primary);
+    --cc-btn-primary-bg: var(--lavaggio-primary);
+    --cc-btn-primary-color: #fff;
+    --cc-btn-primary-border-color: var(--lavaggio-primary);
+    --cc-btn-primary-hover-bg: var(--lavaggio-primary-hover);
+    --cc-btn-primary-hover-color: #fff;
+    --cc-btn-primary-hover-border-color: var(--lavaggio-primary-hover);
+    --cc-btn-secondary-bg: #fff;
+    --cc-btn-secondary-color: var(--lavaggio-primary);
+    --cc-btn-secondary-border-color: var(--lavaggio-primary);
+    --cc-btn-secondary-hover-bg: var(--lavaggio-paper);
+    --cc-btn-secondary-hover-color: var(--lavaggio-primary-hover);
+    --cc-btn-secondary-hover-border-color: var(--lavaggio-primary-hover);
+    --cc-separator-border-color: var(--lavaggio-line);
+    --cc-toggle-on-bg: var(--lavaggio-primary);
+    --cc-cookie-category-block-bg: var(--lavaggio-paper);
+    --cc-cookie-category-block-border: var(--lavaggio-line);
+    --cc-cookie-category-block-hover-bg: #e9eaf5;
+    --cc-cookie-category-block-hover-border: var(--lavaggio-line-strong);
+    --cc-cookie-category-expanded-block-hover-bg: #e9eaf5;
+    --cc-footer-bg: #fff;
+    --cc-footer-border-color: var(--lavaggio-line);
+}
+html[data-theme] body.lavaggio-storefront #cc-main :is(.cm__title, .cm__desc) { color: var(--lavaggio-ink); }
+html[data-theme] body.lavaggio-storefront #cc-main :is(.cm__footer, .pm__footer) { border-color: var(--lavaggio-line); background: #fff; }
+body.lavaggio-storefront #cookie-consent-floating-button { background: var(--lavaggio-primary); box-shadow: 0 10px 22px rgb(132 138 196 / 22%); }
+body.lavaggio-storefront #cookie-consent-floating-button:is(:hover, :focus-visible) { background: var(--lavaggio-primary-hover); box-shadow: 0 14px 26px rgb(132 138 196 / 28%); }
+body.lavaggio-storefront .scroll-to-top-button:hover { background: var(--lavaggio-primary-hover); color: #fff; }
+
+@media (max-width: 767px) {
+    body.lavaggio-storefront :is(.wl-hero, .lm-campaign, .wl-category-art),
+    body.lavaggio-storefront .lm-campaign-grid > :is(.wl-mens-campaign, .wl-sunglasses-campaign) { background-size: auto 194px; }
+}
+
+@media (max-width: 639px) {
+    body.lavaggio-storefront .lavaggio-main-campaign { min-height: 360px; }
+    body.lavaggio-storefront .lavaggio-main-campaign .lm-campaign-copy { padding-bottom: 26px; }
+    body.lavaggio-storefront .lavaggio-main-campaign .wl-campaign-title { font-size: 34px; }
+    body.lavaggio-storefront :is(.lavaggio-care-campaign, .lavaggio-pro-campaign) .lm-campaign-copy { padding-right: 22px; }
+}

@@ -17,7 +17,12 @@
     $legacySiteIcon = trim((string) ($branding['favicon_url'] ?? ''));
     $siteManifestUrl = null;
     $siteSvgIcon = null;
-    if ($usesWatchlineIcons) {
+    if (config('storefront.home') === 'lavaggio') {
+        $iconPath = 'assets/lavaggio/favicon.svg';
+        $siteSvgIcon = asset($iconPath).'?v='.filemtime(public_path($iconPath));
+        $siteIcons = [];
+        $legacySiteIcon = '';
+    } elseif ($usesWatchlineIcons) {
         $versionedWatchlineIcon = static function (string $filename): string {
             $path = 'assets/brand/'.$filename;
 

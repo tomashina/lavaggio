@@ -1,4 +1,4 @@
-@if (config('storefront.home') === 'watchline')
+@if (in_array(config('storefront.home'), ['watchline', 'lavaggio'], true))
     @once('watchline-stock-notification-assets')
         @push('styles')
             <link rel="stylesheet" href="{{ asset('front-theme/styles/stock-notifications.css') }}?v={{ filemtime(public_path('front-theme/styles/stock-notifications.css')) }}">

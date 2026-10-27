@@ -13,7 +13,7 @@
         $storefrontAssetVersion = app(\App\Support\AssetVersion::class)->current();
     @endphp
     @if (\App\Support\StorefrontTheme::usesHerreraLayout((string) ($storeSettings['branding']['store_name'] ?? config('app.name'))))
-        @unless (\App\Support\StorefrontTheme::usesLibermediaBrand() && config('storefront.home') !== 'watchline')
+        @unless (\App\Support\StorefrontTheme::usesLibermediaBrand() && ! in_array(config('storefront.home'), ['watchline', 'lavaggio'], true))
         <script data-storefront-page-reveal-boot>
             (() => {
                 const root = document.documentElement;
@@ -31,7 +31,9 @@
         </script>
         <script defer src="{{ asset('front-theme/scripts/storefront-page-reveal.js') }}?v={{ filemtime(public_path('front-theme/scripts/storefront-page-reveal.js')) }}"></script>
         @endunless
-        <link rel="preload" href="{{ asset('assets/fonts/sora/Sora-Variable.woff2') }}" as="font" type="font/woff2" crossorigin>
+        @unless (config('storefront.home') === 'lavaggio')
+            <link rel="preload" href="{{ asset('assets/fonts/sora/Sora-Variable.woff2') }}" as="font" type="font/woff2" crossorigin>
+        @endunless
     @endif
     <script defer src="{{ asset('front-theme/scripts/desktop-header-menu.js') }}?v={{ filemtime(public_path('front-theme/scripts/desktop-header-menu.js')) }}"></script>
     <script defer src="{{ asset('front-theme/scripts/header-search-panel.js') }}?v={{ filemtime(public_path('front-theme/scripts/header-search-panel.js')) }}"></script>
@@ -63,7 +65,7 @@
     @if ($storeSettings['legal_warranty']['enabled'] ?? false)
         <link rel="stylesheet" href="{{ asset('front-theme/styles/legal-warranty.css') }}?v={{ filemtime(public_path('front-theme/styles/legal-warranty.css')) }}">
     @endif
-    @unless (config('storefront.home') === 'watchline')
+    @unless (in_array(config('storefront.home'), ['watchline', 'lavaggio'], true))
         <link rel="stylesheet" href="{{ asset('front-theme/styles/stock-notifications.css') }}?v={{ filemtime(public_path('front-theme/styles/stock-notifications.css')) }}">
     @endunless
     @stack('styles')
@@ -84,11 +86,15 @@
             <link rel="stylesheet" href="{{ asset('front-theme/styles/libermedia-home-modules.css') }}?v={{ filemtime(public_path('front-theme/styles/libermedia-home-modules.css')) }}">
         @endif
     @endif
-    @if (config('storefront.home') === 'watchline')
+    @if (in_array(config('storefront.home'), ['watchline', 'lavaggio'], true))
         <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-pages.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-pages.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-commerce.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-commerce.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-notice-bars.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-notice-bars.css')) }}">
+    @endif
+    @if (config('storefront.home') === 'lavaggio')
+        <link rel="preload" href="{{ asset('assets/lavaggio/fonts/Satoshi-Variable.woff2') }}" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio.css')) }}">
     @endif
 </head>
 @php
@@ -103,7 +109,8 @@
     $isHerreraBrand = str_contains(strtolower($storeBrandName), 'herrera');
     $herreraStorefront = \App\Support\StorefrontTheme::usesHerreraLayout($storeBrandName);
     $libermediaStorefront = \App\Support\StorefrontTheme::usesLibermediaBrand($storeBrandName);
-    $watchlineStorefront = config('storefront.home') === 'watchline';
+    $watchlineStorefront = in_array(config('storefront.home'), ['watchline', 'lavaggio'], true);
+    $lavaggioStorefront = config('storefront.home') === 'lavaggio';
     $storeBrandLogoUrl = trim((string) ($storeSettings['branding']['logo_url'] ?? ''));
     $storeBrandDarkLogoUrl = trim((string) ($storeSettings['branding']['dark_logo_url'] ?? '')) ?: ($isHerreraBrand && parse_url($storeBrandLogoUrl, PHP_URL_PATH) === '/assets/brand/herrera-logo.svg'
         ? asset('assets/brand/herrera-logo-dark.svg').'?v='.filemtime(public_path('assets/brand/herrera-logo-dark.svg'))
@@ -127,12 +134,12 @@
     $searchAutocompleteEnabled = (bool) app(\App\Services\Settings\SystemSettingsService::class)
         ->get('store_search_autocomplete_enabled', false);
 @endphp
-<body class="storefront {{ $herreraStorefront ? 'herrera-storefront' : '' }}{{ \App\Support\StorefrontTheme::usesLibermediaBrand($storeBrandName) ? ' libermedia-storefront' : '' }}{{ config('storefront.home') === 'watchline' ? ' watchline-storefront' : '' }} min-h-screen overflow-x-hidden bg-white text-slate-900 antialiased @yield('body_class')">
+<body class="storefront {{ $herreraStorefront ? 'herrera-storefront' : '' }}{{ \App\Support\StorefrontTheme::usesLibermediaBrand($storeBrandName) ? ' libermedia-storefront' : '' }}{{ $watchlineStorefront ? ' watchline-storefront' : '' }}{{ $lavaggioStorefront ? ' lavaggio-storefront' : '' }} min-h-screen overflow-x-hidden bg-white text-slate-900 antialiased @yield('body_class')">
 @if ($herreraStorefront)
     <div class="herrera-page-loader" data-storefront-page-loader @if ($watchlineStorefront) data-watchline-page-loader @endif aria-hidden="true">
         @if ($watchlineStorefront)
             <div class="watchline-page-loader-content">
-                <img src="{{ asset('assets/brand/watchline-logo.svg') }}?v={{ filemtime(public_path('assets/brand/watchline-logo.svg')) }}" alt="" width="225" height="110" decoding="async">
+                <img src="{{ $storeBrandLogoUrl }}" alt="" width="{{ $storeBrandLogoWidth }}" height="{{ $storeBrandLogoHeight }}" decoding="async">
         @endif
         <span class="herrera-page-loader-dots"><span></span><span></span><span></span></span>
         @if ($watchlineStorefront)
@@ -244,7 +251,7 @@
             @if ($herreraStorefront)
                 <nav class="herrera-primary-navigation" aria-label="{{ __('herrera.header.main_navigation') }}" data-herrera-primary-navigation>
                     @foreach ($mainNavigation as $item)
-                        @continue(($item['type'] ?? '') === 'catalog' || (config('storefront.home') === 'watchline' && ($item['type'] ?? '') === 'category'))
+                        @continue(($item['type'] ?? '') === 'catalog' || ($watchlineStorefront && ($item['type'] ?? '') === 'category'))
                         <a
                             href="{{ $item['url'] ?? '#' }}"
                             @if (!empty($item['open_in_new_tab'])) target="_blank" rel="noopener noreferrer" @endif
@@ -260,7 +267,7 @@
                     @endforeach
                     @include('front.partials.resource-navigation', ['resourceHerreraPrimary' => true, 'resourceMobile' => false])
                 </nav>
-                @if (config('storefront.home') === 'watchline')
+                @if ($watchlineStorefront)
                     <nav class="herrera-catalog-navigation watchline-desktop-categories" aria-label="{{ __('Kategorije proizvoda') }}">
                         @include('front.desktop.partials.watchline-category-nav', ['watchlineNavSurface' => 'desktop'])
                     </nav>
@@ -861,7 +868,7 @@
                 © {{ now()->year }} {{ $storeName }}. {{ $copyrightText }}
             </div>
             <div class="store-footer-bottom-links flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-                @if ($libermediaStorefront)
+                @if ($libermediaStorefront && ! $lavaggioStorefront)
                     @include('front.partials.libermedia-payment-logos')
                 @endif
                 @foreach ($bottomLinks as $link)
@@ -1243,7 +1250,7 @@
     <script defer src="{{ asset('front-theme/scripts/scroll-to-top.js') }}?v={{ filemtime(public_path('front-theme/scripts/scroll-to-top.js')) }}"></script>
 @endif
 @stack('stock-notification-modals')
-@unless (config('storefront.home') === 'watchline')
+@unless ($watchlineStorefront)
     <script defer src="{{ asset('front-theme/scripts/stock-notifications.js') }}?v={{ filemtime(public_path('front-theme/scripts/stock-notifications.js')) }}"></script>
 @endunless
 @stack('scripts')

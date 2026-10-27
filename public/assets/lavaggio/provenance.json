@@ -1,0 +1,47 @@
+{
+  "source": "https://www.lavaggio.hr/",
+  "retrieved_on": "2026-10-27",
+  "theme_source": "https://www.lavaggio.hr/assets/lavaggio/css/theme.css?v=1.2",
+  "identity": {
+    "primary": "#848ac4",
+    "primary_hover": "#13100d",
+    "text": "#13100d",
+    "heading": "#1e293b",
+    "footer": "#020617",
+    "font": "Satoshi"
+  },
+  "assets": [
+    {
+      "path": "images/logo/lavaggio-logo-dark.svg",
+      "source": "https://www.lavaggio.hr/assets/lavaggio/images/logo/lavaggio_logo_black.svg"
+    },
+    {
+      "path": "images/logo/lavaggio-logo-light.svg",
+      "source": "https://www.lavaggio.hr/assets/lavaggio/images/logo/lavaggio_logo.svg"
+    },
+    {
+      "path": "images/pattern/pattern-square.svg",
+      "source": "https://www.lavaggio.hr/assets/lavaggio/images/pattern/pattern-square.svg"
+    },
+    {
+      "path": "fonts/Satoshi-Variable.woff2",
+      "source": "https://www.lavaggio.hr/assets/lavaggio/fonts/fonts/Satoshi-Variable.woff2"
+    },
+    {
+      "path": "fonts/Satoshi-VariableItalic.woff2",
+      "source": "https://www.lavaggio.hr/assets/lavaggio/fonts/fonts/Satoshi-VariableItalic.woff2"
+    },
+    {
+      "path": "favicon.svg",
+      "source": "https://www.lavaggio.hr/favicon.svg"
+    },
+    {
+      "path": "favicon-96x96.png",
+      "source": "https://www.lavaggio.hr/favicon-96x96.png"
+    },
+    {
+      "path": "apple-touch-icon.png",
+      "source": "https://www.lavaggio.hr/apple-touch-icon.png"
+    }
+  ]
+}

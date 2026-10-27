@@ -1,0 +1,51 @@
+/* Lavaggio staff login keeps the existing authentication form layout. */
+body.lavaggio-auth.lavaggio-storefront {
+    --commerce-accent: #848ac4;
+    --commerce-accent-hover: #13100d;
+    --commerce-accent-soft: #f3f3f9;
+    --commerce-orange: #848ac4;
+    --commerce-border: #e2e8f0;
+    --commerce-border-strong: #c2c5dc;
+    --commerce-ink: #13100d;
+    --commerce-muted: #64748b;
+    --commerce-form-surface: #fff;
+    background: #f8fafc;
+    color: #13100d;
+    font-family: "Satoshi", Arial, Helvetica, sans-serif;
+}
+
+body.lavaggio-auth::before {
+    background: url("/assets/lavaggio/images/pattern/pattern-square.svg") center top / 1440px auto repeat-x;
+}
+
+body.lavaggio-auth .store-auth-header {
+    border-top-color: #848ac4;
+    border-bottom-color: #e2e8f0;
+    background: #fff;
+}
+
+body.lavaggio-auth :is(.store-auth-back-link, .store-auth-footer a, .store-auth-hero > p, .store-auth-checkbox) { color: #64748b; }
+body.lavaggio-auth :is(.store-auth-back-link, .store-auth-footer a):hover { color: #848ac4; }
+body.lavaggio-auth :is(.store-auth-back-link, .store-auth-footer a):focus-visible { outline-color: rgb(132 138 196 / 28%); }
+body.lavaggio-auth .store-auth-main { border-color: #e2e8f0; background: #fff; box-shadow: 0 16px 50px rgb(132 138 196 / 8%), 0 2px 6px rgb(19 16 13 / 3%); }
+body.lavaggio-auth .store-auth-hero h1 { color: #1e293b; }
+body.lavaggio-auth .store-auth-field > label { color: #334155; }
+body.lavaggio-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) { border-color: #c2c5dc; color: #13100d; }
+body.lavaggio-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):hover { border-color: #848ac4; }
+body.lavaggio-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):focus { border-color: #848ac4; outline-color: rgb(132 138 196 / 20%); }
+body.lavaggio-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])[aria-invalid="true"] { border-color: #be123c; }
+body.lavaggio-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])[aria-invalid="true"]:focus { outline-color: rgb(190 18 60 / 14%); }
+body.lavaggio-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):-webkit-autofill { -webkit-text-fill-color: #13100d; caret-color: #13100d; box-shadow: 0 0 0 1000px #f5f5fb inset; }
+body.lavaggio-auth .commerce-main .store-auth-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):autofill { background: #f5f5fb; color: #13100d; }
+body.lavaggio-auth .store-auth-checkbox input { border-color: #b2b6d2; accent-color: #848ac4; color: #848ac4; }
+body.lavaggio-auth .store-auth-checkbox input:focus-visible { outline-color: rgb(132 138 196 / 24%); }
+body.lavaggio-auth .store-auth-hint { color: #64748b; }
+body.lavaggio-auth .store-auth-submit { border-color: #848ac4; background: #848ac4; color: #fff; }
+body.lavaggio-auth .store-auth-submit:hover { border-color: #13100d; background: #13100d; color: #fff; }
+body.lavaggio-auth .store-auth-submit:focus-visible { outline-color: rgb(132 138 196 / 32%); }
+body.lavaggio-auth .store-auth-status { border-color: #d7d9ed; background: #f3f3f9; color: #4f568f; }
+body.lavaggio-auth .store-auth-footer { border-color: #e2e8f0; color: #64748b; }
+
+@media (max-width: 640px) {
+    body.lavaggio-auth::before { background-position: center top; background-size: auto 194px; }
+}

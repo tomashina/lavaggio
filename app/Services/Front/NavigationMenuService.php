@@ -42,13 +42,15 @@ class NavigationMenuService
         $fallbackLocale = strtolower((string) config('app.locale', 'en'));
         $isHerreraStore = \App\Support\StorefrontTheme::usesHerreraLayout((string) $this->settings->get('store_brand_name', config('app.name', 'AG Shop')));
         $isWatchlineStore = config('storefront.home') === 'watchline';
+        $isLavaggioStore = config('storefront.home') === 'lavaggio';
         $items = collect($this->configuredItems())
             ->filter(fn ($item): bool => (bool) ($item['is_active'] ?? true))
+            ->reject(fn ($item): bool => $isLavaggioStore && in_array($item['type'] ?? '', ['category', 'catalog'], true))
             ->sortBy(fn ($item): int => (int) ($item['sort_order'] ?? 0))
             ->values();
         $revision = '';
         $publicStore = null;
-        if ((bool) config('storefront_cache.enabled', false)) {
+        if (! $isLavaggioStore && (bool) config('storefront_cache.enabled', false)) {
             try {
                 $revision = app(GuestStorefrontCache::class)->revision();
                 $publicStore = Cache::store(config('storefront_cache.store') ?: config('cache.default'));
@@ -60,11 +62,11 @@ class NavigationMenuService
             'category-navigation-depth-v4', $isHerreraStore, $isWatchlineStore, $locale, $fallbackLocale, request()->getSchemeAndHttpHost(), config('app.url'), $revision, $items->all(),
         ]));
 
-        if (isset($this->resolvedCache[$cacheKey])) {
+        if (! $isLavaggioStore && isset($this->resolvedCache[$cacheKey])) {
             return $this->resolvedCache[$cacheKey];
         }
 
-        if ($items->isEmpty()) {
+        if (! $isLavaggioStore && $items->isEmpty()) {
             return $this->resolvedCache[$cacheKey] = [];
         }
 
@@ -110,8 +112,23 @@ class NavigationMenuService
             ->orderBy('_lft')
             ->get();
 
+        if ($isLavaggioStore) {
+            // Catalog edits control this menu directly, including empty categories.
+            $automaticItems = $categories
+                ->filter(fn (Category $category): bool => $category->parent_id === null && $category->show_in_menu)
+                ->sortBy(fn (Category $category): array => [(int) $category->sort_order, (int) $category->id])
+                ->map(fn (Category $category): array => [
+                    'type' => 'category',
+                    'category_id' => (int) $category->id,
+                    'show_dropdown' => true,
+                    'icon' => '',
+                    'align_right' => false,
+                ]);
+            $items = $automaticItems->concat($items)->values();
+        }
+
         $categoriesById = $categories->keyBy('id');
-        if ($isHerreraStore && ! \App\Support\StorefrontTheme::usesLibermediaBrand() && $categories->isNotEmpty()
+        if (! $isLavaggioStore && $isHerreraStore && ! \App\Support\StorefrontTheme::usesLibermediaBrand() && $categories->isNotEmpty()
             && $items->contains(fn ($item): bool => in_array($item['type'] ?? '', ['category', 'catalog'], true))) {
             // Fetch only populated category IDs once; propagate presence up the loaded tree.
             $populatedIds = Product::query()
@@ -262,7 +279,7 @@ class NavigationMenuService
             }
         }
 
-        return $this->resolvedCache[$cacheKey] = $resolved;
+        return $isLavaggioStore ? $resolved : $this->resolvedCache[$cacheKey] = $resolved;
     }
 
     /**

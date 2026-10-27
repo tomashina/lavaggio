@@ -523,7 +523,8 @@ class StoreSettingsService
             return $path;
         }
 
-        if (str_starts_with($path, 'assets/brand/') && ! str_contains($path, '..') && is_file(public_path($path))) {
+        if ((str_starts_with($path, 'assets/brand/') || str_starts_with($path, 'assets/lavaggio/'))
+            && ! str_contains($path, '..') && is_file(public_path($path))) {
             return asset($path);
         }
 
@@ -537,9 +538,15 @@ class StoreSettingsService
     {
         $pageIds = [];
         $categoryIds = [];
+        $columnCategoryIds = [];
         foreach ([1, 2, 3] as $col) {
             $pageIds = array_merge($pageIds, $this->normalizeIdList($this->settings->get('store_footer_col_'.$col.'_page_ids', [])));
-            $categoryIds = array_merge($categoryIds, $this->normalizeIdList($this->settings->get('store_footer_col_'.$col.'_category_ids', [])));
+            $columnCategoryIds[$col] = $col === 1 && config('storefront.home') === 'lavaggio'
+                ? Category::query()->where('scope', Category::SCOPE_CATALOG)->currentlyVisible()
+                    ->whereNull('parent_id')->where('show_in_menu', true)
+                    ->orderBy('sort_order')->orderBy('id')->pluck('id')->all()
+                : $this->normalizeIdList($this->settings->get('store_footer_col_'.$col.'_category_ids', []));
+            $categoryIds = array_merge($categoryIds, $columnCategoryIds[$col]);
         }
         $pageIds = array_values(array_unique($pageIds));
         $categoryIds = array_values(array_unique($categoryIds));
@@ -587,7 +594,7 @@ class StoreSettingsService
             }
 
             $links = [];
-            foreach ($this->normalizeIdList($this->settings->get('store_footer_col_'.$col.'_category_ids', [])) as $categoryId) {
+            foreach ($columnCategoryIds[$col] as $categoryId) {
                 $entry = $categoryMap[(int) $categoryId] ?? null;
                 if (is_array($entry)) {
                     $links[] = $entry;

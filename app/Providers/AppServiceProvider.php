@@ -183,6 +183,11 @@ class AppServiceProvider extends ServiceProvider
             }
 
             static $shared = null;
+            static $sharedRequest = null;
+            if ($sharedRequest !== request()) {
+                $sharedRequest = request();
+                $shared = null;
+            }
 
             if ($shared !== null) {
                 $view->with('wishlistProductMap', $shared['wishlistProductMap']);

@@ -93,7 +93,9 @@
             ->contains(fn ($item) => (string) data_get($item, 'block.type') === 'popular_brands');
     @endphp
 
-    @if ($isWatchlineHome)
+    @if (config('storefront.home') === 'lavaggio')
+        @include('front.partials.lavaggio-home')
+    @elseif ($isWatchlineHome)
         <section class="wl-home-opening" data-watchline-home-widgets>
             @include('front.partials.herrera-home-placement', ['items' => $homeContentBlocks])
         </section>
