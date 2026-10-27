@@ -8,7 +8,7 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header.is-sticky {
     isolation: isolate;
     width: 100%;
     margin: 0;
-    padding: 0 20px 22px;
+    padding: 0 var(--herrera-layout-gutter, 16px) 22px;
     border: 0;
     background: transparent;
     box-shadow: none;
@@ -32,8 +32,8 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header + .site-main-header-s
 
 html[data-theme] body.lavaggio-storefront .lavaggio-header-topbar {
     position: relative;
-    margin-inline: -20px;
-    padding-inline: 20px;
+    margin-inline: calc(-1 * var(--herrera-layout-gutter, 16px));
+    padding-inline: var(--herrera-layout-gutter, 16px);
     background: #f3f3f9;
     color: #475569;
     font-size: 12px;
@@ -46,7 +46,7 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-topbar-inner {
     align-items: center;
     gap: 20px;
     width: 100%;
-    max-width: var(--header-content-width, 1860px);
+    max-width: calc(var(--storefront-container-width, 1860px) - 2 * var(--herrera-layout-gutter, 16px));
     min-height: var(--lavaggio-header-topbar-height);
     margin-inline: auto;
 }
@@ -96,7 +96,7 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-card {
     align-items: center;
     gap: clamp(22px, 3vw, 44px);
     width: 100%;
-    max-width: var(--header-content-width, 1860px);
+    max-width: calc(var(--storefront-container-width, 1860px) - 2 * var(--herrera-layout-gutter, 16px));
     min-height: 80px;
     margin: 22px auto 0;
     padding: 14px 16px;
@@ -313,13 +313,13 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-count {
 @media (max-width: 1023px) {
     html[data-theme] body.lavaggio-storefront .lavaggio-header,
     html[data-theme] body.lavaggio-storefront .lavaggio-header.is-sticky {
-        padding-inline: 16px;
+        padding-inline: var(--herrera-layout-gutter, 16px);
         padding-bottom: 16px;
     }
 
     html[data-theme] body.lavaggio-storefront .lavaggio-header-topbar {
-        margin-inline: -16px;
-        padding-inline: 16px;
+        margin-inline: calc(-1 * var(--herrera-layout-gutter, 16px));
+        padding-inline: var(--herrera-layout-gutter, 16px);
     }
 
     html[data-theme] body.lavaggio-storefront .lavaggio-header-topbar-inner {
@@ -365,13 +365,13 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-count {
 @media (max-width: 479px) {
     html[data-theme] body.lavaggio-storefront .lavaggio-header,
     html[data-theme] body.lavaggio-storefront .lavaggio-header.is-sticky {
-        padding-inline: 12px;
+        padding-inline: var(--herrera-layout-gutter, 16px);
         padding-bottom: 12px;
     }
 
     html[data-theme] body.lavaggio-storefront .lavaggio-header-topbar {
-        margin-inline: -12px;
-        padding-inline: 12px;
+        margin-inline: calc(-1 * var(--herrera-layout-gutter, 16px));
+        padding-inline: var(--herrera-layout-gutter, 16px);
         font-size: 11px;
     }
 
