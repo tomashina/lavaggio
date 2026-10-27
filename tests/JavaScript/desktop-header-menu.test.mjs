@@ -594,6 +594,18 @@ test('initial pageshow leaves an already opened mobile menu visible', () => {
     assert.equal(page.document.body.classList.contains('overflow-hidden'), true);
 });
 
+test('Lavaggio keeps its drawer through tablet widths and closes it at the desktop breakpoint', () => {
+    const page = harness({ lavaggioStorefront: true });
+    page.window.innerWidth = 1100;
+    page.open();
+    page.window.emit('resize');
+    assert.equal(page.root.dataset.menuOpen, '1');
+    page.window.innerWidth = 1280;
+    page.window.emit('resize');
+    assert.equal(page.root.dataset.menuOpen, '0');
+    assert.equal(page.document.body.classList.contains('overflow-hidden'), false);
+});
+
 test('BFCache restoration closes the previous menu without duplicate input handlers', () => {
     const page = harness();
     page.open();

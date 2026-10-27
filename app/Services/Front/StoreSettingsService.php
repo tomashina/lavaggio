@@ -613,6 +613,17 @@ class StoreSettingsService
                 $fallbackLocale
             )));
 
+            if ($col === 2 && config('storefront.home') === 'lavaggio') {
+                $links = collect(app(NavigationMenuService::class)->storefrontItemsForLocale($locale))
+                    ->reject(fn (array $item): bool => in_array($item['type'] ?? '', ['category', 'catalog'], true))
+                    ->map(fn (array $item): array => [
+                        'label' => $item['label'],
+                        'url' => $item['url'],
+                        'type' => $item['type'],
+                        'open_in_new_tab' => (bool) ($item['open_in_new_tab'] ?? false),
+                    ])->values()->all();
+            }
+
             $result[] = [
                 'title' => $title,
                 'links' => $links,

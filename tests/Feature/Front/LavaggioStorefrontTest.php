@@ -64,7 +64,7 @@ class LavaggioStorefrontTest extends TestCase
             ->assertDontSee('watchline-favicon');
     }
 
-    public function test_admin_categories_render_in_the_existing_desktop_category_row(): void
+    public function test_catalog_categories_render_under_web_shop_on_desktop_and_mobile(): void
     {
         $category = Category::create([
             'scope' => 'catalog', 'code' => 'njega', 'is_active' => true, 'show_in_menu' => true,
@@ -72,15 +72,33 @@ class LavaggioStorefrontTest extends TestCase
         $category->translations()->create([
             'scope' => 'catalog', 'locale' => 'hr', 'name' => 'Njega', 'slug' => 'njega',
         ]);
+        $child = Category::create([
+            'scope' => 'catalog', 'code' => 'omeksivaci', 'parent_id' => $category->id,
+            'is_active' => true, 'show_in_menu' => true,
+        ]);
+        $child->translations()->create([
+            'scope' => 'catalog', 'locale' => 'hr', 'name' => 'Omekšivači', 'slug' => 'omeksivaci',
+        ]);
 
         $response = $this->get(route('home'))->assertOk();
         $document = new \DOMDocument;
         @$document->loadHTML($response->getContent());
         $xpath = new \DOMXPath($document);
-        $links = $xpath->query('//nav[contains(@class,"watchline-desktop-categories")]//a[@data-watchline-category-link]');
+        $triggers = $xpath->query('//nav[contains(@class,"lavaggio-header-navigation")]//button[@data-lavaggio-catalog-trigger]');
+        $this->assertSame(1, $triggers->length);
+        $this->assertStringContainsString('Web shop', $triggers->item(0)->textContent);
+        $this->assertSame('false', $triggers->item(0)->getAttribute('aria-expanded'));
+        $links = $xpath->query('//*[@data-lavaggio-catalog-menu]//a[@data-lavaggio-catalog-root]');
         $this->assertSame(1, $links->length);
-        $this->assertSame('Njega', $links->item(0)->textContent);
+        $this->assertSame('Njega', trim($links->item(0)->textContent));
         $this->assertSame(route('categories.show', 'njega'), $links->item(0)->getAttribute('href'));
+        $this->assertSame(1, $xpath->query('//*[@data-lavaggio-catalog-panel]//a[@href="'.route('categories.show', 'omeksivaci').'"]')->length);
+        $this->assertSame(0, $xpath->query('//*[@data-lavaggio-catalog-menu]//img')->length);
+        $mobileCatalog = '//*[@data-mobile-menu-panel]//details[@data-mobile-menu-catalog]';
+        $this->assertSame(1, $xpath->query($mobileCatalog)->length);
+        $this->assertStringContainsString('Web shop', $xpath->query($mobileCatalog.'/summary')->item(0)->textContent);
+        $this->assertSame(1, $xpath->query($mobileCatalog.'//a[@href="'.route('categories.show', 'njega').'"]')->length);
+        $this->assertSame(1, $xpath->query($mobileCatalog.'//a[@href="'.route('categories.show', 'omeksivaci').'"]')->length);
 
         $category->update(['show_in_menu' => false]);
         $this->get(route('home'))->assertOk()

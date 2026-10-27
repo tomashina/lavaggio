@@ -1294,9 +1294,13 @@ class CatalogController extends Controller
         bool $availableOnly = false
     ) {
         $hideOutOfStock = $this->hideOutOfStockProducts() || $availableOnly;
+        $includeEmptyCategories = config('storefront.home') === 'lavaggio';
         $cacheKey = sprintf('front:catalog:categories:v3:%s:%s:%s:%s', $locale, $fallbackLocale, $this->localAvailabilityOnly ? 'local-48h' : ($hideOutOfStock ? 'hide-oos' : 'all-stock'), config('storefront.home') === 'watchline' ? 'two-levels' : 'full-depth');
+        if ($includeEmptyCategories) {
+            $cacheKey .= ':include-empty';
+        }
 
-        return Cache::remember($this->publicSourceCacheKey($cacheKey), $this->publicSourceCacheSeconds(600), function () use ($locale, $fallbackLocale, $hideOutOfStock) {
+        return Cache::remember($this->publicSourceCacheKey($cacheKey), $this->publicSourceCacheSeconds(600), function () use ($locale, $fallbackLocale, $hideOutOfStock, $includeEmptyCategories) {
             return $this->categoryNavigationQuery(Category::query())
                 ->select(['id', 'code', 'sort_order'])
                 ->where('scope', Category::SCOPE_CATALOG)
@@ -1309,7 +1313,7 @@ class CatalogController extends Controller
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->get()
-                ->filter(fn (Category $category): bool => (int) $category->products_count > 0)
+                ->filter(fn (Category $category): bool => $includeEmptyCategories || (int) $category->products_count > 0)
                 ->values();
         });
     }
@@ -1332,9 +1336,13 @@ class CatalogController extends Controller
         bool $availableOnly = false
     ) {
         $hideOutOfStock = $this->hideOutOfStockProducts() || $availableOnly;
+        $includeEmptyCategories = config('storefront.home') === 'lavaggio';
         $cacheKey = sprintf('front:catalog:shop-root-categories:v2:%s:%s:%s', $locale, $fallbackLocale, $this->localAvailabilityOnly ? 'local-48h' : ($hideOutOfStock ? 'hide-oos' : 'all-stock'));
+        if ($includeEmptyCategories) {
+            $cacheKey .= ':include-empty';
+        }
 
-        return Cache::remember($this->publicSourceCacheKey($cacheKey), $this->publicSourceCacheSeconds(600), function () use ($locale, $fallbackLocale, $hideOutOfStock) {
+        return Cache::remember($this->publicSourceCacheKey($cacheKey), $this->publicSourceCacheSeconds(600), function () use ($locale, $fallbackLocale, $hideOutOfStock, $includeEmptyCategories) {
             $categories = Category::query()
                 ->select(['id', 'code', 'parent_id', 'sort_order'])
                 ->where('scope', Category::SCOPE_CATALOG)
@@ -1349,7 +1357,7 @@ class CatalogController extends Controller
                 ->get();
 
             return $this->withRecursiveCatalogProductCounts($categories, $hideOutOfStock)
-                ->filter(fn (Category $category): bool => (int) $category->products_count > 0)
+                ->filter(fn (Category $category): bool => $includeEmptyCategories || (int) $category->products_count > 0)
                 ->values();
         });
     }

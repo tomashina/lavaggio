@@ -33,6 +33,30 @@ class NavigationMenuService
         return array_values(array_filter($this->forLocale($locale), fn (array $item): bool => ($item['type'] ?? '') === 'category'));
     }
 
+    /** @return array<int, array<string, mixed>> */
+    public function storefrontItemsForLocale(string $locale): array
+    {
+        $items = $this->forLocale($locale);
+        if (config('storefront.home') !== 'lavaggio') {
+            return $items;
+        }
+
+        $shopUrl = route('shop.index');
+        $shopPaths = [rtrim($shopUrl, '/'), rtrim(route('shop.index', absolute: false), '/')];
+        $categories = array_values(array_filter($items, fn (array $item): bool => ($item['type'] ?? '') === 'category'));
+        $links = array_values(array_filter($items, fn (array $item): bool => ! in_array($item['type'] ?? '', ['category', 'catalog'], true)
+            && ! in_array(rtrim((string) ($item['url'] ?? ''), '/'), $shopPaths, true)));
+
+        return [[
+            'key' => 'lavaggio-catalog',
+            'type' => 'catalog',
+            'label' => 'Web shop',
+            'url' => $shopUrl,
+            'children' => $categories,
+            'open_in_new_tab' => false,
+        ], ...$links];
+    }
+
     /**
      * @return array<int, array<string, mixed>>
      */

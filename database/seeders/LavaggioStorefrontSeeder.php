@@ -33,13 +33,13 @@ class LavaggioStorefrontSeeder extends Seeder
             'store_footer_address' => "Bareda d.o.o.\nBarban 70\n52207 Barban\nOIB: 96889385802",
             'store_footer_hours' => '',
             'store_footer_bottom_copyright_text' => 'Lavaggio® · Sva prava pridržana.',
-            'store_footer_col_1_title' => 'Proizvodi',
-            'store_footer_col_1_title_translations' => ['hr' => 'Proizvodi'],
+            'store_footer_col_1_title' => 'Web shop',
+            'store_footer_col_1_title_translations' => ['hr' => 'Web shop'],
             'store_footer_col_1_category_ids' => [],
             'store_footer_col_2_title' => 'Informacije',
             'store_footer_col_2_title_translations' => ['hr' => 'Informacije'],
             'store_footer_col_2_page_ids' => [],
-            'store_footer_col_2_custom_links' => "O Lavaggiu|https://www.lavaggio.hr/o-praonici/tko-smo-mi\nKontakt|/contact",
+            'store_footer_col_2_custom_links' => '',
             'store_footer_col_3_title' => 'Korisne poveznice',
             'store_footer_col_3_title_translations' => ['hr' => 'Korisne poveznice'],
             'store_footer_col_3_custom_links' => 'Moj račun|'.route('front.auth.login', absolute: false)."\nKošarica|/cart\nLavaggio praonica|https://www.lavaggio.hr/",
@@ -93,11 +93,7 @@ class LavaggioStorefrontSeeder extends Seeder
             'lavaggio_home_pro_title' => 'Znanje iz praonice. Njega kod kuće.',
             'lavaggio_home_pro_description' => 'Tu smo za vaša pitanja o pranju i njezi rublja.',
             'lavaggio_home_empty_description' => 'Pripremamo proizvode za čisto, svježe i njegovano rublje. Uskoro više.',
-            NavigationMenuService::SETTINGS_KEY => [
-                ['type' => 'custom', 'label' => 'Svi proizvodi', 'url' => '/shop', 'is_active' => true, 'sort_order' => 100],
-                ['type' => 'custom', 'label' => 'Akcije', 'url' => '/akcije', 'is_active' => true, 'sort_order' => 110],
-                ['type' => 'contact', 'label' => 'Kontakt', 'is_active' => true, 'sort_order' => 120],
-            ],
+            NavigationMenuService::SETTINGS_KEY => self::navigationItems(),
             NavigationMenuService::APPEARANCE_SETTINGS_KEY => [
                 'container_width' => 1860, 'header_content_width' => 1860,
                 'background_color' => '#848ac4', 'text_color' => '#13100d', 'highlight_color' => '#6c73b0',
@@ -115,5 +111,21 @@ class LavaggioStorefrontSeeder extends Seeder
                 ],
             ],
         ]);
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public static function navigationItems(): array
+    {
+        return collect([
+            ['Praonica', 'https://www.lavaggio.hr/'],
+            ['Usluge', 'https://www.lavaggio.hr/usluge/'],
+            ['Cjenik', 'https://www.lavaggio.hr/cjenik/'],
+            ['Pitanja i odgovori', 'https://www.lavaggio.hr/pitanja-i-odgovori'],
+            ['Blog', 'https://www.lavaggio.hr/blog/'],
+            ['Kontakt', 'https://www.lavaggio.hr/kontakt'],
+        ])->map(fn (array $item, int $index): array => [
+            'type' => 'custom', 'label' => $item[0], 'url' => $item[1],
+            'is_active' => true, 'sort_order' => 100 + $index * 10,
+        ])->all();
     }
 }

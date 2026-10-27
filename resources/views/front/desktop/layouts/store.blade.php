@@ -104,7 +104,9 @@
     $headerCartLines = $cartService->lines();
     $wishlistCount = (int) ($wishlistSummary['item_count'] ?? 0);
     $navigationService = app(\App\Services\Front\NavigationMenuService::class);
-    $mainNavigation = $navigationService->forLocale((string) app()->getLocale());
+    $mainNavigation = config('storefront.home') === 'lavaggio'
+        ? $navigationService->storefrontItemsForLocale((string) app()->getLocale())
+        : $navigationService->forLocale((string) app()->getLocale());
     $topBar = $navigationService->topBar();
     $storeBrandName = trim((string) (($storeSettings['branding']['store_name'] ?? null) ?: config('app.name', 'AG Shop')));
     $isHerreraBrand = str_contains(strtolower($storeBrandName), 'herrera');

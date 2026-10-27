@@ -307,7 +307,7 @@ html[data-theme] body.lavaggio-storefront .site-footer .site-footer-mobile-links
 html[data-theme] body.lavaggio-storefront .site-footer a:is(:hover, :focus-visible) { color: #fff; }
 html[data-theme] body.lavaggio-storefront .site-footer .site-footer-socials a { background: #20243c; color: #c4c8e4; }
 html[data-theme] body.lavaggio-storefront .site-footer .site-footer-socials a:is(:hover, :focus-visible) { background: var(--lavaggio-primary); color: #fff; }
-html[data-theme] body.lavaggio-storefront .site-footer .store-footer-creator-link img { filter: brightness(0) invert(1); }
+html[data-theme] body.lavaggio-storefront .site-footer .store-footer-creator-link img { filter: none; }
 body.lavaggio-storefront :is(.lm-footer-benefits, .lm-footer-benefits .lm-benefits) { background: var(--lavaggio-footer); }
 html[data-theme] body.lavaggio-storefront .site-footer .wl-footer-benefits { border-color: #293043; }
 html[data-theme] body.lavaggio-storefront .wl-footer-benefits .lm-benefits > :is(a, div) { color: #fff; }

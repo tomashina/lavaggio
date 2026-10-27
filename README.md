@@ -16,6 +16,7 @@ touch database/database.sqlite
 php artisan migrate
 php artisan db:seed --class=SystemSettingsSeeder
 php artisan db:seed --class=LavaggioStorefrontSeeder
+php artisan db:seed --class=LavaggioCatalogSeeder
 npm ci
 npm run build
 php artisan storage:link
@@ -25,9 +26,9 @@ Herd poslužuje projekt iz ove mape. `DB_DATABASE` u lokalnom `.env` treba sadr�
 
 ## Početno stanje
 
-Katalog, kategorije, brandovi, kupci, narudžbe i uvezeni sadržaj su prazni. Lokalno je sačuvan postojeći administratorski račun `tomislav@agmedia.hr` s nepromijenjenom lozinkom. Baza, pristupni podaci i privatne sigurnosne kopije nisu u Gitu; nova instalacija ne stvara javno poznatu administratorsku lozinku.
+Katalog proizvoda, brandovi, kupci, narudžbe i uvezeni sadržaj su prazni. Uneseno je pet glavnih kategorija i 17 podkategorija s dostavljenim opisima i SEO podacima. Lokalno je sačuvan postojeći administratorski račun `tomislav@agmedia.hr` s nepromijenjenom lozinkom. Baza, pristupni podaci i privatne sigurnosne kopije nisu u Gitu; nova instalacija ne stvara javno poznatu administratorsku lozinku.
 
-Kategorije u navigaciji, početnoj stranici i podnožju nastaju iz aktivnih kategorija u administraciji. Nazivi, poredak i podkategorije nisu ugrađeni u predloške. Kategorije iz klijentskih uputa dodajemo u sljedećem koraku, uz ostale zahtjeve opisane u [uputama](docs/lavaggio-requirements.md).
+Kategorije u navigaciji „Web shop”, početnoj stranici i podnožju nastaju iz aktivnih kategorija u administraciji. Nazivi, poredak i podkategorije nisu ugrađeni u predloške. `LavaggioCatalogSeeder` ponovljivim unosom postavlja početnu strukturu iz [uputa](docs/lavaggio-requirements.md). Stupac „Web shop” u podnožju prikazuje glavne kategorije, a „Informacije” ostale poveznice iz navigacije. Poveznice na praonicu, usluge, cjenik, pitanja, blog i kontakt vode na postojeću stranicu lavaggio.hr.
 
 Postavke brenda i početne stranice nalaze se u `system_settings`, početne vrijednosti u `LavaggioStorefrontSeeder`. Poruke se lokalno bilježe u zapisnik; plaćanja, dostavne metode i stare integracije nisu konfigurirani.
 

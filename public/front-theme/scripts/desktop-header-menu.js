@@ -588,6 +588,12 @@
             }
         };
 
+        if (document.body.classList.contains('lavaggio-storefront')) {
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 1280 && root.dataset.menuOpen === '1') closeMenu(false);
+            }, { passive: true });
+        }
+
         const openMenu = (event) => {
             if (event) {
                 event.preventDefault();

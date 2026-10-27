@@ -46,12 +46,12 @@
         </a>
 
         <nav class="lavaggio-header-navigation watchline-desktop-categories" aria-label="Glavna navigacija">
-            @if (collect($mainNavigation)->contains(fn ($item) => ($item['type'] ?? '') === 'category'))
-                @include('front.desktop.partials.watchline-category-nav', ['watchlineNavSurface' => 'lavaggio'])
-            @endif
             @foreach ($mainNavigation as $item)
-                @continue(in_array($item['type'] ?? '', ['category', 'catalog'], true))
-                <a href="{{ $item['url'] }}" class="lavaggio-header-link" @if (! empty($item['open_in_new_tab'])) target="_blank" rel="noopener noreferrer" @endif @if (request()->url() === $item['url']) aria-current="page" @endif>{{ $item['label'] }}</a>
+                @if (($item['type'] ?? '') === 'catalog')
+                    @include('front.partials.lavaggio-catalog-nav', ['catalogItem' => $item])
+                @else
+                    <a href="{{ $item['url'] }}" class="lavaggio-header-link" @if (! empty($item['open_in_new_tab'])) target="_blank" rel="noopener noreferrer" @endif @if (request()->url() === $item['url']) aria-current="page" @endif>{{ $item['label'] }}</a>
+                @endif
             @endforeach
         </nav>
 
