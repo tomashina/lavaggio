@@ -355,34 +355,37 @@ body.lavaggio-storefront .scroll-to-top-button:hover { background: var(--lavaggi
 
 /* A more readable scale throughout the Lavaggio storefront. */
 html[data-theme] body.lavaggio-storefront {
-    font-size: 17px;
+    font-size: 18px;
     line-height: 1.6;
 }
 html[data-theme] body.lavaggio-storefront .text-xs { font-size: 14px; line-height: 1.5; }
 html[data-theme] body.lavaggio-storefront .text-sm { font-size: 16px; line-height: 1.5; }
 html[data-theme] body.lavaggio-storefront :is(input, select, textarea) { font-size: 16px; }
 
-html[data-theme] body.lavaggio-storefront :is(.lm-campaign-copy > p:not(.lm-eyebrow), .wl-widget-subtitle, .herrera-home-section-subtitle) {
-    font-size: 16px;
-    line-height: 1.7;
+html[data-theme] body.lavaggio-storefront :is(.lm-campaign-copy > p:not(.lm-eyebrow), .wl-widget-subtitle, .herrera-home-section-subtitle, .content-richtext p, .commerce-hero > p, .lm-page-title > p) {
+    font-size: 18px;
+    font-weight: 450;
+    line-height: 1.75;
 }
 html[data-theme] body.lavaggio-storefront :is(.lm-eyebrow, .wl-eyebrow, .herrera-home-section-eyebrow) { font-size: 12px; }
 html[data-theme] body.lavaggio-storefront :is(.lm-button, .wl-hero-cta, .wl-section-heading > a, .herrera-home-products-link) { font-size: 15px; }
 html[data-theme] body.lavaggio-storefront .wl-cluse-perks li { font-size: 14px; }
-html[data-theme] body.lavaggio-storefront .lavaggio-empty-copy { font-size: 17px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-empty-copy { font-size: 18px; font-weight: 450; }
 html[data-theme] body.lavaggio-storefront .wl-campaign-title { font-size: clamp(28px, 2.2vw, 38px); }
 html[data-theme] body.lavaggio-storefront .lavaggio-main-campaign .wl-campaign-title { font-size: clamp(36px, 3vw, 50px); }
 html[data-theme] body.lavaggio-storefront :is(.herrera-home-heading h2, .wl-section-heading h2) { font-size: clamp(26px, 2vw, 34px); }
 html[data-theme] body.lavaggio-storefront .lm-page-title h1 { font-size: clamp(30px, 2.5vw, 42px); }
 
 html[data-theme] body.lavaggio-storefront .site-footer-newsletter h3 { font-size: clamp(26px, 2.2vw, 34px); }
-html[data-theme] body.lavaggio-storefront .site-footer-newsletter h3 + p { font-size: 17px; }
+html[data-theme] body.lavaggio-storefront .site-footer-newsletter h3 + p { font-size: 18px; font-weight: 450; }
 html[data-theme] body.lavaggio-storefront .site-footer-newsletter input[type="email"] { font-size: 17px; }
 html[data-theme] body.lavaggio-storefront .site-footer-newsletter button[type="submit"] { font-size: 16px; }
-html[data-theme] body.lavaggio-storefront .site-footer-newsletter :is(label, form p) { font-size: 14px; }
-html[data-theme] body.lavaggio-storefront .site-footer :is(.site-footer-contact-title, .site-footer-column-title, .site-footer-mobile-links summary) { font-size: 18px; }
-html[data-theme] body.lavaggio-storefront .site-footer :is(.site-footer-contact-details p, .site-footer-contact-intro, .site-footer-link-list, .site-footer-mobile-links p, .site-footer-mobile-links a) { font-size: 15px; line-height: 1.7; }
-html[data-theme] body.lavaggio-storefront .site-footer .store-footer-bottom { font-size: 14px; }
+html[data-theme] body.lavaggio-storefront .site-footer-newsletter :is(label, form p) { font-size: 16px; font-weight: 450; }
+html[data-theme] body.lavaggio-storefront .site-footer :is(.site-footer-contact-title, .site-footer-column-title, .site-footer-mobile-links summary) { font-size: 20px; }
+html[data-theme] body.lavaggio-storefront .site-footer :is(.site-footer-contact-details p, .site-footer-contact-intro, .site-footer-link-list, .site-footer-mobile-links p, .site-footer-mobile-links a) { font-size: 17px; font-weight: 450; line-height: 1.75; }
+html[data-theme] body.lavaggio-storefront .site-footer :is(.site-footer-link-list a, .site-footer-mobile-links a) { font-weight: 500; }
+html[data-theme] body.lavaggio-storefront .site-footer .site-footer-contact-phone { font-size: 20px; font-weight: 500; }
+html[data-theme] body.lavaggio-storefront .site-footer .store-footer-bottom { font-size: 15px; font-weight: 450; }
 
 html[data-theme] body.lavaggio-storefront .watchline-category-child > a { font-size: 15px; }
 html[data-theme] body.lavaggio-storefront .watchline-category-child .watchline-category-child > a { font-size: 14px; }
