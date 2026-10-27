@@ -304,7 +304,7 @@
             @if (($categoryBrands ?? collect())->isNotEmpty())
                 @include('front.partials.watchline-category-brands')
             @endif
-        @elseif (($subcategoryCards ?? collect())->isNotEmpty())
+        @elseif (config('storefront.home') !== 'lavaggio' && ($subcategoryCards ?? collect())->isNotEmpty())
             @include('front.partials.herrera-subcategory-carousel', ['carouselCategories' => $subcategoryCards])
         @endif
     @endif
