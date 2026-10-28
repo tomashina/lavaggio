@@ -13,8 +13,10 @@
     $preferWebp = (bool) ($storeSettings['images']['use_webp'] ?? false);
     $coverImage = $mediaItems->firstWhere('collection_name', 'blog_cover') ?? $post->getFirstMedia('blog_cover');
     $coverImageUrl = \App\Support\Media\HerreraBlogImage::first($post);
-    $hasLavaggioSourceVideo = config('storefront.home') === 'lavaggio' && data_get($post->payload, 'source') === 'lavaggio-modx'
-        && (bool) preg_match('~<iframe\b[^>]*src=["\x27]https://(?:www\.)?(?:youtube\.com|youtube-nocookie\.com)/embed/~i', (string) $translation?->body_html);
+    $lavaggioVideo = config('storefront.home') === 'lavaggio' && $coverImageUrl
+        ? \App\Support\LavaggioArticleVideo::extract((string) $translation?->body_html)
+        : null;
+    $articleBodyHtml = $lavaggioVideo['body_html'] ?? (string) $translation?->body_html;
     $editorialCoverPath = \App\Support\Media\HerreraBlogImage::localPath($post);
     $isEditorialCover = $editorialCoverPath && $coverImageUrl === asset('assets/blog/herrera/'.basename($editorialCoverPath));
     $coverImagePath = $isEditorialCover ? $editorialCoverPath : $coverImage?->getPath();
@@ -56,6 +58,12 @@
 @push('styles')
     <link rel="stylesheet" href="{{ asset('front-theme/styles/herrera-home-blog.css') }}?v={{ filemtime(public_path('front-theme/styles/herrera-home-blog.css')) }}">
     <link rel="stylesheet" href="{{ asset('front-theme/styles/blog-detail.css') }}?v={{ filemtime(public_path('front-theme/styles/blog-detail.css')) }}">
+    @if (config('storefront.home') === 'lavaggio')
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-blog.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-blog.css')) }}">
+        @if ($lavaggioVideo)
+            <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-article-video.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-article-video.css')) }}">
+        @endif
+    @endif
 @endpush
 
 @section('content')
@@ -170,7 +178,9 @@
                 </p>
             @endif
 
-            @if ($coverImageUrl && ! $hasLavaggioSourceVideo)
+            @if ($lavaggioVideo)
+                @include('front.partials.lavaggio-article-video', ['articleVideo' => $lavaggioVideo, 'articleVideoTitle' => $translation?->title ?? $post->code])
+            @elseif ($coverImageUrl)
                 <figure class="mb-8 {{ $coverImageDimensions ? '' : 'blog-cover--fallback' }}">
                     <img
                         src="{{ $coverImageUrl }}"
@@ -188,7 +198,7 @@
             @endif
 
             <div class="content-richtext">
-                {!! app(\App\Support\WatchlineArticleImages::class)->render((string) $translation?->body_html, $coverImageUrl !== '') ?: '<p>Sadržaj članka trenutačno nije dostupan.</p>' !!}
+                {!! app(\App\Support\WatchlineArticleImages::class)->render($articleBodyHtml, $coverImageUrl !== '') ?: '<p>Sadržaj članka trenutačno nije dostupan.</p>' !!}
             </div>
             @include('front.partials.blog-share')
         </div>
@@ -413,6 +423,9 @@
 
 @push('scripts')
     <script defer src="{{ asset('front-theme/scripts/blog-detail.js') }}?v={{ filemtime(public_path('front-theme/scripts/blog-detail.js')) }}"></script>
+    @if ($lavaggioVideo)
+        <script defer src="{{ asset('front-theme/scripts/lavaggio-article-video.js') }}?v={{ filemtime(public_path('front-theme/scripts/lavaggio-article-video.js')) }}"></script>
+    @endif
     @include('front.partials.splide-assets')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/css/lightgallery-bundle.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.2/lightgallery.min.js"></script>

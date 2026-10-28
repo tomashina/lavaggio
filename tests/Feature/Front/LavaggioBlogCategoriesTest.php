@@ -121,25 +121,67 @@ class LavaggioBlogCategoriesTest extends TestCase
         $this->get('/blog?tag=Savjeti+za+pranje')->assertNotFound();
     }
 
-    public function test_lavaggio_source_video_uses_cover_on_cards_and_does_not_repeat_it_above_the_player(): void
+    public function test_lavaggio_source_video_uses_one_cover_poster_and_loads_its_player_only_in_the_dialog(): void
     {
         app(LavaggioContentImportService::class)->import(['resources' => [$this->resource(1, 'Savjeti za pranje')]]);
         $post = BlogPost::where('code', 'lavaggio-modx-1')->firstOrFail();
         config(['media_profiles.models.'.BlogPost::class.'.collections.blog_cover.conversions' => []]);
         $cover = $post->addMedia(UploadedFile::fake()->image('source-video-cover.jpg', 480, 360))->toMediaCollection('blog_cover');
-        $response = $this->get('/blog/objava-1')->assertOk()->assertSee('youtube-nocookie.com/embed/Abcdef12345', false);
+        $response = $this->get('/blog/objava-1')->assertOk()->assertSee('Izvorni sadržaj.');
         $document = new DOMDocument;
         @$document->loadHTML($response->getContent());
         $xpath = new DOMXPath($document);
-        $this->assertSame(1, $xpath->query('//article[contains(@class,"blog-article")]//iframe')->length);
-        $this->assertSame(0, $xpath->query('//article[contains(@class,"blog-article")]//figure/img')->length);
+        $this->assertSame(0, $xpath->query('//article[contains(@class,"blog-article")]//iframe')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-lavaggio-video and @data-video-id="Abcdef12345" and @data-video-layout="portrait"]')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-lavaggio-video-open]//img[@src="'.$cover->getUrl().'"]')->length);
+        $this->assertSame(1, $xpath->query('//article[contains(@class,"blog-article")]//img[@src="'.$cover->getUrl().'"]')->length);
+        $this->assertSame(1, $xpath->query('//dialog[@data-lavaggio-video-dialog]//*[@data-lavaggio-video-player and not(*)]')->length);
         $this->get('/blog')->assertOk()->assertSee($cover->getUrl(), false);
 
         config(['storefront.home' => 'libermedia']);
         $response = $this->get('/blog/objava-1')->assertOk();
         $document = new DOMDocument;
         @$document->loadHTML($response->getContent());
-        $this->assertSame(1, (new DOMXPath($document))->query('//article[contains(@class,"blog-article")]//figure/img')->length);
+        $xpath = new DOMXPath($document);
+        $this->assertSame(1, $xpath->query('//article[contains(@class,"blog-article")]//figure/img')->length);
+        $this->assertSame(1, $xpath->query('//article[contains(@class,"blog-article")]//iframe')->length);
+        $this->assertSame(0, $xpath->query('//*[@data-lavaggio-video]')->length);
+    }
+
+    public function test_lavaggio_related_articles_use_four_archive_cards_without_changing_other_storefronts(): void
+    {
+        app(LavaggioContentImportService::class)->import(['resources' => array_map(
+            fn (int $id): array => $this->resource($id, 'Savjeti za pranje'), range(1, 7)
+        )]);
+        $hidden = BlogPost::where('code', 'lavaggio-modx-2')->firstOrFail();
+        $hidden->update(['is_active' => false]);
+        $relatedPost = BlogPost::where('code', 'lavaggio-modx-3')->firstOrFail();
+        config(['media_profiles.models.'.BlogPost::class.'.collections.blog_cover.conversions' => []]);
+        $cover = $relatedPost->addMedia(UploadedFile::fake()->image('related-video-cover.jpg', 480, 360))->toMediaCollection('blog_cover');
+        $expected = BlogPost::whereIn('code', ['lavaggio-modx-3', 'lavaggio-modx-4', 'lavaggio-modx-5', 'lavaggio-modx-6'])
+            ->orderByDesc('published_at')->pluck('id')->all();
+
+        $response = $this->get('/blog/objava-1')->assertOk()->assertSee('lavaggio-blog.css')
+            ->assertViewHas('related', fn ($posts): bool => $posts->modelKeys() === $expected);
+        $document = new DOMDocument;
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
+        $xpath = new DOMXPath($document);
+        $relatedSection = '//*[@data-blog-related-articles]';
+        $this->assertSame(1, $xpath->query($relatedSection.'//*[@data-lavaggio-blog-grid]')->length);
+        $this->assertSame(4, $xpath->query($relatedSection.'//*[@data-lavaggio-blog-card]')->length);
+        $this->assertSame(4, $xpath->query($relatedSection.'//a[contains(concat(" ", normalize-space(@class), " "), " lavaggio-blog-card-image ") and contains(concat(" ", normalize-space(@class), " "), " is-portrait ")]')->length);
+        $this->assertSame(1, $xpath->query($relatedSection.'//*[@data-lavaggio-blog-card]//img[@src="'.$cover->getUrl().'"]')->length);
+        $this->assertSame(0, $xpath->query($relatedSection.'//article[contains(@class,"herrera-blog-card")]')->length);
+        $this->assertSame(0, $xpath->query($relatedSection.'//a[@href="'.route('blog.show', ['slug' => 'objava-1']).'" or @href="'.route('blog.show', ['slug' => 'objava-2']).'"]')->length);
+
+        config(['storefront.home' => 'libermedia']);
+        $response = $this->get('/blog/objava-1')->assertOk()->assertDontSee('lavaggio-blog.css')
+            ->assertViewHas('related', fn ($posts): bool => $posts->modelKeys() === array_slice($expected, 0, 3));
+        $document = new DOMDocument;
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
+        $xpath = new DOMXPath($document);
+        $this->assertSame(3, $xpath->query($relatedSection.'//article[contains(@class,"herrera-blog-card")]')->length);
+        $this->assertSame(0, $xpath->query($relatedSection.'//*[@data-lavaggio-blog-grid or @data-lavaggio-blog-card]')->length);
     }
 
     private function resource(int $id, string $tags): array

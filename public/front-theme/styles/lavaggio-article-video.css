@@ -1,0 +1,113 @@
+html[data-theme] body.lavaggio-storefront .lavaggio-article-video { margin: 8px 0 32px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-article-video-poster {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #1e293b;
+    isolation: isolate;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-article-video-poster::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent 55%, rgb(15 23 42 / 48%) 100%);
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-article-video-poster img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    transition: transform .3s ease;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-article-video-play {
+    position: absolute;
+    inset: 50% auto auto 50%;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    border: 1px solid rgb(255 255 255 / 60%);
+    border-radius: 50%;
+    background: rgb(255 255 255 / 96%);
+    color: var(--lavaggio-primary, #848ac4);
+    box-shadow: 0 8px 32px rgb(15 23 42 / 18%);
+    transform: translate(-50%, -50%);
+    transition: background .2s ease, color .2s ease, scale .2s ease;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-article-video-play svg { width: 28px; height: 28px; margin-left: 5px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-article-video-caption {
+    position: absolute;
+    inset: auto auto 24px 28px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 650;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-article-video-caption svg { width: 14px; height: 14px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-article-video-poster:is(:hover, :focus-visible) img { transform: scale(1.025); }
+html[data-theme] body.lavaggio-storefront .lavaggio-article-video-poster:is(:hover, :focus-visible) .lavaggio-article-video-play { background: var(--lavaggio-primary, #848ac4); color: #fff; scale: 1.06; }
+html[data-theme] body.lavaggio-storefront .lavaggio-article-video-poster:focus-visible { outline: 3px solid var(--lavaggio-primary, #848ac4); outline-offset: 5px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-video-dialog {
+    position: fixed;
+    inset: 0;
+    width: min(calc(88vh * 9 / 16), calc(100vw - 48px));
+    width: min(calc(88dvh * 9 / 16), calc(100vw - 48px));
+    max-width: none;
+    max-height: none;
+    margin: auto;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 16px;
+    background: #020617;
+    color: #fff;
+    box-shadow: 0 32px 100px rgb(0 0 0 / 35%);
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-video-dialog.is-landscape {
+    width: min(1100px, calc(100vw - 48px), calc(84vh * 16 / 9));
+    width: min(1100px, calc(100vw - 48px), calc(84dvh * 16 / 9));
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-video-dialog::backdrop { background: rgb(2 6 23 / 90%); }
+html[data-theme] body.lavaggio-storefront .lavaggio-video-player { aspect-ratio: 9 / 16; overflow: hidden; border-radius: inherit; }
+html[data-theme] body.lavaggio-storefront .lavaggio-video-dialog.is-landscape .lavaggio-video-player { aspect-ratio: 16 / 9; }
+html[data-theme] body.lavaggio-storefront .lavaggio-video-player iframe { display: block; width: 100%; height: 100%; border: 0; border-radius: inherit; }
+html[data-theme] body.lavaggio-storefront .lavaggio-video-close {
+    position: absolute;
+    inset: -14px -14px auto auto;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid rgb(255 255 255 / 25%);
+    border-radius: 50%;
+    background: #fff;
+    color: #1e293b;
+    box-shadow: 0 3px 15px rgb(0 0 0 / 18%);
+    cursor: pointer;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-video-close svg { width: 20px; height: 20px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-video-close:hover { background: var(--lavaggio-primary, #848ac4); color: #fff; }
+html[data-theme] body.lavaggio-storefront .lavaggio-video-close:focus-visible { outline: 3px solid var(--lavaggio-primary, #848ac4); outline-offset: 4px; }
+@media (max-width: 639px) {
+    html[data-theme] body.lavaggio-storefront .lavaggio-article-video { margin-bottom: 24px; }
+    html[data-theme] body.lavaggio-storefront .lavaggio-article-video-poster { aspect-ratio: 4 / 3; border-radius: 12px; }
+    html[data-theme] body.lavaggio-storefront .lavaggio-article-video-play { width: 66px; height: 66px; }
+    html[data-theme] body.lavaggio-storefront .lavaggio-article-video-play svg { width: 24px; height: 24px; }
+    html[data-theme] body.lavaggio-storefront .lavaggio-article-video-caption { inset: auto auto 18px 18px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    html[data-theme] body.lavaggio-storefront .lavaggio-article-video-poster img,
+    html[data-theme] body.lavaggio-storefront .lavaggio-article-video-play { transition: none; }
+}

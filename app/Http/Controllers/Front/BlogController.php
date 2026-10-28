@@ -118,8 +118,9 @@ class BlogController extends Controller
             ])
             ->firstOrFail();
 
-        $related = $this->discovery->related($post, [$locale, $fallbackLocale]);
-        $popular = $this->discovery->popular($post, [$locale, $fallbackLocale]);
+        $discoveryLimit = config('storefront.home') === 'lavaggio' ? 4 : 3;
+        $related = $this->discovery->related($post, [$locale, $fallbackLocale], $discoveryLimit);
+        $popular = $this->discovery->popular($post, [$locale, $fallbackLocale], $discoveryLimit);
 
         $relatedProductIds = collect($post->payload['related_product_ids'] ?? [])
             ->map(fn ($id) => (int) $id)

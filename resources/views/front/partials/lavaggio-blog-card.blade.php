@@ -11,7 +11,7 @@
     <a href="{{ $cardUrl }}" class="lavaggio-blog-card-image {{ $cardIsPortrait ? 'is-portrait' : '' }}" aria-label="{{ $cardTitle }}">
         @if ($cardImage)
             <img src="{{ $cardImage }}" alt="{{ $cardTitle }}" width="480" height="360" loading="lazy" decoding="async">
-            <span class="lavaggio-blog-card-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg></span>
+            <span class="lavaggio-blog-card-play" aria-hidden="true"><x-fa-icon name="play" :inline="true" /></span>
         @else
             <span>{{ __('ui.product.no_image') }}</span>
         @endif

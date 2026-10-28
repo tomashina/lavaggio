@@ -37,6 +37,8 @@ Kategorije u navigaciji „Web shop”, početnoj stranici i podnožju nastaju i
 
 Info stranice i pitanja imaju sadržaj širine do 1320 px; slike u tekstu su zaobljene, a uvodi ostaju unutar izvornog sadržaja. TV studio prikazuje četiri objave u redu na desktopu, izvorne kategorije i filtriranje. Kontakt zadržava izvorne kontakt podatke, polja obrasca i kartu, uz lokalno spremanje upita.
 
+Detalj video objave prikazuje široku naslovnicu s Font Awesome Pro play gumbom. Klik otvara video u modalu; zatvaranje zaustavlja reprodukciju. Vezani članci koriste iste četiri kartice i format slika kao TV studio.
+
 U administraciji **Sadržaj → Stranice**, **Blog** i **Česta pitanja** uređuje se preneseni sadržaj. U **Sadržaj → Navigacija** mogu se mijenjati nazivi, redoslijed i ugniježđene stavke Praonice. Ponovno pokretanje seedera namjerno vraća uvezeni sadržaj i početnu navigaciju iz snimka; ne pokrećite ga nakon ručnih izmjena ako ih želite sačuvati. Za pregled zasebnog snimka postoji `php artisan lavaggio:import-content putanja.json`, a `--execute` dopušta uvoz isključivo u provjerenu lokalnu Lavaggio SQLite bazu.
 
 U administraciji **Sadržaj → Navigacija → Slike kategorija u Web shop izborniku** moguće je učitati, zamijeniti ili ukloniti fotografiju svake glavne kategorije i promijeniti njezin alt opis. Slike se mijenjaju zajedno s odabranom kategorijom u desktop izborniku. `LavaggioNavigationImagesSeeder` postavlja početnih pet fotografija samo ako kategorija još nema spremljen odabir; čuva zamjene i namjerna uklanjanja. Optimizirane slike, izvori referentnih fotografija i korišteni promptovi nalaze se u `public/assets/lavaggio/images/categories/`.

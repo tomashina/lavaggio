@@ -51,6 +51,8 @@ class BlogDiscoveryService
                 'translations' => fn ($translation) => $translation->whereIn('locale', $locales)
                     ->whereRaw("TRIM(COALESCE(title, '')) <> ''")->whereRaw("TRIM(COALESCE(slug, '')) <> ''"),
                 'media',
+                'categories' => fn ($categories) => $categories->where('scope', Category::SCOPE_BLOG)->currentlyVisible()
+                    ->with(['translations' => fn ($translation) => $translation->whereIn('locale', $locales)]),
             ]);
     }
 
