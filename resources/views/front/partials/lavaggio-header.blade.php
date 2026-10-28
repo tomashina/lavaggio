@@ -47,7 +47,7 @@
 
         <nav class="lavaggio-header-navigation watchline-desktop-categories" aria-label="Glavna navigacija">
             @foreach ($mainNavigation as $item)
-                @if (($item['type'] ?? '') === 'catalog')
+                @if (($item['type'] ?? '') === 'catalog' || ! empty($item['children']))
                     @include('front.partials.lavaggio-catalog-nav', ['catalogItem' => $item])
                 @else
                     <a href="{{ $item['url'] }}" class="lavaggio-header-link" @if (! empty($item['open_in_new_tab'])) target="_blank" rel="noopener noreferrer" @endif @if (request()->url() === $item['url']) aria-current="page" @endif>{{ $item['label'] }}</a>

@@ -162,8 +162,13 @@
     }
 
     if (! $watchlineSeo && request()->routeIs('faq.index')) {
-        $title = $cleanupText((string) __('ui.faq.page_title'), 191);
-        $description = $cleanupText((string) __('ui.faq.subtitle'), 320);
+        if (config('storefront.home') === 'lavaggio' && isset($faqPageTranslation) && $faqPageTranslation) {
+            $title = $cleanupText($faqPageTranslation->meta_title ?: $faqPageTranslation->title, 191);
+            $description = $cleanupText($faqPageTranslation->meta_description ?: $faqPageTranslation->excerpt ?: $faqPageTranslation->body_html, 320);
+        } else {
+            $title = $cleanupText((string) __('ui.faq.page_title'), 191);
+            $description = $cleanupText((string) __('ui.faq.subtitle'), 320);
+        }
     }
 
     if ($description === '') {

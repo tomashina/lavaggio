@@ -1,6 +1,7 @@
 (() => {
     const init = () => {
-        const catalog = document.querySelector('[data-lavaggio-catalog]');
+        const catalogs = Array.from(document.querySelectorAll('[data-lavaggio-catalog]'));
+        catalogs.forEach((catalog) => {
         const trigger = catalog?.querySelector('[data-lavaggio-catalog-trigger]');
         const menu = catalog?.querySelector('[data-lavaggio-catalog-menu]');
         if (!trigger || !menu || catalog.dataset.catalogReady === '1') return;
@@ -32,6 +33,13 @@
             if (restoreFocus) trigger.focus();
         };
         const open = () => {
+            catalogs.forEach((other) => {
+                if (other === catalog) return;
+                const otherMenu = other.querySelector('[data-lavaggio-catalog-menu]');
+                const otherTrigger = other.querySelector('[data-lavaggio-catalog-trigger]');
+                if (otherMenu) otherMenu.hidden = true;
+                otherTrigger?.setAttribute('aria-expanded', 'false');
+            });
             cancelClose();
             menu.hidden = false;
             openedByHover = false;
@@ -103,6 +111,7 @@
         document.querySelectorAll('[data-mobile-menu-open]').forEach((button) => button.addEventListener('click', () => close()));
         desktop.addEventListener('change', () => close());
         window.addEventListener('pageshow', () => close());
+        });
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
     else init();

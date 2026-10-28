@@ -1,0 +1,254 @@
+/* Contact content and form follow the existing Lavaggio contact page. */
+html[data-theme] body.lavaggio-storefront.contact-commerce-body .commerce-main {
+    width: min(calc(100% - 48px), 1320px);
+    padding-block: 28px 72px;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-contact-title {
+    margin: 0 0 56px;
+    padding: 0;
+    text-align: center;
+}
+
+body.lavaggio-storefront .lavaggio-contact-title nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: var(--lavaggio-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-contact-title h1 {
+    margin: 0;
+    font-size: clamp(30px, 3vw, 40px);
+}
+
+body.lavaggio-storefront .lavaggio-contact-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(32px, 6vw, 100px);
+    align-items: center;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-contact-layout h2 {
+    margin: 0 0 16px;
+    color: var(--lavaggio-heading);
+    font-size: clamp(24px, 2.2vw, 30px);
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-contact-details > p {
+    margin: 0;
+    color: var(--lavaggio-muted);
+    font-size: 18px;
+    line-height: 1.7;
+}
+
+body.lavaggio-storefront .lavaggio-contact-methods {
+    display: grid;
+    gap: 24px;
+    margin: 36px 0 28px;
+}
+
+body.lavaggio-storefront .lavaggio-contact-methods > div {
+    position: relative;
+    padding-left: 32px;
+}
+
+body.lavaggio-storefront .lavaggio-contact-methods svg {
+    position: absolute;
+    top: 5px;
+    left: 0;
+    width: 18px;
+    height: 18px;
+    color: var(--lavaggio-primary);
+}
+
+body.lavaggio-storefront .lavaggio-contact-methods dt {
+    margin-bottom: 4px;
+    color: var(--lavaggio-heading);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+body.lavaggio-storefront .lavaggio-contact-methods dd {
+    margin: 0;
+    color: var(--lavaggio-muted);
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+body.lavaggio-storefront .lavaggio-contact-socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+body.lavaggio-storefront .lavaggio-contact-socials a {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--lavaggio-line);
+    border-radius: 50%;
+    color: var(--lavaggio-heading);
+}
+
+body.lavaggio-storefront .lavaggio-contact-socials svg {
+    width: 16px;
+    height: 16px;
+}
+
+body.lavaggio-storefront .lavaggio-contact-socials a:hover,
+body.lavaggio-storefront .lavaggio-contact-methods a:hover {
+    color: var(--lavaggio-primary);
+}
+
+body.lavaggio-storefront .lavaggio-contact-form {
+    min-width: 0;
+    padding: clamp(24px, 3vw, 40px);
+    border: 1px solid var(--lavaggio-line);
+    border-radius: 16px;
+    background: var(--lavaggio-paper);
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-contact-form h2 {
+    margin-bottom: 28px;
+}
+
+body.lavaggio-storefront .lavaggio-contact-field {
+    margin-top: 20px;
+}
+
+body.lavaggio-storefront .lavaggio-contact-field > label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--lavaggio-heading);
+    font-size: 17px;
+    font-weight: 600;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-contact-field :is(input:not([type="checkbox"]), textarea) {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--lavaggio-line-strong);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--lavaggio-heading);
+    font-size: 16px;
+    font-weight: 450;
+    line-height: 1.5;
+}
+
+body.lavaggio-storefront .lavaggio-contact-field textarea {
+    min-height: 130px;
+    resize: vertical;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-contact-field :is(input, textarea):focus {
+    border-color: var(--lavaggio-primary);
+    outline: 2px solid color-mix(in srgb, var(--lavaggio-primary) 18%, transparent);
+    outline-offset: 0;
+    box-shadow: none;
+}
+
+body.lavaggio-storefront .lavaggio-contact-field .lavaggio-contact-consent {
+    display: flex;
+    align-items: start;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 450;
+    line-height: 1.6;
+}
+
+body.lavaggio-storefront .lavaggio-contact-consent input {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    margin-top: 4px;
+    border-color: var(--lavaggio-line-strong);
+    border-radius: 3px;
+    color: var(--lavaggio-primary);
+}
+
+body.lavaggio-storefront .lavaggio-contact-consent a {
+    color: var(--lavaggio-primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-contact-submit {
+    margin-top: 4px;
+    padding: 12px 22px;
+    border: 1px solid var(--lavaggio-primary);
+    border-radius: 7px;
+    background: var(--lavaggio-primary);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-contact-submit:hover {
+    border-color: #6c73b0;
+    background: #6c73b0;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-contact-error {
+    margin: 8px 0 0;
+    color: #be123c;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-contact-success {
+    padding: 12px 14px;
+    border: 1px solid var(--lavaggio-line-strong);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--lavaggio-heading);
+    font-size: 17px;
+}
+
+body.lavaggio-storefront .lavaggio-contact-map {
+    overflow: hidden;
+    margin-top: 64px;
+    border-radius: 16px;
+    background: var(--lavaggio-paper);
+}
+
+body.lavaggio-storefront .lavaggio-contact-map iframe {
+    display: block;
+    width: 100%;
+    height: 480px;
+    border: 0;
+    filter: grayscale(100%);
+}
+
+@media (max-width: 767px) {
+    html[data-theme] body.lavaggio-storefront.contact-commerce-body .commerce-main {
+        width: calc(100% - 32px);
+        padding-block: 24px 48px;
+    }
+
+    html[data-theme] body.lavaggio-storefront .lavaggio-contact-title {
+        margin-bottom: 36px;
+    }
+
+    body.lavaggio-storefront .lavaggio-contact-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 36px;
+    }
+
+    body.lavaggio-storefront .lavaggio-contact-map {
+        margin-top: 36px;
+    }
+
+    body.lavaggio-storefront .lavaggio-contact-map iframe {
+        height: 360px;
+    }
+}

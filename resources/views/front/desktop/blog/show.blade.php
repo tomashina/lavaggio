@@ -13,6 +13,8 @@
     $preferWebp = (bool) ($storeSettings['images']['use_webp'] ?? false);
     $coverImage = $mediaItems->firstWhere('collection_name', 'blog_cover') ?? $post->getFirstMedia('blog_cover');
     $coverImageUrl = \App\Support\Media\HerreraBlogImage::first($post);
+    $hasLavaggioSourceVideo = config('storefront.home') === 'lavaggio' && data_get($post->payload, 'source') === 'lavaggio-modx'
+        && (bool) preg_match('~<iframe\b[^>]*src=["\x27]https://(?:www\.)?(?:youtube\.com|youtube-nocookie\.com)/embed/~i', (string) $translation?->body_html);
     $editorialCoverPath = \App\Support\Media\HerreraBlogImage::localPath($post);
     $isEditorialCover = $editorialCoverPath && $coverImageUrl === asset('assets/blog/herrera/'.basename($editorialCoverPath));
     $coverImagePath = $isEditorialCover ? $editorialCoverPath : $coverImage?->getPath();
@@ -48,7 +50,7 @@
     $isHerreraBlog = \App\Support\StorefrontTheme::usesHerreraLayout((string) ($storeSettings['branding']['store_name'] ?? config('app.name')));
 @endphp
 
-@section('title', $translation?->title ?? __('ui.blog.page_title'))
+@section('title', $translation?->title ?? (config('storefront.home') === 'lavaggio' ? 'TV studio | Lavaggio' : __('ui.blog.page_title')))
 @section('main_class', 'mx-auto w-full max-w-7xl px-6 pt-0 pb-8')
 
 @push('styles')
@@ -145,7 +147,7 @@
                 <ol class="flex max-w-full flex-wrap items-center justify-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500 sm:gap-2">
                     <li><a href="{{ route('home') }}" class="hover:text-slate-700">{{ __('ui.front.desktop.footer.home') }}</a></li>
                     <li class="text-slate-400">/</li>
-                    <li><a href="{{ route('blog.index') }}" class="hover:text-slate-700">{{ __('ui.blog.title') }}</a></li>
+                    <li><a href="{{ route('blog.index') }}" class="hover:text-slate-700">{{ config('storefront.home') === 'lavaggio' ? 'TV studio' : __('ui.blog.title') }}</a></li>
                     <li class="text-slate-400">/</li>
                     <li class="max-w-[42ch] truncate text-slate-700">{{ Str::limit((string) ($translation?->title ?? $post->code), 78, '...') }}</li>
                 </ol>
@@ -168,7 +170,7 @@
                 </p>
             @endif
 
-            @if ($coverImageUrl)
+            @if ($coverImageUrl && ! $hasLavaggioSourceVideo)
                 <figure class="mb-8 {{ $coverImageDimensions ? '' : 'blog-cover--fallback' }}">
                     <img
                         src="{{ $coverImageUrl }}"

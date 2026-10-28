@@ -1,0 +1,201 @@
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-page {
+    width: 100%;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 34px 12px 64px;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-title {
+    margin-bottom: 34px;
+    text-align: center;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-title ol {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 9px;
+    margin: 0 0 14px;
+    padding: 0;
+    list-style: none;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 550;
+    line-height: 1.5;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-title nav a {
+    color: inherit;
+    text-decoration: none;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-title h1 {
+    margin: 0;
+    color: var(--lavaggio-heading, #1e293b);
+    font-size: clamp(30px, 3vw, 40px);
+    font-weight: 750;
+    line-height: 1.25;
+    letter-spacing: -.025em;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-list {
+    display: grid;
+    gap: 12px;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-item {
+    margin: 0;
+    border: 1px solid #e1e3f1;
+    border-radius: 14px;
+    background: #fff;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-item:hover {
+    border-color: #b0b5dc;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-item[open] {
+    border-color: #b0b5dc;
+    box-shadow: 0 4px 18px rgb(132 138 196 / 8%);
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    min-height: 80px;
+    padding: 22px 24px;
+    border-radius: 13px;
+    color: var(--lavaggio-heading, #1e293b);
+    cursor: pointer;
+    list-style: none;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-question::-webkit-details-marker {
+    display: none;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-question::marker {
+    content: '';
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-question:focus-visible {
+    outline: 3px solid var(--lavaggio-primary, #848ac4);
+    outline-offset: 4px;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-toggle {
+    position: relative;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f0f1fa;
+    color: #6e75b3;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-toggle::before,
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-toggle::after {
+    position: absolute;
+    top: 15px;
+    left: 9px;
+    width: 14px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    content: '';
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-toggle::after {
+    transform: rotate(90deg);
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-item[open] .lavaggio-faq-toggle {
+    background: var(--lavaggio-primary, #848ac4);
+    color: #fff;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-item[open] .lavaggio-faq-toggle::after {
+    display: none;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-answer {
+    margin: 0 24px;
+    padding: 18px 0 24px;
+    border-top: 1px solid #eeeff7;
+    color: #475569;
+    font-size: 18px;
+    font-weight: 450;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-answer :is(p, ul, ol) {
+    margin: 0 0 14px;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-answer > :last-child {
+    margin-bottom: 0;
+}
+
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-faq-answer, .lavaggio-faq-help) a {
+    color: #646bae;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-help {
+    margin: 32px 0 0;
+    padding: 24px;
+    border-radius: 14px;
+    background: #f7f7fc;
+    color: #64748b;
+    font-size: 17px;
+    font-weight: 450;
+    line-height: 1.75;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-help :is(p, ul, ol),
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-empty {
+    margin: 0;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+}
+
+@media (max-width: 639px) {
+    html[data-theme] body.lavaggio-storefront .lavaggio-faq-page {
+        padding: 24px 0 42px;
+    }
+
+    html[data-theme] body.lavaggio-storefront .lavaggio-faq-title {
+        margin-bottom: 26px;
+    }
+
+    html[data-theme] body.lavaggio-storefront .lavaggio-faq-question {
+        gap: 16px;
+        min-height: 76px;
+        padding: 18px;
+        font-size: 18px;
+    }
+
+    html[data-theme] body.lavaggio-storefront .lavaggio-faq-answer {
+        margin-right: 18px;
+        margin-left: 18px;
+        padding: 16px 0 20px;
+    }
+
+    html[data-theme] body.lavaggio-storefront .lavaggio-faq-help {
+        padding: 20px;
+    }
+}

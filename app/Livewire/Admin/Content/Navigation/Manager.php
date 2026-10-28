@@ -223,15 +223,114 @@ class Manager extends Component
         $this->form['top_bar']['socials'] = array_values($this->form['top_bar']['socials']);
     }
 
+    public function addChildItem(string $parentPath, string $type = 'page'): void
+    {
+        if (! $this->validItemPath($parentPath) || substr_count($parentPath, '.children.') >= 3 || ! in_array($type, ['page', 'custom'], true)) {
+            return;
+        }
+        $parent = data_get($this->form['items'], $parentPath);
+        if (! is_array($parent)) {
+            return;
+        }
+        $children = $parent['children'] ?? [];
+        $item = $this->makeDefaultItem($type);
+        $item['sort_order'] = count($children);
+        if ($type === 'custom') {
+            $item['url'] = '/';
+        }
+        $children[] = $item;
+        data_set($this->form['items'], $parentPath.'.children', $children);
+    }
+
+    public function removeNestedItem(string $path): void
+    {
+        $this->changeNestedItem($path, null);
+    }
+
+    public function moveNestedItem(string $path, int $direction): void
+    {
+        if (in_array($direction, [-1, 1], true)) {
+            $this->changeNestedItem($path, $direction);
+        }
+    }
+
+    private function validItemPath(string $path): bool
+    {
+        return preg_match('/^\d+(?:\.children\.\d+){0,3}$/', $path) === 1;
+    }
+
+    private function changeNestedItem(string $path, ?int $direction): void
+    {
+        if (! $this->validItemPath($path) || ! str_contains($path, '.children.')) {
+            return;
+        }
+        $split = strrpos($path, '.');
+        $listPath = substr($path, 0, $split);
+        $index = (int) substr($path, $split + 1);
+        $items = data_get($this->form['items'], $listPath, []);
+        if (! isset($items[$index])) {
+            return;
+        }
+        if ($direction === null) {
+            unset($items[$index]);
+            $items = array_values($items);
+        } elseif (isset($items[$index + $direction])) {
+            [$items[$index], $items[$index + $direction]] = [$items[$index + $direction], $items[$index]];
+        }
+        foreach ($items as $order => &$item) {
+            $item['sort_order'] = $order;
+        }
+        unset($item);
+        data_set($this->form['items'], $listPath, $items);
+    }
+
+    private function addNestedValidationRules(array $items, string $path, array $nodeRules, array &$rules, int $depth = 0): void
+    {
+        foreach ($items as $index => $item) {
+            $itemPath = $path.'.'.$index;
+            foreach ($nodeRules as $key => $rule) {
+                $rules[str_replace('form.items.*', $itemPath, $key)] = $rule;
+            }
+            if ($depth >= 3) {
+                $rules[$itemPath.'.children'] = ['sometimes', 'array', 'size:0'];
+            } elseif (is_array($item['children'] ?? null)) {
+                $this->addNestedValidationRules($item['children'], $itemPath.'.children', $nodeRules, $rules, $depth + 1);
+            }
+        }
+    }
+
+    private function validateItemReferences(array $item, string $path): void
+    {
+        $type = (string) $item['type'];
+        if ($type === 'category' && (int) $item['category_id'] <= 0) {
+            $this->addError($path.'.category_id', (string) __('admin.content.navigation.errors.select_category'));
+        }
+        if ($type === 'page' && (int) $item['page_id'] <= 0) {
+            $this->addError($path.'.page_id', (string) __('admin.content.navigation.errors.select_page'));
+        }
+        if ($type === 'custom') {
+            if (trim((string) $item['label']) === '') {
+                $this->addError($path.'.label', (string) __('admin.content.navigation.errors.enter_label'));
+            }
+            if (trim((string) $item['url']) === '') {
+                $this->addError($path.'.url', (string) __('admin.content.navigation.errors.enter_url'));
+            }
+        }
+        foreach ($item['children'] ?? [] as $index => $child) {
+            $this->validateItemReferences($child, $path.'.children.'.$index);
+        }
+    }
+
     public function save(): void
     {
         $this->syncLocaleTranslationsFromInputs($this->locale);
 
-        $validated = $this->validate([
+        $rules = [
             'form.items' => ['array'],
             'form.category_images' => ['array'],
             'form.category_images.*.image_path' => ['nullable', 'string', 'max:2048'],
             'form.category_images.*.image_alt' => ['nullable', 'string', 'max:255'],
+            'form.items.*.children' => ['sometimes', 'array', 'max:100'],
             'form.items.*.type' => ['required', 'in:catalog,category,page,blog,contact,faq,custom'],
             'form.items.*.label' => ['nullable', 'string', 'max:120'],
             'form.items.*.category_id' => ['nullable', 'integer', 'min:0'],
@@ -289,28 +388,17 @@ class Manager extends Component
             'form.top_bar.socials.*.sort_order' => ['required', 'integer', 'min:0', 'max:9999'],
             'desktopPromoUploads.*' => ['nullable', 'image', 'max:4096'],
             'categoryMenuUploads.*' => ['nullable', 'image', 'max:4096'],
-        ]);
+        ];
+        $nodeRules = array_filter($rules, fn ($key): bool => str_starts_with($key, 'form.items.*.'), ARRAY_FILTER_USE_KEY);
+        $this->addNestedValidationRules($this->form['items'], 'form.items', $nodeRules, $rules);
+        $validated = $this->validate($rules);
 
         $normalizedItems = [];
         foreach (($validated['form']['items'] ?? []) as $index => $item) {
             $normalized = $this->normalizeItem($item, $index, $this->desktopPromoUploads[$index] ?? null);
             $normalizedItems[] = $normalized;
 
-            $type = (string) $normalized['type'];
-            if ($type === 'category' && (int) $normalized['category_id'] <= 0) {
-                $this->addError('form.items.'.$index.'.category_id', (string) __('admin.content.navigation.errors.select_category'));
-            }
-            if ($type === 'page' && (int) $normalized['page_id'] <= 0) {
-                $this->addError('form.items.'.$index.'.page_id', (string) __('admin.content.navigation.errors.select_page'));
-            }
-            if ($type === 'custom') {
-                if (trim((string) $normalized['label']) === '') {
-                    $this->addError('form.items.'.$index.'.label', (string) __('admin.content.navigation.errors.enter_label'));
-                }
-                if (trim((string) $normalized['url']) === '') {
-                    $this->addError('form.items.'.$index.'.url', (string) __('admin.content.navigation.errors.enter_url'));
-                }
-            }
+            $this->validateItemReferences($normalized, 'form.items.'.$index);
         }
 
         if ($this->getErrorBag()->isNotEmpty()) {
@@ -527,6 +615,7 @@ class Manager extends Component
             'is_active' => (bool) ($item['is_active'] ?? true),
             'sort_order' => (int) ($item['sort_order'] ?? $index),
             'desktop_promo_image_path' => $desktopPromoImagePath,
+            'children' => array_map(fn (array $child, int $childIndex): array => $this->normalizeItem($child, $childIndex), $item['children'] ?? [], array_keys($item['children'] ?? [])),
         ], $localizedPromo);
     }
 
@@ -537,6 +626,7 @@ class Manager extends Component
     {
         return [
             'type' => $type,
+            'children' => [],
             'label' => '',
             'label_translations' => [],
             'category_id' => 0,
@@ -569,7 +659,24 @@ class Manager extends Component
             return;
         }
 
-        foreach ($this->form['items'] as $index => $item) {
+        $this->form['items'] = $this->syncItemsLocale($this->form['items'], $normalizedLocale, false);
+    }
+
+    private function syncItemsLocale(array $items, string $normalizedLocale, bool $read): array
+    {
+        $fallbackLocale = strtolower((string) config('app.locale', 'en'));
+        foreach ($items as $index => $item) {
+            if ($read) {
+                foreach (['label' => 'label_translations', 'url' => 'url_translations', ...self::PROMO_LOCALIZED_FIELDS] as $field => $translationsField) {
+                    $translations = $this->normalizeTranslations($item[$translationsField] ?? []);
+                    $resolved = $this->pickTranslationValue($translations, $normalizedLocale, $fallbackLocale);
+                    $items[$index][$field] = $resolved !== '' ? $resolved : trim((string) ($item[$field] ?? ''));
+                    $items[$index][$translationsField] = $translations;
+                }
+                $items[$index]['children'] = $this->syncItemsLocale($item['children'] ?? [], $normalizedLocale, true);
+
+                continue;
+            }
             $labelTranslations = $this->normalizeTranslations($item['label_translations'] ?? []);
             $urlTranslations = $this->normalizeTranslations($item['url_translations'] ?? []);
 
@@ -587,8 +694,8 @@ class Manager extends Component
                 unset($urlTranslations[$normalizedLocale]);
             }
 
-            $this->form['items'][$index]['label_translations'] = $labelTranslations;
-            $this->form['items'][$index]['url_translations'] = $urlTranslations;
+            $items[$index]['label_translations'] = $labelTranslations;
+            $items[$index]['url_translations'] = $urlTranslations;
 
             foreach (self::PROMO_LOCALIZED_FIELDS as $field => $translationsField) {
                 $translations = $this->normalizeTranslations($item[$translationsField] ?? []);
@@ -600,38 +707,17 @@ class Manager extends Component
                     unset($translations[$normalizedLocale]);
                 }
 
-                $this->form['items'][$index][$translationsField] = $translations;
+                $items[$index][$translationsField] = $translations;
             }
+            $items[$index]['children'] = $this->syncItemsLocale($item['children'] ?? [], $normalizedLocale, false);
         }
+
+        return $items;
     }
 
     private function syncInputsFromLocaleTranslations(string $locale): void
     {
-        $normalizedLocale = strtolower(trim($locale));
-        $fallbackLocale = strtolower((string) config('app.locale', 'en'));
-
-        foreach ($this->form['items'] as $index => $item) {
-            $labelTranslations = $this->normalizeTranslations($item['label_translations'] ?? []);
-            $urlTranslations = $this->normalizeTranslations($item['url_translations'] ?? []);
-
-            $resolvedLabel = $this->pickTranslationValue($labelTranslations, $normalizedLocale, $fallbackLocale);
-            $resolvedUrl = $this->pickTranslationValue($urlTranslations, $normalizedLocale, $fallbackLocale);
-
-            $this->form['items'][$index]['label'] = $resolvedLabel !== '' ? $resolvedLabel : trim((string) ($item['label'] ?? ''));
-            $this->form['items'][$index]['url'] = $resolvedUrl !== '' ? $resolvedUrl : trim((string) ($item['url'] ?? ''));
-            $this->form['items'][$index]['label_translations'] = $labelTranslations;
-            $this->form['items'][$index]['url_translations'] = $urlTranslations;
-
-            foreach (self::PROMO_LOCALIZED_FIELDS as $field => $translationsField) {
-                $translations = $this->normalizeTranslations($item[$translationsField] ?? []);
-                $resolved = $this->pickTranslationValue($translations, $normalizedLocale, $fallbackLocale);
-
-                $this->form['items'][$index][$field] = $resolved !== ''
-                    ? $resolved
-                    : trim((string) ($item[$field] ?? ''));
-                $this->form['items'][$index][$translationsField] = $translations;
-            }
-        }
+        $this->form['items'] = $this->syncItemsLocale($this->form['items'], strtolower(trim($locale)), true);
     }
 
     /**

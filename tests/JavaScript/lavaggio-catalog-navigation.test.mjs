@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const script = readFileSync(new URL('../../public/front-theme/scripts/lavaggio-catalog-navigation.js', import.meta.url), 'utf8');
 
-const setup = () => {
+const setup = (menuCount = 1) => {
     const makeNode = () => ({
         dataset: {}, attributes: {}, listeners: {}, children: [], hidden: false,
         classList: {
@@ -23,11 +23,12 @@ const setup = () => {
             return event;
         },
     });
+    const catalogs = Array.from({ length: menuCount }, (_, menuIndex) => {
     const trigger = makeNode();
     const roots = Array.from({ length: 3 }, makeNode);
     const panels = roots.map((root, index) => {
         const panel = makeNode();
-        panel.id = `category-${index}`;
+        panel.id = `menu-${menuIndex}-category-${index}`;
         panel.hidden = index !== 0;
         root.dataset.panelId = panel.id;
         panel.children = Array.from({ length: 2 }, makeNode);
@@ -41,11 +42,17 @@ const setup = () => {
     const catalog = makeNode();
     catalog.children = [trigger, menu];
     catalog.querySelector = (selector) => selector.includes('-trigger]') ? trigger : menu;
+    return { catalog, trigger, menu, roots, panels };
+    });
+    const { catalog, trigger, menu, roots, panels } = catalogs[0];
     const document = {
         readyState: 'complete', activeElement: null, listeners: {},
         querySelector: (selector) => selector === '[data-lavaggio-catalog]' ? catalog : null,
-        querySelectorAll: () => [],
-        addEventListener(type, callback) { this.listeners[type] = callback; },
+        querySelectorAll: (selector) => selector === '[data-lavaggio-catalog]' ? catalogs.map((entry) => entry.catalog) : [],
+        addEventListener(type, callback) {
+            const previous = this.listeners[type];
+            this.listeners[type] = (event) => { previous?.(event); callback(event); };
+        },
     };
     const desktop = {
         matches: true,
@@ -57,10 +64,13 @@ const setup = () => {
         setTimeout(callback) { const id = Symbol(); timers.set(id, callback); return id; },
         clearTimeout(id) { timers.delete(id); },
         matchMedia: (query) => query.includes('min-width') ? desktop : { matches: true },
-        addEventListener(type, callback) { this.listeners[type] = callback; },
+        addEventListener(type, callback) {
+            const previous = this.listeners[type];
+            this.listeners[type] = (event) => { previous?.(event); callback(event); };
+        },
     };
     vm.runInNewContext(script, { document, window });
-    return { catalog, trigger, menu, roots, panels, document, window, desktop };
+    return { catalog, trigger, menu, roots, panels, document, window, desktop, catalogs };
 };
 
 test('click and outside tap toggle the catalog with accessible expanded state', () => {
@@ -116,4 +126,21 @@ test('touch hover does not open the catalog and a viewport change closes it', ()
     desktop.change();
     assert.equal(menu.hidden, true);
     assert.equal(trigger.attributes['aria-expanded'], 'false');
+});
+
+
+test('shop and laundry menus use independent panels and opening one closes the other', () => {
+    const { catalogs, document } = setup(2);
+    const [shop, laundry] = catalogs;
+    shop.trigger.emit('click');
+    assert.equal(shop.menu.hidden, false);
+    laundry.trigger.emit('click');
+    assert.equal(shop.menu.hidden, true);
+    assert.equal(shop.trigger.attributes['aria-expanded'], 'false');
+    assert.equal(laundry.menu.hidden, false);
+    laundry.roots[2].focus();
+    assert.deepEqual(laundry.panels.map((panel) => panel.hidden), [true, true, false]);
+    assert.deepEqual(shop.panels.map((panel) => panel.hidden), [false, true, true]);
+    document.listeners.pointerdown({ target: {} });
+    assert.ok(catalogs.every(({ menu }) => menu.hidden));
 });

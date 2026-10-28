@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Front\Concerns\ResolvesFrontendView;
+use App\Models\Content\Page\InfoPage;
 use App\Models\Content\Support\Faq;
 use App\Services\Content\ContentBlockResolver;
 use Illuminate\Http\Request;
@@ -27,6 +28,16 @@ class FaqController extends Controller
             ->orderBy('id')
             ->get();
 
+        $faqPageTranslation = null;
+        if (config('storefront.home') === 'lavaggio') {
+            $faqPage = InfoPage::query()->where('code', 'lavaggio-modx-72')->where('is_active', true)
+                ->where(fn ($query) => $query->whereNull('published_at')->orWhere('published_at', '<=', now()))
+                ->with(['translations' => fn ($query) => $query->whereIn('locale', [$locale, $fallbackLocale])])
+                ->first();
+            $faqPageTranslation = $faqPage?->translations->firstWhere('locale', $locale)
+                ?? $faqPage?->translations->firstWhere('locale', $fallbackLocale);
+        }
+
         $topBlocks = app(ContentBlockResolver::class)->forPlacement(
             placement: 'faq.top',
             locale: $locale,
@@ -45,6 +56,7 @@ class FaqController extends Controller
 
         return view($this->frontendView($request, 'faq.index'), [
             'faqs' => $faqs,
+            'faqPageTranslation' => $faqPageTranslation,
             'topBlocks' => $topBlocks,
             'bottomBlocks' => $bottomBlocks,
             'locale' => $locale,
@@ -52,4 +64,3 @@ class FaqController extends Controller
         ]);
     }
 }
-

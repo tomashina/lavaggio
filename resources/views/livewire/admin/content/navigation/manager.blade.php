@@ -379,6 +379,10 @@
                             </div>
                         </div>
 
+                        @if (! in_array(($item['type'] ?? ''), ['catalog', 'category'], true))
+                            @include('livewire.admin.content.navigation.children', ['navigationChildren' => $item['children'] ?? [], 'parentPath' => (string) $index, 'navigationDepth' => 0])
+                        @endif
+
                         @if (($item['show_dropdown'] ?? false) && in_array(($item['type'] ?? ''), ['catalog', 'category'], true))
                             @php
                                 $currentPromoPath = (string) ($item['desktop_promo_image_path'] ?? '');

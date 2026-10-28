@@ -1,11 +1,13 @@
 @php
     $catalogRoots = collect($catalogItem['children'] ?? []);
-    $catalogMenuId = 'lavaggio-web-shop-menu';
+    $isShopMenu = ($catalogItem['type'] ?? 'catalog') === 'catalog';
+    $catalogMenuKey = (string) ($catalogItem['key'] ?? (($catalogItem['label'] ?? 'navigation').'-'.substr(hash('sha256', (string) ($catalogItem['url'] ?? '')), 0, 10)));
+    $catalogMenuId = $isShopMenu ? 'lavaggio-web-shop-menu' : 'lavaggio-navigation-'.\Illuminate\Support\Str::slug($catalogMenuKey);
 @endphp
 <div class="lavaggio-catalog" data-lavaggio-catalog>
     @if ($catalogRoots->isNotEmpty())
         <button type="button" class="lavaggio-catalog-trigger" aria-expanded="false" aria-controls="{{ $catalogMenuId }}" data-lavaggio-catalog-trigger>
-            <span class="lavaggio-catalog-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            @if ($isShopMenu)<span class="lavaggio-catalog-icon" aria-hidden="true"><span></span><span></span><span></span></span>@endif
             <span>{{ $catalogItem['label'] }}</span>
             <x-fa-icon inline name="chevron-down" style="regular" class="lavaggio-catalog-caret" />
         </button>
@@ -15,7 +17,7 @@
                 <a href="{{ $catalogItem['url'] }}">{{ __('Prikaži sve') }} <x-fa-icon inline name="arrow-right" style="regular" /></a>
             </div>
             <div class="lavaggio-catalog-columns">
-                <ul class="lavaggio-catalog-roots" aria-label="{{ __('Kategorije') }}">
+                <ul class="lavaggio-catalog-roots" aria-label="{{ $isShopMenu ? __('Kategorije') : $catalogItem['label'] }}">
                     @foreach ($catalogRoots as $root)
                         @php
                             $rootPanelId = $catalogMenuId.'-category-'.$loop->index;

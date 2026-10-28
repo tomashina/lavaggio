@@ -6,6 +6,9 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('front-theme/styles/commerce-pages.css') }}?v={{ filemtime(public_path('front-theme/styles/commerce-pages.css')) }}">
+    @if (config('storefront.home') === 'lavaggio')
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-contact.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-contact.css')) }}">
+    @endif
 @endpush
 
 @section('content')
@@ -14,6 +17,9 @@
         $captchaEnabled = (bool) ($storeSettings['captcha']['recaptcha_v3_enabled'] ?? false) && $captchaSiteKey !== '';
     @endphp
 
+    @if (config('storefront.home') === 'lavaggio')
+        @include('front.desktop.contact.lavaggio')
+    @else
     <section class="commerce-hero lm-page-title">
         <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">{{ __('contact.heading') }}</h1>
         <p class="mt-2 text-slate-600">{{ __('contact.subheading') }}</p>
@@ -102,6 +108,8 @@
             </div>
         </aside>
     </section>
+
+    @endif
 
     @if ($captchaEnabled)
         @push('scripts')

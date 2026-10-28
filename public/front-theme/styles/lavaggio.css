@@ -390,6 +390,22 @@ html[data-theme] body.lavaggio-storefront :is(.lm-eyebrow, .wl-eyebrow, .herrera
 html[data-theme] body.lavaggio-storefront :is(.lm-button, .wl-hero-cta, .wl-section-heading > a, .herrera-home-products-link) { font-size: 15px; }
 html[data-theme] body.lavaggio-storefront .wl-cluse-perks li { font-size: 14px; }
 html[data-theme] body.lavaggio-storefront .lavaggio-empty-copy { font-size: 18px; font-weight: 450; }
+html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-content-video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; margin-block: 1.5rem; }
+html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-content-video-portrait { width: min(100%, 360px); aspect-ratio: 9 / 16; margin-inline: auto; }
+body.lavaggio-storefront :is(.lavaggio-content-title, .lavaggio-content-article) { width: 100%; max-width: 1320px; margin-inline: auto; padding-inline: 12px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-content-title .lm-page-title { padding-inline: 0; text-align: left; }
+body.lavaggio-storefront .lavaggio-content-title nav ol { justify-content: flex-start; }
+body.lavaggio-storefront .lavaggio-content-article figure { margin-block: 0 2rem; }
+body.lavaggio-storefront .lavaggio-content-article img { display: block; max-width: 100%; height: auto; border-radius: 12px; }
+body.lavaggio-storefront .lavaggio-content-article figure > img { width: 100%; }
+html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-content-intro { font-weight: 600; margin-bottom: 2rem; }
+html[data-theme] body.lavaggio-storefront .content-richtext :is(th, td, li, figcaption, summary) { font-size: 18px; font-weight: 450; line-height: 1.65; }
+html[data-theme] body.lavaggio-storefront .content-richtext :is(th, summary) { font-weight: 650; }
+html[data-theme] body.lavaggio-storefront .content-richtext :is(th, td) { vertical-align: top; overflow-wrap: anywhere; }
+@media (max-width: 639px) {
+    html[data-theme] body.lavaggio-storefront .content-richtext :is(th, td) { font-size: 16px; padding: 12px; }
+    body.lavaggio-storefront :is(.lavaggio-content-title, .lavaggio-content-article) { padding-inline: 0; }
+}
 html[data-theme] body.lavaggio-storefront .wl-campaign-title { font-size: clamp(28px, 2.2vw, 38px); }
 html[data-theme] body.lavaggio-storefront .lavaggio-main-campaign .wl-campaign-title { font-size: clamp(36px, 3vw, 50px); }
 html[data-theme] body.lavaggio-storefront :is(.herrera-home-heading h2, .wl-section-heading h2) { font-size: clamp(26px, 2vw, 34px); }

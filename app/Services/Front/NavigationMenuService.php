@@ -123,7 +123,7 @@ class NavigationMenuService
             }
         }
         $cacheKey = hash('sha256', serialize([
-            'category-navigation-depth-v4', $isHerreraStore, $isWatchlineStore, $locale, $fallbackLocale, request()->getSchemeAndHttpHost(), config('app.url'), $revision, $items->all(),
+            'category-navigation-depth-v5', $isHerreraStore, $isWatchlineStore, $locale, $fallbackLocale, request()->getSchemeAndHttpHost(), config('app.url'), $revision, $items->all(),
         ]));
 
         if (! $isLavaggioStore && isset($this->resolvedCache[$cacheKey])) {
@@ -155,7 +155,7 @@ class NavigationMenuService
             ->values()
             ->all();
 
-        $pageIds = $items
+        $pageIds = collect($this->flattenItems($items->all()))
             ->where('type', 'page')
             ->pluck('page_id')
             ->map(fn ($id): int => (int) $id)
@@ -222,124 +222,136 @@ class NavigationMenuService
             ->get()
             ->keyBy('id');
 
-        $resolved = [];
         $categoryImages = $isLavaggioStore ? $this->categoryImages() : [];
 
-        foreach ($items as $index => $item) {
-            $type = (string) ($item['type'] ?? 'custom');
-            $entry = null;
-
-            if ($type === 'category') {
-                $categoryId = (int) ($item['category_id'] ?? 0);
-                $category = $categoryId > 0 ? $categoriesById->get($categoryId) : null;
-
-                if ($category instanceof Category) {
-                    $entry = $this->resolveCategoryItem($category, $item, $childrenByParentId, $locale, $fallbackLocale);
-                    if ($isLavaggioStore && $entry !== null) {
-                        $image = $categoryImages[(int) $category->id] ?? [];
-                        $entry['menu_image_url'] = $this->categoryMenuImageUrl((string) ($image['image_path'] ?? ''));
-                        $entry['menu_image_alt'] = trim((string) ($image['image_alt'] ?? '')) ?: $entry['label'];
-                    }
+        $resolveItems = function (array $items, string $prefix = '') use (&$resolveItems, $categoriesById, $childrenByParentId, $locale, $fallbackLocale, $isLavaggioStore, $categoryImages, $categoryIds, $pagesById, $isWatchlineStore): array {
+            $resolved = [];
+            foreach (collect($items)->sortBy(fn (array $item): int => (int) ($item['sort_order'] ?? 0)) as $index => $item) {
+                if (! ($item['is_active'] ?? true)) {
+                    continue;
                 }
-            } elseif ($type === 'catalog') {
-                $entry = [
-                    'key' => 'catalog-'.$index,
-                    'type' => 'catalog',
-                    'label' => $this->labelForItem($item, 'Proizvodi', $locale, $fallbackLocale),
-                    'url' => $this->urlForItem($item, $locale, $fallbackLocale) ?: route('categories.index'),
-                    'children' => (bool) ($item['show_dropdown'] ?? true)
-                        ? $this->buildCategoryChildren(0, $childrenByParentId, $locale, $fallbackLocale, $categoryIds)
-                        : [],
-                    'open_in_new_tab' => false,
-                    'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
-                ];
-            } elseif ($type === 'page') {
-                $pageId = (int) ($item['page_id'] ?? 0);
-                $page = $pageId > 0 ? $pagesById->get($pageId) : null;
+                $index = $prefix.$index;
+                $type = (string) ($item['type'] ?? 'custom');
+                $entry = null;
 
-                if ($page instanceof InfoPage) {
-                    $translation = $this->pickPageTranslation($page, $locale, $fallbackLocale);
-                    $slug = trim((string) ($translation?->slug ?? ''));
+                if ($type === 'category') {
+                    $categoryId = (int) ($item['category_id'] ?? 0);
+                    $category = $categoryId > 0 ? $categoriesById->get($categoryId) : null;
 
-                    if ($slug !== '') {
-                        $label = $this->labelForItem(
-                            $item,
-                            (string) ($translation?->title ?? $page->code),
-                            $locale,
-                            $fallbackLocale
-                        );
+                    if ($category instanceof Category) {
+                        $entry = $this->resolveCategoryItem($category, $item, $childrenByParentId, $locale, $fallbackLocale);
+                        if ($isLavaggioStore && $entry !== null) {
+                            $image = $categoryImages[(int) $category->id] ?? [];
+                            $entry['menu_image_url'] = $this->categoryMenuImageUrl((string) ($image['image_path'] ?? ''));
+                            $entry['menu_image_alt'] = trim((string) ($image['image_alt'] ?? '')) ?: $entry['label'];
+                        }
+                    }
+                } elseif ($type === 'catalog') {
+                    $entry = [
+                        'key' => 'catalog-'.$index,
+                        'type' => 'catalog',
+                        'label' => $this->labelForItem($item, 'Proizvodi', $locale, $fallbackLocale),
+                        'url' => $this->urlForItem($item, $locale, $fallbackLocale) ?: route('categories.index'),
+                        'children' => (bool) ($item['show_dropdown'] ?? true)
+                            ? $this->buildCategoryChildren(0, $childrenByParentId, $locale, $fallbackLocale, $categoryIds)
+                            : [],
+                        'open_in_new_tab' => false,
+                        'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
+                    ];
+                } elseif ($type === 'page') {
+                    $pageId = (int) ($item['page_id'] ?? 0);
+                    $page = $pageId > 0 ? $pagesById->get($pageId) : null;
+
+                    if ($page instanceof InfoPage) {
+                        $translation = $this->pickPageTranslation($page, $locale, $fallbackLocale);
+                        $slug = trim((string) ($translation?->slug ?? ''));
+
+                        if ($slug !== '') {
+                            $label = $this->labelForItem(
+                                $item,
+                                (string) ($translation?->title ?? $page->code),
+                                $locale,
+                                $fallbackLocale
+                            );
+                            $entry = [
+                                'key' => 'page-'.$page->id.'-'.$index,
+                                'type' => 'page',
+                                'label' => $label,
+                                'url' => route('pages.show', ['slug' => $slug]),
+                                'children' => [],
+                                'open_in_new_tab' => false,
+                                'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
+                            ];
+                        }
+                    }
+                } elseif ($type === 'blog') {
+                    $entry = [
+                        'key' => 'blog-'.$index,
+                        'type' => 'blog',
+                        'label' => $this->labelForItem($item, 'Blog', $locale, $fallbackLocale),
+                        'url' => route('blog.index'),
+                        'children' => [],
+                        'open_in_new_tab' => false,
+                        'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
+                    ];
+                } elseif ($type === 'contact') {
+                    $entry = [
+                        'key' => 'contact-'.$index,
+                        'type' => 'contact',
+                        'label' => $this->labelForItem($item, 'Kontakt', $locale, $fallbackLocale),
+                        'url' => route('contact.create'),
+                        'children' => [],
+                        'open_in_new_tab' => false,
+                        'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
+                    ];
+                } elseif ($type === 'faq') {
+                    $entry = [
+                        'key' => 'faq-'.$index,
+                        'type' => 'faq',
+                        'label' => $this->labelForItem($item, 'FAQ', $locale, $fallbackLocale),
+                        'url' => route('faq.index'),
+                        'children' => [],
+                        'open_in_new_tab' => false,
+                        'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
+                    ];
+                } else {
+                    $url = $this->urlForItem($item, $locale, $fallbackLocale);
+                    $label = $this->labelForItem($item, '', $locale, $fallbackLocale);
+
+                    if ($url !== '' && $label !== '') {
                         $entry = [
-                            'key' => 'page-'.$page->id.'-'.$index,
-                            'type' => 'page',
+                            'key' => 'custom-'.$index,
+                            'type' => 'custom',
                             'label' => $label,
-                            'url' => route('pages.show', ['slug' => $slug]),
+                            'url' => $url,
                             'children' => [],
-                            'open_in_new_tab' => false,
+                            'open_in_new_tab' => (bool) ($item['open_in_new_tab'] ?? false),
                             'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
                         ];
                     }
                 }
-            } elseif ($type === 'blog') {
-                $entry = [
-                    'key' => 'blog-'.$index,
-                    'type' => 'blog',
-                    'label' => $this->labelForItem($item, 'Blog', $locale, $fallbackLocale),
-                    'url' => route('blog.index'),
-                    'children' => [],
-                    'open_in_new_tab' => false,
-                    'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
-                ];
-            } elseif ($type === 'contact') {
-                $entry = [
-                    'key' => 'contact-'.$index,
-                    'type' => 'contact',
-                    'label' => $this->labelForItem($item, 'Kontakt', $locale, $fallbackLocale),
-                    'url' => route('contact.create'),
-                    'children' => [],
-                    'open_in_new_tab' => false,
-                    'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
-                ];
-            } elseif ($type === 'faq') {
-                $entry = [
-                    'key' => 'faq-'.$index,
-                    'type' => 'faq',
-                    'label' => $this->labelForItem($item, 'FAQ', $locale, $fallbackLocale),
-                    'url' => route('faq.index'),
-                    'children' => [],
-                    'open_in_new_tab' => false,
-                    'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
-                ];
-            } else {
-                $url = $this->urlForItem($item, $locale, $fallbackLocale);
-                $label = $this->labelForItem($item, '', $locale, $fallbackLocale);
 
-                if ($url !== '' && $label !== '') {
-                    $entry = [
-                        'key' => 'custom-'.$index,
-                        'type' => 'custom',
-                        'label' => $label,
-                        'url' => $url,
-                        'children' => [],
-                        'open_in_new_tab' => (bool) ($item['open_in_new_tab'] ?? false),
-                        'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
-                    ];
+                if (is_array($entry) && trim((string) ($entry['url'] ?? '')) !== '') {
+                    if (! in_array($type, ['category', 'catalog'], true) && ($item['show_dropdown'] ?? true)) {
+                        $entry['children'] = $resolveItems($item['children'] ?? [], $index.'-');
+                    }
+                    if ($isWatchlineStore && in_array($type, ['category', 'catalog'], true)) {
+                        $entry['children'] = array_map(static function (array $child): array {
+                            $child['children'] = [];
+
+                            return $child;
+                        }, $entry['children']);
+                    }
+                    $entry['is_highlighted'] = (bool) ($item['is_highlighted'] ?? false);
+                    $entry['icon'] = $item['icon'];
+                    $entry['align_right'] = $item['align_right'];
+                    $resolved[] = $entry;
                 }
             }
 
-            if (is_array($entry) && trim((string) ($entry['url'] ?? '')) !== '') {
-                if ($isWatchlineStore && in_array($type, ['category', 'catalog'], true)) {
-                    $entry['children'] = array_map(static function (array $child): array {
-                        $child['children'] = [];
-
-                        return $child;
-                    }, $entry['children']);
-                }
-                $entry['is_highlighted'] = (bool) ($item['is_highlighted'] ?? false);
-                $entry['icon'] = $item['icon'];
-                $entry['align_right'] = $item['align_right'];
-                $resolved[] = $entry;
-            }
-        }
+            return $resolved;
+        };
+        $resolved = $resolveItems($items->all());
 
         if ($publicStore !== null) {
             try {
@@ -358,6 +370,12 @@ class NavigationMenuService
     public function configuredItems(): array
     {
         $raw = $this->settings->get(self::SETTINGS_KEY, []);
+
+        return $this->normalizeConfiguredItems($raw);
+    }
+
+    private function normalizeConfiguredItems(mixed $raw, int $depth = 0): array
+    {
 
         if (! is_array($raw)) {
             return [];
@@ -438,10 +456,22 @@ class NavigationMenuService
                 'desktop_promo_cta_label_translations' => $promoCtaLabelTranslations,
                 'desktop_promo_cta_url' => $this->pickLocalizedValue($promoCtaUrlTranslations, $fallbackLocale),
                 'desktop_promo_cta_url_translations' => $promoCtaUrlTranslations,
+                'children' => $depth < 3 ? $this->normalizeConfiguredItems($item['children'] ?? [], $depth + 1) : [],
             ];
         }
 
         return $items;
+    }
+
+    private function flattenItems(array $items): array
+    {
+        $flattened = [];
+        foreach ($items as $item) {
+            $flattened[] = $item;
+            $flattened = [...$flattened, ...$this->flattenItems($item['children'] ?? [])];
+        }
+
+        return $flattened;
     }
 
     /**

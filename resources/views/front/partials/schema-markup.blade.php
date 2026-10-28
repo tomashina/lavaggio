@@ -204,7 +204,7 @@
         }
 
         if (request()->routeIs('blog.*')) {
-            $breadcrumbItems[] = ['@type' => 'ListItem', 'position' => $position++, 'name' => 'Blog', 'item' => route('blog.index')];
+            $breadcrumbItems[] = ['@type' => 'ListItem', 'position' => $position++, 'name' => config('storefront.home') === 'lavaggio' ? 'TV studio' : 'Blog', 'item' => route('blog.index')];
         }
 
         if (request()->routeIs('pages.show') && isset($page)) {
@@ -532,7 +532,7 @@
         $blogIndex = [
             '@context' => 'https://schema.org',
             '@type' => 'Blog',
-            'name' => 'Blog',
+            'name' => config('storefront.home') === 'lavaggio' ? 'TV studio' : 'Blog',
             'url' => $currentUrl,
             'publisher' => ['@type' => 'Organization', 'name' => $businessName],
         ];
@@ -589,7 +589,7 @@
             $schemas[] = [
                 '@context' => 'https://schema.org',
                 '@type' => 'ItemList',
-                'name' => 'Blog posts',
+                'name' => config('storefront.home') === 'lavaggio' ? 'Objave TV studija' : 'Blog posts',
                 'itemListElement' => $listItems,
             ];
         }

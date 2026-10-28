@@ -34,18 +34,37 @@ class BlogController extends Controller
         $locale = app()->getLocale();
         $fallbackLocale = (string) config('app.locale');
         $variant = $this->frontendVariant($request);
+        $isLavaggioStudio = config('storefront.home') === 'lavaggio';
         $blogCategory = null;
         $blogCategoryTranslation = null;
         $categorySlug = is_string($request->query('category')) ? trim($request->query('category')) : '';
+        $sourceTag = $isLavaggioStudio && is_string($request->query('tag')) ? trim($request->query('tag')) : '';
         if ($categorySlug !== '') {
             $blogCategory = Category::query()->where('scope', Category::SCOPE_BLOG)->currentlyVisible()
                 ->whereHas('translations', fn ($q) => $q->whereIn('locale', [$locale, $fallbackLocale])->where('slug', $categorySlug))
                 ->with(['translations' => fn ($q) => $q->whereIn('locale', [$locale, $fallbackLocale])])->firstOrFail();
             $blogCategoryTranslation = $blogCategory->translations->firstWhere('locale', $locale) ?? $blogCategory->translations->firstWhere('locale', $fallbackLocale);
+        } elseif ($sourceTag !== '') {
+            $blogCategory = Category::query()->where('scope', Category::SCOPE_BLOG)->currentlyVisible()
+                ->where(fn ($query) => $query->where('payload->source_tag', $sourceTag)
+                    ->orWhereHas('translations', fn ($translation) => $translation->whereIn('locale', [$locale, $fallbackLocale])->where('name', $sourceTag)))
+                ->with(['translations' => fn ($query) => $query->whereIn('locale', [$locale, $fallbackLocale])])->firstOrFail();
+            $blogCategoryTranslation = $blogCategory->translations->firstWhere('locale', $locale) ?? $blogCategory->translations->firstWhere('locale', $fallbackLocale);
         }
+
+        $blogFilterCategories = $isLavaggioStudio
+            ? Category::query()->where('scope', Category::SCOPE_BLOG)->currentlyVisible()
+                ->whereHas('blogPosts', fn ($query) => $query->visibleOnBlog([$locale, $fallbackLocale]))
+                ->with(['translations' => fn ($query) => $query->whereIn('locale', [$locale, $fallbackLocale])])
+                ->orderBy('sort_order')->get()
+                ->sortBy(fn (Category $category): string => mb_strtolower((string) ($category->translations->firstWhere('locale', $locale)?->name
+                    ?? $category->translations->firstWhere('locale', $fallbackLocale)?->name ?? $category->code)))
+                ->values()
+            : collect();
 
         $posts = BlogPost::query()
             ->where('is_active', true)
+            ->when($isLavaggioStudio, fn ($query) => $query->visibleOnBlog([$locale, $fallbackLocale]))
             ->when($blogCategory, fn ($q) => $q->whereHas('categories', fn ($categories) => $categories->where('categories.id', $blogCategory->id)))
             ->where(function ($q): void {
                 $q->whereNull('published_at')
@@ -54,10 +73,12 @@ class BlogController extends Controller
             ->with([
                 'translations' => fn ($q) => $q->whereIn('locale', [$locale, $fallbackLocale]),
                 'media',
+                ...($isLavaggioStudio ? ['categories' => fn ($query) => $query->where('scope', Category::SCOPE_BLOG)->currentlyVisible()
+                    ->with(['translations' => fn ($translation) => $translation->whereIn('locale', [$locale, $fallbackLocale])])] : []),
             ])
             ->orderByDesc('published_at')
             ->orderByDesc('id')
-            ->paginate(30)->withQueryString();
+            ->paginate($isLavaggioStudio ? 12 : 30)->withQueryString();
         \App\Support\WatchlineSeo::ensureValidPagination($posts);
 
         $topBlocks = app(ContentBlockResolver::class)->forPlacement('blog.top', $locale, null, null, $variant);
@@ -71,6 +92,7 @@ class BlogController extends Controller
             'fallbackLocale' => $fallbackLocale,
             'blogCategory' => $blogCategory,
             'blogCategoryTranslation' => $blogCategoryTranslation,
+            'blogFilterCategories' => $blogFilterCategories,
         ]);
     }
 

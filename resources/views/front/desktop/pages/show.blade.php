@@ -14,7 +14,7 @@
         <section class="mb-8">@include('components.content-placement', ['items' => $topBlocks])</section>
     @endif
 
-    <section class="mb-8 px-1">
+    <section class="lavaggio-content-title mb-8 px-1">
         <div class="front-soft-hero lm-page-title px-6 py-4 text-center sm:px-8 sm:py-5">
             <nav aria-label="Breadcrumb" class="mb-2">
                 <ol class="flex flex-wrap items-center justify-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500 sm:gap-2">
@@ -24,13 +24,13 @@
                 </ol>
             </nav>
             <h1 class="text-2xl font-extrabold uppercase tracking-tight text-slate-900">{{ $translation?->title ?? $page->code }}</h1>
-            @if (!empty($translation?->excerpt))
+            @if (config('storefront.home') !== 'lavaggio' && !empty($translation?->excerpt))
                 <p class="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">{{ $translation->excerpt }}</p>
             @endif
         </div>
     </section>
 
-    <article class="bg-white px-2 py-2">
+    <article class="lavaggio-content-article bg-white px-2 py-2">
         <div class="content-richtext">
             {!! app(\App\Support\WatchlineArticleImages::class)->render((string) $translation?->body_html) ?: '<p>This page has no body content.</p>' !!}
         </div>
