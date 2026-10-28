@@ -44,7 +44,7 @@ html[data-theme] body.lavaggio-storefront .lavaggio-blog-card-image {
     overflow: hidden;
     aspect-ratio: 16 / 9;
     border-radius: 12px;
-    background: #f5f5fa;
+    background: transparent;
 }
 html[data-theme] body.lavaggio-storefront .lavaggio-blog-card-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
 html[data-theme] body.lavaggio-storefront .lavaggio-blog-card-image.is-portrait { aspect-ratio: auto; height: clamp(320px, 34vw, 560px); }
