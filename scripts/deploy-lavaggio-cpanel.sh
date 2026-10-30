@@ -45,7 +45,7 @@ esac
 [[ -z "$("$git_bin" -C "$source_root" status --porcelain --untracked-files=normal)" ]] || fail 'The cPanel checkout must be clean; this script never pulls or resets Git.'
 revision="$("$git_bin" -C "$source_root" rev-parse --verify HEAD)"
 [[ -f "$source_root/public/build/manifest.json" && -f "$source_root/composer.lock" ]] || fail 'The committed frontend build and Composer lock are required.'
-[[ -f "$runtime_root/.env" && ! -L "$runtime_root/.env" && -s "$runtime_root/database/database.sqlite" && ! -L "$runtime_root/database/database.sqlite" ]] || fail 'Prepare the existing .env and SQLite database inside the project before deployment.'
+[[ -f "$runtime_root/.env" && ! -L "$runtime_root/.env" ]] || fail 'Prepare the existing private .env inside the project before deployment.'
 [[ -f "$public_root/.htaccess" && ! -L "$public_root/.htaccess" ]] || fail 'The existing domain .htaccess is required.'
 [[ ! -L "$public_root/.user.ini" ]] || fail 'The domain .user.ini must not be a symlink.'
 
@@ -56,7 +56,7 @@ for candidate in /home/baredahr/.local/bin/composer.phar "$composer_from_path" /
 done
 [[ -n "$composer_bin" ]] || fail 'Install/configure Composer on the server first; this script does not download executables.'
 
-# Validate without booting Laravel, loading old caches, printing secrets or writing SQLite.
+# Validate without booting Laravel, loading old caches, printing secrets or writing data.
 "$php_bin" /dev/stdin "$runtime_root" "$public_root" <<'LAVAGGIO_PREREQUISITES'
 <?php
 function stopDeploy(string $message): never { fwrite(STDERR, "Lavaggio prerequisite failed: ".$message."\n"); exit(1); }
@@ -65,17 +65,33 @@ if (PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500) stopDeploy('PHP 8.4 is re
 $bootstrapKeys = ['APP_CONFIG_CACHE', 'APP_BASE_PATH', 'APP_ENV_PATH', 'APP_SERVICES_CACHE', 'APP_PACKAGES_CACHE', 'APP_ROUTES_CACHE', 'APP_EVENTS_CACHE', 'VIEW_COMPILED_PATH'];
 $required = ['APP_ENV'=>'staging', 'APP_URL'=>'https://shop.lavaggio.hr', 'APP_DEBUG'=>'false',
     'HERRERA_LOCAL_SAFE_MODE'=>'true', 'MAIL_MAILER'=>'log', 'QUEUE_CONNECTION'=>'sync',
-    'DB_CONNECTION'=>'sqlite', 'DB_DATABASE'=>$root.'/database/database.sqlite',
     'SESSION_DRIVER'=>'file', 'SESSION_COOKIE'=>'lavaggio_shop_session', 'SESSION_SECURE_COOKIE'=>'true',
     'CACHE_STORE'=>'file', 'STOREFRONT_HOME'=>'lavaggio', 'STORE_B2C_ONLY'=>'true', 'STORE_B2B_ONLY'=>'false',
     'GIFT_VOUCHER_EMAILS_ENABLED'=>'false', 'STOCK_NOTIFICATIONS_EMAILS_ENABLED'=>'false'];
-$watched = array_fill_keys([...array_keys($required), ...$bootstrapKeys, 'APP_KEY', 'DB_URL', 'SESSION_DOMAIN', 'SESSION_CONNECTION', 'DB_CACHE_CONNECTION', 'LAVAGGIO_INHERITED_WEB_PHP84_VERIFIED'], true);
+$watched = array_fill_keys([...array_keys($required), ...$bootstrapKeys, 'APP_KEY', 'DB_CONNECTION', 'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'DB_SOCKET', 'DB_CHARSET', 'DB_COLLATION', 'DB_URL', 'SESSION_DOMAIN', 'SESSION_CONNECTION', 'DB_CACHE_CONNECTION', 'LAVAGGIO_INHERITED_WEB_PHP84_VERIFIED'], true);
 $values = [];
 foreach (file($root.'/.env', FILE_IGNORE_NEW_LINES) as $line) {
     if (! preg_match('/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/', $line, $match) || ! isset($watched[$match[1]])) continue;
     $key = $match[1];
     if (array_key_exists($key, $values)) stopDeploy('A protected environment key is duplicated.');
     $value = trim($match[2]);
+    if ($key === 'DB_PASSWORD') {
+        // Dotenv single quotes preserve $, backslashes, # and double quotes literally.
+        // Accept only forms whose value is identical in Dotenv and Laravel env().
+        if (preg_match('/\A\x27([^\x27]*)\x27(?:\s*#.*)?\z/', $value, $password)) {
+            $value = $password[1];
+        } elseif (preg_match('/\A\x22([^\x22\\\\$]*)\x22(?:\s*#.*)?\z/', $value, $password)) {
+            $value = $password[1];
+        } elseif (preg_match('/\A([^\s#\x22\x27\\\\$]*)(?:\s*#.*)?\z/', $value, $password)) {
+            $value = $password[1];
+        } else {
+            stopDeploy('Use a one-line single-quoted DB_PASSWORD for literal special characters; embedded single quotes require separate review.');
+        }
+        if (in_array(strtolower($value), ['true', '(true)', 'false', '(false)', 'null', '(null)', 'empty', '(empty)'], true)
+            || preg_match('/\A([\x22\x27]).*\1\z/', $value)) stopDeploy('DB_PASSWORD must remain an explicit string after Laravel environment parsing.');
+        $values[$key] = $value;
+        continue;
+    }
     if ($value !== '' && ($value[0] === '"' || $value[0] === "'")) {
         if (! preg_match('/\A([\x22\x27])(.*)\1(?:\s+#.*)?\z/', $value, $quoted)) stopDeploy('Unsupported protected environment quoting.');
         $value = $quoted[2];
@@ -87,7 +103,7 @@ foreach (file($root.'/.env', FILE_IGNORE_NEW_LINES) as $line) {
 }
 foreach ($required as $key=>$expected) if (($values[$key] ?? null) !== $expected) stopDeploy('Missing or unsafe setting: '.$key);
 foreach ($bootstrapKeys as $key) if (($values[$key] ?? '') !== '') stopDeploy('Custom bootstrap/cache paths are not allowed: '.$key);
-foreach (['DB_URL', 'SESSION_DOMAIN', 'SESSION_CONNECTION', 'DB_CACHE_CONNECTION'] as $key) {
+foreach (['DB_URL', 'DB_SOCKET', 'SESSION_DOMAIN', 'SESSION_CONNECTION', 'DB_CACHE_CONNECTION'] as $key) {
     if (! in_array(strtolower($values[$key] ?? ''), ['', 'null', '(null)'], true)) stopDeploy('Shared connection/domain overrides are not allowed: '.$key);
 }
 foreach ($watched as $key=>$_) {
@@ -97,15 +113,37 @@ foreach ($watched as $key=>$_) {
 $key = $values['APP_KEY'] ?? '';
 $key = str_starts_with($key, 'base64:') ? base64_decode(substr($key, 7), true) : $key;
 if (! is_string($key) || strlen($key) !== 32) stopDeploy('Preserve the current valid application key; this script never generates one.');
-$database = $root.'/database/database.sqlite';
-if (realpath($database) !== $database || (stat($database)['nlink'] ?? 0) !== 1) stopDeploy('SQLite must be a separate regular file.');
-$pdo = new PDO('sqlite:file:'.$database.'?mode=ro', options: [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
-$pdo->exec('PRAGMA query_only=ON');
+$connection = $values['DB_CONNECTION'] ?? '';
+if ($connection === 'mysql') {
+    // This allowlist must never include the main site's baredahr_lavaggio database.
+    if (($values['DB_DATABASE'] ?? '') !== 'baredahr_lavaggioshop') stopDeploy('MySQL must use the dedicated baredahr_lavaggioshop database.');
+    if (($values['DB_HOST'] ?? '') !== 'localhost' || ($values['DB_PORT'] ?? '3306') !== '3306') stopDeploy('MySQL must use the account-local localhost:3306 server.');
+    $username = $values['DB_USERNAME'] ?? '';
+    if (! preg_match('/\Abaredahr_[A-Za-z0-9_]+\z/', $username) || $username === 'baredahr_lavaggio') stopDeploy('MySQL requires a dedicated shop database user.');
+    if (($values['DB_PASSWORD'] ?? '') === '') stopDeploy('MySQL requires the existing private shop database password.');
+    if (($values['DB_CHARSET'] ?? 'utf8mb4') !== 'utf8mb4' || ($values['DB_COLLATION'] ?? 'utf8mb4_unicode_ci') !== 'utf8mb4_unicode_ci') stopDeploy('MySQL must use utf8mb4 with utf8mb4_unicode_ci collation.');
+    try {
+        $pdo = new PDO('mysql:host=localhost;port=3306;dbname=baredahr_lavaggioshop;charset=utf8mb4', $username, $values['DB_PASSWORD'], [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES=>false]);
+        $pdo->exec('SET SESSION TRANSACTION READ ONLY');
+        $pdo->beginTransaction();
+        if ($pdo->query('SELECT DATABASE()')->fetchColumn() !== 'baredahr_lavaggioshop') stopDeploy('MySQL connected to an unexpected database.');
+    } catch (Throwable $exception) {
+        stopDeploy('The dedicated MySQL database could not be opened read-only; check its credentials, grants and PDO driver privately.');
+    }
+} elseif ($connection === 'sqlite') {
+    // Retained for the existing private snapshot and deliberate SQLite previews.
+    $database = $root.'/database/database.sqlite';
+    if (($values['DB_DATABASE'] ?? '') !== $database || ! is_file($database) || is_link($database) || realpath($database) !== $database || (stat($database)['nlink'] ?? 0) !== 1) stopDeploy('SQLite must be the project\'s separate regular database/database.sqlite file.');
+    $pdo = new PDO('sqlite:file:'.$database.'?mode=ro', options: [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+    $pdo->exec('PRAGMA query_only=ON');
+} else {
+    stopDeploy('Only the dedicated shop MySQL database or the existing project SQLite snapshot is allowed.');
+}
 $ran = $pdo->query('SELECT migration FROM migrations')->fetchAll(PDO::FETCH_COLUMN);
 $pending = array_values(array_diff(array_map(fn ($file)=>basename($file, '.php'), glob($root.'/database/migrations/*.php')), $ran));
 if ($pending !== []) stopDeploy("Pending migrations require separate review; none were run:\n".implode("\n", $pending));
 $settings = [];
-foreach ($pdo->query("SELECT key,value FROM system_settings WHERE key IN ('store_email_enabled','gls_api_enabled','watchline_integrations')") as $row) {
+foreach ($pdo->query("SELECT `key`,`value` FROM system_settings WHERE `key` IN ('store_email_enabled','gls_api_enabled','watchline_integrations')") as $row) {
     $settings[$row['key']] = json_decode($row['value'], true, flags: JSON_THROW_ON_ERROR);
 }
 if (filter_var($settings['store_email_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) stopDeploy('Mail must remain disabled for this preview.');
@@ -113,6 +151,7 @@ if (filter_var($settings['gls_api_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) 
 $integrations = $settings['watchline_integrations'] ?? [];
 if (filter_var($integrations['live_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) stopDeploy('Inherited integrations must remain disabled.');
 foreach ($integrations['schedules'] ?? [] as $schedule) if (filter_var($schedule['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) stopDeploy('Inherited integration schedules must remain disabled.');
+if ($connection === 'mysql') $pdo->rollBack();
 $manifest = json_decode(file_get_contents($root.'/public/build/manifest.json'), true, flags: JSON_THROW_ON_ERROR);
 if (! is_array($manifest) || $manifest === []) stopDeploy('Missing frontend manifest entries.');
 foreach ($manifest as $entry) foreach ([($entry['file'] ?? ''), ...($entry['css'] ?? []), ...($entry['assets'] ?? [])] as $file) {
@@ -159,7 +198,7 @@ printf '%s\n' "Mode: $([[ "$apply" == true ]] && printf APPLY || printf DRY-RUN)
 du -sh -- "$runtime_root"
 df -h -- "$runtime_root"
 if [[ "$apply" == false ]]; then
-    printf '%s\n' 'Plan: use the current project checkout, preserve .env/SQLite/uploads, back up generated caches, install locked dependencies, create public/storage if absent, rebuild Laravel caches.' \
+    printf '%s\n' 'Plan: use the current project checkout, preserve .env/database/uploads, back up generated caches, install locked dependencies, create public/storage if absent, rebuild Laravel caches.' \
         'Plan only: no Composer install, Artisan boot, permissions changes, symlink creation, database/settings writes, migrations, seeds, key generation, mail/integration activation or cron changes.'
     exit 0
 fi
@@ -180,7 +219,11 @@ mkdir -p "$runtime_root/bootstrap/cache" "$runtime_root/storage/framework/cache/
 # The web server must traverse the project to reach public/; private data remains owner-only.
 chmod 755 "$runtime_root" "$public_root" "$runtime_root/storage" "$runtime_root/storage/app" "$runtime_root/storage/app/public"
 chmod 700 "$runtime_root/.git" "$runtime_root/storage/app/private"
-chmod 600 "$runtime_root/.env" "$runtime_root/database/database.sqlite"
+chmod 600 "$runtime_root/.env"
+if [[ -e "$runtime_root/database/database.sqlite" || -L "$runtime_root/database/database.sqlite" ]]; then
+    [[ -f "$runtime_root/database/database.sqlite" && ! -L "$runtime_root/database/database.sqlite" ]] || fail 'The retained SQLite snapshot must be a regular file.'
+    chmod 600 "$runtime_root/database/database.sqlite"
+fi
 [[ -L "$public_root/storage" ]] || ln -s "$runtime_root/storage/app/public" "$public_root/storage"
 
 cd "$runtime_root"
@@ -201,5 +244,5 @@ done
 [[ "$("$git_bin" -C "$source_root" rev-parse HEAD)" == "$revision" && -z "$("$git_bin" -C "$source_root" status --porcelain --untracked-files=normal)" ]] || fail 'The checkout changed or a runtime file is not ignored; review before continuing.'
 printf '%s\n' "$revision" > "$runtime_root/storage/app/private/.lavaggio-deploy-revision"
 printf '%s\n' "Lavaggio deployed in its project checkout: $revision" "Private generated-cache backup: $backup_root" \
-    'The standard tracked index.php/.htaccess/.user.ini, existing .env, SQLite, media and local hosting files were preserved.' \
+    'The standard tracked index.php/.htaccess/.user.ini, existing .env, database, media and local hosting files were preserved.' \
     'No migrations, seeds, key rotation, mail/integration activation or cron changes were performed.'
