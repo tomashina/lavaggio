@@ -164,9 +164,9 @@
                 <a href="{{ route('bundles.index') }}" class="herrera-category-tile libermedia-category-bundle" data-libermedia-category-bundle>
                     <span class="libermedia-category-bundle-icon"><x-fa-icon name="gift" style="light" /></span>
                     <span class="libermedia-category-bundle-copy">
-                        <span class="libermedia-category-bundle-eyebrow">{{ __('Više igre, više uštede') }}</span>
+                        <span class="libermedia-category-bundle-eyebrow">{{ config('storefront.home') === 'lavaggio' ? 'Više njege, više uštede' : __('Više igre, više uštede') }}</span>
                         <span class="libermedia-category-bundle-title">{{ __('Kupi u kompletu i uštedi') }}</span>
-                        <span class="libermedia-category-bundle-description">{{ __('Otkrijte odabrane komplete za igru i učenje.') }}</span>
+                        <span class="libermedia-category-bundle-description">{{ config('storefront.home') === 'lavaggio' ? 'Otkrijte odabrane komplete za pranje i njegu rublja.' : __('Otkrijte odabrane komplete za igru i učenje.') }}</span>
                     </span>
                     <span class="libermedia-category-bundle-cta">{{ __('Pogledajte ponudu') }} <x-fa-icon name="arrow-right" /></span>
                 </a>

@@ -17,8 +17,8 @@ class GiftVoucherDelivered extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: config('storefront.home') === 'watchline'
-            ? 'Poklon za vas: Watchline poklon bon'
+        return new Envelope(subject: \App\Support\Mail\StoreMailBrand::usesSharedDesign()
+            ? 'Poklon za vas: '.\App\Support\Mail\StoreMailBrand::name().' poklon bon'
             : 'Poklon za vas: Liber Media poklon bon');
     }
 

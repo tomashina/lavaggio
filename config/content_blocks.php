@@ -11,6 +11,12 @@ return [
     |
     */
     'types' => [
+        'lavaggio_campaigns' => 'Lavaggio — uvodni banneri',
+        'lavaggio_categories' => 'Lavaggio — kategorije i kompleti',
+        'lavaggio_products' => 'Lavaggio — proizvodi u nizu',
+        'lavaggio_brands' => 'Lavaggio — brandovi s logotipima',
+        'lavaggio_blog' => 'Lavaggio — blog i TV studio',
+        'lavaggio_reviews' => 'Lavaggio — komentari kupaca',
         'watchline_campaigns' => 'Watchline — tri prodajna bannera',
         'watchline_locations' => 'Watchline — servis i trgovina',
         'watchline_assurance' => 'Watchline — podrška kupcima',

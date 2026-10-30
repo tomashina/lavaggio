@@ -12,7 +12,7 @@
         <header class="lm-reviews-page-header lm-page-title">
             <div>
                 <nav aria-label="Putanja stranice">
-                    <a href="{{ route('home') }}">Naslovnica</a>
+                    <a href="{{ route('home') }}"><x-front.breadcrumb-home>Naslovnica</x-front.breadcrumb-home></a>
                     <span aria-hidden="true">/</span>
                     <span aria-current="page">Iskustva kupaca</span>
                 </nav>

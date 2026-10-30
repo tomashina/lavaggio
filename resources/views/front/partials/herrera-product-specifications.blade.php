@@ -2,7 +2,8 @@
     $compactProductSpecifications = $compactProductSpecifications ?? app(\App\Support\ProductSpecificationPresenter::class)
         ->compact($product, $locale ?? app()->getLocale(), $fallbackLocale ?? config('app.locale'), (string) ($translation?->description ?? ''));
     $isWatchlineSpecifications = config('storefront.home') === 'watchline';
-    $showAllSpecifications = ! $isWatchlineSpecifications && \App\Support\StorefrontTheme::usesLibermediaBrand();
+    $showAllSpecifications = config('storefront.home') === 'lavaggio'
+        || (! $isWatchlineSpecifications && \App\Support\StorefrontTheme::usesLibermediaBrand());
     $allSpecifications = $compactProductSpecifications['primary']->concat($compactProductSpecifications['secondary']);
     $visibleSpecifications = $isWatchlineSpecifications
         ? $allSpecifications->take(6)

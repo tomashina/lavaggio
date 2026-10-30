@@ -10,7 +10,7 @@
                     <span>/</span>
                 @endif
                 @if (!empty($item['url']))
-                    <a href="{{ $item['url'] }}" class="hover:text-slate-900">{{ $item['label'] }}</a>
+                    <a href="{{ $item['url'] }}" class="hover:text-slate-900">@if (($item['url'] ?? null) === route('home'))<x-front.breadcrumb-home>{{ $item['label'] }}</x-front.breadcrumb-home>@else{{ $item['label'] }}@endif</a>
                 @else
                     <span class="text-slate-900">{{ $item['label'] }}</span>
                 @endif

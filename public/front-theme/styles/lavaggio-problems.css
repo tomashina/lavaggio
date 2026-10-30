@@ -1,0 +1,6 @@
+.lavaggio-problem-links{margin-top:22px;padding-top:18px;border-top:1px solid #e9e9f2;display:grid;gap:8px;max-width:420px}
+.lavaggio-problem-links-label{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#777db7}
+.lavaggio-problem-links a{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 13px;background:#f2f2fa;border:1px solid #e5e5f1;border-radius:9px;color:#4f5591;font-size:13px;font-weight:600;text-decoration:none;transition:background .15s,color .15s}
+.lavaggio-problem-links a:hover,.lavaggio-problem-links a:focus-visible{background:#e6e7f5;color:#31376c;outline:2px solid #858bc3;outline-offset:2px}
+.lavaggio-problem-links svg{width:13px;height:13px;flex-shrink:0}
+#mobile-navigation .lavaggio-problem-links{margin:10px 16px 20px;max-width:none;padding-top:15px}

@@ -27,7 +27,7 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header::before {
     pointer-events: none;
 }
 
-html[data-theme] body.lavaggio-storefront:has(.herrera-catalog-heading-band, .lm-page-title) .lavaggio-header::before {
+html[data-theme] body.lavaggio-storefront:has(.herrera-catalog-heading-band, .lm-page-title, [data-lavaggio-home-widgets]) .lavaggio-header::before {
     max-height: calc(100% - var(--lavaggio-header-topbar-height, 32px));
 }
 
@@ -64,6 +64,7 @@ html[data-theme] body.lavaggio-storefront :is(.lavaggio-header-contacts, .lavagg
 }
 
 html[data-theme] body.lavaggio-storefront .lavaggio-header-socials {
+    grid-column: 3;
     justify-content: flex-end;
 }
 
@@ -84,6 +85,7 @@ html[data-theme] body.lavaggio-storefront :is(.lavaggio-header-contacts, .lavagg
 }
 
 html[data-theme] body.lavaggio-storefront .lavaggio-header-announcement {
+    grid-column: 2;
     margin: 0;
     color: inherit;
     font-size: inherit;
@@ -316,6 +318,14 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-count {
 }
 
 @media (max-width: 1279px) {
+    html[data-theme] body.lavaggio-storefront .lavaggio-header:not(:has(.lavaggio-header-topbar.has-announcement)) {
+        --lavaggio-header-topbar-height: 0px;
+    }
+
+    html[data-theme] body.lavaggio-storefront .lavaggio-header-topbar:not(.has-announcement) {
+        display: none;
+    }
+
     html[data-theme] body.lavaggio-storefront .lavaggio-header,
     html[data-theme] body.lavaggio-storefront .lavaggio-header.is-sticky {
         --lavaggio-header-card-inset: 14px;
@@ -554,6 +564,11 @@ html[data-theme] body.lavaggio-storefront .lavaggio-catalog-columns {
     display: grid;
     grid-template-columns: minmax(280px, 29%) minmax(0, 1fr);
     min-height: 330px;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-catalog-columns.has-direct-links-only {
+    grid-template-columns: 1fr;
+    min-height: 0;
 }
 
 html[data-theme] body.lavaggio-storefront .lavaggio-catalog-roots {

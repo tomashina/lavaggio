@@ -1,0 +1,182 @@
+[
+  {
+    "code": "lavaggio-example-blistavo-bijelo",
+    "title": "Blistavo bijelo",
+    "products": [
+      {
+        "ean": "9000101805017",
+        "quantity": 1
+      },
+      {
+        "ean": "5997321747781",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  },
+  {
+    "code": "lavaggio-example-njega-tamnog-rublja",
+    "title": "Njega tamnog rublja",
+    "products": [
+      {
+        "ean": "9000101809527",
+        "quantity": 1
+      },
+      {
+        "ean": "8700216724074",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  },
+  {
+    "code": "lavaggio-example-boje-i-cvjetna-svjezina",
+    "title": "Boje i cvjetna svježina",
+    "products": [
+      {
+        "ean": "9000101808568",
+        "quantity": 1
+      },
+      {
+        "ean": "8700216723879",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  },
+  {
+    "code": "lavaggio-example-svjezi-rucnici",
+    "title": "Svježi ručnici",
+    "products": [
+      {
+        "ean": "8720181676420",
+        "quantity": 1
+      },
+      {
+        "ean": "3045206382007",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  },
+  {
+    "code": "lavaggio-example-njega-djecjeg-rublja",
+    "title": "Njega dječjeg rublja",
+    "products": [
+      {
+        "ean": "4009175968616",
+        "quantity": 1
+      },
+      {
+        "ean": "4001499969430",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  },
+  {
+    "code": "lavaggio-example-profesionalna-njega-boja",
+    "title": "Profesionalna njega boja",
+    "products": [
+      {
+        "ean": "8700216908801",
+        "quantity": 1
+      },
+      {
+        "ean": "4001499961458",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  },
+  {
+    "code": "lavaggio-example-miris-zlatne-orhideje",
+    "title": "Miris zlatne orhideje",
+    "products": [
+      {
+        "ean": "8006530182003",
+        "quantity": 1
+      },
+      {
+        "ean": "8700216724081",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  },
+  {
+    "code": "lavaggio-example-pomoc-za-mrlje-od-hrane",
+    "title": "Pomoć za mrlje od hrane",
+    "products": [
+      {
+        "ean": "4008455004037",
+        "quantity": 1
+      },
+      {
+        "ean": "4008455004082",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  },
+  {
+    "code": "lavaggio-example-njega-i-odrzavanje-perilice",
+    "title": "Njega i održavanje perilice",
+    "products": [
+      {
+        "ean": "5999109510594",
+        "quantity": 1
+      },
+      {
+        "ean": "4008455087818",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  },
+  {
+    "code": "lavaggio-example-rublje-i-perilica-bez-dlacica",
+    "title": "Rublje i perilica bez dlačica",
+    "products": [
+      {
+        "ean": "4023103126251",
+        "quantity": 1
+      },
+      {
+        "ean": "4008455109916",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  },
+  {
+    "code": "lavaggio-example-sensitive-njega-rublja",
+    "title": "Sensitive njega rublja",
+    "products": [
+      {
+        "ean": "9000101566789",
+        "quantity": 1
+      },
+      {
+        "ean": "8700216723985",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  },
+  {
+    "code": "lavaggio-example-njega-boja-i-mrlje-od-znoja",
+    "title": "Njega boja i mrlje od znoja",
+    "products": [
+      {
+        "ean": "8720181676413",
+        "quantity": 1
+      },
+      {
+        "ean": "4008455038919",
+        "quantity": 1
+      }
+    ],
+    "discount_percent": 10
+  }
+]

@@ -192,6 +192,25 @@
                             </div>
                         </div>
                     @endforeach
+                    @if (config('storefront.home') === 'lavaggio')
+                        <div class="md:col-span-2 rounded-xl border border-slate-200 p-4">
+                            <h3 class="mb-3 text-sm font-bold text-slate-800">Lavaggio — uvjeti i informacije u podnožju</h3>
+                            <div class="grid gap-3 md:grid-cols-3">
+                                <div>
+                                    <label for="lavaggio-footer-legal-title" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Naslov stupca</label>
+                                    <input id="lavaggio-footer-legal-title" type="text" wire:model="form.lavaggio_footer_legal_title" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                                    @error('form.lavaggio_footer_legal_title') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="lavaggio-footer-legal-links" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Poveznice i njihov redoslijed</label>
+                                    <textarea id="lavaggio-footer-legal-links" wire:model="form.lavaggio_footer_legal_links" rows="10" class="w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm" placeholder="Uvjeti kupnje|/page/uvjeti-kupnje&#10;Kontakt|/contact"></textarea>
+                                    <p class="mt-1 text-xs text-slate-500">Jedna poveznica po retku: <code>Naziv|URL</code>. Dodajte ili obrišite redak za dodavanje ili uklanjanje poveznice. Premjestite retke za promjenu redoslijeda. Dozvoljene su putanje koje počinju s / i pune http(s) adrese.</p>
+                                    <p class="mt-2 text-xs text-slate-500">Naslov i popis zajednički su svim jezicima. Sadržaj odredišnih stranica uređuje se u <a href="{{ route('admin.content.pages.index') }}" class="font-semibold text-cyan-700 underline">Sadržaj → Stranice</a>.</p>
+                                    @error('form.lavaggio_footer_legal_links') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                     <div class="md:col-span-2 rounded-xl border border-slate-200 p-4">
                         <p class="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Bottom Footer Bar') }}</p>
                         <div class="grid gap-3 md:grid-cols-2">
@@ -267,6 +286,15 @@
                             <input type="url" wire:model="form.store_social_youtube_url" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
                             <label class="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
                                 <input type="checkbox" wire:model="form.store_footer_social_youtube_enabled" class="rounded border-slate-300 text-cyan-700 focus:ring-cyan-500" />
+                                {{ __('Show in footer') }}
+                            </label>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">LinkedIn URL</label>
+                            <input type="url" wire:model="form.store_social_linkedin_url" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                            @error('form.store_social_linkedin_url') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                            <label class="mt-2 inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                                <input type="checkbox" wire:model="form.store_footer_social_linkedin_enabled" class="rounded border-slate-300 text-cyan-700 focus:ring-cyan-500" />
                                 {{ __('Show in footer') }}
                             </label>
                         </div>
@@ -416,6 +444,14 @@
                     </label>
                     <p class="text-xs text-slate-600 md:col-span-2">{{ __('Omogućuje javne maloprodajne cijene s PDV-om, registraciju privatnih kupaca i kupnju. Odobreni B2B kupci zadržavaju svoje ugovorene cijene.') }}</p>
                     @error('form.store_pricing_b2c_enabled') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                    @if (config('storefront.home') === 'lavaggio')
+                        <div class="md:col-span-2 rounded-xl border border-slate-200 p-4">
+                            <label for="lavaggio-free-shipping-threshold" class="mb-2 block text-sm font-semibold text-slate-800">{{ __('Besplatna dostava za narudžbe iznad (€)') }}</label>
+                            <input id="lavaggio-free-shipping-threshold" type="number" min="0" step="0.01" wire:model="form.lavaggio_free_shipping_threshold" class="w-full max-w-xs rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                            <p class="mt-2 text-xs text-slate-600">{{ __('Spremanje ažurira obavijesti u trgovini i prag besplatne dostave za sve aktivne načine dostave. Osobno preuzimanje ostaje zasebno.') }}</p>
+                            @error('form.lavaggio_free_shipping_threshold') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                        </div>
+                    @endif
                 </div>
             @endif
 

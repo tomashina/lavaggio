@@ -161,6 +161,10 @@ class ProductCard extends Component
             ->all();
 
         $authUser = auth()->user();
+        $isLavaggio = config('storefront.home') === 'lavaggio';
+        $formatPrice = static fn (float $value): string => $isLavaggio
+            ? number_format($value, 2, ',', '.').' €'
+            : number_format($value, 2).' €';
         if ($this->priceData === null) {
             $priceData = app(ProductPricePresentationService::class)->forProduct($this->product, $authUser);
             $displayCurrent = $priceData['display_current'] ?? $priceData['current_gross'];
@@ -169,11 +173,12 @@ class ProductCard extends Component
 
             $this->priceData = [
                 'display_current' => (float) $displayCurrent,
-                'current_price' => number_format((float) $displayCurrent, 2).' €',
-                'old_price' => $displayOld !== null ? number_format((float) $displayOld, 2).' €' : null,
+                'unit_gross' => (float) ($priceData['current_gross'] ?? 0),
+                'current_price' => $formatPrice((float) $displayCurrent),
+                'old_price' => $displayOld !== null ? $formatPrice((float) $displayOld) : null,
                 'discount_percent' => $priceData['discount_percent'],
                 'lowest_30_days_price' => $displayLowest !== null
-                    ? number_format((float) $displayLowest, 2).' €'
+                    ? $formatPrice((float) $displayLowest)
                     : null,
                 'is_b2b_price' => (bool) ($priceData['is_b2b_price'] ?? false),
                 'display_includes_tax' => (bool) ($priceData['display_includes_tax'] ?? true),
@@ -209,6 +214,9 @@ class ProductCard extends Component
             'localStockQuantity' => max(0, (int) $this->product->stock_qty),
             'supplierStockQuantity' => max(0, (int) ($this->product->supplier_stock_qty ?? 0)),
             'productPriceValue' => round((float) ($priceData['display_current'] ?? 0), 2),
+            'lavaggioContentLabel' => $isLavaggio
+                ? app(\App\Support\LavaggioProductPresenter::class)->contentLabel($this->product, (float) ($priceData['unit_gross'] ?? 0))
+                : null,
             'productBrand' => $manufacturerName,
             'productCategory' => $categoryName,
             'imageUrl' => $imageUrl,

@@ -1,5 +1,5 @@
 @component('emails.watchline.layout', ['title' => $heading, 'preheader' => $intro])
-    <p class="eyebrow">Vaš Watchline račun</p>
+    <p class="eyebrow">Vaš {{ \App\Support\Mail\StoreMailBrand::name() }} račun</p>
     <h1>{{ $heading }}</h1>
     <p class="intro">{{ $intro }}</p>
     <p><a href="{{ $actionUrl }}" class="cta">{{ $actionText }}</a></p>

@@ -1,5 +1,5 @@
 @component('emails.watchline.layout', ['title' => __('return_request.mail.admin_heading')])
-<p class="eyebrow">Watchline · Obavijest za trgovinu</p><h1>{{ __('return_request.mail.admin_heading') }}</h1>
+<p class="eyebrow">{{ \App\Support\Mail\StoreMailBrand::name() }} · Obavijest za trgovinu</p><h1>{{ __('return_request.mail.admin_heading') }}</h1>
 <p class="intro">{{ __('return_request.mail.admin_intro') }}</p>
                 <div class="statement">{{ $withdrawal->declaration }}</div>
                 <table class="details" role="presentation">

@@ -55,6 +55,9 @@
         <link rel="stylesheet" href="{{ asset('front-theme/styles/checkout.css') }}?v={{ filemtime(public_path('front-theme/styles/checkout.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/gift-vouchers.css') }}?v={{ filemtime(public_path('front-theme/styles/gift-vouchers.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/libermedia-checkout.css') }}?v={{ filemtime(public_path('front-theme/styles/libermedia-checkout.css')) }}">
+        @if (config('storefront.home') === 'lavaggio')
+            <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-checkout.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-checkout.css')) }}">
+        @endif
     @endpush
 
     <div class="checkout-shell">
@@ -280,6 +283,7 @@
                                             value="{{ $method->code }}"
                                             data-is-boxnow="{{ in_array(strtolower((string) $method->code), ['boxnow', 'box_now'], true) ? '1' : '0' }}"
                                             data-boxnow-partner-id="{{ (string) ((is_array($method->settings ?? null) ? ($method->settings['boxnow_partner_id'] ?? '') : '') ?: '') }}"
+                                            data-boxnow-public-widget="{{ \App\Support\BoxNowShipping::usesPublicWidget($method) ? '1' : '0' }}"
                                             data-is-gls-dpm="{{ \App\Support\GlsShipping::isGlsDpmShippingMethod($method) ? '1' : '0' }}"
                                             data-gls-dpm-filter-type="{{ \App\Support\GlsShipping::glsDpmFilterType($method) ?? '' }}"
                                             @checked($selectedShippingCode === (string) $method->code)
@@ -383,6 +387,9 @@
                                             @endif
                                             @if (trim((string) $method->description) !== '')
                                                 <span class="checkout-payment-description mt-1 block whitespace-pre-line text-xs leading-relaxed text-slate-600">{{ trim((string) $method->description) }}</span>
+                                            @endif
+                                            @if (config('storefront.home') === 'lavaggio' && config('commerce.local_safe_mode') && data_get($method->settings, 'bank_preview_placeholder') && !app(\App\Services\Payments\EpcQrService::class)->validIban((string) data_get($method->settings, 'upi_receiver_iban', '')))
+                                                <span class="mt-1 block text-xs font-semibold text-amber-800">{{ __('Ogledni prikaz · IBAN XXXX · nije za uplatu') }}</span>
                                             @endif
                                         </span>
                                     </span>
@@ -533,7 +540,7 @@
     </form>
     @include('front.partials.checkout-discount-forms')
 
-    @if (config('storefront.home') === 'watchline')
+    @if (in_array(config('storefront.home'), ['watchline', 'lavaggio'], true))
         <dialog id="boxnow-widget-root" class="wl-boxnow-dialog" data-watchline-boxnow-dialog aria-labelledby="boxnow-map-title">
             <div class="wl-boxnow-dialog-header">
                 <h2 id="boxnow-map-title">{{ __('Odaberite BOX NOW paketomat') }}</h2>
@@ -701,7 +708,7 @@
                     return '<div class="checkout-option-card checkout-shipping-option" data-shipping-option-card>'
                         + '<label class="flex cursor-pointer items-start justify-between gap-3 px-3 py-2.5 text-sm">'
                         + '<span class="inline-flex min-w-0 items-start gap-2">'
-                        + '<input type="radio" name="shipping_method_code" value="' + escapeHtml(method.code) + '" data-is-boxnow="' + isBoxNow + '" data-boxnow-partner-id="' + partnerId + '" data-is-gls-dpm="' + isGlsDpm + '" data-gls-dpm-filter-type="' + glsDpmFilterType + '" class="mt-0.5 h-4 w-4 shrink-0 border-slate-300 text-slate-900 focus:ring-0" required ' + (checked ? 'checked' : '') + '>'
+                        + '<input type="radio" name="shipping_method_code" value="' + escapeHtml(method.code) + '" data-is-boxnow="' + isBoxNow + '" data-boxnow-partner-id="' + partnerId + '" data-boxnow-public-widget="' + (method.boxnow_public_widget ? '1' : '0') + '" data-is-gls-dpm="' + isGlsDpm + '" data-gls-dpm-filter-type="' + glsDpmFilterType + '" class="mt-0.5 h-4 w-4 shrink-0 border-slate-300 text-slate-900 focus:ring-0" required ' + (checked ? 'checked' : '') + '>'
                         + '<span class="min-w-0"><span class="font-semibold text-slate-900">' + escapeHtml(method.name) + '</span>' + descriptionHtml + '</span>'
                         + '</span>'
                         + '<span class="shrink-0 whitespace-nowrap text-slate-600">' + escapeHtml(method.price_formatted || '') + '</span>'
@@ -736,10 +743,13 @@
                     const descriptionHtml = description
                         ? '<span class="checkout-payment-description mt-1 block whitespace-pre-line text-xs leading-relaxed text-slate-600">' + escapeHtml(description) + '</span>'
                         : '';
+                    const previewHtml = method.preview_only
+                        ? '<span class="mt-1 block text-xs font-semibold text-amber-800">{{ __('Ogledni prikaz · IBAN XXXX · nije za uplatu') }}</span>'
+                        : '';
                     return '<label class="checkout-option-card flex cursor-pointer items-start justify-between gap-3 px-3 py-2.5 text-sm">'
                         + '<span class="inline-flex min-w-0 items-start gap-2">'
                         + '<input type="radio" name="payment_method_code" value="' + escapeHtml(method.code) + '" class="mt-0.5 h-4 w-4 shrink-0 border-slate-300 text-slate-900 focus:ring-0" required ' + (checked ? 'checked' : '') + '>'
-                        + '<span class="min-w-0">' + methodLabel + descriptionHtml + '</span>'
+                        + '<span class="min-w-0">' + methodLabel + descriptionHtml + previewHtml + '</span>'
                         + '</span>'
                         + '</label>';
                 }).join('');
@@ -833,12 +843,12 @@
 
                 const partnerSource = shippingOptionsRoot?.querySelector('input[name="shipping_method_code"][data-is-boxnow="1"]');
                 const partnerId = String(partnerSource?.dataset?.boxnowPartnerId || '').trim();
-                if (partnerId === '') {
+                if (!partnerSource || (partnerId === '' && partnerSource.dataset.boxnowPublicWidget !== '1')) {
                     return Promise.resolve(false);
                 }
 
                 window._bn_map_widget_config = {
-                    partnerId: partnerId,
+                    ...(partnerId !== '' ? { partnerId } : {}),
                     parentElement: boxNowDialog ? '#boxnow-widget-map' : '#boxnow-widget-root',
                     buttonSelector: boxNowDialog ? '[data-boxnow-widget-trigger]' : '[data-boxnow-open]',
                     type: boxNowDialog ? 'iframe' : 'popup',
@@ -1195,7 +1205,7 @@
                 event.preventDefault();
                 const selected = selectedShippingInput();
                 const partnerId = String(selected?.dataset?.boxnowPartnerId || '').trim();
-                if (partnerId === '') {
+                if (partnerId === '' && selected?.dataset?.boxnowPublicWidget !== '1') {
                     alert(@json(__('ui.checkout.boxnow.partner_missing')));
                     return;
                 }

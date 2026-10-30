@@ -230,7 +230,7 @@
                                                 <option value="{{ $optionValue }}">{{ $optionLabel }}</option>
                                             @endforeach
                                         </select>
-                                        @if (($form['type'] ?? '') === 'watchline_products' && $fieldKey === 'source')
+                                        @if (in_array(($form['type'] ?? ''), ['watchline_products', 'lavaggio_products'], true) && $fieldKey === 'source')
                                             <p class="mt-2 text-xs leading-relaxed text-slate-500">
                                                 @if (($form['watchline']['source'] ?? '') === 'new_products')
                                                     Prikazuje artikle kojima je u katalogu uključena oznaka „Novo u ponudi”.
@@ -284,12 +284,12 @@
                     </datalist>
                 @endif
 
-                @if (in_array(($form['type'] ?? ''), ['five_star_reviews_carousel', 'blogs_carousel', 'watchline_reviews', 'watchline_blog', 'watchline_products'], true))
+                @if (in_array(($form['type'] ?? ''), ['five_star_reviews_carousel', 'blogs_carousel', 'watchline_reviews', 'watchline_blog', 'watchline_products', 'lavaggio_reviews', 'lavaggio_blog', 'lavaggio_products'], true))
                     <div class="mt-3">
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            @if (in_array(($form['type'] ?? ''), ['blogs_carousel', 'watchline_blog'], true))
+                            @if (in_array(($form['type'] ?? ''), ['blogs_carousel', 'watchline_blog', 'lavaggio_blog'], true))
                                 {{ __('Number of blog posts to show') }}
-                            @elseif (($form['type'] ?? '') === 'watchline_products')
+                            @elseif (in_array(($form['type'] ?? ''), ['watchline_products', 'lavaggio_products'], true))
                                 {{ __('Number of products to show') }}
                             @else
                                 {{ __('Number of comments to show') }}
@@ -298,7 +298,7 @@
                         <input type="number" min="1" max="50" wire:model="form.items_limit" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm md:max-w-[220px]" />
                         @error('form.items_limit') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
 
-                        @if (in_array(($form['type'] ?? ''), ['blogs_carousel', 'watchline_blog'], true))
+                        @if (in_array(($form['type'] ?? ''), ['blogs_carousel', 'watchline_blog', 'lavaggio_blog'], true))
                             <div class="mt-2 md:max-w-[220px]">
                                 <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Blog source') }}</label>
                                 <select wire:model="form.blog_source" data-tom-select data-tom-no-search="1" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
@@ -306,7 +306,7 @@
                                     <option value="featured">{{ __('Featured only') }}</option>
                                 </select>
                             </div>
-                        @elseif (in_array(($form['type'] ?? ''), ['five_star_reviews_carousel', 'watchline_reviews'], true))
+                        @elseif (in_array(($form['type'] ?? ''), ['five_star_reviews_carousel', 'watchline_reviews', 'lavaggio_reviews'], true))
                             <label class="inline-flex items-center gap-2">
                                 <input type="checkbox" wire:model="form.reviews_featured_only" class="h-4 w-4 border-slate-300 text-slate-900 focus:ring-0">
                                 <span class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">{{ __('Featured comments only') }}</span>
@@ -477,7 +477,7 @@
             </div>
         @endif
 
-        @if ($this->isItemBlock && !(($form['type'] ?? '') === 'featured_categories' && ($form['category_source'] ?? 'manual') === 'all_root') && (! in_array(($form['type'] ?? ''), ['watchline_products', 'watchline_brands'], true) || ($form['watchline']['source'] ?? 'manual') === 'manual'))
+        @if ($this->isItemBlock && !(($form['type'] ?? '') === 'featured_categories' && ($form['category_source'] ?? 'manual') === 'all_root') && (! in_array(($form['type'] ?? ''), ['watchline_products', 'watchline_brands', 'lavaggio_products', 'lavaggio_brands'], true) || ($form['watchline']['source'] ?? 'manual') === 'manual'))
             <div class="admin-panel admin-form-panel p-6">
                 <p class="admin-section-title">
                     @if (($form['type'] ?? '') === 'category_products_carousel')
@@ -497,7 +497,7 @@
                         {{ __('Choose and order the categories shown in this module.') }}
                     @elseif (($form['type'] ?? '') === 'popular_brands')
                         {{ __('Choose and order the brands shown in this module.') }}
-                    @elseif (($form['type'] ?? '') === 'watchline_blog')
+                    @elseif (in_array(($form['type'] ?? ''), ['watchline_blog', 'lavaggio_blog'], true))
                         Odaberite članke i složite njihov redoslijed. Ostavite prazno za automatski odabir članaka.
                     @else
                         {{ __('Choose items and order them. No JSON IDs needed.') }}
@@ -513,7 +513,7 @@
                             class="mb-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                             placeholder="{{ __('Search all items from database...') }}"
                         />
-                        @if (($form['type'] ?? '') === 'watchline_products')
+                        @if (in_array(($form['type'] ?? ''), ['watchline_products', 'lavaggio_products'], true))
                             <p class="mb-2 text-xs leading-relaxed text-slate-500">Prikazano je najviše 100 rezultata. Za ostale artikle upišite naziv ili šifru.</p>
                         @endif
                         <select wire:key="picker-select-{{ md5(($this->currentItemType ?? 'none').'|'.$pickerSearch.'|'.($this->itemOptions->count())) }}" wire:model="pickerItemId" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">

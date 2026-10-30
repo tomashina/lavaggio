@@ -281,6 +281,10 @@ class StoreSettingsService
                     'url' => trim((string) $this->settings->get('store_social_youtube_url', '')),
                     'enabled' => (bool) $this->settings->get('store_footer_social_youtube_enabled', true),
                 ],
+                'linkedin' => [
+                    'url' => trim((string) $this->settings->get('store_social_linkedin_url', '')),
+                    'enabled' => (bool) $this->settings->get('store_footer_social_linkedin_enabled', true),
+                ],
             ],
         ];
     }

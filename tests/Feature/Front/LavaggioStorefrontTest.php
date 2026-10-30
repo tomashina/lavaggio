@@ -26,11 +26,11 @@ class LavaggioStorefrontTest extends TestCase
         $this->seed(LavaggioStorefrontSeeder::class);
     }
 
-    public function test_empty_store_renders_lavaggio_without_inherited_catalog_or_branding(): void
+    public function test_empty_store_renders_lavaggio_without_hardcoded_widgets_or_inherited_catalog_branding(): void
     {
         $this->get(route('home'))->assertOk()
-            ->assertSee('Njega rublja s potpisom Lavaggio.')
-            ->assertSee('Ponuda je u pripremi.')
+            ->assertSee('data-lavaggio-home-widgets', false)
+            ->assertDontSee('data-lavaggio-widget=', false)
             ->assertSee('lavaggio-storefront')
             ->assertSee('front-theme/styles/lavaggio.css')
             ->assertSee('assets/lavaggio/favicon.svg')

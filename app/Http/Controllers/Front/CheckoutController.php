@@ -383,6 +383,7 @@ class CheckoutController extends Controller
                 'requires_quote' => (string) $method->pricing_type === 'quote',
                 'is_boxnow' => in_array(strtolower((string) $method->code), ['boxnow', 'box_now'], true),
                 'boxnow_partner_id' => (string) ((is_array($method->settings ?? null) ? ($method->settings['boxnow_partner_id'] ?? '') : '') ?: ''),
+                'boxnow_public_widget' => \App\Support\BoxNowShipping::usesPublicWidget($method),
                 'is_gls_dpm' => GlsShipping::isGlsDpmShippingMethod($method),
                 'gls_dpm_filter_type' => GlsShipping::glsDpmFilterType($method),
             ])->all(),
@@ -390,6 +391,9 @@ class CheckoutController extends Controller
                 'code' => (string) $method->code,
                 'name' => (string) $method->name,
                 'description' => trim((string) $method->description),
+                'preview_only' => config('storefront.home') === 'lavaggio' && config('commerce.local_safe_mode')
+                    && data_get($method->settings, 'bank_preview_placeholder')
+                    && ! app(\App\Services\Payments\EpcQrService::class)->validIban((string) data_get($method->settings, 'upi_receiver_iban', '')),
             ])->all(),
             'totals' => [
                 'subtotal' => round((float) $totals['subtotal'], 2),

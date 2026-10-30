@@ -17,7 +17,7 @@
         <div class="front-soft-hero lm-page-title px-6 py-4 text-center sm:px-8 sm:py-5">
             <nav aria-label="Breadcrumb" class="mb-2">
                 <ol class="flex flex-wrap items-center justify-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500 sm:gap-2">
-                    <li><a href="{{ route('home') }}" class="hover:text-slate-700">{{ __('ui.front.desktop.footer.home') }}</a></li>
+                    <li><a href="{{ route('home') }}" class="hover:text-slate-700"><x-front.breadcrumb-home /></a></li>
                     <li class="text-slate-400">/</li>
                     <li class="text-slate-700">{{ $categoryTranslation?->name ?? __('ui.front.desktop.footer.info') }}</li>
                 </ol>

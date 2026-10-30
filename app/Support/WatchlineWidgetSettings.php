@@ -29,14 +29,19 @@ class WatchlineWidgetSettings
     public static function defaults(string $type): array
     {
         return array_replace(
-            (array) config('watchline_widgets.'.$type.'.content_defaults', []),
+            (array) config(self::configKey($type).'.'.$type.'.content_defaults', []),
             array_map(static fn (array $field): mixed => $field['default'] ?? '', self::fields($type)),
         );
     }
 
     public static function fields(string $type): array
     {
-        return (array) config('watchline_widgets.'.$type.'.fields', []);
+        return (array) config(self::configKey($type).'.'.$type.'.fields', []);
+    }
+
+    private static function configKey(string $type): string
+    {
+        return str_starts_with($type, 'lavaggio_') ? 'lavaggio_widgets' : 'watchline_widgets';
     }
 
     public static function forBlock(ContentBlock $block, ?ContentBlockTranslation $translation): array

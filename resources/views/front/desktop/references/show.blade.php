@@ -21,7 +21,7 @@
     @endphp
     <header class="reference-heading front-soft-hero lm-page-title">
         <nav aria-label="{{ __('Breadcrumb') }}" class="reference-breadcrumbs">
-            <a href="{{ route('home') }}">{{ __('ui.front.desktop.footer.home') }}</a><span aria-hidden="true">/</span>
+            <a href="{{ route('home') }}"><x-front.breadcrumb-home /></a><span aria-hidden="true">/</span>
             <a href="{{ route('references.index') }}">{{ __('reference_projects.title') }}</a><span aria-hidden="true">/</span>
             <span aria-current="page">{{ $translation->title }}</span>
         </nav>

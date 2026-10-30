@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const script = readFileSync(new URL('../../public/front-theme/scripts/header-search-panel.js', import.meta.url), 'utf8');
 
-function harness({ enabled = true, mobile = false, persistent = true, breakpoint = '1279', fullscreen = false } = {}) {
+function harness({ enabled = true, mobile = false, persistent = true, breakpoint = '1279', fullscreen = false, modal = false } = {}) {
     let now = 0;
     let timerId = 0;
     const timers = new Map();
@@ -50,7 +50,8 @@ function harness({ enabled = true, mobile = false, persistent = true, breakpoint
     };
     const panel = element();
     panel.hasAttribute = (name) => name === 'data-header-search-persistent' ? persistent
-        : name === 'data-header-search-fullscreen' ? fullscreen : false;
+        : name === 'data-header-search-fullscreen' ? fullscreen
+            : name === 'data-header-search-modal' ? modal : false;
     panel.dataset.headerSearchBreakpoint = breakpoint;
     const form = element();
     const input = element();
@@ -427,4 +428,67 @@ test('category-only matches remain visible without an empty state', async () => 
     assert.equal(rows[0].href, '/category/rasvjeta');
     assert.equal(page.nodes.get('[data-header-search-empty]').hidden, true);
     assert.equal(page.nodes.get('[data-header-search-footer]').hidden, false);
+});
+
+test('desktop modal starts closed, opens with immediate focus, fetches suggestions and closes on Escape', async () => {
+    const page = harness({ modal: true, persistent: false });
+    assert.equal(page.panel.getAttribute('aria-hidden'), 'true');
+    assert.equal(page.panel.inert, true);
+    assert.equal(page.toggle.getAttribute('aria-expanded'), 'false');
+    page.type('omekšivač'); page.advance(250);
+    assert.equal(page.requests.length, 0);
+    page.toggle.emit('click');
+    assert.equal(page.panel.classList.contains('is-open'), true);
+    assert.equal(page.panel.getAttribute('role'), 'dialog');
+    assert.equal(page.panel.getAttribute('aria-modal'), 'true');
+    assert.equal(page.panel.inert, false);
+    assert.equal(page.toggle.getAttribute('aria-expanded'), 'true');
+    assert.equal(page.document.activeElement, page.input);
+    assert.equal(page.document.body.classList.contains('header-search-overlay-open'), true);
+    assert.equal(page.requests.length, 1);
+    page.requests[0].resolve({ total: 1, items: [{ name: 'Lavaggio omekšivač', url: '/product/omeksivac', price: '12,00 €' }] });
+    await settle();
+    assert.equal(page.nodes.get('[data-header-search-suggestions-list]').querySelectorAll('[data-header-search-suggestion]').length, 1);
+    page.document.emit('keydown', { key: 'Escape' });
+    assert.equal(page.panel.classList.contains('is-open'), false);
+    assert.equal(page.panel.getAttribute('aria-hidden'), 'true');
+    assert.equal(page.panel.inert, true);
+    assert.equal(page.document.body.classList.contains('header-search-overlay-open'), false);
+    assert.equal(page.document.activeElement, page.toggle);
+});
+
+test('modal focus wraps in both directions and an outside focus returns inside', () => {
+    const page = harness({ modal: true, persistent: false });
+    page.toggle.emit('click');
+    const link = page.nodes.get('[data-header-search-view-all]');
+    link.focus();
+    let prevented = 0;
+    page.document.emit('keydown', { key: 'Tab', preventDefault() { prevented++; } });
+    assert.equal(page.document.activeElement, page.input);
+    page.document.emit('keydown', { key: 'Tab', shiftKey: true, preventDefault() { prevented++; } });
+    assert.equal(page.document.activeElement, link);
+    page.toggle.focus();
+    page.document.emit('keydown', { key: 'Tab', preventDefault() { prevented++; } });
+    assert.equal(page.document.activeElement, page.input);
+    assert.equal(prevented, 3);
+});
+
+test('modal stays open across desktop/mobile changes and close aborts pending results', async () => {
+    const page = harness({ modal: true, persistent: false });
+    page.toggle.emit('click'); page.type('deterdžent'); page.advance(250);
+    page.media.matches = true; page.media.emit('change');
+    page.viewport.height = 410; page.viewport.offsetTop = 20; page.viewport.emit('resize');
+    assert.equal(page.panel.style.getPropertyValue('--header-search-viewport-height'), '410px');
+    page.media.matches = false; page.media.emit('change');
+    assert.equal(page.panel.classList.contains('is-open'), true);
+    assert.equal(page.document.body.classList.contains('header-search-overlay-open'), true);
+    page.close.emit('click');
+    assert.equal(page.requests[0].signal.aborted, true);
+    page.requests[0].resolve({ total: 1, items: [{ name: 'Deterdžent', url: '/product/deterdzent' }] });
+    await settle();
+    assert.equal(page.panel.classList.contains('is-open'), false);
+    assert.equal(page.nodes.get('[data-header-search-suggestions]').hidden, true);
+    assert.equal(page.panel.style.getPropertyValue('--header-search-viewport-height'), '');
+    page.media.matches = true; page.media.emit('change');
+    assert.equal(page.panel.getAttribute('aria-hidden'), 'true');
 });

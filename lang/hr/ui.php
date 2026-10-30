@@ -430,6 +430,7 @@ return [
             'unavailable' => 'Odabrana opcija nije dostupna ili nema zalihe.',
             'updated' => 'Košarica je ažurirana.',
             'adjusted' => 'Količina je prilagođena jer proizvod nije dostupan.',
+            'adjusted_to_availability' => 'Količina u košarici je prilagođena dostupnosti proizvoda.',
             'adjusted_with_stock' => 'Dostupno je najviše :stock kom. Količina u košarici je prilagođena.',
             'removed' => 'Stavka je uklonjena iz košarice.',
             'cleared' => 'Košarica je ispražnjena.',

@@ -21,7 +21,7 @@
             <nav aria-label="Breadcrumb" class="mb-2">
                 <ol class="flex flex-wrap items-center justify-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500 sm:gap-2">
                     <li>
-                        <a href="{{ route('home') }}" class="inline-flex items-center justify-center text-slate-500 hover:text-slate-700">{{ __('ui.front.desktop.footer.home') }}</a>
+                        <a href="{{ route('home') }}" class="inline-flex items-center justify-center text-slate-500 hover:text-slate-700"><x-front.breadcrumb-home /></a>
                     </li>
                     <li class="text-slate-400">/</li>
                     <li class="text-slate-700">{{ __('ui.category_index.page_title') }}</li>

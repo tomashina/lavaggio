@@ -49,6 +49,11 @@
       "path": "images/pattern/pattern-square-faded.svg",
       "derived_from": "images/pattern/pattern-square.svg",
       "modification": "Grid opacity fades smoothly to transparent over the original 194px height."
+    },
+    {
+      "path": "images/logo/lavaggio-mail-logo.png",
+      "derived_from": "images/logo/lavaggio-logo-dark.svg",
+      "modification": "Rasterized at 660 × 150 px for email clients; displayed at the original 220 × 50 px."
     }
   ]
 }

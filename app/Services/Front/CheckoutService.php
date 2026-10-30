@@ -16,6 +16,7 @@ use App\Models\Settings\Local\ShippingMethod;
 use App\Models\Settings\Local\TaxRate;
 use App\Models\User;
 use App\Services\GiftVoucherService;
+use App\Services\Payments\BankTransferUpiService;
 use App\Services\Payments\CorvusPayFormService;
 use App\Services\Payments\KeksPayService;
 use App\Services\Payments\WSPayFormService;
@@ -78,6 +79,7 @@ class CheckoutService
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
+            ->filter(fn (PaymentMethod $method) => app(BankTransferUpiService::class)->canBeOffered($method))
             ->filter(fn (PaymentMethod $method) => $corvusPay->canBeOffered($method))
             ->filter(fn (PaymentMethod $method) => $wspay->canBeOffered($method))
             ->filter(fn (PaymentMethod $method) => $keks->canBeOffered($method))
@@ -249,6 +251,25 @@ class CheckoutService
             if ($glsDpmId === '') {
                 throw ValidationException::withMessages([
                     'shipping_gls_dpm_id' => __('Odaberite GLS paketomat ili ParcelShop lokaciju.'),
+                ]);
+            }
+        }
+
+        if (data_get($shippingMethod->settings, 'configured_from') === 'lavaggio-checkout'
+            && $shippingMethod->service_type === 'parcel_locker') {
+            $boxNow = $this->isBoxNowCode((string) $shippingMethod->code);
+            $prefix = $boxNow ? 'shipping_boxnow_' : 'shipping_gls_dpm_';
+            $idField = $prefix.($boxNow ? 'locker_id' : 'id');
+            $nameField = $prefix.($boxNow ? 'locker_name' : 'name');
+            $invalid = ! preg_match('/^[A-Za-z0-9._:\\-]{1,120}$/', (string) ($payload[$idField] ?? ''))
+                || trim((string) ($payload[$nameField] ?? '')) === ''
+                || trim((string) ($payload[$prefix.'address_line_1'] ?? '')) === ''
+                || ! preg_match('/^[0-9]{5}$/', trim((string) ($payload[$prefix.'postal_code'] ?? '')))
+                || trim((string) ($payload[$prefix.'city'] ?? '')) === ''
+                || (! $boxNow && ($payload[$prefix.'type'] ?? '') !== 'parcel-locker');
+            if ($invalid) {
+                throw ValidationException::withMessages([
+                    $idField => __('Odaberite valjani paketomat na karti odabrane dostavne službe.'),
                 ]);
             }
         }

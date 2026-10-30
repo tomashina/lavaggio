@@ -8,6 +8,7 @@ use App\Services\Catalog\CatalogFeatureService;
 use App\Services\Front\GuestStorefrontCache;
 use App\Services\Pricing\ProductPricePresentationService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -69,8 +70,8 @@ class PromotionManager extends Component
             'title' => $translation?->title ?? $action->code,
             'type' => $action->type,
             'discount_value' => (string) $action->discount_value,
-            'starts_at' => $action->starts_at?->format('Y-m-d\TH:i:s') ?? '',
-            'ends_at' => $action->ends_at?->format('Y-m-d\TH:i:s') ?? '',
+            'starts_at' => $this->formatPromotionDate($action->starts_at, 'Y-m-d\TH:i:s') ?? '',
+            'ends_at' => $this->formatPromotionDate($action->ends_at, 'Y-m-d\TH:i:s') ?? '',
             'is_active' => $action->is_active,
             'priority' => $action->priority,
             'is_exclusive' => $action->is_exclusive,
@@ -110,7 +111,7 @@ class PromotionManager extends Component
                 abort_unless($this->canEditInline($action), 403, 'Opseg akcije se promijenio. Otvorite zajednički editor akcija.');
             } else {
                 $action = new CatalogAction([
-                    'code' => 'watchline-product-'.$this->productId.'-'.Str::lower(Str::random(12)),
+                    'code' => config('storefront.home').'-product-'.$this->productId.'-'.Str::lower(Str::random(12)),
                     'scope' => CatalogAction::SCOPE_PRODUCT,
                     'target_type' => CatalogAction::TARGET_PRODUCT,
                     'audience_type' => CatalogAction::AUDIENCE_ALL,
@@ -121,8 +122,8 @@ class PromotionManager extends Component
             $action->fill([
                 'type' => $validated['type'],
                 'discount_value' => $validated['discount_value'],
-                'starts_at' => ($validated['starts_at'] ?? '') ?: null,
-                'ends_at' => ($validated['ends_at'] ?? '') ?: null,
+                'starts_at' => $this->storedPromotionDate($validated['starts_at'] ?? null),
+                'ends_at' => $this->storedPromotionDate($validated['ends_at'] ?? null),
                 'is_active' => $validated['is_active'],
                 'priority' => $validated['priority'],
                 'is_exclusive' => $validated['is_exclusive'],
@@ -176,8 +177,8 @@ class PromotionManager extends Component
                     CatalogAction::TYPE_FIXED => number_format((float) $action->discount_value, 2, ',', '.').' €',
                     default => 'Složena akcija',
                 },
-                'starts_at' => $action->starts_at?->format('d.m.Y. H:i') ?? 'Bez početnog datuma',
-                'ends_at' => $action->ends_at?->format('d.m.Y. H:i') ?? 'Bez završnog datuma',
+                'starts_at' => $this->formatPromotionDate($action->starts_at, 'd.m.Y. H:i') ?? 'Bez početnog datuma',
+                'ends_at' => $this->formatPromotionDate($action->ends_at, 'd.m.Y. H:i') ?? 'Bez završnog datuma',
                 'editable' => $this->canEditInline($action),
             ]),
             'price' => app(ProductPricePresentationService::class)->forProduct($product, null),
@@ -213,6 +214,31 @@ class PromotionManager extends Component
                     });
                 }
             });
+    }
+
+    private function formatPromotionDate(?Carbon $date, string $format): ?string
+    {
+        if ($date === null) {
+            return null;
+        }
+
+        return (config('storefront.home') === 'lavaggio'
+            ? $date->copy()->timezone('Europe/Zagreb')
+            : $date)->format($format);
+    }
+
+    private function storedPromotionDate(?string $value): ?string
+    {
+        if (! filled($value)) {
+            return null;
+        }
+        if (config('storefront.home') !== 'lavaggio') {
+            return $value;
+        }
+
+        return Carbon::parse($value, 'Europe/Zagreb')
+            ->timezone((string) config('app.timezone', 'UTC'))
+            ->format('Y-m-d H:i:s');
     }
 
     protected function validationAttributes(): array
@@ -278,7 +304,7 @@ class PromotionManager extends Component
 
     private function permit(string $ability): void
     {
-        abort_unless(config('storefront.home') === 'watchline' && app(CatalogFeatureService::class)->useActions(), 404);
+        abort_unless(in_array(config('storefront.home'), ['watchline', 'lavaggio'], true) && app(CatalogFeatureService::class)->useActions(), 404);
         abort_unless($this->can('view') && $this->can($ability), 403);
     }
 }

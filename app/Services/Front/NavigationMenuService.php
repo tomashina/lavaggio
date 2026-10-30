@@ -335,6 +335,10 @@ class NavigationMenuService
                     if (! in_array($type, ['category', 'catalog'], true) && ($item['show_dropdown'] ?? true)) {
                         $entry['children'] = $resolveItems($item['children'] ?? [], $index.'-');
                     }
+                    if ($isLavaggioStore && ! in_array($type, ['category', 'catalog'], true) && ! empty($entry['children'])) {
+                        $entry['menu_image_url'] = $this->categoryMenuImageUrl((string) ($item['desktop_promo_image_path'] ?? ''));
+                        $entry['menu_image_alt'] = $entry['label'];
+                    }
                     if ($isWatchlineStore && in_array($type, ['category', 'catalog'], true)) {
                         $entry['children'] = array_map(static function (array $child): array {
                             $child['children'] = [];

@@ -1,4 +1,5 @@
 @php
+    $isLavaggioCard = config('storefront.home') === 'lavaggio';
     $canViewPrices = $canViewPrices ?? app(\App\Services\Pricing\B2BAccessService::class)->canViewPrices(auth()->user());
     $isPurchasable = $canViewPrices && $isPurchasable;
     if (! $canViewPrices) {
@@ -12,6 +13,14 @@
     $hasOptionErrorForCard = (int) old('product_id', 0) === $productId && $errors->has('product_option_value_id');
     $deferHoverImage = config('storefront.home') === 'watchline';
 @endphp
+
+@if ($isLavaggioCard)
+    @once('lavaggio-product-styles')
+        @push('styles')
+            <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-products.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-products.css')) }}">
+        @endpush
+    @endonce
+@endif
 
 <article class="group w-full min-w-0 overflow-hidden {{ $lined ? 'product-card-lined flex h-full flex-col bg-white p-0' : ($flat ? 'bg-white p-0' : 'rounded-2xl bg-white p-5 shadow-sm') }}" data-product-card data-product-id="{{ $productId }}" @if ($lined) data-product-card-lined @endif>
     <div class="relative {{ $flat ? 'overflow-hidden' : '-mt-5 overflow-hidden rounded-t-2xl' }}">
@@ -89,6 +98,10 @@
             <span class="product-promotion-badge absolute left-2 top-2 inline-flex h-7 items-center border border-rose-600 bg-rose-600 px-2 text-xs font-bold text-white">
                 -{{ $discountPercent }}%
             </span>
+        @endif
+
+        @if ($isLavaggioCard && $product->is_professional)
+            <span class="lavaggio-pro-badge lavaggio-card-pro {{ ! empty($discountPercent) ? 'has-promotion' : '' }}" title="Profesionalni proizvod"><strong>PRO</strong><span>Profesionalna upotreba</span></span>
         @endif
 
         @if ($isPurchasable && ! $lined)
@@ -214,6 +227,9 @@
                     </span>
                 </div>
                 @include('front.partials.b2b-tax-note', ['includesTax' => $displayIncludesTax ?? true])
+                @if ($isLavaggioCard && $lavaggioContentLabel)
+                    <p class="lavaggio-card-content">{{ $lavaggioContentLabel }}</p>
+                @endif
                 @include('front.partials.watchline-reference-price', ['referencePriceText' => $referencePriceText ?? null])
                 @if (! empty($lowest30DaysPrice))
                     <p class="product-card-lowest-price mt-1 text-[9px] leading-tight text-slate-500 sm:text-[10px]" aria-label="{{ __('ui.product.lowest_price_30_days', ['price' => $lowest30DaysPrice]) }}" title="{{ __('ui.product.lowest_price_30_days', ['price' => $lowest30DaysPrice]) }}">{{ \App\Support\StorefrontTheme::usesLibermediaBrand() ? __('Najniža cijena (30 dana): :price', ['price' => $lowest30DaysPrice]) : __('ui.product.lowest_price_30_days', ['price' => $lowest30DaysPrice]) }}</p>
@@ -351,6 +367,9 @@
                     </span>
                 </div>
                 @include('front.partials.b2b-tax-note', ['includesTax' => $displayIncludesTax ?? true])
+                @if ($isLavaggioCard && $lavaggioContentLabel)
+                    <p class="lavaggio-card-content">{{ $lavaggioContentLabel }}</p>
+                @endif
                 @include('front.partials.watchline-reference-price', ['referencePriceText' => $referencePriceText ?? null])
                 @if (! empty($lowest30DaysPrice))
                     <p class="text-[10px] leading-tight text-slate-500 sm:text-[11px]">{{ __('ui.product.lowest_price_30_days', ['price' => $lowest30DaysPrice]) }}</p>
@@ -407,6 +426,9 @@
                     </span>
                 </div>
                 @include('front.partials.b2b-tax-note', ['includesTax' => $displayIncludesTax ?? true])
+                @if ($isLavaggioCard && $lavaggioContentLabel)
+                    <p class="lavaggio-card-content">{{ $lavaggioContentLabel }}</p>
+                @endif
                 @include('front.partials.watchline-reference-price', ['referencePriceText' => $referencePriceText ?? null])
                 @if (! empty($lowest30DaysPrice))
                     <p class="text-[10px] leading-tight text-slate-500 sm:text-[11px]">{{ __('ui.product.lowest_price_30_days', ['price' => $lowest30DaysPrice]) }}</p>

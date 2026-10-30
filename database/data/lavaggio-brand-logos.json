@@ -1,0 +1,363 @@
+[
+  {
+    "code": "lavaggio-ariel",
+    "name": "Ariel",
+    "path": "assets/lavaggio/brands/ariel.webp",
+    "source_page": "https://www.ariel.co.uk/en-gb",
+    "source_url": "https://www.ariel.co.uk/en-gb/static/images/logo.png",
+    "retrieved_at": "2026-10-28T12:54:32+00:00",
+    "source_dimensions": [
+      350,
+      350
+    ],
+    "source_sha256": "7d0548ee2b44e17a838165e3ceb71ae3dd2be8ab7da662923eb4992a45840974",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "cb160ae440ba0a08a0ceb2c5e360e97b48cac9da7de010cebba0d32f8f8e93bd",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-persil",
+    "name": "Persil",
+    "path": "assets/lavaggio/brands/persil.webp",
+    "source_page": "https://www.persil.de/",
+    "source_url": "https://dm.henkel-dam.com/is/image/henkel/persil_de_logo_0505_400x140",
+    "retrieved_at": "2026-10-28T12:54:32+00:00",
+    "source_dimensions": [
+      400,
+      140
+    ],
+    "source_sha256": "1655c40cf7e47218d2442f9b7d517c795f19d579053ad93da4c7da6fcc5edec2",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "2a5c60340cabe6828754bacde0a6fa875ec37ebdd29821244604629d8c32a22f",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-perwoll",
+    "name": "Perwoll",
+    "path": "assets/lavaggio/brands/perwoll.webp",
+    "source_page": "https://www.henkel.hr/brendovi-i-poslovne-jedinice/perwoll-678444",
+    "source_url": "https://www.henkel.hr/resource/image/27810/1x1/1000/1000/1a3c25cdeb095bf525a7955e83862bd3/0ACCBEC640E7AAA8F2D98329F2CF163E/perwoll-logo.webp",
+    "retrieved_at": "2026-10-28T12:54:32+00:00",
+    "source_dimensions": [
+      1000,
+      1000
+    ],
+    "source_sha256": "bdd7f7cc8df3c687edb5dfd4cd652e650189a924b98446de8ac8afdcf42ca05c",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "92fcbbebe54c0e8c464cc7bdb04fdd0a5bdcda44b843f9b5d3896bad6093ac4f",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-frosch",
+    "name": "Frosch",
+    "path": "assets/lavaggio/brands/frosch.webp",
+    "source_page": "https://frosch.de/de/",
+    "source_url": "https://frosch.de/test-bilder/logo_frosch.svg",
+    "retrieved_at": "2026-10-28T12:54:33+00:00",
+    "source_dimensions": [
+      1200,
+      795
+    ],
+    "source_sha256": "f1985cf916e4c642d76eb130d36f034d3fa8506ca789e5d5ba9e3438be952493",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "93b30e2d2ce451f5e80d1a2e08cfc0913f257916c8fdbf8b3a1eace2a76e3ace",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-vanish",
+    "name": "Vanish",
+    "path": "assets/lavaggio/brands/vanish.webp",
+    "source_page": "https://www.vanish.de/",
+    "source_url": "https://eu-images.contentstack.com/v3/assets/blte6b9e99033a702bd/blt6d03c9d14be2c06f/66aa273efc9452067d72ac9c/cfc2af41e232ff6b1fcc0a0d485ee75c78ad140d.png",
+    "retrieved_at": "2026-10-28T12:54:33+00:00",
+    "source_dimensions": [
+      220,
+      190
+    ],
+    "source_sha256": "b15adeb9ce5df495e7db3bb5cdfd916ba91bdad91075fe9d65792bbccb564620",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "006b7d3e1aae11c6e4b3bd43e2b970b3d6a3adb78876bd89362e9d5f29cdad76",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-dr-beckmann",
+    "name": "Dr. Beckmann",
+    "path": "assets/lavaggio/brands/dr-beckmann.webp",
+    "source_page": "https://www.dr-beckmann.com/de-de/",
+    "source_url": "https://www.dr-beckmann.com/_assets/6e0ddf8a12dfb824bd69f231bd60adc6/assets/img/logo.svg",
+    "retrieved_at": "2026-10-28T12:54:33+00:00",
+    "source_dimensions": [
+      1200,
+      594
+    ],
+    "source_sha256": "1e0ff17808f323ac4b65e4f57951cbd700e4abc976458c216c4ad0c0713e8777",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "154cef5e8c6d6fc6de9407d8f1b2e598dc355f404a2224c20301c831fca6c71c",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-lenor",
+    "name": "Lenor",
+    "path": "assets/lavaggio/brands/lenor.webp",
+    "source_page": "https://www.lenor.de/de-de",
+    "source_url": "https://images.ctfassets.net/meoygw8w7e92/4pJA7moNn9zjvdVATT6Ohx/636781ba90522f2f79261ad1b3840cd7/lenor_logo.png",
+    "retrieved_at": "2026-10-28T12:54:33+00:00",
+    "source_dimensions": [
+      270,
+      183
+    ],
+    "source_sha256": "ba5c391ff581aa5de381aad4c8497cf533765aebf4f21691ef2aca86ffc1443b",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "64a924a349a5305903bd3907c0f291719a9180f420493cabfaf827094f8827ee",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-sanytol",
+    "name": "Sanytol",
+    "path": "assets/lavaggio/brands/sanytol.webp",
+    "source_page": "https://sanytol.com/",
+    "source_url": "https://sanytol.com/wp-content/themes/sanytol/assets/icons/sanytol-logo.svg",
+    "retrieved_at": "2026-10-28T12:54:33+00:00",
+    "source_dimensions": [
+      1200,
+      341
+    ],
+    "source_sha256": "97cd5a1072f43c757f6c27144c0114029f40938ccd240b0e28f48fbdafb639ad",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "c12f470b287a324ff95126ab2eb481eda3977ca988cff0e0d7bb999c1e52712d",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-calgon",
+    "name": "Calgon",
+    "path": "assets/lavaggio/brands/calgon.webp",
+    "source_page": "https://www.calgon.de/",
+    "source_url": "https://eu-images.contentstack.com/v3/assets/blt9ca8222b5acaa556/blt60347aaac3a758e2/6671325427143f94646b25f9/Calgon_logo_V12(1).webp",
+    "retrieved_at": "2026-10-28T12:54:33+00:00",
+    "source_dimensions": [
+      400,
+      394
+    ],
+    "source_sha256": "0b1ff162ab96ce4915b0a7b8f37bdda58e5680079f5404a915eb563c380a3024",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "b087212c9895e506f7a7305c5c1cdd06fdf87ae4798295bab66f2300cd0b0f9b",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-vileda",
+    "name": "Vileda",
+    "path": "assets/lavaggio/brands/vileda.webp",
+    "source_page": "https://www.vileda.de/",
+    "source_url": "https://www.vileda.de/medias/V-logo-flag-RGB.jpg?context=bWFzdGVyfHJvb3R8ODM3Njh8aW1hZ2UvanBlZ3xhR0U0TDJnd05TODVNVEkyTlRjNU56azRNRFEyTG1wd1p3fDQ4OWYyNzlhZTNjYmJhZDNlZTlmMzc4ODMwMGEyNWU3Yzg0ZDFhYTMwMDg0ZTY4YWM0MjZhOGFiNjI3ZTk5NjU",
+    "retrieved_at": "2026-10-28T12:54:34+00:00",
+    "source_dimensions": [
+      685,
+      356
+    ],
+    "source_sha256": "aa6a91effaa8b493fff7969a764e18f5a7945a1091704cdb3ebc6f05619f6d77",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "7490ee9f1cfb6e74e3061c59dfff50bf98dc892513052e132b0a17f4bcd1a0b5",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-sil",
+    "name": "Sil",
+    "path": "assets/lavaggio/brands/sil.webp",
+    "source_page": "https://www.allyoucare-byhenkel.com/de/de/marken/wasch-und-reinigungsmittel/sil.html",
+    "source_url": "https://dm.henkel-dam.com/is/image/henkel/sil-logo-home?fmt=png-alpha&wid=596",
+    "retrieved_at": "2026-10-28T12:54:34+00:00",
+    "source_dimensions": [
+      596,
+      195
+    ],
+    "source_sha256": "0ba5c9238fe163de1329d78ea9acedf7f05cffb0ad8553dccf9ffd3ecbea5340",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "7694d64626d72d977fa7ff2da314cb79b7f5279019e7767ccd5aaa8c7f95bcd5",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-sagrotan",
+    "name": "Sagrotan",
+    "path": "assets/lavaggio/brands/sagrotan.webp",
+    "source_page": "https://www.sagrotan.de/",
+    "source_url": "https://eu-images.contentstack.com/v3/assets/blt8719179d18ab4628/bltba4190d6bc18ba72/6a1593b67e488f217873fcec/New_Logo_Peach_(1).png",
+    "retrieved_at": "2026-10-28T12:54:34+00:00",
+    "source_dimensions": [
+      1123,
+      794
+    ],
+    "source_sha256": "85b8786fed8550ad212eec781ebc539ea865f33afdb18afd91e2d1cff88b1264",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "5b3072a7f3436778fcbc10676ed09ccde4be8092d76fdd0f04fdc83acb203c9e",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-wenko",
+    "name": "WENKO",
+    "path": "assets/lavaggio/brands/wenko.webp",
+    "source_page": "https://www.wenko.com/en/",
+    "source_url": "https://www.wenko.com/typo3conf/ext/wenko/Resources/Public/Gfx/wenkologo/Wenko Logo_GB_3_4c.svg",
+    "retrieved_at": "2026-10-28T12:54:34+00:00",
+    "source_dimensions": [
+      1200,
+      600
+    ],
+    "source_sha256": "32dc380efe89c8c48790786e93492acbba49dea3a8cd3093ffb9dd44da72d886",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "83cb7bb2a29882c78fc52d0dba6cd6c835bbfad6b606c882a40a8a10fd64ff7f",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-leifheit",
+    "name": "Leifheit",
+    "path": "assets/lavaggio/brands/leifheit.webp",
+    "source_page": "https://www.leifheit.de/de-de/",
+    "source_url": "https://cdn.shopware.store/K/E/S/o3B2r/media/f5/89/72/1729580779/LEI-Logo-240x68_Desktop.svg?ts=1729580779",
+    "retrieved_at": "2026-10-28T12:54:34+00:00",
+    "source_dimensions": [
+      1200,
+      340
+    ],
+    "source_sha256": "1e9c39aba5f674bff862027aacfc1f5e0d8300ce98e75a72dbc7279e355c354e",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "7a38f5a6f64d1bbf34b60de18a0f3e1f4fc76ae30642be8123bfb56e38f74ae8",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-heitmann",
+    "name": "HEITMANN",
+    "path": "assets/lavaggio/brands/heitmann.webp",
+    "source_page": "https://www.heitmann-hygiene-care.de/",
+    "source_url": "https://www.heitmann-hygiene-care.de/media/images/logo.svg",
+    "retrieved_at": "2026-10-28T12:54:35+00:00",
+    "source_dimensions": [
+      1200,
+      436
+    ],
+    "source_sha256": "491c12b120d74c046e5989712a0f0b765cef811eff224023bccb7f0af92cde62",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "cb08a6cb204fa0532be5e5d87e7d1b2acf7fa38f6a53580b71668596c083797e",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-coccolino",
+    "name": "Coccolino",
+    "path": "assets/lavaggio/brands/coccolino.webp",
+    "source_page": "https://wiop.unilever.it/brands/coccolino/",
+    "source_url": "https://wiop.unilever.it/content-images/92ui5egz/production/1fc8516853ff31f4e6cf6503c930667a8f38fea5-1080x1080.jpg",
+    "retrieved_at": "2026-10-28T12:54:35+00:00",
+    "source_dimensions": [
+      1080,
+      1080
+    ],
+    "source_sha256": "e4ec5249a65206ef10e1846508973d87c6f8a65f029147fef465635584c5cf11",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "1b3b2646464c5615993c8706243b10d47c41be4688489ec6ae20a4f3dcbe983e",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-faks",
+    "name": "FAKS",
+    "path": "assets/lavaggio/brands/faks.webp",
+    "source_page": "https://www.saponia.hr/hr/siroka-potrosnja/pranje-i-njega-rublja/",
+    "source_url": "https://www.saponia.hr/media/148964/faks-logo_2025.png",
+    "retrieved_at": "2026-10-28T12:54:36+00:00",
+    "source_dimensions": [
+      1327,
+      563
+    ],
+    "source_sha256": "a6ed3cd66df9b6a66b01c12daa555caa3c196b0fcc957b1d55354f9cd4e8b6b7",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "d2b7e44b8525e567d7ae81ddacb6e87c0ce6e5361f75fe301dbda0fe7474bf6a",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-silan",
+    "name": "Silan",
+    "path": "assets/lavaggio/brands/silan.webp",
+    "source_page": "https://www.henkel.com/our-businesses/silan-27916",
+    "source_url": "https://www.henkel.com/resource/image/27920/1x1/1000/1000/dc8bf71e80d99921312b66f81675ba81/5FA1B52059ABE45BBE540E5F3C059EE0/silan-logo.webp",
+    "retrieved_at": "2026-10-28T12:54:36+00:00",
+    "source_dimensions": [
+      1000,
+      1000
+    ],
+    "source_sha256": "1797ff34c7514cb300f123ba2473de7a431f5016a1d01383f30b1f5d8f7b75c7",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "c5cce5228f6fe559c4f3c12799c1b49386f3c6370832baa35e240cbb64ece608",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  },
+  {
+    "code": "lavaggio-burstenmann",
+    "name": "Bürstenmann",
+    "path": "assets/lavaggio/brands/burstenmann.webp",
+    "source_page": "https://www.buerstenmann.com/portal.html",
+    "source_url": "https://www.buerstenmann.com/fileadmin/_processed_/0/b/csm_Logo-B%C3%BCrstenmann-GmbH_0eb128ba29.png",
+    "retrieved_at": "2026-10-28T12:54:36+00:00",
+    "source_dimensions": [
+      400,
+      81
+    ],
+    "source_sha256": "193defad5812b14cb3409a5af27985b34d98b7b1d5a2954fafd5971f82326804",
+    "asset_dimensions": [
+      600,
+      260
+    ],
+    "asset_sha256": "aa919651eee4b1e385c0b55701f7bd71b78920a5c8965616d65c8e59ed9c19ee",
+    "normalization": "Official brand artwork; surrounding whitespace trimmed, proportionally resized, centered on a white background and encoded as WebP. No logo elements redrawn."
+  }
+]

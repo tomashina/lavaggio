@@ -11,7 +11,7 @@
     <section class="mb-10 px-1">
         <div class="front-soft-hero lm-page-title px-6 py-6 text-center sm:px-8 sm:py-8">
             <nav aria-label="{{ __('Breadcrumb') }}" class="mb-3 text-xs text-slate-500">
-                <a href="{{ route('home') }}" class="hover:text-slate-700">{{ __('ui.front.desktop.footer.home') }}</a>
+                <a href="{{ route('home') }}" class="hover:text-slate-700"><x-front.breadcrumb-home /></a>
                 <span class="mx-2" aria-hidden="true">/</span>
                 <span aria-current="page">{{ __('reference_projects.title') }}</span>
             </nav>

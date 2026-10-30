@@ -161,6 +161,9 @@ class CatalogController extends Controller
                 $displayOld = $price['display_old'] ?? $price['old_gross'] ?? null;
                 $taxSuffix = ($price['display_includes_tax'] ?? true) === false
                     ? ' '.__('ui.b2b.pricing.excludes_tax') : '';
+                $formatPrice = static fn (float $value): string => config('storefront.home') === 'lavaggio'
+                    ? app(\App\Support\LavaggioProductPresenter::class)->money($value)
+                    : number_format($value, 2).' €';
                 $imageUrl = null;
                 $brand = null;
 
@@ -192,10 +195,10 @@ class CatalogController extends Controller
                     'url' => route('products.show', ['slug' => $slug]),
                     'image_url' => $imageUrl,
                     'price' => $price !== null
-                        ? number_format((float) $displayCurrent, 2).' €'.$taxSuffix
+                        ? $formatPrice((float) $displayCurrent).$taxSuffix
                         : null,
                     'old_price' => $price !== null && $displayOld !== null
-                        ? number_format((float) $displayOld, 2).' €'
+                        ? $formatPrice((float) $displayOld)
                         : null,
                     'has_discount' => $price !== null
                         && $displayOld !== null
@@ -573,6 +576,10 @@ class CatalogController extends Controller
                             ->whereIn('locale', [$locale, $fallbackLocale]),
                     ]),
             ]);
+
+        if (config('storefront.home') === 'lavaggio') {
+            $query->addSelect(['products.is_professional', 'products.content_quantity', 'products.content_unit', 'products.delivery_mode']);
+        }
 
         $this->applyProductSearch($query, $locale, $fallbackLocale, $search);
 
@@ -990,6 +997,10 @@ class CatalogController extends Controller
                                 ->whereIn('locale', [$locale, $fallbackLocale]),
                         ]),
                 ]);
+
+            if (config('storefront.home') === 'lavaggio') {
+                $productsQuery->addSelect(['products.is_professional', 'products.content_quantity', 'products.content_unit', 'products.delivery_mode']);
+            }
 
             $this->prioritizeLocalStock($productsQuery);
 

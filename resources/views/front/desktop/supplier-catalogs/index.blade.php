@@ -6,7 +6,7 @@
 @section('content')
     <section class="front-soft-hero lm-page-title mb-8 px-6 py-8 text-center sm:px-10 sm:py-10">
         <nav aria-label="Breadcrumb" class="mb-3 text-xs text-slate-500">
-            <a href="{{ route('home') }}" class="hover:text-cyan-700">{{ __('ui.front.desktop.footer.home') }}</a>
+            <a href="{{ route('home') }}" class="hover:text-cyan-700"><x-front.breadcrumb-home /></a>
             <span class="mx-2" aria-hidden="true">/</span>
             <span>{{ __('supplier_catalogs.title') }}</span>
         </nav>

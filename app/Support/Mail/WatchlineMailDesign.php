@@ -46,6 +46,14 @@ a { color:#0077b5; }
 .block p,.pre-line { white-space:pre-line;overflow-wrap:anywhere; }
 .center { text-align:center; }
 CSS;
+        if (StoreMailBrand::isLavaggio()) {
+            $css = strtr($css, [
+                '#0077b5' => '#656ba8', '#111111' => '#13100d',
+                '#444444' => '#4d4952', '#64748b' => '#6b6772',
+                '#edf6fc' => '#f1f2f9', '#dce8ef' => '#e4e5f0',
+            ]);
+            $css .= "\n.cta { background:#848ac4;color:#13100d;border-radius:12px; }";
+        }
         $document = new DOMDocument('1.0', 'UTF-8');
         $inlined = (new CssToInlineStyles)->convert('<!doctype html><html><head><meta charset="utf-8"></head><body>'.$html.'</body></html>', $css);
         @$document->loadHTML($inlined, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);

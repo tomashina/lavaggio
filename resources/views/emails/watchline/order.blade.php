@@ -30,6 +30,14 @@
                     </div>
                 @endif
 
+                @if (!empty($gls_locker['id']))
+                    <div class="panel">
+                        <h3>GLS paketomat</h3>
+                        <p><strong>{{ $gls_locker['name'] ?: $gls_locker['id'] }}</strong></p>
+                        <p>{{ trim(($gls_locker['address_line_1'] ?? '').', '.($gls_locker['postal_code'] ?? '').' '.($gls_locker['city'] ?? ''), ', ') }}</p>
+                    </div>
+                @endif
+
                 <table class="items" cellspacing="0" cellpadding="0">
                     <thead>
                         <tr>
@@ -87,12 +95,17 @@
                 @if (!empty($bank_transfer) && !empty($bank_transfer['receiver_iban']))
                     <div class="bank">
                         <h3>{{ __('mail.orders.bank_transfer_title') }}</h3>
-                        <p>{{ __('mail.orders.bank_transfer_note') }}</p>
+                        @if (!empty($bank_transfer['preview_only']))
+                            <p><strong>OGLEDNI PRIKAZ · NIJE ZA UPLATU</strong></p>
+                            <p>Podaci su testni. Nemojte izvršavati uplatu prema ovoj poruci.</p>
+                        @else
+                            <p>{{ __('mail.orders.bank_transfer_note') }}</p>
+                        @endif
                         <p><strong>{{ __('mail.orders.bank_recipient') }}:</strong> {{ $bank_transfer['receiver_name'] ?? '-' }}</p>
                         <p><strong>{{ __('mail.orders.bank_iban') }}:</strong> {{ $bank_transfer['receiver_iban'] ?? '-' }}</p>
                         <p><strong>{{ __('mail.orders.bank_model') }}:</strong> {{ $bank_transfer['model'] ?? '-' }}</p>
                         <p><strong>{{ __('mail.orders.bank_reference') }}:</strong> {{ $bank_transfer['reference'] ?? '-' }}</p>
-                        <p><strong>{{ __('mail.orders.bank_amount') }}:</strong> {{ number_format((float) ($bank_transfer['amount'] ?? 0), 2, '.', ',') }} {{ $currency }}</p>
+                        <p><strong>{{ __('mail.orders.bank_amount') }}:</strong> {{ number_format((float) ($bank_transfer['amount'] ?? 0), 2, ',', '.') }} {{ $currency }}</p>
                         <p><strong>{{ __('mail.orders.bank_description') }}:</strong> {{ $bank_transfer['description'] ?? '-' }}</p>
 
                         @include('emails.watchline.bank-barcode', ['bankTransfer' => $bank_transfer, 'reference' => $order_number])

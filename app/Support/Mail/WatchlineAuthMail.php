@@ -17,10 +17,10 @@ final class WatchlineAuthMail
             ->line(__('This password reset link will expire in :count minutes.', ['count' => $minutes]))
             ->line(__('If you did not request a password reset, no further action is required.'));
 
-        return config('storefront.home') === 'watchline'
-            ? $mail->subject('Nova lozinka za vaš Watchline račun')->view('emails.watchline.auth', [
+        return StoreMailBrand::usesSharedDesign()
+            ? $mail->subject('Nova lozinka za vaš '.StoreMailBrand::name().' račun')->view('emails.watchline.auth', [
                 'heading' => 'Postavite novu lozinku.',
-                'intro' => 'Zaprimili smo zahtjev za promjenu lozinke vašeg Watchline računa. Novu lozinku postavite putem poveznice u nastavku.',
+                'intro' => 'Zaprimili smo zahtjev za promjenu lozinke vašeg '.StoreMailBrand::name().' računa. Novu lozinku postavite putem poveznice u nastavku.',
                 'actionText' => 'Postavite novu lozinku', 'actionUrl' => $url,
                 'expiryMinutes' => $minutes, 'isVerification' => false,
             ]) : $mail;
@@ -33,10 +33,10 @@ final class WatchlineAuthMail
             ->action(__('Verify Email Address'), $url)
             ->line(__('If you did not create an account, no further action is required.'));
 
-        return config('storefront.home') === 'watchline'
-            ? $mail->subject('Potvrdite e-mail adresu · Watchline')->view('emails.watchline.auth', [
+        return StoreMailBrand::usesSharedDesign()
+            ? $mail->subject('Potvrdite e-mail adresu · '.StoreMailBrand::name())->view('emails.watchline.auth', [
                 'heading' => 'Potvrdite svoju e-mail adresu.',
-                'intro' => 'Još samo jedan korak do vašeg Watchline računa. Potvrdite svoju e-mail adresu putem poveznice u nastavku.',
+                'intro' => 'Još samo jedan korak do vašeg '.StoreMailBrand::name().' računa. Potvrdite svoju e-mail adresu putem poveznice u nastavku.',
                 'actionText' => 'Potvrdite e-mail adresu', 'actionUrl' => $url,
                 'expiryMinutes' => (int) config('auth.verification.expire', 60), 'isVerification' => true,
             ]) : $mail;

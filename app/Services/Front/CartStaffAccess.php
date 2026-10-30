@@ -15,6 +15,10 @@ class CartStaffAccess
 {
     public function canViewStock(Request $request): bool
     {
+        if (config('storefront.home') === 'lavaggio') {
+            return false;
+        }
+
         $viewer = $request->user();
         if (! $viewer) {
             return false;

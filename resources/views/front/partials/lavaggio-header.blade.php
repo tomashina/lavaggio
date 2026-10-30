@@ -1,8 +1,8 @@
 <header class="site-main-header lavaggio-header">
     @include('front.partials.customer-impersonation')
 
-    @if ($topBar['is_enabled'] || $announcementEnabled)
-        <div class="lavaggio-header-topbar">
+    @if ($topBar['is_enabled'] || $announcementEnabled || \App\Support\StorefrontSocialLinks::resolve($storeSettings['branding']['social'] ?? [], $topBar['socials'] ?? [], true)->isNotEmpty())
+        <div class="lavaggio-header-topbar{{ $announcementEnabled ? ' has-announcement' : '' }}">
             <div class="lavaggio-header-topbar-inner">
                 <nav class="lavaggio-header-contacts" aria-label="Kontakt podaci">
                     @if ($topBar['is_enabled'])
@@ -22,16 +22,7 @@
                         @endif
                     </div>
                 @endif
-                <div class="lavaggio-header-socials">
-                    @if ($topBar['is_enabled'])
-                        @foreach ($topBar['socials'] as $social)
-                            @continue(! $social['is_active'])
-                            <a href="{{ $social['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="{{ ($social['label'] ?? '') ?: ucfirst($social['network']) }}">
-                                <x-fa-icon inline :name="match ($social['network']) { 'facebook' => 'facebook-f', 'linkedin' => 'linkedin-in', 'twitter' => 'x-twitter', default => $social['network'] }" style="brands" />
-                            </a>
-                        @endforeach
-                    @endif
-                </div>
+                @include('front.partials.herrera-footer-socials', ['socialLinksClass' => 'lavaggio-header-socials'])
             </div>
         </div>
     @endif
@@ -56,9 +47,9 @@
         </nav>
 
         <div class="lavaggio-header-actions">
-            <a href="{{ route('shop.index') }}" class="lavaggio-header-action" aria-label="{{ __('ui.front.desktop.search') }}" title="{{ __('ui.front.desktop.search') }}">
+            <button type="button" class="lavaggio-header-action" aria-label="{{ __('ui.front.desktop.search') }}" title="{{ __('ui.front.desktop.search') }}" aria-controls="header-search-panel" aria-expanded="false" data-header-search-toggle>
                 <x-fa-icon inline name="magnifying-glass" style="regular" />
-            </a>
+            </button>
             <a href="{{ auth()->check() ? route('account.dashboard') : route('front.auth.login') }}" class="lavaggio-header-action" aria-label="{{ auth()->check() ? __('ui.front.desktop.account') : __('Prijava') }}">
                 <x-fa-icon inline name="user" style="regular" />
             </a>

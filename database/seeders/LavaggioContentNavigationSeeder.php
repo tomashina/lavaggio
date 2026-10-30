@@ -80,5 +80,6 @@ class LavaggioContentNavigationSeeder extends Seeder
             'catalog_use_blog' => true,
             'store_footer_col_3_custom_links' => 'Moj račun|'.route('front.auth.login', absolute: false)."\nKošarica|/cart\nPraonica|/page/usluge",
         ]);
+        $this->call(LavaggioLaundryMenuImagesSeeder::class);
     }
 }

@@ -56,7 +56,7 @@ class Index extends Component
     {
         $block = ContentBlock::query()->findOrFail($id);
         $code = (string) $block->code;
-        $fixedWidget = str_starts_with((string) $block->type, 'watchline_');
+        $fixedWidget = (str_starts_with((string) $block->type, 'watchline_') || str_starts_with((string) $block->type, 'lavaggio_'));
 
         activity('content_blocks')
             ->performedOn($block)
@@ -100,7 +100,7 @@ class Index extends Component
     {
         $slot = ContentBlockSlot::query()->with('block')
             ->whereIn('placement', ['home.content', 'footer.benefits'])
-            ->whereHas('block', fn ($query) => $query->where('type', 'like', 'watchline_%'))
+            ->whereHas('block', fn ($query) => $query->where(fn ($type) => $type->where('type', 'like', 'watchline_%')->orWhere('type', 'like', 'lavaggio_%')))
             ->findOrFail($slotId);
         $active = ! ($slot->is_active && $slot->block->is_active);
         DB::transaction(function () use ($slot, $active): void {
@@ -113,7 +113,7 @@ class Index extends Component
     private function homeWidgetQuery()
     {
         return ContentBlockSlot::query()->where('placement', 'home.content')
-            ->whereHas('block', fn ($query) => $query->where('type', 'like', 'watchline_%'))
+            ->whereHas('block', fn ($query) => $query->where(fn ($type) => $type->where('type', 'like', 'watchline_%')->orWhere('type', 'like', 'lavaggio_%')))
             ->orderBy('sort_order')->orderBy('id');
     }
 
@@ -175,7 +175,7 @@ class Index extends Component
             'previewBlock' => $previewBlock,
             'homeWidgetSlots' => $this->homeWidgetQuery()->with('block.translations')->get(),
             'footerWidgetSlots' => ContentBlockSlot::query()->where('placement', 'footer.benefits')
-                ->whereHas('block', fn ($query) => $query->where('type', 'like', 'watchline_%'))
+                ->whereHas('block', fn ($query) => $query->where(fn ($type) => $type->where('type', 'like', 'watchline_%')->orWhere('type', 'like', 'lavaggio_%')))
                 ->with('block.translations')->orderBy('sort_order')->get(),
         ]);
     }

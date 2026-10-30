@@ -7,6 +7,7 @@ use App\Models\Content\Support\ContactMessage;
 use App\Models\Sales\Order\Order;
 use App\Models\Sales\Order\OrderItem;
 use App\Services\Payments\BankTransferUpiService;
+use App\Support\Mail\StoreMailBrand;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -33,8 +34,8 @@ class StoreNotificationService
             return;
         }
 
-        $subject = config('storefront.home') === 'watchline'
-            ? '[Watchline] '.($message->subject ?: 'Nova poruka kupca')
+        $subject = StoreMailBrand::usesSharedDesign()
+            ? '['.StoreMailBrand::name().'] '.($message->subject ?: 'Nova poruka kupca')
             : '[Contact] '.($message->subject ?: 'New contact message');
         $body = implode("\n", [
             'Name: '.(string) $message->name,
@@ -52,7 +53,7 @@ class StoreNotificationService
                     $mail->replyTo($message->email, (string) $message->name);
                 }
             };
-            if (config('storefront.home') === 'watchline') {
+            if (StoreMailBrand::usesSharedDesign()) {
                 Mail::send('emails.watchline.contact', ['contact' => $message, 'isReturn' => false], $callback);
             } else {
                 Mail::raw($body, $callback);
@@ -84,7 +85,7 @@ class StoreNotificationService
                     $mail->replyTo($message->email);
                 }
             };
-            if (config('storefront.home') === 'watchline') {
+            if (StoreMailBrand::usesSharedDesign()) {
                 Mail::send('emails.watchline.contact', ['contact' => $message, 'isReturn' => true], $callback);
             } else {
                 Mail::raw($body, $callback);
@@ -233,6 +234,9 @@ class StoreNotificationService
                 'image_url' => $this->absoluteUrl($imageUrl),
             ];
         })->values()->all();
+        $glsLocker = is_array($order->payload['shipping']['gls_dpm'] ?? null)
+            ? $order->payload['shipping']['gls_dpm']
+            : null;
         $boxNow = is_array($order->payload['shipping']['boxnow'] ?? null)
             ? $order->payload['shipping']['boxnow']
             : null;
@@ -281,6 +285,13 @@ class StoreNotificationService
                 'grand_total' => (float) $order->grand_total,
             ],
             'bank_transfer' => is_array($bankTransfer) ? $bankTransfer : null,
+            'gls_locker' => is_array($glsLocker) ? [
+                'id' => trim((string) ($glsLocker['id'] ?? '')),
+                'name' => trim((string) ($glsLocker['name'] ?? '')),
+                'address_line_1' => trim((string) ($glsLocker['address_line_1'] ?? '')),
+                'postal_code' => trim((string) ($glsLocker['postal_code'] ?? '')),
+                'city' => trim((string) ($glsLocker['city'] ?? '')),
+            ] : null,
             'box_now' => is_array($boxNow) ? [
                 'locker_id' => trim((string) ($boxNow['locker_id'] ?? '')),
                 'locker_name' => trim((string) ($boxNow['locker_name'] ?? '')),
@@ -332,7 +343,7 @@ class StoreNotificationService
 
     private function formatMoney(float $value, string $currencyCode): string
     {
-        if (config('storefront.home') === 'watchline') {
+        if (StoreMailBrand::usesSharedDesign()) {
             return number_format($value, 2, ',', '.').' '.($currencyCode === 'EUR' ? '€' : $currencyCode);
         }
         $symbol = $currencyCode === 'EUR' ? 'EUR' : $currencyCode;

@@ -193,6 +193,61 @@
         </div>
         @endif
 
+        @if ($activeTab === 'content' && $lavaggioProductEditor)
+        <div class="admin-panel admin-form-panel p-6">
+            <p class="admin-section-title">{{ __('Podaci za prikaz artikla') }}</p>
+            <p class="mt-2 text-sm text-slate-500">{{ __('Sadržaj pakiranja koristi se za izračun cijene po litri, kilogramu ili komadu. Cijena na dan ulistanja ostaje zasebno spremljena.') }}</p>
+            <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('EAN kod') }}</label>
+                    <input type="text" wire:model="form.barcode" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-mono" />
+                    @error('form.barcode') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Količina sadržaja') }}</label>
+                    <input type="number" min="0.001" step="0.001" wire:model="form.content_quantity" placeholder="2.7" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                    @error('form.content_quantity') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Jedinica sadržaja') }}</label>
+                    <select wire:model="form.content_unit" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                        <option value="">{{ __('Odaberite jedinicu') }}</option>
+                        @foreach ($contentUnitOptions as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach
+                    </select>
+                    @error('form.content_unit') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Cijena na dan ulistanja (€)') }}</label>
+                    <input type="number" min="0" step="0.01" wire:model="form.listing_price" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                    @error('form.listing_price') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Datum ulistanja') }}</label>
+                    <input type="date" wire:model="form.listed_at" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                    @error('form.listed_at') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Rok isporuke') }}</label>
+                    <select wire:model="form.delivery_mode" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                        @foreach ($deliveryModeOptions as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach
+                    </select>
+                    @error('form.delivery_mode') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Raspoloživo kod dobavljača / za narudžbu') }}</label>
+                    <input type="number" min="0" step="1" wire:model="form.supplier_stock_qty" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                    <p class="mt-1 text-xs text-slate-500">{{ __('Količina dostupna za kupnju uz odabrani rok isporuke od dobavljača ili po narudžbi.') }}</p>
+                    @error('form.supplier_stock_qty') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                </div>
+            </div>
+            <label class="mt-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <input type="checkbox" wire:model="form.is_professional" class="rounded border-slate-300 text-cyan-700">
+                {{ __('Profesionalni proizvod — prikaži oznaku PRO') }}
+            </label>
+            @error('form.is_professional') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+        </div>
+        @endif
+
         @if ($activeTab === 'content')
         <div class="admin-panel admin-form-panel p-6">
             <p class="admin-section-title">{{ __('Content') }}</p>
@@ -221,6 +276,31 @@
                 <label for="product-description-html" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Description') }}</label>
                 <x-admin.quill-field id="product-description-html" rows="8" wire:model.live.debounce.300ms="form.description" />
             </div>
+            @if ($lavaggioProductEditor)
+                <p class="mt-2 text-xs text-slate-500">{{ __('Opis se prikazuje u odjeljku Informacije o proizvodu.') }}</p>
+                <div class="mt-5 grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Sastojci') }}</label>
+                        <textarea rows="5" wire:model="form.ingredients" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"></textarea>
+                        @error('form.ingredients') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Napomene o opasnosti') }}</label>
+                        <textarea rows="5" wire:model="form.hazard_notes" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"></textarea>
+                        @error('form.hazard_notes') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Proizvođač / uvoznik') }}</label>
+                        <textarea rows="4" wire:model="form.manufacturer_importer" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"></textarea>
+                        @error('form.manufacturer_importer') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Zemlja podrijetla') }}</label>
+                        <input type="text" wire:model="form.country_of_origin" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                        @error('form.country_of_origin') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            @endif
         </div>
         @endif
 

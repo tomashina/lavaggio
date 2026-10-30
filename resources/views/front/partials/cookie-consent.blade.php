@@ -196,7 +196,8 @@
                 });
         };
 
-        const cookieFloatingButton = document.getElementById('cookie-consent-floating-button');
+        const cookieFloatingButton = document.getElementById('cookie-consent-floating-button')
+            || document.getElementById('cookie-consent-footer-button');
         if (cookieFloatingButton) {
             cookieFloatingButton.addEventListener('click', () => {
                 ensureCookieConsentAssets().then(() => {

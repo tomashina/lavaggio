@@ -1,4 +1,5 @@
 @php
+    $isLavaggioProductContent = config('storefront.home') === 'lavaggio';
     $commentFormHasErrors = $errors->has('author_name')
         || $errors->has('author_email')
         || $errors->has('body')
@@ -52,7 +53,7 @@
                 <span class="product-detail-tab-description-short">{{ __('ui.product.description_short') }}</span>
             </a>
         @endif
-        @if ($hasSpecificationAttributes)
+        @if ($hasSpecificationAttributes && ! $isLavaggioProductContent)
             <a
                 href="#product-specifications"
                 class="{{ $firstDetailSectionId === 'product-specifications' ? 'is-active' : '' }}"
@@ -73,7 +74,9 @@
     </nav>
     @endunless
 
-    @if ($hasProductStory)
+    @if ($isLavaggioProductContent)
+        @include('front.partials.lavaggio-product-legal')
+    @elseif ($hasProductStory)
         <section id="product-description" class="product-detail-content-section" data-product-detail-section>
             <header class="product-detail-section-intro">
                 <h2 class="product-detail-section-heading">{{ __('ui.product.description') }}</h2>
@@ -89,7 +92,7 @@
         </section>
     @endif
 
-    @if ($hasSpecificationAttributes && ! $isHerreraProductContent)
+    @if ($hasSpecificationAttributes && ! $isHerreraProductContent && ! $isLavaggioProductContent)
         <section id="product-specifications" class="product-detail-content-section" data-product-detail-section>
             <header class="product-detail-section-intro">
                 <h2 class="product-detail-section-heading">{{ __('ui.product.specifications') }}</h2>

@@ -40,9 +40,19 @@ class Product extends Model implements HasMedia
         'minimum_order_quantity',
         'order_quantity_step',
         'is_active',
+        'is_professional',
         'manufacturer_id',
         'tax_rate_id',
         'base_price',
+        'content_quantity',
+        'content_unit',
+        'listing_price',
+        'listed_at',
+        'delivery_mode',
+        'ingredients',
+        'hazard_notes',
+        'manufacturer_importer',
+        'country_of_origin',
         'erp_gross_list_price',
         'erp_cash_discount_percent',
         'erp_cash_selling_price',
@@ -71,9 +81,13 @@ class Product extends Model implements HasMedia
 
     protected $casts = [
         'is_active' => 'bool',
+        'is_professional' => 'bool',
         'manufacturer_id' => 'int',
         'tax_rate_id' => 'int',
         'base_price' => 'decimal:2',
+        'content_quantity' => 'decimal:3',
+        'listing_price' => 'decimal:2',
+        'listed_at' => 'date',
         'erp_gross_list_price' => 'decimal:4',
         'erp_cash_discount_percent' => 'decimal:4',
         'erp_cash_selling_price' => 'decimal:4',
@@ -123,6 +137,21 @@ class Product extends Model implements HasMedia
             'exclude_shipping_calculation' => 'Ne ulazi u obračun dostave',
             'no_parcel_locker' => 'Nije dopušten paketomat',
             'quote_shipping' => 'Individualni obračun dostave',
+        ];
+    }
+
+    public static function contentUnitOptions(): array
+    {
+        return ['l' => 'l', 'kg' => 'kg', 'pcs' => 'kom'];
+    }
+
+    public static function deliveryModeOptions(): array
+    {
+        return [
+            'stock' => 'Sa zalihe — dostava u 2–3 radna dana',
+            'supplier' => 'Od dobavljača — dostava u 4–10 radnih dana',
+            'order' => 'Po narudžbi — dostava od 10 do 20 dana',
+            'unavailable' => 'Trenutno nedostupno',
         ];
     }
 

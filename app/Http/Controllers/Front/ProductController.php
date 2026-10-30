@@ -113,6 +113,10 @@ class ProductController extends Controller
         $product = Product::query()
             ->withStorefrontEnergyData()
             ->select(['id', 'code', 'sku', 'barcode', 'base_price', 'stock_qty', 'supplier_stock_qty', 'tax_rate_id', 'manufacturer_id', 'is_active', 'payload'])
+            ->when(config('storefront.home') === 'lavaggio', fn ($query) => $query->addSelect([
+                'is_professional', 'content_quantity', 'content_unit', 'listing_price', 'listed_at',
+                'delivery_mode', 'ingredients', 'hazard_notes', 'manufacturer_importer', 'country_of_origin',
+            ]))
             ->withApprovedCommentSummary([$locale, $fallbackLocale])
             ->where('is_active', true)
             ->whereHas('translations', function ($q) use ($locale, $fallbackLocale, $slug): void {
@@ -207,6 +211,9 @@ class ProductController extends Controller
         $relatedBaseQuery = Product::query()
             ->withStorefrontEnergyData()
             ->select(['id', 'code', 'sku', 'barcode', 'base_price', 'stock_qty', 'supplier_stock_qty', 'tax_rate_id', 'manufacturer_id', 'is_active', 'payload'])
+            ->when(config('storefront.home') === 'lavaggio', fn ($query) => $query->addSelect([
+                'is_professional', 'content_quantity', 'content_unit', 'delivery_mode',
+            ]))
             ->withApprovedCommentSummary([$locale, $fallbackLocale])
             ->visibleOnStorefront($this->hideOutOfStockProducts())
             ->where('id', '!=', $product->id)

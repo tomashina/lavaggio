@@ -11,6 +11,7 @@ use App\Models\Sales\Order\OrderTotal;
 use App\Models\Settings\Local\OrderStatus;
 use App\Models\Settings\Local\PaymentMethod;
 use App\Models\User;
+use App\Services\Payments\BankTransferUpiService;
 use App\Services\Payments\CorvusPayFormService;
 use App\Services\Payments\WSPayFormService;
 use Illuminate\Support\Collection;
@@ -90,6 +91,7 @@ class GiftVoucherService
 
         return PaymentMethod::query()->where('is_active', true)->whereIn('code', config('gift_vouchers.payment_codes', []))
             ->orderBy('sort_order')->orderBy('id')->get()
+            ->filter(fn (PaymentMethod $method) => app(BankTransferUpiService::class)->canBeOffered($method))
             ->filter(fn (PaymentMethod $method) => config('storefront.home') !== 'watchline'
                 || app(WSPayFormService::class)->isWspayCode((string) $method->code)
                 || app(CorvusPayFormService::class)->isCorvusCode((string) $method->code))

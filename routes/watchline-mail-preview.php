@@ -7,3 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('preview/watchline-mail', [WatchlineMailPreviewController::class, 'index'])->name('preview.watchline-mail.index');
 Route::get('preview/watchline-mail/{key}', [WatchlineMailPreviewController::class, 'show'])
     ->where('key', '[a-z-]+')->name('preview.watchline-mail.show');
+
+Route::get('preview/lavaggio-mail', [WatchlineMailPreviewController::class, 'index'])->name('preview.lavaggio-mail.index');
+Route::get('preview/lavaggio-mail/{key}', [WatchlineMailPreviewController::class, 'show'])
+    ->where('key', '[a-z-]+')->name('preview.lavaggio-mail.show');

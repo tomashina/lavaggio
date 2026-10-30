@@ -1,5 +1,10 @@
 @if ($canViewPrices)
-    @if (\App\Support\StorefrontTheme::usesLibermediaBrand())
+    @if (config('storefront.home') === 'lavaggio')
+        @php($lavaggioStock = app(\App\Support\LavaggioProductPresenter::class)->stock($product))
+        <p class="lavaggio-stock" data-product-availability-state="{{ $lavaggioStock['state'] }}">
+            <span>{{ $lavaggioStock['label'] }}</span>
+        </p>
+    @elseif (\App\Support\StorefrontTheme::usesLibermediaBrand())
         <p class="product-availability-status mt-3 inline-flex items-center gap-1.5 text-xs font-semibold {{ $isPurchasable ? 'text-emerald-700' : 'text-slate-500' }}" data-product-availability-state="{{ $isPurchasable ? 'available' : 'unavailable' }}">
             <span aria-hidden="true">●</span>
             <span>{{ $isPurchasable ? __('Dostupno') : __('Trenutno nedostupno') }}</span>

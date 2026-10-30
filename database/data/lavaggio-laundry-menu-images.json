@@ -1,0 +1,106 @@
+{
+  "source": "Originalne fotografije s lavaggio.hr; fizički kadar i WebP optimizacija bez generiranja ili mijenjanja sadržaja.",
+  "prepared_at": "2026-10-28",
+  "target_dimensions": [
+    1000,
+    750
+  ],
+  "images": [
+    {
+      "source_page_id": 69,
+      "image_path": "assets/lavaggio/navigation/samoposluzna-praonica.webp",
+      "image_alt": "Samoposlužna praonica rublja",
+      "navigation_page_url": "https://www.lavaggio.hr/usluge/samoposluzna-praonica-rublja/",
+      "source_page_url": "https://www.lavaggio.hr/",
+      "image_source_url": "https://www.lavaggio.hr/assets/lavaggio/image/lavaggio-nutra.jpg",
+      "crop_xywh": [
+        366,
+        0,
+        2293,
+        1720
+      ],
+      "bytes": 92236,
+      "sha256": "3587a1cf6bd8af733f76552b76c416d16bc50ffb5aff4a3f8b853926819e9d11"
+    },
+    {
+      "source_page_id": 73,
+      "image_path": "assets/lavaggio/navigation/usluzna-praonica.webp",
+      "image_alt": "Oprano i pripremljeno rublje u Lavaggio praonici",
+      "navigation_page_url": "https://www.lavaggio.hr/usluge/usluzna-praonica-rublja/",
+      "source_page_url": "https://www.lavaggio.hr/usluge/usluzna-praonica-rublja/",
+      "image_source_url": "https://www.lavaggio.hr/assets/lavaggio/image/img20240909134411-cinematic.jpg",
+      "crop_xywh": [
+        0,
+        256,
+        2048,
+        1536
+      ],
+      "bytes": 136902,
+      "sha256": "8ff042b73e43246319a99dfbca9e43efedf6c133d0c05ea611af3a9fd6e442b5"
+    },
+    {
+      "source_page_id": 75,
+      "image_path": "assets/lavaggio/navigation/prikup-i-dostava.webp",
+      "image_alt": "Pripremljeno rublje u Lavaggio dostavnom vozilu",
+      "navigation_page_url": "https://www.lavaggio.hr/usluge/prikup-i-dostava-rublja/",
+      "source_page_url": "https://www.lavaggio.hr/usluge/prikup-i-dostava-rublja/",
+      "image_source_url": "https://www.lavaggio.hr/assets/lavaggio/image/pxl-20250624-111536562.jpg",
+      "crop_xywh": [
+        0,
+        6,
+        4080,
+        3060
+      ],
+      "bytes": 111534,
+      "sha256": "6dc6ab135f69850659d86b025b6a90d27eecf1b354dad4047b040757c0ce9808"
+    },
+    {
+      "source_page_id": 76,
+      "image_path": "assets/lavaggio/navigation/ozonsko-pranje.webp",
+      "image_alt": "Uređaji za ozonsko pranje u Lavaggio praonici",
+      "navigation_page_url": "https://www.lavaggio.hr/usluge/ozonsko-pranje-rublja/",
+      "source_page_url": "https://www.lavaggio.hr/",
+      "image_source_url": "https://www.lavaggio.hr/assets/lavaggio/image/b1.jpg",
+      "crop_xywh": [
+        0,
+        1,
+        980,
+        735
+      ],
+      "bytes": 34548,
+      "sha256": "c4c0838e72b56819c0d0c4839766427693ac6498627c1afa599bf7a94e309523"
+    },
+    {
+      "source_page_id": 70,
+      "image_path": "assets/lavaggio/navigation/cjenik.webp",
+      "image_alt": "Priprema rublja i pregled programa pranja u Lavaggio praonici",
+      "navigation_page_url": "https://www.lavaggio.hr/cjenik/",
+      "source_page_url": "https://www.lavaggio.hr/usluge/samoposluzna-praonica-rublja/",
+      "image_source_url": "https://www.lavaggio.hr/assets/lavaggio/image/20241203-100003-cinematic.jpg",
+      "crop_xywh": [
+        0,
+        256,
+        2048,
+        1536
+      ],
+      "bytes": 125274,
+      "sha256": "5dcaf1344b7be4051bc0b3b056779cb93d3f990b2f1b660c6eab2815d4ccadab"
+    },
+    {
+      "source_page_id": 71,
+      "image_path": "assets/lavaggio/navigation/o-praonici.webp",
+      "image_alt": "Lavaggio tim ispred praonice u Barbanu",
+      "navigation_page_url": "https://www.lavaggio.hr/o-praonici/",
+      "source_page_url": "https://www.lavaggio.hr/o-praonici/tko-smo-mi",
+      "image_source_url": "https://www.lavaggio.hr/assets/lavaggio/image/tkosmomi.jpg",
+      "crop_xywh": [
+        1088,
+        0,
+        5056,
+        3792
+      ],
+      "bytes": 144540,
+      "sha256": "29e6b8ad574131d05f825175260062cf9694bf8071cd8f858df01f5457878b77"
+    }
+  ]
+}

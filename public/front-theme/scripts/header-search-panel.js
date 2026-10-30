@@ -29,6 +29,7 @@
         const viewAllLink = form.querySelector('[data-header-search-view-all]');
         const panelClose = panel.querySelector('[data-header-search-close]');
         const b2bPriceLabel = String(form.dataset.autocompleteB2bLabel || 'B2B').trim();
+        const modalSearch = panel.hasAttribute('data-header-search-modal');
 
         const autocompleteEnabled = form.dataset.autocompleteEnabled === '1'
             && !!form.dataset.autocompleteEndpoint
@@ -49,9 +50,9 @@
             return isMobileViewport() && panel.hasAttribute('data-header-search-persistent');
         };
 
-        const isFullscreenMobileSearch = () => isMobileViewport() && panel.hasAttribute('data-header-search-fullscreen');
+        const isFullscreenSearch = () => modalSearch || (isMobileViewport() && panel.hasAttribute('data-header-search-fullscreen'));
         const syncFullscreenViewport = function () {
-            if (!isFullscreenMobileSearch() || !isOpen) {
+            if (!isFullscreenSearch() || !isOpen) {
                 panel.style.removeProperty('--header-search-viewport-height');
                 panel.style.removeProperty('--header-search-viewport-top');
                 return;
@@ -61,21 +62,22 @@
             panel.style.setProperty('--header-search-viewport-top', `${viewport?.offsetTop || 0}px`);
         };
 
-        let isOpen = !isMobileViewport() || isPersistentMobileSearch();
+        let isOpen = !modalSearch && (!isMobileViewport() || isPersistentMobileSearch());
         let debounceId = 0;
         let activeIndex = -1;
         let abortController = null;
         let activeRequestQuery = '';
         let resultLinks = [];
         let focusTimer = 0;
+        let openingToggle = null;
 
         const syncPanelAccessibility = function () {
-            const mobileOpen = isMobileViewport() && isOpen;
-            panel.setAttribute('aria-hidden', isMobileViewport() && !isOpen ? 'true' : 'false');
-            toggles.forEach((toggle) => toggle.setAttribute('aria-expanded', mobileOpen ? 'true' : 'false'));
-            const fullscreenOpen = isFullscreenMobileSearch() && isOpen;
+            const collapsible = modalSearch || isMobileViewport();
+            panel.setAttribute('aria-hidden', collapsible && !isOpen ? 'true' : 'false');
+            toggles.forEach((toggle) => toggle.setAttribute('aria-expanded', collapsible && isOpen ? 'true' : 'false'));
+            const fullscreenOpen = isFullscreenSearch() && isOpen;
             document.body.classList.toggle('header-search-overlay-open', fullscreenOpen);
-            panel.inert = isMobileViewport() && !isOpen;
+            panel.inert = collapsible && !isOpen;
             if (fullscreenOpen) {
                 panel.setAttribute('role', 'dialog');
                 panel.setAttribute('aria-modal', 'true');
@@ -120,7 +122,7 @@
         };
 
         const ensurePanelVisible = function () {
-            if (!isMobileViewport() || isFullscreenMobileSearch()) {
+            if (!isMobileViewport() || isFullscreenSearch()) {
                 return;
             }
 
@@ -159,8 +161,8 @@
             viewAllLink.textContent = `${form.dataset.autocompleteViewAllLabel || 'Prikaži sve'}${total > 0 ? ` (${total})` : ''}`;
         };
 
-        const showMobileSearchPrompt = function (message = '') {
-            if (!isFullscreenMobileSearch() || !isOpen || !suggestions) return;
+        const showSearchPrompt = function (message = '') {
+            if (!autocompleteEnabled || !isFullscreenSearch() || !isOpen || !suggestions) return;
             suggestions.hidden = false;
             footer.hidden = false;
             emptyState.hidden = false;
@@ -188,7 +190,7 @@
             loadingState.hidden = true;
             emptyState.hidden = true;
             footer.hidden = true;
-            showMobileSearchPrompt();
+            showSearchPrompt();
         };
 
         suggestionsClose?.addEventListener('click', function () {
@@ -364,8 +366,8 @@
             loadingState.textContent = form.dataset.autocompleteLoadingLabel || '';
             loadingState.hidden = false;
             emptyState.hidden = true;
-            footer.hidden = !isFullscreenMobileSearch();
-            if (isFullscreenMobileSearch()) updateViewAllLink(input.value.trim());
+            footer.hidden = !isFullscreenSearch();
+            if (isFullscreenSearch()) updateViewAllLink(input.value.trim());
             activeIndex = -1;
             resultLinks = [];
         };
@@ -403,8 +405,8 @@
                     '__QUERY__': query,
                 });
                 emptyState.hidden = false;
-                footer.hidden = !isFullscreenMobileSearch();
-                if (isFullscreenMobileSearch()) updateViewAllLink(query, 0, payload.search_url);
+                footer.hidden = !isFullscreenSearch();
+                if (isFullscreenSearch()) updateViewAllLink(query, 0, payload.search_url);
                 resultLinks = [];
                 return;
             }
@@ -453,7 +455,7 @@
             suggestionsList.appendChild(grid);
             bindSuggestionLinks();
 
-            footer.hidden = !isFullscreenMobileSearch() && productItems.length === 0;
+            footer.hidden = !isFullscreenSearch() && productItems.length === 0;
             if (!footer.hidden) {
                 updateViewAllLink(query, Number(productGroup.total || 0), payload.search_url);
             }
@@ -526,7 +528,7 @@
                     }
 
                     closeSuggestions();
-                    showMobileSearchPrompt(form.dataset.autocompleteErrorLabel || '');
+                    showSearchPrompt(form.dataset.autocompleteErrorLabel || '');
                 })
                 .finally(() => {
                     if (abortController === requestController) {
@@ -567,8 +569,8 @@
             syncPanelAccessibility();
 
             ensurePanelVisible();
-            if (isFullscreenMobileSearch()) {
-                showMobileSearchPrompt();
+            if (isFullscreenSearch()) {
+                showSearchPrompt();
                 input.focus({ preventScroll: true });
                 return;
             }
@@ -589,14 +591,17 @@
             closeSuggestions();
             window.clearTimeout(focusTimer);
 
-            if (isMobileViewport() && !isPersistentMobileSearch()) {
+            if (modalSearch || (isMobileViewport() && !isPersistentMobileSearch())) {
                 panel.classList.remove('is-open');
                 isOpen = false;
                 if (suggestions) suggestions.hidden = true;
+                if (modalSearch && panel.contains(document.activeElement)) {
+                    document.activeElement.blur?.();
+                }
                 dismissMobileKeyboard();
                 syncPanelAccessibility();
                 if (restoreFocus) {
-                    toggles[0]?.focus({ preventScroll: true });
+                    (openingToggle || toggles[0])?.focus({ preventScroll: true });
                 }
                 return;
             }
@@ -608,12 +613,14 @@
         panelClose?.addEventListener('click', () => closePanel(true));
 
         toggles.forEach(function (toggle) {
-            toggle.addEventListener('click', function () {
+            toggle.addEventListener('click', function (event) {
+                event.preventDefault?.();
                 if (isOpen) {
                     closePanel(true);
                     return;
                 }
 
+                openingToggle = toggle;
                 openPanel();
             });
         });
@@ -630,7 +637,7 @@
         });
 
         input.addEventListener('input', function () {
-            if (isFullscreenMobileSearch()) updateViewAllLink(input.value.trim());
+            if (isFullscreenSearch()) updateViewAllLink(input.value.trim());
             queueAutocomplete();
         });
 
@@ -721,7 +728,7 @@
                 event.preventDefault?.();
                 closePanel(true);
             }
-            if (event.key === 'Tab' && isOpen && isFullscreenMobileSearch()) {
+            if (event.key === 'Tab' && isOpen && isFullscreenSearch()) {
                 const focusable = Array.from(panel.querySelectorAll('input:not([type="hidden"]), button, a[href]'))
                     .filter((element) => !element.disabled && element.getClientRects().length > 0);
                 const first = focusable[0];
@@ -740,6 +747,11 @@
         });
 
         const syncViewportState = function () {
+            if (modalSearch) {
+                if (!isOpen) closeSuggestions();
+                syncPanelAccessibility();
+                return;
+            }
             if (!isMobileViewport()) {
                 panel.classList.remove('is-open');
                 isOpen = true;

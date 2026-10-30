@@ -11,6 +11,26 @@ class BankTransferUpiService
 {
     public const PAYLOAD_KEY = 'bank_transfer';
 
+    public function canBeOffered(PaymentMethod $method): bool
+    {
+        if (! data_get($method->settings, 'bank_local_codes')) {
+            return true;
+        }
+        if (app()->environment(['local', 'testing']) && (bool) config('commerce.local_safe_mode')
+            && config('storefront.home') === 'lavaggio'
+            && data_get($method->settings, 'configured_from') === 'lavaggio-checkout'
+            && data_get($method->settings, 'bank_preview_placeholder') === true) {
+            return true;
+        }
+
+        return $this->hasReceiverIdentity([
+            'receiver_name' => data_get($method->settings, 'upi_receiver_name'),
+            'receiver_street' => data_get($method->settings, 'upi_receiver_street'),
+            'receiver_place' => data_get($method->settings, 'upi_receiver_place'),
+            'receiver_iban' => data_get($method->settings, 'upi_receiver_iban'),
+        ]) && app(EpcQrService::class)->validIban((string) data_get($method->settings, 'upi_receiver_iban', ''));
+    }
+
     /**
      * @return array<string, mixed>|null
      */
@@ -26,7 +46,40 @@ class BankTransferUpiService
         $settings = $this->resolveMethodSettings((string) $order->payment_method_code);
         $next = $this->buildSnapshot($order, $settings, $current);
 
-        if (! (bool) config('commerce.local_safe_mode') && ($next['qr_image_base64'] ?? '') === '' && $this->hasReceiverIdentity($next)) {
+        $localCodes = (bool) ($current['local_codes'] ?? $settings['bank_local_codes'] ?? false);
+        $previewOnly = ($current['qr_preview_only'] ?? false) || (
+            app()->environment(['local', 'testing']) && config('commerce.local_safe_mode')
+            && config('storefront.home') === 'lavaggio'
+            && data_get($settings, 'configured_from') === 'lavaggio-checkout'
+            && data_get($settings, 'bank_preview_placeholder') === true
+            && ! app(EpcQrService::class)->validIban((string) ($next['receiver_iban'] ?? ''))
+        );
+        if ($previewOnly) {
+            $next['preview_only'] = true;
+            $next['qr_preview_only'] = true;
+            $next['instructions'] = 'OGLEDNI PRIKAZ · NIJE ZA UPLATU. IBAN XXXX je testni podatak. Narudžba služi samo za pregled trgovine.';
+            $next['epc_qr_image_base64'] = base64_encode((new \Com\Tecnick\Barcode\Barcode)
+                ->getBarcodeObj('QRCODE,M', 'OGLEDNI PRIKAZ - NIJE ZA UPLATU', -6, -6, 'black', [-4, -4, -4, -4])
+                ->setBackgroundColor('white')->getPngData());
+            $next['epc_qr_image_mime'] = 'image/png';
+            $next['qr_image_base64'] = '';
+            $next['qr_error'] = '';
+        } elseif ($localCodes && $this->hasReceiverIdentity($next)) {
+            $next['local_codes'] = true;
+            foreach (['qr' => Hub3BarcodeService::class, 'epc_qr' => EpcQrService::class] as $prefix => $renderer) {
+                if (($next[$prefix.'_image_base64'] ?? '') !== '') {
+                    continue;
+                }
+                try {
+                    $next[$prefix.'_image_base64'] = base64_encode(app($renderer)->png($next));
+                    $next[$prefix.'_image_mime'] = 'image/png';
+                    $next[$prefix.'_error'] = '';
+                    $next['generated_at'] = now()->toIso8601String();
+                } catch (\Throwable) {
+                    $next[$prefix.'_error'] = 'Payment code could not be generated. Use the written bank details.';
+                }
+            }
+        } elseif (! $localCodes && ! (bool) config('commerce.local_safe_mode') && ($next['qr_image_base64'] ?? '') === '' && $this->hasReceiverIdentity($next)) {
             $qrResult = $this->generateQrBase64($next);
             if (($qrResult['base64'] ?? '') !== '') {
                 $next['qr_image_base64'] = (string) $qrResult['base64'];
@@ -123,6 +176,9 @@ class BankTransferUpiService
             'qr_image_base64' => trim((string) ($current['qr_image_base64'] ?? '')),
             'qr_image_mime' => trim((string) ($current['qr_image_mime'] ?? 'image/png')),
             'qr_error' => trim((string) ($current['qr_error'] ?? '')),
+            'epc_qr_image_base64' => trim((string) ($current['epc_qr_image_base64'] ?? '')),
+            'epc_qr_image_mime' => trim((string) ($current['epc_qr_image_mime'] ?? 'image/png')),
+            'epc_qr_error' => trim((string) ($current['epc_qr_error'] ?? '')),
             'generated_at' => trim((string) ($current['generated_at'] ?? '')),
         ];
     }

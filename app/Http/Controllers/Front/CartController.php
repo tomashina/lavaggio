@@ -173,10 +173,13 @@ class CartController extends Controller
         );
 
         $quantityWasStockAdjusted = (int) $validated['quantity'] > $availableStock && $availableStock > 0;
+        $stockAdjustmentMessage = config('storefront.home') === 'lavaggio'
+            ? __('ui.cart.status.adjusted_to_availability')
+            : __('ui.cart.status.adjusted_with_stock', ['stock' => $availableStock]);
         $message = $ok
             ? __('ui.cart.status.updated')
             : ($quantityWasStockAdjusted
-                ? __('ui.cart.status.adjusted_with_stock', ['stock' => $availableStock])
+                ? $stockAdjustmentMessage
                 : __('ui.cart.status.adjusted'));
 
         return $ok

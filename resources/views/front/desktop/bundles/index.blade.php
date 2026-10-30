@@ -1,5 +1,5 @@
 @extends('front.desktop.layouts.store')
-@section('title', 'Bundle artikli – Liber Media')
+@section('title', config('storefront.home') === 'lavaggio' ? 'Kompleti za njegu rublja | Lavaggio' : 'Bundle artikli – Liber Media')
 @section('main_class', 'lm-bundles-main')
 @push('styles')
     <link rel="stylesheet" href="{{ asset('front-theme/styles/libermedia-bundles.css') }}?v={{ filemtime(public_path('front-theme/styles/libermedia-bundles.css')) }}">
@@ -10,9 +10,9 @@
     <header class="lm-bundles-header lm-page-title">
         <span class="lm-bundles-header-gift" aria-hidden="true"><x-fa-icon name="gift" style="light" /></span>
         <div>
-            <p class="lm-bundles-eyebrow">Više igre, više radosti</p>
+            <p class="lm-bundles-eyebrow">{{ config('storefront.home') === 'lavaggio' ? 'Više njege, više uštede' : 'Više igre, više radosti' }}</p>
             <h1>Kupi u kompletu i uštedi</h1>
-            <p>Kompleti koji idu zajedno — za male istraživače i velike osmijehe.</p>
+            <p>{{ config('storefront.home') === 'lavaggio' ? 'Odabrani parovi za pranje, svježinu i njegu rublja.' : 'Kompleti koji idu zajedno — za male istraživače i velike osmijehe.' }}</p>
         </div>
     </header>
     @if($errors->any())<div role="alert" class="lm-bundles-error">{{ $errors->first() }}</div>@endif
@@ -23,7 +23,7 @@
         @endphp
         <article class="lm-bundle-card" id="bundle-{{ $bundle->id }}" data-bundle-card="{{ $bundle->id }}">
             <div class="lm-bundle-card-top">
-                <span class="lm-bundle-gift-label"><x-fa-icon name="gift" style="light" /> Komplet za igru</span>
+                <span class="lm-bundle-gift-label"><x-fa-icon name="gift" style="light" /> {{ config('storefront.home') === 'lavaggio' ? 'Komplet za rublje' : 'Komplet za igru' }}</span>
                 @if($offer['can_view_prices'] && $offer['saving'] > 0)
                     <span class="lm-bundle-saving-badge">Ušteda {{ $offer['saving_percent'] }}%</span>
                 @endif

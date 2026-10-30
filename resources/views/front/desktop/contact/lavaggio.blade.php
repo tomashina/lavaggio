@@ -11,7 +11,7 @@
 
 <section class="lm-page-title lavaggio-contact-title">
     <nav aria-label="Breadcrumb">
-        <a href="{{ route('home') }}">Početna</a><span aria-hidden="true">/</span><span>Kontakt</span>
+        <a href="{{ route('home') }}"><x-front.breadcrumb-home>Početna</x-front.breadcrumb-home></a><span aria-hidden="true">/</span><span>Kontakt</span>
     </nav>
     <h1>Kontakt</h1>
 </section>

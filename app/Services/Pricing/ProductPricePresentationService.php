@@ -102,6 +102,8 @@ class ProductPricePresentationService
                 'b2b_source_type' => null,
                 'price_catalog_id' => null,
                 'price_catalog_entry_id' => null,
+                'promotion_starts_at' => null,
+                'promotion_ends_at' => null,
             ];
         }
 
@@ -136,6 +138,7 @@ class ProductPricePresentationService
                 $audienceStoredBase,
                 $user,
                 $groupPrice,
+                $resolvedAction,
             );
             $lowest30DaysGross = (float) $this->taxPricing->grossFromStored($lowest30DaysStored, $product, user: $user);
         }
@@ -176,6 +179,8 @@ class ProductPricePresentationService
             'b2b_source_type' => $groupPrice?->source_type,
             'price_catalog_id' => $groupPrice?->catalog_id,
             'price_catalog_entry_id' => $groupPrice?->catalog_entry_id,
+            'promotion_starts_at' => $hasPromotionalDiscount ? $resolvedAction?->starts_at?->toIso8601String() : null,
+            'promotion_ends_at' => $hasPromotionalDiscount ? $resolvedAction?->ends_at?->toIso8601String() : null,
         ];
     }
 
@@ -184,11 +189,18 @@ class ProductPricePresentationService
         float $storedBasePrice,
         ?User $user,
         ?ResolvedB2BPrice $groupPrice = null,
+        ?CatalogAction $currentPromotion = null,
     ): float {
-        $periodStart = now()->subDays(30);
-        $periodEnd = now();
+        // A promotion's reference window ends before that promotion starts.
+        // Including the current discounted price would erase the reference
+        // price as soon as the offer becomes active.
+        $usePromotionReference = config('storefront.home') === 'lavaggio' && $currentPromotion !== null;
+        $periodEnd = $usePromotionReference
+            ? ($currentPromotion->starts_at ?? $currentPromotion->created_at ?? now())->copy()
+            : now();
+        $periodStart = $periodEnd->copy()->subDays(30);
 
-        if (config('commerce.b2c_only')) {
+        if (config('commerce.b2c_only') && ! $usePromotionReference) {
             $actions = app(\App\Services\Catalog\B2CPromotionService::class)->forProduct($product, $user, history: true);
         } else {
             $categoryIds = $product->relationLoaded('categories')
@@ -248,6 +260,19 @@ class ProductPricePresentationService
 
         }
 
+        if ($usePromotionReference) {
+            $actions = $actions->reject(fn (CatalogAction $action): bool => $action->is($currentPromotion)
+                || ($action->starts_at !== null && $action->starts_at->greaterThanOrEqualTo($periodEnd)));
+
+            return $this->lowestStoredPriceDuringReferenceWindow(
+                $product,
+                $storedBasePrice,
+                $actions,
+                $periodStart,
+                $periodEnd,
+            );
+        }
+
         $historyQuery = ProductPriceHistory::query()
             ->where('product_id', $product->getKey())
             ->whereBetween('effective_at', [$periodStart, $periodEnd])
@@ -293,5 +318,59 @@ class ProductPricePresentationService
         }
 
         return max(0.0, $best);
+    }
+
+    private function lowestStoredPriceDuringReferenceWindow(
+        Product $product,
+        float $fallbackPrice,
+        \Illuminate\Support\Collection $actions,
+        \Illuminate\Support\Carbon $periodStart,
+        \Illuminate\Support\Carbon $periodEnd,
+    ): float {
+        $history = ProductPriceHistory::query()
+            ->where('product_id', $product->getKey())
+            ->where('price_type', 'base')
+            ->whereNull('product_option_value_id')
+            ->where('effective_at', '<', $periodEnd)
+            ->orderBy('effective_at')
+            ->orderBy('id')
+            ->get(['old_price', 'new_price', 'effective_at']);
+
+        $openingHistory = $history->last(fn (ProductPriceHistory $row): bool => $row->effective_at->lessThanOrEqualTo($periodStart));
+        $firstChange = $history->first(fn (ProductPriceHistory $row): bool => $row->effective_at->greaterThan($periodStart));
+        $openingPrice = (float) ($openingHistory?->new_price ?? $firstChange?->old_price ?? $fallbackPrice);
+        $samples = collect([$periodStart]);
+        foreach ($history as $row) {
+            if ($row->effective_at->greaterThan($periodStart)) {
+                $samples->push($row->effective_at);
+            }
+        }
+        foreach ($actions as $action) {
+            if ($action->starts_at?->between($periodStart, $periodEnd, false)) {
+                $samples->push($action->starts_at);
+            }
+            if ($action->ends_at?->between($periodStart, $periodEnd, false)) {
+                $afterEnd = $action->ends_at->copy()->addSecond();
+                if ($afterEnd->lessThan($periodEnd)) {
+                    $samples->push($afterEnd);
+                }
+            }
+        }
+
+        $lowest = null;
+        foreach ($samples as $sample) {
+            $lastChange = $history->last(fn (ProductPriceHistory $row): bool => $row->effective_at->lessThanOrEqualTo($sample));
+            $basePrice = (float) ($lastChange?->new_price ?? $openingPrice);
+            $candidate = $basePrice;
+            foreach ($actions as $action) {
+                if (($action->starts_at === null || $action->starts_at->lessThanOrEqualTo($sample))
+                    && ($action->ends_at === null || $action->ends_at->greaterThanOrEqualTo($sample))) {
+                    $candidate = min($candidate, $this->actionResolver->applyToPrice($basePrice, $action));
+                }
+            }
+            $lowest = $lowest === null ? $candidate : min($lowest, $candidate);
+        }
+
+        return max(0.0, $lowest ?? $fallbackPrice);
     }
 }

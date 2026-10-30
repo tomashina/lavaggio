@@ -29,6 +29,9 @@
     @if ($editing)
         <form wire:submit="save" class="admin-panel admin-form-panel space-y-4 p-6">
             <h2 class="admin-section-title">{{ $editingId ? __('Uredi akciju') : __('Nova akcija') }}</h2>
+            @if (config('storefront.home') === 'lavaggio')
+                <p class="text-xs text-slate-500">{{ __('Početak i završetak akcije unose se prema lokalnom vremenu u Hrvatskoj (Europe/Zagreb).') }}</p>
+            @endif
             <div>
                 <label for="product-promotion-title" class="mb-1 block text-sm font-semibold text-slate-700">{{ __('Naziv akcije') }}</label>
                 <input id="product-promotion-title" wire:model="form.title" type="text" maxlength="255" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
@@ -85,7 +88,7 @@
                     <div>
                         <h3 class="font-semibold text-slate-900">{{ $promotion['title'] }}</h3>
                         <p class="mt-1 text-sm text-slate-600">{{ $promotion['scope'] }} · {{ $promotion['status'] }} · {{ $promotion['discount'] }}</p>
-                        <p class="mt-1 text-xs text-slate-500">{{ $promotion['starts_at'] }} — {{ $promotion['ends_at'] }}</p>
+                        <p class="mt-1 text-xs text-slate-500">{{ $promotion['starts_at'] }} — {{ $promotion['ends_at'] }} @if(config('storefront.home') === 'lavaggio') (Europe/Zagreb) @endif</p>
                     </div>
                     @if ($canUpdate)
                         @if ($promotion['editable'])

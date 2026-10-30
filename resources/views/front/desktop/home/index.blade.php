@@ -19,7 +19,7 @@
         $isHerreraHome = \App\Support\StorefrontTheme::usesHerreraLayout((string) ($storeSettings['branding']['store_name'] ?? config('app.name')));
         $isLibermediaHome = in_array(config('storefront.home'), ['libermedia', 'watchline'], true);
         $isWatchlineHome = config('storefront.home') === 'watchline';
-        $homeContentBlocks = $isWatchlineHome
+        $homeContentBlocks = ($isWatchlineHome || config('storefront.home') === 'lavaggio')
             ? $resolver->forPlacement('home.content', $locale, null, null, 'desktop')
             : collect();
         $homeFallbackView = match (config('storefront.home')) {

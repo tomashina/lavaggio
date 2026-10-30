@@ -26,8 +26,9 @@ class LavaggioCatalogMenuImageTest extends TestCase
                         'label' => 'Uklanjanje mrlja', 'url' => '/kategorija/uklanjanje-mrlja',
                         'menu_image_url' => '/storage/navigation/categories/mrlje.webp',
                         'menu_image_alt' => '',
+                        'children' => [['label' => 'Predtretman', 'url' => '/kategorija/predtretman']],
                     ],
-                    ['label' => 'Pribor', 'url' => '/kategorija/pribor'],
+                    ['label' => 'Pribor', 'url' => '/kategorija/pribor', 'children' => [['label' => 'Mrežice', 'url' => '/kategorija/mrezice']]],
                 ],
             ],
         ])->render();

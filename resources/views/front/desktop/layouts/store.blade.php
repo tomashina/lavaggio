@@ -96,6 +96,7 @@
         <link rel="preload" href="{{ asset('assets/lavaggio/fonts/Satoshi-Variable.woff2').'?v=e739aff9b4d0' }}" as="font" type="font/woff2" crossorigin>
         <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-header.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-header.css')) }}">
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-search.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-search.css')) }}">
     @endif
 </head>
 @php
@@ -161,6 +162,7 @@
 
 @if ($lavaggioStorefront)
     @include('front.partials.lavaggio-header')
+    @include('front.partials.lavaggio-search')
 @else
 <header class="site-main-header sticky top-0 z-40 bg-white">
     @include('front.partials.customer-impersonation')
@@ -758,7 +760,7 @@
                             <li><a href="{{ $link['url'] }}" class="transition hover:text-slate-900">{{ $link['label'] }}</a></li>
                         @endforeach
                     </ul>
-                    @if ($herreraStorefront && $loop->last)
+                    @if ($herreraStorefront && ! $lavaggioStorefront && $loop->last)
                         @include('front.partials.herrera-footer-socials')
                     @endif
                 </details>
@@ -819,7 +821,7 @@
                             <li><a href="{{ $link['url'] }}" class="transition">{{ $link['label'] }}</a></li>
                         @endforeach
                     </ul>
-                    @if ($herreraStorefront && $loop->last)
+                    @if ($herreraStorefront && ! $lavaggioStorefront && $loop->last)
                         @include('front.partials.herrera-footer-socials')
                     @endif
                 </div>
@@ -854,6 +856,10 @@
         </div>
         @endunless
 
+        @if ($lavaggioStorefront)
+            @include('front.partials.lavaggio-footer-legal')
+        @endif
+
         @php
             $copyrightText = trim((string) ($storeSettings['footer']['bottom_copyright_text'] ?? ''));
             if ($copyrightText === '') {
@@ -870,6 +876,21 @@
                 ->values()
                 ->all();
         @endphp
+        @if ($lavaggioStorefront)
+            <div class="lavaggio-footer-controls" aria-label="Društvene mreže i postavke stranice">
+                <div class="lavaggio-footer-control-start">
+                    @if ((bool) ($storeSettings['cookies']['enabled'] ?? true))
+                        <button type="button" id="cookie-consent-footer-button" class="lavaggio-footer-icon-button" aria-label="Postavke kolačića">
+                            <x-fa-icon name="cookie-bite" :inline="true" />
+                        </button>
+                    @endif
+                </div>
+                @include('front.partials.herrera-footer-socials')
+                <div class="lavaggio-footer-control-end">
+                    @include('front.partials.scroll-to-top', ['footerPlacement' => true])
+                </div>
+            </div>
+        @endif
         <div class="store-footer-bottom grid items-center gap-3 text-xs lg:grid-cols-[1fr_auto_1fr]">
             <div class="store-footer-copyright">
                 © {{ now()->year }} {{ $storeName }}. {{ $copyrightText }}
@@ -1247,13 +1268,13 @@
         window.addEventListener('pageshow', loadOnReady);
     })();
 </script>
-@if (empty($isMobileDevice))
+@if (! $lavaggioStorefront && empty($isMobileDevice))
     @include('front.partials.scroll-to-top')
 @endif
-@include('front.partials.cookie-consent', ['showCookieFloatingButton' => empty($isMobileDevice)])
+@include('front.partials.cookie-consent', ['showCookieFloatingButton' => ! $lavaggioStorefront && empty($isMobileDevice)])
 <script defer src="{{ asset('front-theme/scripts/header-cart-popover.js') }}?v={{ filemtime(public_path('front-theme/scripts/header-cart-popover.js')) }}"></script>
 <script defer src="{{ asset('front-theme/scripts/storefront-ui.js') }}?v={{ filemtime(public_path('front-theme/scripts/storefront-ui.js')) }}"></script>
-@if (empty($isMobileDevice))
+@if ($lavaggioStorefront || empty($isMobileDevice))
     <script defer src="{{ asset('front-theme/scripts/scroll-to-top.js') }}?v={{ filemtime(public_path('front-theme/scripts/scroll-to-top.js')) }}"></script>
 @endif
 @stack('stock-notification-modals')

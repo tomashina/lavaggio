@@ -2,7 +2,7 @@
     <header class="lavaggio-faq-title lm-page-title">
         <nav aria-label="Breadcrumb">
             <ol>
-                <li><a href="{{ route('home') }}">{{ __('ui.front.desktop.footer.home') }}</a></li>
+                <li><a href="{{ route('home') }}"><x-front.breadcrumb-home /></a></li>
                 <li aria-hidden="true">/</li>
                 <li aria-current="page">{{ $faqTitle }}</li>
             </ol>

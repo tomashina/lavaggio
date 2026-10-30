@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Catalog\Product;
 
 use App\Models\Catalog\Attribute\Attribute;
+use App\Models\Catalog\Attribute\AttributeGroup;
 use App\Models\Catalog\Category\Category;
 use App\Models\Catalog\Manufacturer\Manufacturer;
 use App\Models\Catalog\Product\Product;
@@ -72,12 +73,23 @@ class Form extends Component
         'minimum_order_quantity' => 1,
         'order_quantity_step' => 1,
         'is_active' => true,
+        'is_professional' => false,
         'is_new' => false,
         'is_popular' => false,
         'manufacturer_id' => null,
         'tax_rate_id' => null,
         'base_price' => 0,
+        'content_quantity' => null,
+        'content_unit' => '',
+        'listing_price' => null,
+        'listed_at' => '',
+        'delivery_mode' => 'stock',
+        'ingredients' => '',
+        'hazard_notes' => '',
+        'manufacturer_importer' => '',
+        'country_of_origin' => '',
         'stock_qty' => 0,
+        'supplier_stock_qty' => 0,
         'weight_kg' => null,
         'length_cm' => null,
         'width_cm' => null,
@@ -324,6 +336,21 @@ class Form extends Component
             if ($this->useManufacturers()) {
                 $productData['manufacturer_id'] = $validated['form']['manufacturer_id'] ?: null;
             }
+            if ($this->isLavaggioEditor()) {
+                $productData += [
+                    'is_professional' => (bool) ($validated['form']['is_professional'] ?? false),
+                    'supplier_stock_qty' => (int) $validated['form']['supplier_stock_qty'],
+                    'content_quantity' => $validated['form']['content_quantity'] ?: null,
+                    'content_unit' => $validated['form']['content_unit'] ?: null,
+                    'listing_price' => $validated['form']['listing_price'] === '' ? null : $validated['form']['listing_price'],
+                    'listed_at' => $validated['form']['listed_at'] ?: null,
+                    'delivery_mode' => $validated['form']['delivery_mode'],
+                    'ingredients' => trim((string) ($validated['form']['ingredients'] ?? '')) ?: null,
+                    'hazard_notes' => trim((string) ($validated['form']['hazard_notes'] ?? '')) ?: null,
+                    'manufacturer_importer' => trim((string) ($validated['form']['manufacturer_importer'] ?? '')) ?: null,
+                    'country_of_origin' => trim((string) ($validated['form']['country_of_origin'] ?? '')) ?: null,
+                ];
+            }
 
             if ($this->productId) {
                 $product = Product::query()->findOrFail($this->productId);
@@ -364,6 +391,9 @@ class Form extends Component
                     $product,
                     array_values($validated['form']['attribute_ids'] ?? []),
                 );
+            }
+            if ($this->isLavaggioEditor()) {
+                $this->syncProfessionalAttribute($product, (bool) $validated['form']['is_professional']);
             }
 
             if (! $this->isWatchlineEditor()) {
@@ -826,10 +856,13 @@ class Form extends Component
             'useAttributes' => $this->useAttributes(),
             'useOptions' => $this->useOptions(),
             'watchlineProductEditor' => $this->isWatchlineEditor(),
+            'lavaggioProductEditor' => $this->isLavaggioEditor(),
             'useProductPromotions' => $this->useProductPromotions(),
             'useManufacturers' => $this->useManufacturers(),
             'unitOptions' => Product::unitOptions(),
             'shippingLabelOptions' => Product::shippingLabelOptions(),
+            'contentUnitOptions' => Product::contentUnitOptions(),
+            'deliveryModeOptions' => Product::deliveryModeOptions(),
             'packageTypeOptions' => ProductPackage::typeOptions(),
             'energyClassOptions' => ProductEnergyDeclaration::energyClassOptions(),
             'eprelProductGroupOptions' => EprelClient::productGroupOptions(),
@@ -850,7 +883,18 @@ class Form extends Component
             'form.name' => __('Name'),
             'form.slug' => __('Slug'),
             'form.base_price' => __('Base Price'),
+            'form.is_professional' => __('Profesionalni proizvod'),
+            'form.content_quantity' => __('Količina sadržaja'),
+            'form.content_unit' => __('Jedinica sadržaja'),
+            'form.listing_price' => __('Cijena na dan ulistanja'),
+            'form.listed_at' => __('Datum ulistanja'),
+            'form.delivery_mode' => __('Rok isporuke'),
+            'form.ingredients' => __('Sastojci'),
+            'form.hazard_notes' => __('Napomene o opasnosti'),
+            'form.manufacturer_importer' => __('Proizvođač / uvoznik'),
+            'form.country_of_origin' => __('Zemlja podrijetla'),
             'form.stock_qty' => __('Stock Qty'),
+            'form.supplier_stock_qty' => __('Raspoloživo kod dobavljača / za narudžbu'),
             'form.tax_rate_id' => __('Tax Class'),
             'form.manufacturer_id' => __('Manufacturer'),
             'form.unit_of_measure' => __('Jedinica mjere'),
@@ -910,10 +954,31 @@ class Form extends Component
             'form.minimum_order_quantity' => ['required', 'integer', 'min:1', 'max:999999'],
             'form.order_quantity_step' => ['required', 'integer', 'min:1', 'max:999999'],
             'form.is_active' => ['boolean'],
+            'form.is_professional' => ['boolean'],
             'form.is_new' => ['boolean'],
             'form.is_popular' => ['boolean'],
             'form.tax_rate_id' => ['nullable', 'integer', Rule::exists('tax_rates', 'id')],
             'form.base_price' => ['required', 'numeric', 'min:0'],
+            'form.content_quantity' => ['nullable', 'numeric', 'gt:0', 'max:9999999.999', 'required_with:form.content_unit'],
+            'form.content_unit' => ['nullable', Rule::in(array_keys(Product::contentUnitOptions())), 'required_with:form.content_quantity'],
+            'form.listing_price' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'form.listed_at' => ['nullable', 'date'],
+            'form.delivery_mode' => [
+                'required', Rule::in(array_keys(Product::deliveryModeOptions())),
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! $this->isLavaggioEditor() || $value !== 'unavailable') {
+                        return;
+                    }
+                    $supplierStock = (int) ($this->form['supplier_stock_qty'] ?? 0);
+                    if ((int) ($this->form['stock_qty'] ?? 0) > 0 || $supplierStock > 0) {
+                        $fail('Za oznaku Trenutno nedostupno vlastita zaliha i zaliha dobavljača moraju biti 0. Najprije uskladite količine na zalihi.');
+                    }
+                },
+            ],
+            'form.ingredients' => ['nullable', 'string', 'max:65535'],
+            'form.hazard_notes' => ['nullable', 'string', 'max:65535'],
+            'form.manufacturer_importer' => ['nullable', 'string', 'max:65535'],
+            'form.country_of_origin' => ['nullable', 'string', 'max:255'],
             'form.stock_qty' => ['required', 'integer', 'min:0'],
             'form.weight_kg' => ['nullable', 'numeric', 'min:0'],
             'form.length_cm' => ['nullable', 'numeric', 'min:0'],
@@ -1000,6 +1065,10 @@ class Form extends Component
             ])],
         ];
 
+        if ($this->isLavaggioEditor()) {
+            $rules['form.supplier_stock_qty'] = ['required', 'integer', 'min:0'];
+        }
+
         if ($this->useManufacturers()) {
             $rules['form.manufacturer_id'] = [
                 'nullable',
@@ -1059,6 +1128,16 @@ class Form extends Component
         $this->form['minimum_order_quantity'] = max(1, (int) $product->minimum_order_quantity);
         $this->form['order_quantity_step'] = max(1, (int) $product->order_quantity_step);
         $this->form['is_active'] = (bool) $product->is_active;
+        $this->form['is_professional'] = (bool) $product->is_professional;
+        $this->form['content_quantity'] = $product->content_quantity;
+        $this->form['content_unit'] = $product->content_unit ?? '';
+        $this->form['listing_price'] = $product->listing_price;
+        $this->form['listed_at'] = $product->listed_at?->format('Y-m-d') ?? '';
+        $this->form['delivery_mode'] = $product->delivery_mode ?: 'stock';
+        $this->form['ingredients'] = $product->ingredients ?? '';
+        $this->form['hazard_notes'] = $product->hazard_notes ?? '';
+        $this->form['manufacturer_importer'] = $product->manufacturer_importer ?? '';
+        $this->form['country_of_origin'] = $product->country_of_origin ?? '';
         $this->form['is_new'] = ProductNewLabel::isNew($product);
         $this->form['is_popular'] = ProductPopularityLabel::isPopular($product);
         $this->form['tax_rate_id'] = $product->tax_rate_id
@@ -1066,6 +1145,7 @@ class Form extends Component
             : ($this->isWatchlineEditor() ? null : $this->defaultTaxRateId());
         $this->form['base_price'] = (float) $product->base_price;
         $this->form['stock_qty'] = (int) $product->stock_qty;
+        $this->form['supplier_stock_qty'] = (int) $product->supplier_stock_qty;
         $this->form['weight_kg'] = $product->weight_kg;
         $this->form['length_cm'] = $product->length_cm;
         $this->form['width_cm'] = $product->width_cm;
@@ -2212,11 +2292,44 @@ class Form extends Component
         return config('storefront.home') === 'watchline';
     }
 
+    private function syncProfessionalAttribute(Product $product, bool $professional): void
+    {
+        $attribute = Attribute::query()->where('code', 'lavaggio-pro-pro')->first();
+        if (! $professional) {
+            if ($attribute) {
+                $product->attributes()->detach($attribute->id);
+            }
+
+            return;
+        }
+
+        if (! $attribute) {
+            $group = AttributeGroup::query()->firstOrCreate(['code' => 'lavaggio-pro'], [
+                'type' => Attribute::TYPE_MULTI, 'sort_order' => 50,
+            ]);
+            $group->translations()->firstOrCreate(['locale' => 'hr'], ['name' => 'Profesionalna upotreba']);
+            $attribute = Attribute::query()->create([
+                'code' => 'lavaggio-pro-pro', 'attribute_group_id' => $group->id,
+                'group_code' => $group->code, 'type' => Attribute::TYPE_MULTI,
+                'is_active' => true, 'sort_order' => 0,
+            ]);
+            $attribute->translations()->create([
+                'locale' => 'hr', 'group_name' => 'Profesionalna upotreba', 'name' => 'PRO', 'slug' => 'pro',
+            ]);
+        }
+        $product->attributes()->syncWithoutDetaching([$attribute->id => ['sort_order' => 50]]);
+    }
+
+    private function isLavaggioEditor(): bool
+    {
+        return config('storefront.home') === 'lavaggio';
+    }
+
     private function useProductPromotions(): bool
     {
         $user = auth()->user();
 
-        return $this->isWatchlineEditor() && app(CatalogFeatureService::class)->useActions()
+        return ($this->isWatchlineEditor() || $this->isLavaggioEditor()) && app(CatalogFeatureService::class)->useActions()
             && $user && ($user->isA('superadmin')
                 || ($user->can('admin.access') && $user->can('catalog.products.update') && $user->can('catalog.actions.view')));
     }

@@ -8,6 +8,7 @@ use App\Models\Catalog\Category\Category;
 use App\Models\Catalog\Option\Option;
 use App\Models\Content\Page\InfoPage;
 use App\Models\Settings\Local\Language;
+use App\Models\Settings\Local\ShippingMethod;
 use App\Services\Catalog\CatalogFeatureService;
 use App\Services\Settings\SystemSettingsService;
 use App\Support\Media\MediaProfileRegistry;
@@ -15,6 +16,7 @@ use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -107,16 +109,20 @@ class StoreSettings extends Component
         'store_footer_col_3_custom_links' => '',
         'store_footer_bottom_link_page_ids' => [],
         'store_footer_bottom_copyright_text' => '',
+        'lavaggio_footer_legal_title' => 'Uvjeti',
+        'lavaggio_footer_legal_links' => '',
         'store_social_facebook_url' => '',
         'store_social_facebook_slovenia_url' => '',
         'store_social_instagram_url' => '',
         'store_social_tiktok_url' => '',
         'store_social_youtube_url' => '',
+        'store_social_linkedin_url' => '',
         'store_footer_social_facebook_enabled' => true,
         'store_footer_social_facebook_slovenia_enabled' => true,
         'store_footer_social_instagram_enabled' => true,
         'store_footer_social_tiktok_enabled' => true,
         'store_footer_social_youtube_enabled' => true,
+        'store_footer_social_linkedin_enabled' => true,
         'store_brand_logo_path' => '',
         'store_brand_logo_optimized_path' => '',
         'store_brand_logo_width' => 0,
@@ -153,6 +159,7 @@ class StoreSettings extends Component
         'store_analytics_purchase_event_name' => 'purchase',
         'store_pricing_b2c_enabled' => false,
         'store_pricing_prices_include_tax' => false,
+        'lavaggio_free_shipping_threshold' => 50,
         'store_cart_coupon_enabled' => false,
 
         'store_seo_default_title' => '',
@@ -302,6 +309,7 @@ class StoreSettings extends Component
         foreach ($this->form as $key => $default) {
             $this->form[$key] = $settings->get($key, $default);
         }
+        $this->form['lavaggio_footer_legal_links'] = $this->formatFooterLegalLinks($this->form['lavaggio_footer_legal_links']);
 
         foreach (self::LOCALIZED_SETTING_KEYS as $key) {
             $this->baseLocalizedValues[$key] = $this->form[$key] ?? '';
@@ -344,9 +352,29 @@ class StoreSettings extends Component
 
         $payload = array_merge($payload, $this->uploadPayloadForCurrentTab());
         $payload = $this->appendLocalizedPayload($payload);
+        if (array_key_exists('lavaggio_footer_legal_links', $payload)) {
+            $payload['lavaggio_footer_legal_links'] = $this->parseFooterLegalLinks((string) $payload['lavaggio_footer_legal_links']);
+        }
 
-        app(SystemSettingsService::class)->putMany($payload);
+        if (array_key_exists('lavaggio_free_shipping_threshold', $payload)) {
+            $threshold = round((float) $payload['lavaggio_free_shipping_threshold'], 2);
+            $payload['lavaggio_free_shipping_threshold'] = $threshold;
+            $displayThreshold = rtrim(rtrim(number_format($threshold, 2, ',', '.'), '0'), ',');
+            $payload['store_announcement_text'] = 'Besplatna dostava za narudžbe iznad '.$displayThreshold.' €';
+        }
+
+        DB::transaction(function () use ($payload): void {
+            app(SystemSettingsService::class)->putMany($payload);
+            if (array_key_exists('lavaggio_free_shipping_threshold', $payload)) {
+                ShippingMethod::query()->where('is_active', true)
+                    ->where('code', '!=', 'pickup')
+                    ->where(fn (Builder $query) => $query->whereNull('carrier')->orWhere('carrier', '!=', 'pickup'))
+                    ->where(fn (Builder $query) => $query->whereNull('service_type')->orWhere('service_type', '!=', 'pickup'))
+                    ->update(['free_over' => $payload['lavaggio_free_shipping_threshold']]);
+            }
+        });
         $this->form = array_merge($this->form, Arr::only($payload, array_keys($this->form)));
+        $this->form['lavaggio_footer_legal_links'] = $this->formatFooterLegalLinks($this->form['lavaggio_footer_legal_links']);
         $this->loadLocalizedInputs($this->locale);
         $this->resetUploadsForCurrentTab();
 
@@ -413,16 +441,20 @@ class StoreSettings extends Component
             'form.store_footer_bottom_link_page_ids' => ['nullable', 'array'],
             'form.store_footer_bottom_link_page_ids.*' => ['integer', 'exists:content_info_pages,id'],
             'form.store_footer_bottom_copyright_text' => ['nullable', 'string', 'max:255'],
+            'form.lavaggio_footer_legal_title' => ['nullable', 'string', 'max:120'],
+            'form.lavaggio_footer_legal_links' => ['nullable', 'string', 'max:15000', $this->footerLegalLinksRule()],
             'form.store_social_facebook_url' => ['nullable', 'url', 'max:2048'],
             'form.store_social_facebook_slovenia_url' => ['nullable', 'url', 'max:2048'],
             'form.store_social_instagram_url' => ['nullable', 'url', 'max:2048'],
             'form.store_social_tiktok_url' => ['nullable', 'url', 'max:2048'],
             'form.store_social_youtube_url' => ['nullable', 'url', 'max:2048'],
+            'form.store_social_linkedin_url' => ['nullable', 'url:http,https', 'max:2048'],
             'form.store_footer_social_facebook_enabled' => ['required', 'boolean'],
             'form.store_footer_social_facebook_slovenia_enabled' => ['required', 'boolean'],
             'form.store_footer_social_instagram_enabled' => ['required', 'boolean'],
             'form.store_footer_social_tiktok_enabled' => ['required', 'boolean'],
             'form.store_footer_social_youtube_enabled' => ['required', 'boolean'],
+            'form.store_footer_social_linkedin_enabled' => ['required', 'boolean'],
 
             'form.store_newsletter_coupon_enabled' => ['required', 'boolean'],
             'form.store_newsletter_coupon_percent' => ['required', 'numeric', 'min:1', 'max:100'],
@@ -468,6 +500,7 @@ class StoreSettings extends Component
             'form.store_analytics_purchase_event_name' => ['nullable', 'string', 'max:64'],
             'form.store_pricing_b2c_enabled' => ['required', 'boolean'],
             'form.store_pricing_prices_include_tax' => ['required', 'boolean'],
+            'form.lavaggio_free_shipping_threshold' => ['required', 'numeric', 'min:0', 'max:9999999.99', 'decimal:0,2'],
             'form.store_cart_coupon_enabled' => ['required', 'boolean'],
 
             'form.store_seo_default_title' => ['nullable', 'string', 'max:191'],
@@ -609,6 +642,56 @@ class StoreSettings extends Component
                 $fail('validation.url')->translate();
             }
         };
+    }
+
+    private function footerLegalLinksRule(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            foreach (preg_split('/\r\n|\r|\n/', (string) $value) ?: [] as $index => $line) {
+                if (trim($line) === '') {
+                    continue;
+                }
+                $parts = explode('|', $line, 2);
+                if (count($parts) !== 2 || Validator::make([
+                    'label' => trim($parts[0] ?? ''),
+                    'url' => trim($parts[1] ?? ''),
+                ], [
+                    'label' => ['required', 'string', 'max:120'],
+                    'url' => ['required', 'string', 'max:2048', $this->storeLinkRule()],
+                ])->fails()) {
+                    $fail('Redak '.($index + 1).': unesite naziv i ispravnu poveznicu u obliku Naziv|/page/adresa ili Naziv|https://primjer.hr.');
+
+                    return;
+                }
+            }
+        };
+    }
+
+    /** @return array<int, array{label: string, url: string}> */
+    private function parseFooterLegalLinks(string $value): array
+    {
+        $links = [];
+        foreach (preg_split('/\r\n|\r|\n/', $value) ?: [] as $line) {
+            if (trim($line) === '') {
+                continue;
+            }
+            [$label, $url] = explode('|', $line, 2);
+            $links[] = ['label' => trim($label), 'url' => trim($url)];
+        }
+
+        return $links;
+    }
+
+    private function formatFooterLegalLinks(mixed $value): string
+    {
+        if (is_string($value)) {
+            return $value;
+        }
+
+        return collect(is_array($value) ? $value : [])
+            ->filter(fn ($link): bool => is_array($link) && isset($link['label'], $link['url']) && is_string($link['label']) && is_string($link['url']))
+            ->map(fn (array $link): string => $link['label'].'|'.$link['url'])
+            ->implode("\n");
     }
 
     public function render()
@@ -1305,11 +1388,13 @@ class StoreSettings extends Component
                 'email' => str_starts_with($key, 'store_email_'),
                 'branding' => str_starts_with($key, 'store_brand_')
                     || str_starts_with($key, 'store_footer_')
-                    || str_starts_with($key, 'store_social_'),
+                    || str_starts_with($key, 'store_social_')
+                    || (config('storefront.home') === 'lavaggio' && str_starts_with($key, 'lavaggio_footer_legal_')),
                 'newsletter' => str_starts_with($key, 'store_newsletter_'),
                 'integrations' => str_starts_with($key, 'store_captcha_')
                     || str_starts_with($key, 'store_analytics_'),
-                'pricing' => str_starts_with($key, 'store_pricing_'),
+                'pricing' => str_starts_with($key, 'store_pricing_')
+                    || (config('storefront.home') === 'lavaggio' && $key === 'lavaggio_free_shipping_threshold'),
                 'cart' => str_starts_with($key, 'store_cart_'),
                 'images' => str_starts_with($key, 'store_images_'),
                 'products' => str_starts_with($key, 'store_product_')

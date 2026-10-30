@@ -6,6 +6,7 @@ use App\Models\Catalog\Product\Product;
 use App\Models\Catalog\Product\ProductPackage;
 use App\Models\Settings\Local\ShippingMethod;
 use App\Models\Settings\Local\ShippingMethodRate;
+use App\Support\BoxNowShipping;
 use Illuminate\Support\Collection;
 
 class ShippingCalculator
@@ -209,7 +210,7 @@ class ShippingCalculator
         }
 
         $policy = (string) ($method->missing_measurements_policy ?: 'allow');
-        if ($policy === 'block') {
+        if ($policy === 'block' && ! BoxNowShipping::allowsPreviewMeasurements($method)) {
             if (
                 ($method->min_weight_kg !== null || $method->max_weight_kg !== null)
                 && (bool) ($profile['has_missing_weight'] ?? false)
@@ -258,6 +259,21 @@ class ShippingCalculator
         }
 
         if (collect($dimensions)->contains(static fn ($value): bool => $value === null)) {
+            // Preserve limits on every known dimension even in the local demo preview.
+            if (BoxNowShipping::allowsPreviewMeasurements($method)) {
+                $known = array_values(array_filter($dimensions, static fn ($value): bool => $value !== null));
+                $configured = array_map(static fn ($value): float => $value === null ? INF : (float) $value, $limits);
+                rsort($known, SORT_NUMERIC);
+                rsort($configured, SORT_NUMERIC);
+                foreach ($known as $index => $edge) {
+                    if ($edge > $configured[$index]) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
             return (string) $method->missing_measurements_policy !== 'block';
         }
 

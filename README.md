@@ -43,7 +43,13 @@ U administraciji **Sadržaj → Stranice**, **Blog** i **Česta pitanja** uređu
 
 U administraciji **Sadržaj → Navigacija → Slike kategorija u Web shop izborniku** moguće je učitati, zamijeniti ili ukloniti fotografiju svake glavne kategorije i promijeniti njezin alt opis. Slike se mijenjaju zajedno s odabranom kategorijom u desktop izborniku. `LavaggioNavigationImagesSeeder` postavlja početnih pet fotografija samo ako kategorija još nema spremljen odabir; čuva zamjene i namjerna uklanjanja. Optimizirane slike, izvori referentnih fotografija i korišteni promptovi nalaze se u `public/assets/lavaggio/images/categories/`.
 
-Postavke brenda i početne stranice nalaze se u `system_settings`, početne vrijednosti u `LavaggioStorefrontSeeder`. Poruke se lokalno bilježe u zapisnik; plaćanja, dostavne metode i stare integracije nisu konfigurirani.
+Postavke brenda i početne stranice nalaze se u `system_settings`, početne vrijednosti u `LavaggioStorefrontSeeder`. Poruke se lokalno bilježe u zapisnik; stare integracije nisu aktivirane.
+
+`php artisan lavaggio:configure-checkout` postavlja lokalni pregled GLS dostave na adresu, GLS paketomata i BOX NOW paketomata te pouzeća i bankovne transakcije. Naredba čuva sigurnosnu kopiju baze, nasljeđuje postojeću cijenu dostave i prag besplatne dostave te pri ponovnom pokretanju čuva naknadne izmjene u administraciji. Početni lokalni pregled koristi 4,90 € i besplatnu dostavu iznad 50 €; cijene dostavnih službi uređuju se u administraciji.
+
+Pod **Postavke → Lokalno → Načini plaćanja → Bankovna transakcija** upisuju se IBAN, primatelj i ostali podaci za uplatu. Lokalni testni IBAN `XXXX` jasno je označen „NIJE ZA UPLATU”, a ogledni QR kod sadrži samo testni tekst. Nakon unosa valjanih podataka nove narudžbe automatski dobivaju SEPA QR i hrvatski HUB3 barkod, generirane lokalno. Produkcija zahtijeva valjane bankovne podatke. BOX NOW lokalno dopušta pregled proizvoda bez mjera pakiranja; za produkciju treba dopuniti stvarne mjere i težine proizvoda.
+
+Ikona pretrage otvara modal preko cijelog ekrana s prijedlozima proizvoda, kategorija i brendova. Društvene mreže u zaglavlju i podnožju koriste iste postavke. Pregled Lavaggio mailova na `/preview/lavaggio-mail` prikazuje 19 primjera na računalu i mobitelu; dostupan je samo u lokalnom i testnom okruženju i ne šalje poruke.
 
 Naredba `php artisan lavaggio:prepare-store` prikazuje pregled lokalnog čišćenja. Opcija `--execute` radi privatnu sigurnosnu kopiju i prazni trgovinu uz očuvanje administratorskog računa. Naredba dopušta samo izdvojenu lokalnu mapu `lavaggioshop` i njezinu SQLite bazu.
 

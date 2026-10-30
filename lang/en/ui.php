@@ -429,6 +429,7 @@ return [
             'unavailable' => 'Product option is unavailable or out of stock.',
             'updated' => 'Cart updated.',
             'adjusted' => 'Quantity adjusted because product is unavailable.',
+            'adjusted_to_availability' => 'The cart quantity was adjusted to product availability.',
             'adjusted_with_stock' => 'Only :stock item(s) are available. The cart quantity was adjusted.',
             'removed' => 'Item removed from cart.',
             'cleared' => 'Cart cleared.',

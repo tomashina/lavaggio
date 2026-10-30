@@ -1,4 +1,6 @@
-@if (config('storefront.home') === 'watchline')
+@if (\App\Support\Mail\StoreMailBrand::isLavaggio())
+    @include('emails.lavaggio.newsletter')
+@elseif (config('storefront.home') === 'watchline')
     @include('emails.watchline/newsletter')
 @else
 @php($copy = !empty($watchline) ? 'mail.watchline_newsletter_coupon' : 'mail.newsletter_coupon')

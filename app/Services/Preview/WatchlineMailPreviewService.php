@@ -7,6 +7,7 @@ use App\Models\Sales\ContractWithdrawal;
 use App\Models\Sales\GiftVoucher;
 use App\Models\Sales\Offer\CustomerOffer;
 use App\Models\Sales\Order\Order;
+use App\Support\Mail\StoreMailBrand;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Carbon;
@@ -19,16 +20,16 @@ class WatchlineMailPreviewService
 {
     public function available(): bool
     {
-        return app()->environment(['local', 'testing']) && config('storefront.home') === 'watchline';
+        return app()->environment(['local', 'testing']) && StoreMailBrand::usesSharedDesign();
     }
 
     /** @return array<string, array{label: string, group: string, description: string, inactive?: bool}> */
     public function samples(): array
     {
-        return [
-            'order-customer' => ['label' => 'Potvrda narudžbe kupcu', 'group' => 'Narudžbe', 'description' => 'Kartično plaćanje, dvije stavke i popust.'],
+        $samples = [
+            'order-customer' => ['label' => 'Potvrda narudžbe kupcu', 'group' => 'Narudžbe', 'description' => StoreMailBrand::isLavaggio() ? 'Plaćanje pouzećem, dvije stavke i popust.' : 'Kartično plaćanje, dvije stavke i popust.'],
             'order-admin' => ['label' => 'Nova narudžba trgovini', 'group' => 'Narudžbe', 'description' => 'Administratorska obavijest o novoj narudžbi.'],
-            'order-bank' => ['label' => 'Narudžba s uplatom na račun', 'group' => 'Narudžbe', 'description' => 'Ogledni PDF417 barkod s oznakom NIJE ZA UPLATU; bankovni podaci nisu važeći.'],
+            'order-bank' => ['label' => 'Narudžba s uplatom na račun', 'group' => 'Narudžbe', 'description' => 'Ogledni kodovi s oznakom NIJE ZA UPLATU; bankovni podaci nisu važeći.'],
             'order-locker' => ['label' => 'Narudžba s BOX NOW dostavom', 'group' => 'Narudžbe', 'description' => 'Sažetak odabranog paketomata.'],
             'gift-purchase' => ['label' => 'Kupnja poklon bona · čeka uplatu', 'group' => 'Poklon bonovi', 'description' => 'Potvrda prije uplate s oglednim PDF417 barkodom koji nije za plaćanje.'],
             'gift-paid' => ['label' => 'Kupnja poklon bona · plaćeno', 'group' => 'Poklon bonovi', 'description' => 'Potvrda kupnje nakon uplate.'],
@@ -43,8 +44,19 @@ class WatchlineMailPreviewService
             'legacy-return' => ['label' => 'Stariji zahtjev za povrat', 'group' => 'Povrati i kontakt', 'description' => 'Pregled zadržane obavijesti starijeg obrasca.'],
             'password-reset' => ['label' => 'Obnova lozinke', 'group' => 'Korisnički račun', 'description' => 'Prava obavijest za obnovu lozinke bez aktivne poveznice ili tokena.'],
             'email-verification' => ['label' => 'Potvrda e-mail adrese', 'group' => 'Korisnički račun', 'description' => 'Prava obavijest za potvrdu adrese bez potpisane poveznice.'],
-            'customer-offer' => ['label' => 'Ponuda kupcu · neaktivni modul', 'group' => 'Neaktivni modul', 'description' => 'Predložak ponude postoji, a modul ponuda u Watchline trgovini nije aktivan.', 'inactive' => true],
+            'customer-offer' => ['label' => 'Ponuda kupcu · neaktivni modul', 'group' => 'Neaktivni modul', 'description' => 'Predložak ponude postoji, a modul ponuda u ovoj trgovini nije aktivan.', 'inactive' => true],
         ];
+
+        if (StoreMailBrand::isLavaggio()) {
+            $samples['order-gls-locker'] = ['label' => 'Narudžba s GLS paketomatom', 'group' => 'Narudžbe', 'description' => 'Sažetak odabranog GLS paketomata.'];
+            foreach (['review-request', 'abandoned-cart'] as $inactive) {
+                $samples[$inactive]['group'] = 'Neaktivni modul';
+                $samples[$inactive]['label'] .= ' · neaktivni modul';
+                $samples[$inactive]['inactive'] = true;
+            }
+        }
+
+        return $samples;
     }
 
     public function render(string $key): string
@@ -85,14 +97,14 @@ class WatchlineMailPreviewService
 
         if ($key === 'newsletter') {
             return view('emails.newsletter.coupon', [
-                'coupon_code' => 'OGLEDNI-KOD-NE-VAZI', 'store_name' => 'Watchline', 'shop_url' => $this->exampleUrl(),
-                'logo_url' => asset('assets/brand/watchline-logo.svg'), 'watchline' => true, 'discount_percent' => 10,
+                'coupon_code' => 'OGLEDNI-KOD-NE-VAZI', 'store_name' => StoreMailBrand::name(), 'shop_url' => $this->exampleUrl(),
+                'logo_url' => StoreMailBrand::details()['logo'], 'watchline' => ! StoreMailBrand::isLavaggio(), 'discount_percent' => 10,
             ])->render();
         }
 
         if ($key === 'restock') {
             return view('emails.stock-notifications.available', [
-                'targetName' => 'Ogledni ženski ručni sat', 'targetUrl' => $this->exampleUrl(),
+                'targetName' => (StoreMailBrand::isLavaggio() ? 'Ogledni deterdžent za rublje' : 'Ogledni ženski ručni sat'), 'targetUrl' => $this->exampleUrl(),
                 'unsubscribeUrl' => $this->exampleUrl(), 'isBundle' => false,
             ])->render();
         }
@@ -103,8 +115,8 @@ class WatchlineMailPreviewService
 
         if (in_array($key, ['withdrawal-admin', 'withdrawal-receipt'], true)) {
             return view('emails.withdrawals.'.($key === 'withdrawal-admin' ? 'admin' : 'receipt'), [
-                'withdrawal' => $this->withdrawal(), 'storeName' => 'Watchline',
-                'returnAddress' => "Watchline · ogledna adresa\nUlica primjera 12, 10000 Zagreb",
+                'withdrawal' => $this->withdrawal(), 'storeName' => StoreMailBrand::name(),
+                'returnAddress' => StoreMailBrand::name()." · ogledna adresa\nUlica primjera 12, 10000 Zagreb",
                 'instructions' => 'Ogledne upute: zaštitite artikl prije slanja. Ovaj primjer nije stvarni zahtjev za povrat.',
                 'adminUrl' => $this->exampleUrl(),
             ])->render();
@@ -121,7 +133,7 @@ class WatchlineMailPreviewService
             {
                 protected function resetUrl($notifiable): string
                 {
-                    return url('/preview/watchline-mail#ogled');
+                    return url('/preview/'.(StoreMailBrand::isLavaggio() ? 'lavaggio' : 'watchline').'-mail#ogled');
                 }
             };
 
@@ -133,7 +145,7 @@ class WatchlineMailPreviewService
             {
                 protected function verificationUrl($notifiable): string
                 {
-                    return url('/preview/watchline-mail#ogled');
+                    return url('/preview/'.(StoreMailBrand::isLavaggio() ? 'lavaggio' : 'watchline').'-mail#ogled');
                 }
             };
 
@@ -185,27 +197,34 @@ class WatchlineMailPreviewService
     /** @return array<string, mixed> */
     private function orderData(string $key): array
     {
-        $totals = ['subtotal' => 208.80, 'discount' => 20.88, 'shipping' => 4.50, 'payment_fee' => 0, 'tax' => 0, 'grand_total' => 192.42];
+        $totals = StoreMailBrand::isLavaggio()
+            ? ['subtotal' => 20.88, 'discount' => 2.09, 'shipping' => 4.50, 'payment_fee' => 0, 'tax' => 0, 'grand_total' => 23.29]
+            : ['subtotal' => 208.80, 'discount' => 20.88, 'shipping' => 4.50, 'payment_fee' => 0, 'tax' => 0, 'grand_total' => 192.42];
 
         return [
-            'store_name' => 'Watchline', 'logo_url' => asset('assets/brand/watchline-logo.svg'),
-            'legal_warranty' => ['enabled' => true, 'email_enabled' => true, 'asset_url' => $this->exampleUrl(), 'eu_url' => $this->exampleUrl()],
+            'store_name' => StoreMailBrand::name(), 'logo_url' => StoreMailBrand::details()['logo'],
+            'legal_warranty' => ['enabled' => ! StoreMailBrand::isLavaggio(), 'email_enabled' => true, 'asset_url' => $this->exampleUrl(), 'eu_url' => $this->exampleUrl()],
             'order_number' => 'OGLEDNA-001', 'variant' => $key === 'order-admin' ? 'admin' : 'customer',
             'customer_name' => 'Ogledni kupac', 'customer_contact' => '', 'customer_email' => 'kupac@example.invalid',
             'customer_phone' => '+385 00 000 000', 'placed_at' => '25.10.2026. 10:00',
-            'payment_method' => $key === 'order-bank' ? 'Uplata na račun' : 'Kartično plaćanje',
-            'shipping_method' => $key === 'order-locker' ? 'BOX NOW paketomat' : 'GLS dostava',
+            'payment_method' => $key === 'order-bank' ? 'Uplata na račun' : (StoreMailBrand::isLavaggio() ? 'Pouzećem' : 'Kartično plaćanje'),
+            'shipping_method' => match ($key) {
+                'order-locker' => 'BOX NOW paketomat',
+                'order-gls-locker' => 'GLS paketomat',
+                default => 'GLS dostava',
+            },
             'billing_address' => 'Ulica primjera 12, 10000 Zagreb, HR',
             'shipping_address' => 'Ulica primjera 12, 10000 Zagreb, HR',
-            'customer_note' => 'Ogledna napomena: molim poklon pakiranje.', 'currency' => 'EUR',
+            'customer_note' => StoreMailBrand::isLavaggio() ? 'Ogledna napomena: molim dostavu na navedenu adresu.' : 'Ogledna napomena: molim poklon pakiranje.', 'currency' => 'EUR',
             'items' => [
-                ['name' => 'Ogledni ženski ručni sat', 'sku' => 'OGLED-SAT-001', 'option_label' => 'Boja: zlatna', 'quantity' => 1, 'unit_price' => '129,00 €', 'line_total' => '129,00 €', 'product_url' => $this->exampleUrl(), 'image_url' => asset('assets/brand/watchline-favicon.svg')],
-                ['name' => 'Ogledna ogrlica', 'sku' => 'OGLED-NAKIT-002', 'option_label' => '', 'quantity' => 2, 'unit_price' => '39,90 €', 'line_total' => '79,80 €', 'product_url' => $this->exampleUrl(), 'image_url' => ''],
+                ['name' => (StoreMailBrand::isLavaggio() ? 'Ogledni deterdžent za rublje' : 'Ogledni ženski ručni sat'), 'sku' => StoreMailBrand::isLavaggio() ? 'OGLED-DETERDZENT-001' : 'OGLED-SAT-001', 'option_label' => (StoreMailBrand::isLavaggio() ? 'Pakiranje: 1 l' : 'Boja: zlatna'), 'quantity' => 1, 'unit_price' => StoreMailBrand::isLavaggio() ? '12,90 €' : '129,00 €', 'line_total' => StoreMailBrand::isLavaggio() ? '12,90 €' : '129,00 €', 'product_url' => $this->exampleUrl(), 'image_url' => StoreMailBrand::isLavaggio() ? asset('assets/lavaggio/home/products/ariel-sensitive.webp') : asset('assets/brand/watchline-favicon.svg')],
+                ['name' => (StoreMailBrand::isLavaggio() ? 'Ogledni omekšivač za rublje' : 'Ogledna ogrlica'), 'sku' => StoreMailBrand::isLavaggio() ? 'OGLED-OMEKSIVAC-002' : 'OGLED-NAKIT-002', 'option_label' => '', 'quantity' => 2, 'unit_price' => StoreMailBrand::isLavaggio() ? '3,99 €' : '39,90 €', 'line_total' => StoreMailBrand::isLavaggio() ? '7,98 €' : '79,80 €', 'product_url' => $this->exampleUrl(), 'image_url' => ''],
             ],
             'totals' => array_map(fn ($value) => number_format($value, 2, ',', '.').' €', $totals),
             'totals_raw' => $totals,
-            'bank_transfer' => $key === 'order-bank' ? $this->bankTransfer(192.42) : null,
+            'bank_transfer' => $key === 'order-bank' ? $this->bankTransfer($totals['grand_total']) : null,
             'box_now' => $key === 'order-locker' ? ['locker_id' => 'OGLED', 'locker_name' => 'Ogledni paketomat', 'address_line_1' => 'Ulica primjera 12', 'postal_code' => '10000', 'city' => 'Zagreb'] : null,
+            'gls_locker' => $key === 'order-gls-locker' ? ['id' => 'OGLED-GLS', 'name' => 'Ogledni GLS paketomat', 'address_line_1' => 'Ulica primjera 12', 'postal_code' => '10000', 'city' => 'Zagreb'] : null,
         ];
     }
 
@@ -228,7 +247,7 @@ class WatchlineMailPreviewService
             'full_name' => 'Ogledni kupac', 'email' => 'kupac@example.invalid', 'phone' => '+385 00 000 000',
             'address_line' => 'Ulica primjera 12', 'postal_code' => '10000', 'city' => 'Zagreb', 'country_code' => 'HR',
             'order_number' => 'OGLEDNA-001', 'contract_date' => '2026-10-20', 'received_date' => '2026-10-22',
-            'items' => 'Ogledni ženski ručni sat · 1 komad',
+            'items' => StoreMailBrand::isLavaggio() ? 'Ogledni deterdžent za rublje · 1 komad' : 'Ogledni ženski ručni sat · 1 komad',
             'note' => 'Ogledna napomena uz zahtjev za povrat.',
             'declaration' => 'Ovim putem izjavljujem da jednostrano raskidam ugovor za oglednu narudžbu OGLEDNA-001.',
         ]);
@@ -238,10 +257,10 @@ class WatchlineMailPreviewService
     {
         return new ContactMessage([
             'name' => 'Ogledni kupac', 'email' => 'kupac@example.invalid', 'phone' => '+385 00 000 000',
-            'subject' => $key === 'legacy-return' ? 'Ogledni zahtjev za povrat · OGLEDNA-001' : 'Upit o odabiru sata',
+            'subject' => $key === 'legacy-return' ? 'Ogledni zahtjev za povrat · OGLEDNA-001' : (StoreMailBrand::isLavaggio() ? 'Upit o njezi rublja' : 'Upit o odabiru sata'),
             'message' => $key === 'legacy-return'
                 ? "Molim informacije o povratu oglednog artikla.\nNarudžba: OGLEDNA-001."
-                : "Poštovani, zanima me odgovara li ovaj model manjem zapešću.\nHvala na pomoći!",
+                : (StoreMailBrand::isLavaggio() ? "Poštovani, zanima me koji je proizvod prikladan za osjetljivo rublje.\nHvala na pomoći!" : "Poštovani, zanima me odgovara li ovaj model manjem zapešću.\nHvala na pomoći!"),
             'created_at' => '2026-10-25 10:00:00',
         ]);
     }
@@ -255,7 +274,7 @@ class WatchlineMailPreviewService
             'subject' => $isReview ? 'Kako vam se sviđa vaš odabir?' : 'Vaš odabir još je u košarici',
             'heading' => $isReview ? 'Podijelite svoje iskustvo' : 'Još razmišljate o svom odabiru?',
             'intro' => $isReview ? 'Vaše mišljenje pomaže drugim kupcima pri odabiru. Ocijenite artikle iz svoje ogledne narudžbe.' : 'Artikle iz svoje ogledne košarice možete još jednom pogledati.',
-            'products' => [['name' => 'Ogledni ženski ručni sat', 'url' => $this->exampleUrl(), 'quantity' => 1], ['name' => 'Ogledna ogrlica', 'url' => $this->exampleUrl(), 'quantity' => 2]],
+            'products' => [['name' => (StoreMailBrand::isLavaggio() ? 'Ogledni deterdžent za rublje' : 'Ogledni ženski ručni sat'), 'url' => $this->exampleUrl(), 'quantity' => 1], ['name' => (StoreMailBrand::isLavaggio() ? 'Ogledni omekšivač za rublje' : 'Ogledna ogrlica'), 'url' => $this->exampleUrl(), 'quantity' => 2]],
             'coupon' => $isReview ? null : ['discount' => 10, 'code' => 'OGLEDNI-KOD-NE-VAZI', 'expires' => '01.11.2026.'],
             'action_url' => $this->exampleUrl(), 'action_label' => $isReview ? 'Ocijeni artikle' : 'Pogledaj košaricu',
             'unsubscribe_url' => $this->exampleUrl(),
@@ -272,11 +291,14 @@ class WatchlineMailPreviewService
             // Static PDF417 encodes only non-payment demo text; no payment service is called.
             'qr_image_base64' => base64_encode((string) file_get_contents(public_path('assets/previews/watchline-payment-demo.png'))),
             'qr_image_mime' => 'image/png', 'qr_preview_only' => true,
+            'preview_only' => StoreMailBrand::isLavaggio(),
+            'epc_qr_image_base64' => StoreMailBrand::isLavaggio() ? base64_encode((string) file_get_contents(public_path('assets/previews/lavaggio-qr-demo.png'))) : null,
+            'epc_qr_image_mime' => 'image/png',
         ];
     }
 
     private function exampleUrl(): string
     {
-        return url('/preview/watchline-mail#ogled');
+        return url('/preview/'.(StoreMailBrand::isLavaggio() ? 'lavaggio' : 'watchline').'-mail#ogled');
     }
 }

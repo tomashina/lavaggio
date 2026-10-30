@@ -55,6 +55,9 @@
                 @foreach ($children as $nestedChild)
                     @include('front.desktop.partials.main-nav-mobile-child', ['child' => $nestedChild, 'level' => $level + 1])
                 @endforeach
+                @if (config('storefront.home') === 'lavaggio' && $level === 0)
+                    <li>@include('front.partials.lavaggio-problem-links', ['problemCategoryUrl' => $child['url'] ?? null, 'problemCategoryKey' => $child['key'] ?? null])</li>
+                @endif
             </ul>
         </details>
     @else

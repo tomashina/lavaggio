@@ -31,7 +31,11 @@
                 @if(!empty($bankTransfer['receiver_iban']))
                     <dl><div><dt>Primatelj uplate</dt><dd>{{ $bankTransfer['receiver_name'] }}</dd></div><div><dt>IBAN</dt><dd>{{ $bankTransfer['receiver_iban'] }}</dd></div><div><dt>Model i poziv na broj</dt><dd>HR{{ $bankTransfer['model'] }} {{ $bankTransfer['reference'] }}</dd></div><div><dt>Iznos</dt><dd>{{ \App\Support\Currency::format((float) $bankTransfer['amount']) }}</dd></div></dl>
                 @endif
-                @if(!empty($bankTransfer['qr_image_base64']))<img src="data:{{ $bankTransfer['qr_image_mime'] ?: 'image/png' }};base64,{{ $bankTransfer['qr_image_base64'] }}" alt="Skenirajte podatke za uplatu" width="280" height="280">@endif
+                @if (\App\Support\Mail\StoreMailBrand::isLavaggio())
+                    @include('emails.watchline.bank-barcode', ['reference' => $order->order_number])
+                @elseif(!empty($bankTransfer['qr_image_base64']))
+                    <img src="data:{{ $bankTransfer['qr_image_mime'] ?: 'image/png' }};base64,{{ $bankTransfer['qr_image_base64'] }}" alt="Skenirajte podatke za uplatu" width="280" height="280">
+                @endif
             </section>
         @endif
         <div class="gift-voucher-receipt-actions">

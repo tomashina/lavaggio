@@ -1,6 +1,7 @@
 @extends('front.desktop.layouts.store')
 
 @php
+    $isLavaggioProductDetail = config('storefront.home') === 'lavaggio';
     $isHerreraProductDetail = \App\Support\StorefrontTheme::usesHerreraLayout((string) ($storeSettings['branding']['store_name'] ?? config('app.name')));
     $isLibermediaProductDetail = \App\Support\StorefrontTheme::usesLibermediaBrand((string) ($storeSettings['branding']['store_name'] ?? config('app.name')));
     $canViewPrices = $canViewPrices ?? app(\App\Services\Pricing\B2BAccessService::class)->canViewPrices(auth()->user());
@@ -16,7 +17,9 @@
     $productEanCode = trim((string) $product->barcode) ?: trim((string) data_get($product->payload, 'opencart.ean'));
     $localStockQuantity = max(0, (int) $product->stock_qty);
     $supplierStockQuantity = max(0, (int) ($product->supplier_stock_qty ?? 0));
-    $formatDisplayPrice = static fn ($value): string => number_format((float) $value, 2).' €';
+    $formatDisplayPrice = static fn ($value): string => $isLavaggioProductDetail
+        ? number_format((float) $value, 2, ',', '.').' €'
+        : number_format((float) $value, 2).' €';
     $formatDisplayDecimal = static fn ($value): string => number_format((float) $value, 2, '.', '');
     $formatPriceData = static function (array $priceData) use ($formatDisplayPrice, $formatDisplayDecimal, $canViewPrices): array {
         if (! $canViewPrices) {
@@ -94,7 +97,7 @@
 
     $gallery = $galleryItems
         ->unique(fn ($mediaItem) => (int) $mediaItem->id)
-        ->map(function ($mediaItem) use ($translation, $product, $preferWebp) {
+        ->map(function ($mediaItem) use ($translation, $product, $preferWebp, $isLavaggioProductDetail) {
             $detailUrl = \App\Support\Media\MediaUrl::conversion($mediaItem, 'detail_960x960', $preferWebp);
             $cardUrl720 = \App\Support\Media\MediaUrl::conversionOrNull($mediaItem, 'card_720w', $preferWebp);
             $cardUrl480 = \App\Support\Media\MediaUrl::conversionOrNull($mediaItem, 'card_480w', $preferWebp);
@@ -108,7 +111,7 @@
 
             return [
                 'id' => (int) $mediaItem->id,
-                'full' => (string) ($detailUrl ?? $mediaItem->getUrl()),
+                'full' => (string) ($isLavaggioProductDetail ? $mediaItem->getUrl() : ($detailUrl ?? $mediaItem->getUrl())),
                 'display' => (string) $displayUrl,
                 'display_srcset' => $displaySrcset,
                 'thumb' => (string) ($thumbUrl ?? $mediaItem->getUrl()),
@@ -210,6 +213,11 @@
 @section('content')
 @push('styles')
     <link rel="stylesheet" href="{{ asset('front-theme/styles/product-detail.css') }}?v={{ filemtime(public_path('front-theme/styles/product-detail.css')) }}">
+    @if ($isLavaggioProductDetail)
+        @once('lavaggio-product-styles')
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-products.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-products.css')) }}">
+        @endonce
+    @endif
     @if ($isHerreraProductDetail)
         <link rel="stylesheet" href="{{ asset('front-theme/styles/herrera-product-detail.css') }}?v={{ filemtime(public_path('front-theme/styles/herrera-product-detail.css')) }}">
     @endif
@@ -224,7 +232,7 @@
 
         <nav aria-label="Breadcrumb" class="product-detail-breadcrumb lm-page-title lm-page-title--breadcrumb">
             <ol>
-                <li><a href="{{ route('home') }}">{{ __('ui.front.desktop.footer.home') }}</a></li>
+                <li><a href="{{ route('home') }}"><x-front.breadcrumb-home /></a></li>
                 <li aria-hidden="true">/</li>
                 <li><a href="{{ route('shop.index') }}">{{ __('ui.shop.page_title') }}</a></li>
                 @foreach ($displayProductBreadcrumbCategories as $breadcrumbCategory)
@@ -330,6 +338,9 @@
         <aside class="product-detail-card">
             <div>
                 <div class="product-detail-heading">
+                    @if ($isLavaggioProductDetail && $product->is_professional)
+                        <div class="lavaggio-pro-badge"><strong>PRO</strong><span>Profesionalni proizvod</span></div>
+                    @endif
                     @if ((int) ($reviewSummary['count'] ?? 0) > 0)
                         <div class="mb-2">
                             @include('front.partials.product-review-summary', [
@@ -338,11 +349,17 @@
                                 'href' => '#product-comments',
                             ])
                         </div>
+                    @elseif ($isLavaggioProductDetail)
+                        <a href="#product-comments" class="lavaggio-no-reviews"><span aria-hidden="true">☆☆☆☆☆</span><span>Još nema ocjena</span></a>
                     @endif
                     <h1 class="product-detail-title text-2xl font-extrabold leading-tight text-slate-900">{{ $translation?->name ?? $product->code }}</h1>
+                    @if ($isLavaggioProductDetail)
+                        @include('front.partials.product-identifiers', ['updateProductSku' => true])
+                    @else
                     <p class="product-detail-identifier mt-1 text-xs text-slate-500">{{ __('Šifra') }}: <span data-product-sku-value>{{ $productDisplayCode }}</span></p>
                     @if ($productEanCode !== '')
                         <p class="product-detail-identifier mt-1 text-xs text-slate-500">EAN: <span data-product-ean>{{ $productEanCode }}</span></p>
+                    @endif
                     @endif
                     @if ($manufacturerTranslation && $manufacturerEnabled)
                         <p class="product-detail-brand mt-1 text-xs text-slate-600">
@@ -383,7 +400,10 @@
                     </p>
                     @endif
                     <p class="{{ $oldPrice ? '' : 'hidden' }} mt-1 text-sm text-slate-500 line-through" data-product-price-old>{{ $oldPrice ?: '' }}</p>
-                    <p class="{{ $lowest30DaysPrice ? '' : 'hidden' }} mt-1 text-xs text-slate-600" data-product-price-lowest>{{ $lowest30DaysPrice ? __('ui.product.lowest_price_30_days', ['price' => $lowest30DaysPrice]) : '' }}</p>
+                    <p class="{{ $lowest30DaysPrice ? '' : 'hidden' }} mt-1 text-xs text-slate-600" data-product-price-lowest>{{ $lowest30DaysPrice ? ($isLavaggioProductDetail ? 'NC 30 dana: '.$lowest30DaysPrice : __('ui.product.lowest_price_30_days', ['price' => $lowest30DaysPrice])) : '' }}</p>
+                    @if ($isLavaggioProductDetail)
+                        @include('front.partials.lavaggio-product-facts')
+                    @endif
                     @include('front.partials.watchline-reference-price', ['referencePriceText' => \App\Support\WatchlineReferencePrice::text($product)])
                     @endif
                     @if ($energyDocumentDeclarations->count() > 1 || ($energyDocumentDeclarations->isNotEmpty() && ! $primaryEnergyDeclaration))
@@ -412,6 +432,9 @@
             </div>
 
             @include('front.partials.product-availability')
+            @if ($isLavaggioProductDetail)
+                @include('front.partials.lavaggio-product-notices')
+            @endif
 
             @if ($colorVariants->isNotEmpty())
                 <div class="mt-5 border-y border-slate-200 py-4" data-product-color-variants>
@@ -850,13 +873,19 @@
                 @csrf
             </form>
 
-            @include('front.partials.product-purchase-information', [
-                'product' => $product,
-                'manufacturerTranslation' => $manufacturerTranslation,
-                'firstCategoryTranslation' => $firstCategoryTranslation,
-                'shippingMethods' => $shippingMethods ?? collect(),
-                'paymentMethods' => $paymentMethods ?? collect(),
-            ])
+            @if ($isLavaggioProductDetail)
+                @include('front.partials.legal-warranty-notice', ['warrantyVariant' => 'product'])
+                @include('front.partials.herrera-product-specifications')
+                @include('front.partials.product-documents')
+            @else
+                @include('front.partials.product-purchase-information', [
+                    'product' => $product,
+                    'manufacturerTranslation' => $manufacturerTranslation,
+                    'firstCategoryTranslation' => $firstCategoryTranslation,
+                    'shippingMethods' => $shippingMethods ?? collect(),
+                    'paymentMethods' => $paymentMethods ?? collect(),
+                ])
+            @endif
         </aside>
     </section>
 
@@ -997,4 +1026,7 @@
     <script defer src="{{ asset('front-theme/scripts/product-detail.js') }}?v={{ filemtime(public_path('front-theme/scripts/product-detail.js')) }}"></script>
     <script defer src="{{ asset('front-theme/scripts/product-fit-finder.js') }}?v={{ filemtime(public_path('front-theme/scripts/product-fit-finder.js')) }}"></script>
     <script defer src="{{ asset('front-theme/scripts/product-page.js') }}?v={{ filemtime(public_path('front-theme/scripts/product-page.js')) }}"></script>
+    @if ($isLavaggioProductDetail)
+        <script defer src="{{ asset('front-theme/scripts/lavaggio-products.js') }}?v={{ filemtime(public_path('front-theme/scripts/lavaggio-products.js')) }}"></script>
+    @endif
 @endpush

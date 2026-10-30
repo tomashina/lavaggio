@@ -7,6 +7,10 @@
     @if ($bankTransfer && !$order->paid_at)
         <div class="bank">
             <h2>Podaci za uplatu</h2>
+            @if (!empty($bankTransfer['preview_only']))
+                <p><strong>OGLEDNI PRIKAZ · NIJE ZA UPLATU</strong></p>
+                <p>Podaci su testni. Nemojte izvršavati uplatu prema ovoj poruci.</p>
+            @endif
             <p>{{ $bankTransfer['receiver_name'] ?? '' }}</p>
             <p>IBAN: <strong>{{ $bankTransfer['receiver_iban'] ?? '' }}</strong></p>
             <p>Iznos: <strong>{{ number_format((float) $order->grand_total, 2, ',', '.') }} €</strong></p>

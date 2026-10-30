@@ -59,7 +59,7 @@ class Manager extends Component
 
     public string $previousLocale = 'en';
 
-    /** @var array<int, TemporaryUploadedFile|null> */
+    /** @var array<int|string, TemporaryUploadedFile|null> */
     public array $desktopPromoUploads = [];
 
     /** @var array<int, TemporaryUploadedFile|null> */
@@ -88,6 +88,13 @@ class Manager extends Component
     {
         $this->validateOnly('categoryMenuUploads.'.$categoryId, [
             'categoryMenuUploads.'.$categoryId => ['nullable', 'image', 'max:4096'],
+        ]);
+    }
+
+    public function updatedDesktopPromoUploads(mixed $upload, string $key): void
+    {
+        $this->validateOnly('desktopPromoUploads.'.$key, [
+            'desktopPromoUploads.'.$key => ['nullable', 'image', 'max:4096'],
         ]);
     }
 
@@ -395,7 +402,7 @@ class Manager extends Component
 
         $normalizedItems = [];
         foreach (($validated['form']['items'] ?? []) as $index => $item) {
-            $normalized = $this->normalizeItem($item, $index, $this->desktopPromoUploads[$index] ?? null);
+            $normalized = $this->normalizeItem($item, $index, $this->desktopPromoUploads[$index] ?? null, (string) $index);
             $normalizedItems[] = $normalized;
 
             $this->validateItemReferences($normalized, 'form.items.'.$index);
@@ -444,6 +451,16 @@ class Manager extends Component
 
         $this->form['items'][$index]['desktop_promo_image_path'] = '';
         unset($this->desktopPromoUploads[$index]);
+    }
+
+    public function removeNestedMenuImage(string $path): void
+    {
+        if (! $this->validItemPath($path) || ! str_contains($path, '.children.') || ! is_array(data_get($this->form['items'], $path))) {
+            return;
+        }
+
+        data_set($this->form['items'], $path.'.desktop_promo_image_path', '');
+        unset($this->desktopPromoUploads[str_replace('.', '_', $path)]);
     }
 
     public function clearCategoryMenuImage(int $categoryId): void
@@ -552,7 +569,7 @@ class Manager extends Component
      * @param  array<string, mixed>  $item
      * @return array<string, mixed>
      */
-    private function normalizeItem(array $item, int $index, mixed $desktopPromoUpload = null): array
+    private function normalizeItem(array $item, int $index, mixed $desktopPromoUpload = null, string $itemPath = ''): array
     {
         $type = (string) ($item['type'] ?? 'custom');
         $locale = strtolower(trim($this->locale));
@@ -615,7 +632,11 @@ class Manager extends Component
             'is_active' => (bool) ($item['is_active'] ?? true),
             'sort_order' => (int) ($item['sort_order'] ?? $index),
             'desktop_promo_image_path' => $desktopPromoImagePath,
-            'children' => array_map(fn (array $child, int $childIndex): array => $this->normalizeItem($child, $childIndex), $item['children'] ?? [], array_keys($item['children'] ?? [])),
+            'children' => array_map(function (array $child, int $childIndex) use ($itemPath): array {
+                $childPath = $itemPath.'.children.'.$childIndex;
+
+                return $this->normalizeItem($child, $childIndex, $this->desktopPromoUploads[str_replace('.', '_', $childPath)] ?? null, $childPath);
+            }, $item['children'] ?? [], array_keys($item['children'] ?? [])),
         ], $localizedPromo);
     }
 

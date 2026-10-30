@@ -24,7 +24,7 @@
         }
 
         $partial = 'front.content-blocks.types.'.$block->type;
-        $isWatchlineWidget = str_starts_with((string) $block->type, 'watchline_')
+        $isWatchlineWidget = (str_starts_with((string) $block->type, 'watchline_') || str_starts_with((string) $block->type, 'lavaggio_'))
             && array_key_exists((string) $block->type, (array) config('content_blocks.types', []));
         if ($isWatchlineWidget) {
             // Watchline widgets use fixed layouts; editors change data, not Blade files.
@@ -43,7 +43,7 @@
         $blogIds = $blockItems->where('item_type', 'blog')->pluck('item_id')->map(fn ($id) => (int) $id)->all();
 
         $products = collect();
-        $watchlineAutomaticProducts = (string) $block->type === 'watchline_products'
+        $watchlineAutomaticProducts = in_array((string) $block->type, ['watchline_products', 'lavaggio_products'], true)
             && (\App\Support\WatchlineWidgetSettings::forBlock($block, $translation)['source'] ?? 'manual') !== 'manual';
         if ($productIds !== [] && ! $watchlineAutomaticProducts) {
             $products = \App\Models\Catalog\Product\Product::query()
@@ -73,7 +73,7 @@
                 ->sortBy(fn ($row) => array_search((int) $row->id, $productIds, true))
                 ->values();
 
-            if (in_array((string) $block->type, ['products_carousel', 'watchline_products'], true)) {
+            if (in_array((string) $block->type, ['products_carousel', 'watchline_products', 'lavaggio_products'], true)) {
                 $products = $products
                     ->filter(function ($product): bool {
                         return \App\Support\Media\LegacyCatalogImage::url(data_get($product->payload, 'opencart.image')) !== null || $product->media
@@ -279,7 +279,7 @@
     @endphp
 
     @if ($isWatchlineWidget)
-        <div data-watchline-widget="{{ $block->code }}" data-content-block-id="{{ $block->id }}">
+        <div data-watchline-widget="{{ $block->code }}" @if(str_starts_with((string) $block->type, 'lavaggio_')) data-lavaggio-widget="{{ $block->code }}" @endif data-content-block-id="{{ $block->id }}">
     @endif
     @if ($wrapperClasses !== '' || $wrapperStyle !== '')
         <div @if($wrapperClasses !== '') class="{{ $wrapperClasses }}" @endif @if($wrapperStyle !== '') style="{{ $wrapperStyle }}" @endif>

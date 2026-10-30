@@ -74,6 +74,7 @@
     ],
     "light": [
         "bag-shopping",
+        "basket-shopping",
         "battery-half",
         "bolt",
         "boxes-stacked",
@@ -98,16 +99,27 @@
         "screwdriver-wrench",
         "sensor",
         "shield-check",
+        "shirt",
+        "spray-can-sparkles",
         "tag",
         "temperature-half",
         "toolbox",
         "truck-fast",
         "tv",
-        "user"
+        "user",
+        "washing-machine",
+        "wind"
+    ],
+    "duotone": [
+        "shirt",
+        "washing-machine",
+        "comments"
     ],
     "brands": [
+        "facebook",
         "facebook-f",
         "instagram",
+        "linkedin",
         "linkedin-in",
         "tiktok",
         "whatsapp",

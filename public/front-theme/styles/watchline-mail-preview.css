@@ -37,3 +37,9 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 32px; }
     .preview-stage { padding: 0; border: 0; border-radius: 0; }
     .preview-width { flex-wrap: wrap; }
 }
+
+.lavaggio-mail-preview { background:#f5f5fa;color:#13100d; }
+.lavaggio-mail-preview a { color:#656ba8; }
+.lavaggio-mail-preview .preview-stage { background:#e9eaf5;border-color:#e4e5f0; }
+.lavaggio-mail-preview .preview-width button { color:#656ba8;border-color:#d7d9ed; }
+.lavaggio-mail-preview .preview-width button[aria-pressed="true"] { background:#848ac4;border-color:#848ac4;color:#13100d; }

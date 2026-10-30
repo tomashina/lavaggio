@@ -1,5 +1,5 @@
 @component('emails.watchline.layout', ['title' => $isReturn ? 'Novi zahtjev za povrat' : 'Nova poruka iz trgovine'])
-    <p class="eyebrow">Watchline · Obavijest za trgovinu</p>
+    <p class="eyebrow">{{ \App\Support\Mail\StoreMailBrand::name() }} · Obavijest za trgovinu</p>
     <h1>{{ $isReturn ? 'Novi zahtjev za povrat.' : 'Nova poruka kupca.' }}</h1>
     <table class="details" role="presentation">
         <tr><th>Ime i prezime</th><td>{{ $contact->name }}</td></tr>

@@ -11,16 +11,16 @@
         const panels = Array.from(menu.querySelectorAll('[data-lavaggio-catalog-panel]'));
         const desktop = window.matchMedia('(min-width: 1280px)');
         const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-        let activeRoot = roots[0];
+        let activeRoot = roots.find((root) => root.dataset.panelId) || roots[0];
         let closeTimer;
         let openedByHover = false;
 
         const selectRoot = (root) => {
             activeRoot = root;
             roots.forEach((entry) => {
-                const active = entry === root;
+                const active = entry === root && Boolean(root.dataset.panelId);
                 entry.classList.toggle('is-active', active);
-                entry.setAttribute('aria-expanded', String(active));
+                if (entry.dataset.panelId) entry.setAttribute('aria-expanded', String(active));
             });
             panels.forEach((panel) => { panel.hidden = panel.id !== root.dataset.panelId; });
         };
@@ -96,7 +96,7 @@
                     const index = event.key === 'Home' ? 0 : event.key === 'End' ? roots.length - 1
                         : (rootIndex + (event.key === 'ArrowUp' ? -1 : 1) + roots.length) % roots.length;
                     roots[index]?.focus();
-                } else if (event.key === 'ArrowRight') {
+                } else if (event.key === 'ArrowRight' && event.target.dataset.panelId) {
                     event.preventDefault();
                     activePanelLinks()[0]?.focus();
                 }

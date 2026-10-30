@@ -443,7 +443,8 @@ class ShippingManager extends Component
         $legacyMeasurements = $existingMethod && BoxNowShipping::preservesLegacyAvailability($existingMethod)
             && ($form['missing_measurements_policy'] ?? '') === 'allow';
 
-        if (trim((string) ($form['boxnow_partner_id'] ?? '')) === '') {
+        if (trim((string) ($form['boxnow_partner_id'] ?? '')) === ''
+            && ! ($existingMethod && BoxNowShipping::usesPublicWidget($existingMethod))) {
             $this->addError('form.boxnow_partner_id', __('BOX NOW partner ID obavezan je za aktivnu BOX NOW dostavu.'));
             $ready = false;
         }

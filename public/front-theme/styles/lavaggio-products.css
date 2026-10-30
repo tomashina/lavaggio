@@ -1,0 +1,125 @@
+body.lavaggio-storefront .lavaggio-pro-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    width: fit-content;
+    border-radius: 4px;
+    background: #252c51;
+    color: #fff;
+    padding: .35rem .55rem;
+    font-size: 10px;
+    font-weight: 750;
+    line-height: 1.2;
+    letter-spacing: .04em;
+}
+body.lavaggio-storefront .lavaggio-pro-badge strong { font-size: 12px; letter-spacing: .07em; }
+body.lavaggio-storefront .lavaggio-card-pro { position: absolute; top: .5rem; left: .5rem; z-index: 2; pointer-events: none; }
+body.lavaggio-storefront .lavaggio-card-pro.has-promotion { top: 2.7rem; }
+body.lavaggio-storefront .product-detail-heading > .lavaggio-pro-badge { margin-bottom: .85rem; }
+body.lavaggio-storefront .lavaggio-product-identifiers { display: flex; flex-wrap: wrap; column-gap: 1rem; row-gap: .25rem; margin-top: .6rem; font-size: 11px; line-height: 1.4; color: #64748b; }
+body.lavaggio-storefront .lavaggio-product-identifiers > div { display: flex; gap: .25rem; }
+body.lavaggio-storefront .lavaggio-product-facts { display: grid; order: 6; flex-basis: 100%; width: 100%; gap: .4rem; margin-top: .8rem; }
+body.lavaggio-storefront .lavaggio-product-content { font-size: 13px; font-weight: 650; color: #475569; }
+body.lavaggio-storefront .lavaggio-product-listing-price,
+body.lavaggio-storefront .lavaggio-product-vat { font-size: 11px; line-height: 1.6; color: #64748b; }
+body.lavaggio-storefront .lavaggio-card-content { margin-top: .4rem; font-size: 11px; line-height: 1.5; color: #64748b; }
+body.lavaggio-storefront .lavaggio-stock { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; margin-top: 1rem; color: #306a51; font-size: 11px; line-height: 1.5; font-weight: 750; }
+body.lavaggio-storefront .lavaggio-stock::before { width: 6px; height: 6px; content: ''; border-radius: 50%; background: currentColor; }
+body.lavaggio-storefront .lavaggio-stock[data-product-availability-state="low"] { color: #a16c12; }
+body.lavaggio-storefront .lavaggio-stock[data-product-availability-state="unavailable"] { color: #64748b; }
+body.lavaggio-storefront .lavaggio-stock-quantity { margin-left: auto; color: #64748b; font-size: 10px; font-weight: 450; }
+body.lavaggio-storefront .lavaggio-product-notices { display: grid; gap: .7rem; margin-top: 1rem; padding: 1rem 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+body.lavaggio-storefront .lavaggio-product-notices p { display: flex; align-items: center; gap: .65rem; font-size: 12px; color: #475569; }
+body.lavaggio-storefront .lavaggio-product-notices svg { width: 17px; height: 17px; color: #848ac4; flex-shrink: 0; }
+body.lavaggio-storefront .lavaggio-sale-countdown { display: grid; gap: .5rem; width: 100%; max-width: 270px; margin: .5rem 0 .2rem; padding: .625rem; border: 1px solid #dedff0; background: #f3f3f9; border-radius: 8px; }
+body.lavaggio-storefront .lavaggio-sale-countdown[hidden] { display: none; }
+body.lavaggio-storefront .lavaggio-countdown-title { color: #475569; font-size: 12px; font-weight: 650; line-height: 1.4; }
+body.lavaggio-storefront .lavaggio-countdown-clock { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .375rem; }
+body.lavaggio-storefront .lavaggio-countdown-unit { display: flex; flex-direction: column; align-items: center; gap: .2rem; min-width: 0; padding: .4rem .125rem; border: 1px solid #e4e5f0; border-radius: 5px; background: #fff; }
+body.lavaggio-storefront .lavaggio-sale-countdown strong { color: #252c51; font-size: 20px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
+body.lavaggio-storefront .lavaggio-countdown-unit-label { color: #64748b; font-size: 8px; line-height: 1.2; letter-spacing: .05em; }
+body.lavaggio-storefront .lavaggio-sale-countdown time { padding-top: .375rem; border-top: 1px solid #dedff0; color: #64748b; font-size: 10px; line-height: 1.4; }
+body.lavaggio-storefront .lavaggio-product-legal { padding: 0; margin: 0 0 2.5rem; border-top: 1px solid #e2e8f0; overflow-anchor: none; }
+body.lavaggio-storefront .lavaggio-legal-panel { border-bottom: 1px solid #e2e8f0; }
+body.lavaggio-storefront .lavaggio-legal-panel.is-sliding { overflow: hidden; }
+body.lavaggio-storefront .lavaggio-legal-panel summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem .2rem; list-style: none; cursor: pointer; color: #1e293b; font-size: 14px; font-weight: 750; }
+body.lavaggio-storefront .lavaggio-legal-panel summary::-webkit-details-marker { display: none; }
+body.lavaggio-storefront .lavaggio-legal-panel summary:focus-visible { outline: 2px solid #848ac4; outline-offset: 3px; }
+body.lavaggio-storefront .lavaggio-legal-toggle { color: #848ac4; font-size: 24px; line-height: 1; font-weight: 400; transition: transform .2s; }
+body.lavaggio-storefront .lavaggio-legal-panel[open] .lavaggio-legal-toggle { transform: rotate(45deg); }
+body.lavaggio-storefront .lavaggio-legal-panel[data-expanded="false"] .lavaggio-legal-toggle { transform: none; }
+body.lavaggio-storefront .lavaggio-legal-content { padding: 0 .2rem 1.5rem; max-width: 980px; color: #475569; font-size: 14px; line-height: 1.8; }
+body.lavaggio-storefront .lavaggio-legal-content > p { white-space: pre-line; }
+body.lavaggio-storefront .lavaggio-legal-missing { color: #94a3b8; }
+body.lavaggio-storefront .lavaggio-no-reviews { color: #94a3b8; font-size: 10px; line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) {
+    body.lavaggio-storefront .lavaggio-legal-toggle { transition: none; }
+}
+body.lavaggio-storefront .product-detail-heading .lavaggio-no-reviews { display: inline-flex; gap: .5rem; margin-bottom: .7rem; font-size: 12px; }
+
+/* Transparent packshots keep the same white presentation in the enlarged gallery. */
+body.lavaggio-storefront :is(.product-gallery-slide-button, .product-gallery-slide-image, .product-gallery-thumbnail, .lg-backdrop, .lg-outer, .lg-img-wrap) { background: #fff; }
+html[data-theme] body.lavaggio-storefront [data-product-card-image-frame] { background: #fff; }
+body.lavaggio-storefront .lg-outer :is(.lg-toolbar, .lg-sub-html) { background: rgb(255 255 255 / 96%); color: #334155; }
+body.lavaggio-storefront .lg-outer :is(.lg-icon, .lg-counter, .lg-counter-current, .lg-counter-all) { color: #334155; }
+body.lavaggio-storefront .lg-outer :is(.lg-prev, .lg-next) { background: #f1f2f9; color: #334155; }
+
+/* Keep product details comfortable to read alongside the larger shop typography. */
+html[data-theme] body.lavaggio-storefront .product-detail-heading .product-detail-title {
+    font-size: clamp(28px, 2.1vw, 34px);
+    line-height: 1.22;
+}
+html[data-theme] body.lavaggio-storefront .product-detail-heading :is(.lavaggio-product-identifiers, .product-detail-brand) { font-size: 13px; line-height: 1.6; }
+html[data-theme] body.lavaggio-storefront .product-detail-heading > .lavaggio-pro-badge { padding: .45rem .65rem; font-size: 12px; }
+html[data-theme] body.lavaggio-storefront .product-detail-heading > .lavaggio-pro-badge strong { font-size: 14px; }
+html[data-theme] body.lavaggio-storefront .product-detail-heading .lavaggio-no-reviews { font-size: 14px; line-height: 1.5; }
+html[data-theme] body.lavaggio-storefront .product-detail-pricing { gap: 6px 12px; }
+html[data-theme] body.lavaggio-storefront .product-detail-pricing [data-product-price-current] { font-size: 36px; line-height: 1.2; }
+html[data-theme] body.lavaggio-storefront .product-detail-pricing [data-product-price-old] { font-size: 18px; }
+html[data-theme] body.lavaggio-storefront .product-detail-pricing [data-product-price-discount] { font-size: 14px; padding: 4px 8px; }
+html[data-theme] body.lavaggio-storefront .product-detail-pricing :is([data-price-includes-tax], [data-price-excludes-tax], .product-detail-tax-note, .product-detail-net-price, [data-product-price-lowest]) { font-size: 14px; line-height: 1.6; }
+html[data-theme] body.lavaggio-storefront .lavaggio-product-facts { gap: .5rem; }
+html[data-theme] body.lavaggio-storefront .lavaggio-product-content { font-size: 16px; line-height: 1.6; }
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-product-listing-price, .lavaggio-product-vat) { font-size: 14px; line-height: 1.6; }
+html[data-theme] body.lavaggio-storefront .product-detail-card .lavaggio-stock { font-size: 14px; line-height: 1.6; }
+html[data-theme] body.lavaggio-storefront .product-detail-card .lavaggio-stock-quantity { font-size: 13px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-product-notices p { font-size: 16px; line-height: 1.6; }
+html[data-theme] body.lavaggio-storefront .lavaggio-product-notices svg { width: 20px; height: 20px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-sale-countdown > span:first-child { font-size: 12px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-sale-countdown strong { font-size: 20px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-countdown-unit-label { font-size: 8px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-sale-countdown time { font-size: 10px; }
+html[data-theme] body.lavaggio-storefront .product-detail-cart-button { font-size: 16px; line-height: 1.35; }
+html[data-theme] body.lavaggio-storefront .product-detail-quantity-control input { font-size: 17px; }
+html[data-theme] body.lavaggio-storefront .product-detail-tabs a { font-size: 17px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-legal-panel summary { font-size: 18px; line-height: 1.5; }
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-legal-content, .lavaggio-legal-content .product-detail-description-content) { font-size: 17px; line-height: 1.8; overflow-wrap: anywhere; }
+html[data-theme] body.lavaggio-storefront .lavaggio-legal-missing { color: #64748b; }
+html[data-theme] body.lavaggio-storefront :is(.product-rating-overview, .product-detail-comments-empty, .product-detail-comment-body) { font-size: 16px; line-height: 1.7; }
+html[data-theme] body.lavaggio-storefront :is(.product-detail-comment-toggle, .product-detail-field label, .product-detail-comment-submit, .product-detail-comment-meta) { font-size: 14px; }
+html[data-theme] body.lavaggio-storefront .product-detail-field :is(input, select, textarea) { font-size: 16px; }
+html[data-theme] body.lavaggio-storefront .product-detail-card :is(.lavaggio-product-identifiers, .product-detail-brand, .lavaggio-no-reviews, .product-detail-tax-note, .product-detail-net-price, [data-price-includes-tax], [data-price-excludes-tax], [data-product-price-lowest], .lavaggio-product-listing-price, .lavaggio-product-vat, .lavaggio-stock-quantity) { color: #475569; font-weight: 500; opacity: 1; }
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-product-content, .lavaggio-product-notices p, .lavaggio-sale-countdown > span:first-child) { color: #334155; }
+html[data-theme] body.lavaggio-storefront .lavaggio-sale-countdown :is(time, .lavaggio-countdown-unit-label) { color: #475569; font-weight: 500; }
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-legal-content, .lavaggio-legal-content .product-detail-description-content) { color: #334155; font-weight: 450; }
+html[data-theme] body.lavaggio-storefront .lavaggio-legal-missing { color: #475569; }
+html[data-theme] body.lavaggio-storefront .herrera-product-specifications { margin-top: 1.5rem; }
+html[data-theme] body.lavaggio-storefront .herrera-product-specifications > h2 { color: #1e293b; font-size: 18px; font-weight: 650; }
+html[data-theme] body.lavaggio-storefront .herrera-product-specifications :is(.product-information-row, dt, dd) { font-size: 16px; line-height: 1.6; }
+html[data-theme] body.lavaggio-storefront .herrera-product-specifications dt { color: #475569; font-weight: 500; }
+html[data-theme] body.lavaggio-storefront .herrera-product-specifications dd { color: #1e293b; font-weight: 500; }
+html[data-theme] body.lavaggio-storefront .product-detail-lower :is(.product-rating-score > p, .product-rating-overview > p, .product-detail-comments-empty, .product-detail-comment-body, .product-detail-field label, .product-comment-date) { color: #475569; font-weight: 500; }
+html[data-theme] body.lavaggio-storefront .product-detail-lower :is(.product-rating-score > p, .product-rating-overview > p) { font-size: 16px; }
+html[data-theme] body.lavaggio-storefront .product-detail-lower .product-rating-empty-stars { color: #475569; }
+@media (max-width: 640px) {
+    body.lavaggio-storefront .lavaggio-card-pro { padding: .3rem .4rem; font-size: 8px; }
+    body.lavaggio-storefront .lavaggio-card-pro strong { font-size: 10px; }
+    body.lavaggio-storefront .lavaggio-card-pro > span { display: none; }
+    body.lavaggio-storefront .lavaggio-legal-panel summary { padding: 1.1rem 0; font-size: 13px; }
+    body.lavaggio-storefront .lavaggio-stock-quantity { flex-basis: 100%; margin-left: .8rem; }
+    html[data-theme] body.lavaggio-storefront .product-detail-heading .product-detail-title { font-size: 27px; }
+    html[data-theme] body.lavaggio-storefront .product-detail-pricing [data-product-price-current] { font-size: 34px; }
+    html[data-theme] body.lavaggio-storefront .product-detail-tabs a { font-size: 16px; }
+    html[data-theme] body.lavaggio-storefront .lavaggio-legal-panel summary { font-size: 17px; }
+    html[data-theme] body.lavaggio-storefront :is(.lavaggio-legal-content, .lavaggio-legal-content .product-detail-description-content) { font-size: 16px; }
+}

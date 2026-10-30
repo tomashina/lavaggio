@@ -92,6 +92,38 @@ class LavaggioNavigationImagesTest extends TestCase
         $this->assertSame([], Storage::disk('public')->allFiles('navigation/categories'));
     }
 
+    public function test_laundry_submenu_photos_can_be_uploaded_and_removed_without_changing_links(): void
+    {
+        app(SystemSettingsService::class)->put(NavigationMenuService::SETTINGS_KEY, [[
+            'type' => 'custom', 'label' => 'Praonica', 'url' => '/page/usluge', 'children' => [
+                ['type' => 'custom', 'label' => 'Samoposlužna praonica', 'url' => '/page/samoposluzna', 'children' => [
+                    ['type' => 'custom', 'label' => 'Kako prati', 'url' => '/page/kako-prati'],
+                ]],
+                ['type' => 'custom', 'label' => 'Rezervacije 2027', 'url' => '/page/rezervacije'],
+            ],
+        ]]);
+
+        $component = Livewire::actingAs($this->admin())->test(NavigationManager::class)
+            ->assertSee('Fotografija u izborniku')
+            ->set('desktopPromoUploads.0_children_0', UploadedFile::fake()->image('praonica.webp', 1000, 750))
+            ->call('save')->assertHasNoErrors();
+
+        $navigation = app(NavigationMenuService::class);
+        $item = $navigation->forLocale('hr')[0];
+        $photo = $navigation->configuredItems()[0]['children'][0]['desktop_promo_image_path'];
+        Storage::disk('public')->assertExists($photo);
+        $this->assertSame(Storage::disk('public')->url($photo), $item['children'][0]['menu_image_url']);
+        $this->assertSame('Samoposlužna praonica', $item['children'][0]['menu_image_alt']);
+        $this->assertStringEndsWith('/page/kako-prati', $item['children'][0]['children'][0]['url']);
+        $this->assertArrayNotHasKey('menu_image_url', $item['children'][1]);
+
+        $component->call('removeNestedMenuImage', '0.children.0')->call('save')->assertHasNoErrors();
+        $item = $navigation->forLocale('hr')[0];
+        $this->assertSame('', $item['children'][0]['menu_image_url']);
+        $this->assertStringEndsWith('/page/rezervacije', $item['children'][1]['url']);
+        $this->assertStringEndsWith('/page/kako-prati', $item['children'][0]['children'][0]['url']);
+    }
+
     public function test_new_root_categories_appear_automatically_and_missing_images_do_not_create_broken_urls(): void
     {
         $root = $this->category('Njega', 'njega');

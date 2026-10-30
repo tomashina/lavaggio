@@ -106,6 +106,13 @@ body.lavaggio-storefront {
     --lavaggio-line-strong: #c2c5dc;
     --lavaggio-footer: #020617;
     --lavaggio-pattern: url("/assets/lavaggio/images/pattern/pattern-square-faded.svg");
+    --lavaggio-text-body: 16px;
+    --lavaggio-text-lead: 18px;
+    --lavaggio-text-meta: 12px;
+    --lavaggio-text-action: 16px;
+    --lavaggio-heading-section: clamp(28px, 2.2vw, 36px);
+    --lavaggio-heading-card: clamp(24px, 1.8vw, 28px);
+    --lavaggio-leading-body: 1.6;
     --herrera-font-family: "Satoshi", Arial, Helvetica, sans-serif;
     --font-sans: var(--herrera-font-family);
     --default-font-family: var(--herrera-font-family);
@@ -309,7 +316,8 @@ body.lavaggio-storefront :is(.lavaggio-care-campaign, .lavaggio-pro-campaign) .l
 body.lavaggio-storefront :is(.lavaggio-care-campaign, .lavaggio-pro-campaign) .wl-campaign-title { max-width: 24ch; }
 body.lavaggio-storefront :is(.lavaggio-care-campaign, .lavaggio-pro-campaign) .lm-campaign-copy > p:not(.lm-eyebrow) { max-width: 46ch; }
 body.lavaggio-storefront .lavaggio-empty-copy { margin-top: 14px; color: var(--lavaggio-muted); font-size: 15px; line-height: 1.7; }
-body.lavaggio-storefront .site-footer-newsletter { background-color: var(--lavaggio-paper); box-shadow: 0 0 0 100vmax var(--lavaggio-paper); }
+body.lavaggio-storefront .site-footer-accent { display: none; }
+body.lavaggio-storefront .site-footer-newsletter { border-top: 0; background-color: var(--lavaggio-paper); box-shadow: 0 0 0 100vmax var(--lavaggio-paper); }
 body.lavaggio-storefront .site-footer-newsletter input[type="email"] { border-color: var(--lavaggio-line-strong); }
 
 /* Match the original site's dark footer without moving its shop columns. */
@@ -326,6 +334,116 @@ html[data-theme] body.lavaggio-storefront .site-footer .site-footer-mobile-links
 html[data-theme] body.lavaggio-storefront .site-footer a:is(:hover, :focus-visible) { color: #fff; }
 html[data-theme] body.lavaggio-storefront .site-footer .site-footer-socials a { background: #20243c; color: #c4c8e4; }
 html[data-theme] body.lavaggio-storefront .site-footer .site-footer-socials a:is(:hover, :focus-visible) { background: var(--lavaggio-primary); color: #fff; }
+html[data-theme] body.lavaggio-storefront .site-footer .herrera-footer-socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 24px;
+}
+html[data-theme] body.lavaggio-storefront .site-footer .herrera-footer-socials a {
+    display: inline-flex;
+    flex: 0 0 44px;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    background: #1e293b;
+    color: #f1f5f9;
+    transition: background-color .18s, border-color .18s;
+}
+html[data-theme] body.lavaggio-storefront .site-footer .herrera-footer-socials a:is(:hover, :focus-visible) {
+    border-color: var(--lavaggio-primary);
+    background: var(--lavaggio-primary-hover);
+    color: #fff;
+}
+html[data-theme] body.lavaggio-storefront .site-footer .herrera-footer-socials svg {
+    width: 22px;
+    height: 22px;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-footer-legal {
+    padding: 28px 0;
+    border-top: 1px solid #293043;
+    color: #cbd5e1;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-footer-legal h3 {
+    margin: 0 0 18px;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-footer-legal ul {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-footer-legal a {
+    color: #aeb3db;
+    font-size: var(--lavaggio-text-body, 16px);
+    line-height: 1.6;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-footer-legal a:is(:hover, :focus-visible) { color: #fff; }
+html[data-theme] body.lavaggio-storefront .lavaggio-footer-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 22px 0 26px;
+    border-top: 1px solid #293043;
+}
+html[data-theme] body.lavaggio-storefront .site-footer .lavaggio-footer-controls .herrera-footer-socials {
+    grid-column: 2;
+    flex-wrap: nowrap;
+    margin: 0;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-footer-control-start { grid-column: 1; justify-self: start; }
+html[data-theme] body.lavaggio-storefront .lavaggio-footer-control-end { grid-column: 3; justify-self: end; }
+html[data-theme] body.lavaggio-storefront .lavaggio-footer-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    background: #1e293b;
+    color: #f1f5f9;
+    cursor: pointer;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-footer-icon-button:is(:hover, :focus-visible) {
+    border-color: var(--lavaggio-primary);
+    background: var(--lavaggio-primary-hover);
+    color: #fff;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-footer-icon-button svg { width: 22px; height: 22px; }
+@media (max-width: 1023px) {
+    html[data-theme] body.lavaggio-storefront .lavaggio-footer-legal ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 639px) {
+    html[data-theme] body.lavaggio-storefront .lavaggio-footer-legal { padding: 24px 0; }
+    html[data-theme] body.lavaggio-storefront .lavaggio-footer-legal ul { gap: 12px 18px; }
+    html[data-theme] body.lavaggio-storefront .lavaggio-footer-controls { --lavaggio-footer-control-size: clamp(32px, 9.6vw, 38px); gap: 8px; }
+    html[data-theme] body.lavaggio-storefront .site-footer .lavaggio-footer-controls .herrera-footer-socials { gap: 8px; }
+    html[data-theme] body.lavaggio-storefront .site-footer .lavaggio-footer-controls .herrera-footer-socials a,
+    html[data-theme] body.lavaggio-storefront .lavaggio-footer-icon-button {
+        flex-basis: var(--lavaggio-footer-control-size);
+        width: var(--lavaggio-footer-control-size);
+        height: 40px;
+        min-height: 40px;
+        border-radius: 8px;
+    }
+    html[data-theme] body.lavaggio-storefront .lavaggio-footer-icon-button svg,
+    html[data-theme] body.lavaggio-storefront .site-footer .lavaggio-footer-controls .herrera-footer-socials svg { width: 20px; height: 20px; }
+}
 html[data-theme] body.lavaggio-storefront .site-footer .store-footer-creator-link img { filter: none; }
 body.lavaggio-storefront :is(.lm-footer-benefits, .lm-footer-benefits .lm-benefits) { background: var(--lavaggio-footer); }
 html[data-theme] body.lavaggio-storefront .site-footer .wl-footer-benefits { border-color: #293043; }
@@ -374,8 +492,8 @@ body.lavaggio-storefront .scroll-to-top-button:hover { background: var(--lavaggi
 
 /* A more readable scale throughout the Lavaggio storefront. */
 html[data-theme] body.lavaggio-storefront {
-    font-size: 18px;
-    line-height: 1.6;
+    font-size: var(--lavaggio-text-body);
+    line-height: var(--lavaggio-leading-body);
 }
 html[data-theme] body.lavaggio-storefront .text-xs { font-size: 14px; line-height: 1.5; }
 html[data-theme] body.lavaggio-storefront .text-sm { font-size: 16px; line-height: 1.5; }
@@ -387,7 +505,7 @@ html[data-theme] body.lavaggio-storefront :is(.lm-campaign-copy > p:not(.lm-eyeb
     line-height: 1.75;
 }
 html[data-theme] body.lavaggio-storefront :is(.lm-eyebrow, .wl-eyebrow, .herrera-home-section-eyebrow) { font-size: 12px; }
-html[data-theme] body.lavaggio-storefront :is(.lm-button, .wl-hero-cta, .wl-section-heading > a, .herrera-home-products-link) { font-size: 15px; }
+html[data-theme] body.lavaggio-storefront :is(.lm-button, .wl-hero-cta, .wl-section-heading > a, .herrera-home-products-link) { font-size: var(--lavaggio-text-action); }
 html[data-theme] body.lavaggio-storefront .wl-cluse-perks li { font-size: 14px; }
 html[data-theme] body.lavaggio-storefront .lavaggio-empty-copy { font-size: 18px; font-weight: 450; }
 html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-content-video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; margin-block: 1.5rem; }
@@ -459,4 +577,158 @@ html[data-theme] body.lavaggio-storefront .catalog-desktop-sidebar .catalog-pric
     body.lavaggio-storefront .lavaggio-main-campaign .lm-campaign-copy { padding-bottom: 26px; }
     html[data-theme] body.lavaggio-storefront .lavaggio-main-campaign .wl-campaign-title { font-size: 38px; }
     body.lavaggio-storefront :is(.lavaggio-care-campaign, .lavaggio-pro-campaign) .lm-campaign-copy { padding-right: 22px; }
+}
+
+/* Shared reading/action scale for storefront widgets, independent of their layout. */
+/* One breadcrumb style for catalogue, product, content and account pages. */
+html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 10px;
+    max-width: 100%;
+    color: #64748b;
+    font-size: var(--lavaggio-text-body, 16px);
+    font-weight: 450;
+    line-height: 1.5;
+    letter-spacing: 0;
+    text-align: center;
+    text-transform: none;
+}
+html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) > ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 10px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) :is(ol, li, a, span) {
+    color: inherit;
+    font: inherit;
+    letter-spacing: 0;
+    text-transform: none;
+}
+html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) li {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    max-width: 100%;
+    gap: 10px;
+    overflow-wrap: anywhere;
+}
+html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    text-decoration: none;
+}
+html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) a:is(:hover, :focus-visible) {
+    color: var(--lavaggio-primary-hover);
+}
+html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) :is([aria-hidden="true"]:not(svg), li.text-slate-400) {
+    margin: 0;
+    color: #94a3b8;
+}
+html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) :is([aria-current="page"], ol > li:last-child) {
+    color: var(--lavaggio-heading, #1e293b);
+}
+html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) > span:last-child {
+    color: var(--lavaggio-heading, #1e293b);
+}
+body.lavaggio-storefront .lavaggio-breadcrumb-home-icon {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+}
+@media (max-width: 767px) {
+    html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 7px;
+        width: 100%;
+        min-width: 0;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+        font-size: 12px;
+        line-height: 1.4;
+        text-align: left;
+        white-space: nowrap;
+    }
+    html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs)::-webkit-scrollbar {
+        display: none;
+    }
+    html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) > ol {
+        flex: 0 0 auto;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 7px;
+        width: max-content;
+        min-width: 100%;
+    }
+    html[data-theme] body.lavaggio-storefront main :is(nav[aria-label="Breadcrumb"], nav[aria-label="Putanja stranice"], nav.reference-breadcrumbs) :is(li, a, span) {
+        flex: 0 0 auto;
+        max-width: none;
+        gap: 7px;
+        overflow-wrap: normal;
+        white-space: nowrap;
+    }
+    html[data-theme] body.lavaggio-storefront main nav.product-detail-breadcrumb {
+        margin-bottom: 14px;
+        padding-block: 4px;
+    }
+    body.lavaggio-storefront .lavaggio-breadcrumb-home-icon {
+        flex-basis: 14px;
+        width: 14px;
+        height: 14px;
+    }
+}
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-widget-heading h2, .lavaggio-widget-products-heading h2, .herrera-home-heading h2, .wl-section-heading h2, .lavaggio-review-band .lm-home-reviews-heading h2) {
+    font-size: var(--lavaggio-heading-section);
+    line-height: 1.2;
+}
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-widget-eyebrow, .herrera-home-section-eyebrow, .lm-home-reviews-eyebrow, .lavaggio-problem-links-label) {
+    font-size: var(--lavaggio-text-meta);
+    line-height: 1.5;
+}
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-widget-subtitle, .herrera-home-section-subtitle, .lm-home-reviews-subtitle) {
+    font-size: var(--lavaggio-text-lead);
+    line-height: var(--lavaggio-leading-body);
+}
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-widget-products-link, .lavaggio-widget-heading > a, .herrera-brand-strip__all, .herrera-home-blog-widget .herrera-home-products-link, .herrera-blog-card-read, .lavaggio-review-band .lm-home-reviews-all, .lavaggio-problem-links a) {
+    font-size: var(--lavaggio-text-action);
+    line-height: 1.5;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-review-band .lm-home-reviews-all > svg {
+    width: 16px;
+    height: 16px;
+}
+html[data-theme] body.lavaggio-storefront :is(.herrera-blog-card-copy p, .lavaggio-review-band .lm-home-review blockquote, .lm-home-review-author strong, .lm-home-review-product strong, .lm-home-review-rating, .product-detail-comment-toggle, .product-detail-comment-submit, .product-detail-field label) {
+    font-size: var(--lavaggio-text-body);
+    line-height: var(--lavaggio-leading-body);
+}
+html[data-theme] body.lavaggio-storefront .herrera-blog-card-copy :is(h2, h3) {
+    font-size: 22px;
+    line-height: 1.35;
+}
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-card-content, .lavaggio-no-reviews, .lavaggio-product-identifiers, .lavaggio-stock, .lavaggio-stock-quantity, .lavaggio-countdown-labels, .lavaggio-pro-badge, .lavaggio-card-pro, .lavaggio-card-pro strong, .lm-home-review-author time, .lm-home-review-product small) {
+    font-size: var(--lavaggio-text-meta);
+    line-height: 1.5;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-home :is(.herrera-brand-strip__actions, .lm-home-reviews-actions, .lavaggio-widget-product-actions, .libermedia-home-blog-actions) {
+    flex-wrap: wrap;
+}
+@media (max-width: 767px) {
+    html[data-theme] body.lavaggio-storefront .lavaggio-review-band .lm-home-reviews-heading {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    html[data-theme] body.lavaggio-storefront .lavaggio-review-band .lm-home-reviews-actions {
+        justify-content: space-between;
+    }
 }

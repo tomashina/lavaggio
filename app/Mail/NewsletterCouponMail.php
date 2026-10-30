@@ -25,7 +25,9 @@ class NewsletterCouponMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __($this->watchline ? 'mail.watchline_newsletter_coupon.subject' : 'mail.newsletter_coupon.subject', ['code' => $this->couponCode, 'percent' => $this->discountPercent]),
+            subject: \App\Support\Mail\StoreMailBrand::isLavaggio()
+                ? 'Lavaggio: vaših '.$this->discountPercent.'% popusta'
+                : __($this->watchline ? 'mail.watchline_newsletter_coupon.subject' : 'mail.newsletter_coupon.subject', ['code' => $this->couponCode, 'percent' => $this->discountPercent]),
         );
     }
 

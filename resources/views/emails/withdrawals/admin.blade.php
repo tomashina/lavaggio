@@ -1,4 +1,4 @@
-@if (config('storefront.home') === 'watchline')
+@if (\App\Support\Mail\StoreMailBrand::usesSharedDesign())
     @include('emails.watchline/withdrawal-admin')
 @else
 <!DOCTYPE html>

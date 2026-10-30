@@ -59,11 +59,25 @@
 
                 @if (!empty($bankTransfer['qr_image_base64']))
                     <div class="mt-4">
+                        @if (!empty($bankTransfer['local_codes']))
+                            <p class="mb-2 text-sm font-semibold text-slate-800">{{ __('HUB3 2D kod za mobilno bankarstvo') }}</p>
+                        @endif
                         <img
                             src="data:{{ $bankTransfer['qr_image_mime'] ?? 'image/png' }};base64,{{ $bankTransfer['qr_image_base64'] }}"
                             alt="{{ __('ui.checkout.success.bank_qr_alt') }}"
                             class="h-auto w-full max-w-[380px] border border-slate-200 bg-white p-2"
                         >
+                    </div>
+                @endif
+                @if (!empty($bankTransfer['epc_qr_image_base64']))
+                    <div class="mt-4">
+                        <p class="mb-2 text-sm font-semibold text-slate-800">{{ !empty($bankTransfer['qr_preview_only']) ? __('Ogledni QR kod · nije za uplatu') : __('SEPA QR kod') }}</p>
+                        <img src="data:{{ $bankTransfer['epc_qr_image_mime'] ?? 'image/png' }};base64,{{ $bankTransfer['epc_qr_image_base64'] }}"
+                            alt="{{ !empty($bankTransfer['qr_preview_only']) ? __('Ogledni QR kod koji nije namijenjen za uplatu') : __('SEPA QR kod s podacima za uplatu narudžbe') }}" width="240" height="240"
+                            class="h-auto max-w-full border border-slate-200 bg-white p-2">
+                        @if (empty($bankTransfer['qr_preview_only']))
+                            <p class="mt-2 text-sm text-slate-600">{{ __('Skenirajte kod u bankovnoj aplikaciji koja podržava SEPA QR. Prije potvrde provjerite primatelja i iznos.') }}</p>
+                        @endif
                     </div>
                 @endif
             </section>

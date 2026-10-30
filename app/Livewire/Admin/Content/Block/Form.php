@@ -46,6 +46,9 @@ class Form extends Component
     private const MATERIAL_CRAFTSMANSHIP_BULLET_COUNT = 3;
 
     private const ITEM_TYPE_MAP = [
+        'lavaggio_products' => 'product',
+        'lavaggio_brands' => 'manufacturer',
+        'lavaggio_blog' => 'blog',
         'watchline_products' => 'product',
         'watchline_brands' => 'manufacturer',
         'watchline_blog' => 'blog',
@@ -173,7 +176,7 @@ class Form extends Component
 
     public function getPopularFilterHasNoProductsProperty(): bool
     {
-        if (($this->form['type'] ?? '') !== 'watchline_products'
+        if (! in_array(($this->form['type'] ?? ''), ['watchline_products', 'lavaggio_products'], true)
             || ! filter_var(data_get($this->form, 'watchline.popular_only', false), FILTER_VALIDATE_BOOL)) {
             return false;
         }
@@ -600,8 +603,8 @@ class Form extends Component
             $selectedIds = array_values(array_unique($selectedIds));
         }
         $automaticWatchlineItems = $isWatchlineWidget && (
-            $validated['form']['type'] === 'watchline_blog'
-            || (in_array($validated['form']['type'], ['watchline_products', 'watchline_brands'], true)
+            in_array($validated['form']['type'], ['watchline_blog', 'lavaggio_blog'], true)
+            || (in_array($validated['form']['type'], ['watchline_products', 'watchline_brands', 'lavaggio_products', 'lavaggio_brands'], true)
                 && data_get($validated, 'form.watchline.source', 'manual') !== 'manual')
         );
 
@@ -742,7 +745,7 @@ class Form extends Component
 
     private function useAutomaticProductsWhenManualSelectionIsEmpty(): void
     {
-        if (($this->form['type'] ?? '') !== 'watchline_products'
+        if (! in_array(($this->form['type'] ?? ''), ['watchline_products', 'lavaggio_products'], true)
             || data_get($this->form, 'watchline.source', 'manual') !== 'manual'
             || (array) ($this->form['selected_item_ids'] ?? []) !== []) {
             return;
@@ -1178,7 +1181,7 @@ class Form extends Component
                 });
             }
 
-            if (($this->form['type'] ?? '') === 'watchline_products') {
+            if (in_array(($this->form['type'] ?? ''), ['watchline_products', 'lavaggio_products'], true)) {
                 $query->limit(100);
             }
 
@@ -2669,12 +2672,12 @@ BLADE,
 
     private function isWatchlineWidgetType(string $type): bool
     {
-        return str_starts_with($type, 'watchline_') && WatchlineWidgetSettings::fields($type) !== [];
+        return (str_starts_with($type, 'watchline_') || str_starts_with($type, 'lavaggio_')) && WatchlineWidgetSettings::fields($type) !== [];
     }
 
     private function watchlineFilterOptions(string $kind): Collection
     {
-        if (($this->form['type'] ?? '') !== 'watchline_products') {
+        if (! in_array(($this->form['type'] ?? ''), ['watchline_products', 'lavaggio_products'], true)) {
             return collect();
         }
 
