@@ -16,7 +16,9 @@ tar -xzf /home/baredahr/.lavaggio-transfer/public-media.tar.gz \
 
 The storage directory must contain the numeric media directories directly. Leave runtime `public` and `storage/app/public` absent; deployment creates outward symlinks to the document root and its `storage/` directory. If media already exists in the runtime, move/preserve it explicitly before deployment.
 
-The domain must have working HTTPS and a verified PHP 8.4 handler in `.htaccess`. The script uses `/opt/alt/php84/usr/bin/php` (verified PHP 8.4.27) and the verified Composer PHAR at `/home/baredahr/.local/bin/composer.phar` (falling back to an existing standard server Composer installation). Existing `.user.ini`, `.well-known`, PHP handler and public uploads are preserved.
+The domain must have working HTTPS and use PHP 8.4 for web requests. The script uses `/opt/alt/php84/usr/bin/php` (verified PHP 8.4.27) and the verified Composer PHAR at `/home/baredahr/.local/bin/composer.phar` (falling back to an existing standard server Composer installation). Existing `.user.ini`, `.well-known`, cPanel-generated PHP ini directives, explicit PHP handler and public uploads are preserved.
+
+If the account inherits its PHP version through PHP Selector and `.htaccess` contains no explicit handler, verify the actual **web** version first: create a randomly named temporary PHP file in the document root that returns only `PHP_VERSION`, fetch it over the shop's HTTPS URL, confirm 8.4, and remove the file immediately. Only after that check add `LAVAGGIO_INHERITED_WEB_PHP84_VERIFIED=true` to the private `.env`. Deployment then preserves the existing cPanel ini directives and inherits the verified handler; it does not inject a guessed handler. Recheck the web version after changes to hosting PHP settings.
 
 Use these explicit preview settings alongside the preserved application key and normal locale/theme settings:
 

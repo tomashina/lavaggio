@@ -47,7 +47,7 @@ esac
 revision="$("$git_bin" -C "$source_root" rev-parse --verify HEAD)"
 [[ -f "$source_root/public/build/manifest.json" && -f "$source_root/composer.lock" ]] || fail 'The committed frontend build and Composer lock are required.'
 [[ -f "$runtime_root/.env" && ! -L "$runtime_root/.env" && -s "$runtime_root/database/database.sqlite" && ! -L "$runtime_root/database/database.sqlite" ]] || fail 'Prepare the private .env and separate current SQLite database before deployment.'
-[[ -f "$public_root/.htaccess" && ! -L "$public_root/.htaccess" ]] || fail 'Configure the domain PHP 8.4 handler before deployment.'
+[[ -f "$public_root/.htaccess" && ! -L "$public_root/.htaccess" ]] || fail 'The existing domain .htaccess is required.'
 [[ ! -L "$public_root/.user.ini" ]] || fail 'The domain .user.ini must not be a symlink.'
 
 composer_bin=''
@@ -72,7 +72,7 @@ $required = ['APP_ENV'=>'staging', 'APP_URL'=>'https://shop.lavaggio.hr', 'APP_D
     'SESSION_DRIVER'=>'file', 'SESSION_COOKIE'=>'lavaggio_shop_session', 'SESSION_SECURE_COOKIE'=>'true',
     'CACHE_STORE'=>'file', 'STOREFRONT_HOME'=>'lavaggio', 'STORE_B2C_ONLY'=>'true', 'STORE_B2B_ONLY'=>'false',
     'GIFT_VOUCHER_EMAILS_ENABLED'=>'false', 'STOCK_NOTIFICATIONS_EMAILS_ENABLED'=>'false'];
-$watched = array_fill_keys([...array_keys($required), ...$bootstrapKeys, 'APP_KEY', 'DB_URL', 'SESSION_DOMAIN', 'SESSION_CONNECTION', 'DB_CACHE_CONNECTION'], true);
+$watched = array_fill_keys([...array_keys($required), ...$bootstrapKeys, 'APP_KEY', 'DB_URL', 'SESSION_DOMAIN', 'SESSION_CONNECTION', 'DB_CACHE_CONNECTION', 'LAVAGGIO_INHERITED_WEB_PHP84_VERIFIED'], true);
 $values = [];
 foreach (file($root.'/.env', FILE_IGNORE_NEW_LINES) as $line) {
     if (! preg_match('/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/', $line, $match) || ! isset($watched[$match[1]])) continue;
@@ -122,8 +122,11 @@ foreach ($manifest as $entry) foreach ([($entry['file'] ?? ''), ...($entry['css'
     if (! is_string($file) || $file === '' || str_starts_with($file, '/') || in_array('..', explode('/', $file), true)
         || ! is_file($source.'/public/build/'.$file) || is_link($source.'/public/build/'.$file)) stopDeploy('Missing or unsafe frontend asset.');
 }
-// Retain the domain's existing PHP 8.4 handler without copying old routing rules.
+// Retain cPanel's PHP configuration without copying old application routing rules.
 $htaccess = file_get_contents($public.'/.htaccess');
+$phpConfiguration = [];
+preg_match_all('/^# BEGIN cPanel-generated php ini directives.*?^# END cPanel-generated php ini directives[^\r\n]*/ms', $htaccess, $matches);
+array_push($phpConfiguration, ...$matches[0]);
 $handlers = [];
 preg_match_all('/^# php -- BEGIN cPanel-generated handler.*?^# php -- END cPanel-generated handler[^\r\n]*/ms', $htaccess, $matches);
 foreach ($matches[0] as $block) {
@@ -138,9 +141,15 @@ if ($handlers === []) {
     preg_match_all('/^\s*AddHandler\s+application\/x-httpd-(?:alt-php84|ea-php84|php84)[^\r\n]*/mi', $htaccess, $matches);
     array_push($handlers, ...$matches[0]);
 }
-if ($handlers === []) stopDeploy('No recognized existing PHP 8.4 domain handler; configure/review it first.');
+if ($handlers === []) {
+    if (preg_match('/^\s*(?:AddHandler|SetHandler)\s+[^\r\n]*php/mi', $htaccess)) stopDeploy('An unrecognized explicit PHP handler requires review.');
+    if (($values['LAVAGGIO_INHERITED_WEB_PHP84_VERIFIED'] ?? '') !== 'true') {
+        stopDeploy('No explicit PHP 8.4 handler. Verify inherited web PHP 8.4 with a temporary HTTPS probe, remove it, then set LAVAGGIO_INHERITED_WEB_PHP84_VERIFIED=true in the private .env.');
+    }
+    echo "Web PHP: using the previously HTTPS-verified inherited PHP 8.4 configuration.\n";
+}
 if (preg_match('/^\s*AuthType\s+/mi', $htaccess)) stopDeploy('Existing directory authentication requires explicit preservation before using this script.');
-file_put_contents($work.'/php-handler', implode("\n", array_unique($handlers))."\n");
+file_put_contents($work.'/php-handler', implode("\n", array_unique([...$phpConfiguration, ...$handlers]))."\n");
 echo "Private environment, database, migrations, frontend and PHP handler: OK (secrets hidden).\n";
 LAVAGGIO_PREREQUISITES
 
@@ -236,7 +245,7 @@ $app->usePublicPath('/home/baredahr/shop.lavaggio.hr');
 $app->handleRequest(Request::capture());
 LAVAGGIO_PUBLIC_INDEX
 cat "$source_root/public/.htaccess" > "$work_dir/public-files/.htaccess"
-printf '\n# Preserve the domain-specific PHP 8.4 handler.\n' >> "$work_dir/public-files/.htaccess"
+printf '\n# Preserve the domain-specific cPanel PHP configuration.\n' >> "$work_dir/public-files/.htaccess"
 cat "$work_dir/php-handler" >> "$work_dir/public-files/.htaccess"
 "$php_bin" -l "$work_dir/public-files/index.php"
 [[ "$("$git_bin" -C "$source_root" rev-parse HEAD)" == "$revision" && -z "$("$git_bin" -C "$source_root" status --porcelain --untracked-files=normal)" ]] || fail 'The source changed during deployment; wrapper not published.'
