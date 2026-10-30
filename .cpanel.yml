@@ -1,4 +1,4 @@
 ---
 deployment:
   tasks:
-    - /bin/bash /home/baredahr/repositories/lavaggio/scripts/deploy-lavaggio-cpanel.sh --apply
+    - /bin/bash /home/baredahr/shop.lavaggio.hr/scripts/deploy-lavaggio-cpanel.sh --apply

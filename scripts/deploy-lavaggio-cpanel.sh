@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# cPanel pull deployment for the isolated Lavaggio shop preview.
-# Without --apply this only validates prerequisites and shows a copy plan.
+# cPanel pull deployment for the standard Lavaggio Laravel installation.
+# The Git checkout is the running application; only its public/ is web-accessible.
+# Without --apply this only validates prerequisites and shows the deployment plan.
 set -Eeuo pipefail
 umask 077
 
@@ -14,29 +15,27 @@ esac
 [[ $# -le 1 ]] || { printf '%s\n' 'Only one argument is supported.' >&2; exit 1; }
 
 account_root=/home/baredahr
-source_root=/home/baredahr/repositories/lavaggio
-runtime_root=/home/baredahr/apps/lavaggio-shop
-public_root=/home/baredahr/shop.lavaggio.hr
+source_root=/home/baredahr/shop.lavaggio.hr
+runtime_root="$source_root"
+public_root="$source_root/public"
 php_bin=/opt/alt/php84/usr/bin/php
 backup_base=/home/baredahr/.lavaggio-shop-backups
-work_dir=''
 backup_root=''
 fail() { printf '%s\n' "Lavaggio deployment stopped: $*" >&2; exit 1; }
-cleanup() { [[ -z "$work_dir" ]] || rm -rf -- "$work_dir"; }
-trap cleanup EXIT
 trap 'printf "%s\n" "Deployment failed. Review the private backup: ${backup_root:-not created}. No database restore or migration was attempted." >&2' ERR
 
 [[ "$(id -un)" == baredahr && "${HOME:-}" == "$account_root" ]] || fail 'Run as the baredahr account with its normal HOME.'
-for tool in rsync realpath stat du df flock; do command -v "$tool" >/dev/null || fail "Required tool is unavailable: $tool"; done
+for tool in realpath stat du df flock; do command -v "$tool" >/dev/null || fail "Required tool is unavailable: $tool"; done
 git_bin="$(command -v git || true)"
 [[ -n "$git_bin" ]] || git_bin=/usr/local/cpanel/3rdparty/lib/path-bin/git
 [[ -x "$git_bin" ]] || fail 'Git is unavailable.'
 [[ -x "$php_bin" ]] || fail 'The verified PHP 8.4 CLI is unavailable.'
-for directory in "$account_root" "$source_root" "$runtime_root" "$public_root"; do
+for directory in "$account_root" "$source_root" "$public_root"; do
     [[ -d "$directory" && ! -L "$directory" && "$(realpath "$directory")" == "$directory" ]] || fail "Unsafe or missing fixed directory: $directory"
     [[ "$(stat -c '%U' "$directory")" == baredahr ]] || fail "Unexpected directory owner: $directory"
 done
 [[ "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)" == "$source_root" ]] || fail 'Use the script from the registered Lavaggio checkout.'
+[[ -d "$source_root/.git" && ! -L "$source_root/.git" ]] || fail 'The project must contain its own ordinary .git directory.'
 [[ "$("$git_bin" -C "$source_root" rev-parse --show-toplevel)" == "$source_root" ]] || fail 'The source must be the exact registered checkout.'
 [[ "$("$git_bin" -C "$source_root" branch --show-current)" == main ]] || fail 'The checkout must be on main.'
 case "$("$git_bin" -C "$source_root" remote get-url origin)" in
@@ -46,7 +45,7 @@ esac
 [[ -z "$("$git_bin" -C "$source_root" status --porcelain --untracked-files=normal)" ]] || fail 'The cPanel checkout must be clean; this script never pulls or resets Git.'
 revision="$("$git_bin" -C "$source_root" rev-parse --verify HEAD)"
 [[ -f "$source_root/public/build/manifest.json" && -f "$source_root/composer.lock" ]] || fail 'The committed frontend build and Composer lock are required.'
-[[ -f "$runtime_root/.env" && ! -L "$runtime_root/.env" && -s "$runtime_root/database/database.sqlite" && ! -L "$runtime_root/database/database.sqlite" ]] || fail 'Prepare the private .env and separate current SQLite database before deployment.'
+[[ -f "$runtime_root/.env" && ! -L "$runtime_root/.env" && -s "$runtime_root/database/database.sqlite" && ! -L "$runtime_root/database/database.sqlite" ]] || fail 'Prepare the existing .env and SQLite database inside the project before deployment.'
 [[ -f "$public_root/.htaccess" && ! -L "$public_root/.htaccess" ]] || fail 'The existing domain .htaccess is required.'
 [[ ! -L "$public_root/.user.ini" ]] || fail 'The domain .user.ini must not be a symlink.'
 
@@ -57,13 +56,11 @@ for candidate in /home/baredahr/.local/bin/composer.phar "$composer_from_path" /
 done
 [[ -n "$composer_bin" ]] || fail 'Install/configure Composer on the server first; this script does not download executables.'
 
-work_dir="$(mktemp -d /tmp/lavaggio-deploy.XXXXXX)"
-mkdir "$work_dir/public-files"
 # Validate without booting Laravel, loading old caches, printing secrets or writing SQLite.
-"$php_bin" /dev/stdin "$runtime_root" "$source_root" "$public_root" "$work_dir" <<'LAVAGGIO_PREREQUISITES'
+"$php_bin" /dev/stdin "$runtime_root" "$public_root" <<'LAVAGGIO_PREREQUISITES'
 <?php
 function stopDeploy(string $message): never { fwrite(STDERR, "Lavaggio prerequisite failed: ".$message."\n"); exit(1); }
-[$script, $root, $source, $public, $work] = $argv;
+[$script, $root, $public] = $argv;
 if (PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500) stopDeploy('PHP 8.4 is required.');
 $bootstrapKeys = ['APP_CONFIG_CACHE', 'APP_BASE_PATH', 'APP_ENV_PATH', 'APP_SERVICES_CACHE', 'APP_PACKAGES_CACHE', 'APP_ROUTES_CACHE', 'APP_EVENTS_CACHE', 'VIEW_COMPILED_PATH'];
 $required = ['APP_ENV'=>'staging', 'APP_URL'=>'https://shop.lavaggio.hr', 'APP_DEBUG'=>'false',
@@ -105,7 +102,7 @@ if (realpath($database) !== $database || (stat($database)['nlink'] ?? 0) !== 1) 
 $pdo = new PDO('sqlite:file:'.$database.'?mode=ro', options: [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 $pdo->exec('PRAGMA query_only=ON');
 $ran = $pdo->query('SELECT migration FROM migrations')->fetchAll(PDO::FETCH_COLUMN);
-$pending = array_values(array_diff(array_map(fn ($file)=>basename($file, '.php'), glob($source.'/database/migrations/*.php')), $ran));
+$pending = array_values(array_diff(array_map(fn ($file)=>basename($file, '.php'), glob($root.'/database/migrations/*.php')), $ran));
 if ($pending !== []) stopDeploy("Pending migrations require separate review; none were run:\n".implode("\n", $pending));
 $settings = [];
 foreach ($pdo->query("SELECT key,value FROM system_settings WHERE key IN ('store_email_enabled','gls_api_enabled','watchline_integrations')") as $row) {
@@ -116,17 +113,14 @@ if (filter_var($settings['gls_api_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) 
 $integrations = $settings['watchline_integrations'] ?? [];
 if (filter_var($integrations['live_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) stopDeploy('Inherited integrations must remain disabled.');
 foreach ($integrations['schedules'] ?? [] as $schedule) if (filter_var($schedule['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) stopDeploy('Inherited integration schedules must remain disabled.');
-$manifest = json_decode(file_get_contents($source.'/public/build/manifest.json'), true, flags: JSON_THROW_ON_ERROR);
+$manifest = json_decode(file_get_contents($root.'/public/build/manifest.json'), true, flags: JSON_THROW_ON_ERROR);
 if (! is_array($manifest) || $manifest === []) stopDeploy('Missing frontend manifest entries.');
 foreach ($manifest as $entry) foreach ([($entry['file'] ?? ''), ...($entry['css'] ?? []), ...($entry['assets'] ?? [])] as $file) {
     if (! is_string($file) || $file === '' || str_starts_with($file, '/') || in_array('..', explode('/', $file), true)
-        || ! is_file($source.'/public/build/'.$file) || is_link($source.'/public/build/'.$file)) stopDeploy('Missing or unsafe frontend asset.');
+        || ! is_file($root.'/public/build/'.$file) || is_link($root.'/public/build/'.$file)) stopDeploy('Missing or unsafe frontend asset.');
 }
-// Retain cPanel's PHP configuration without copying old application routing rules.
+// Validate the existing web PHP setup; tracked public bootstrap/config files stay unchanged.
 $htaccess = file_get_contents($public.'/.htaccess');
-$phpConfiguration = [];
-preg_match_all('/^# BEGIN cPanel-generated php ini directives.*?^# END cPanel-generated php ini directives[^\r\n]*/ms', $htaccess, $matches);
-array_push($phpConfiguration, ...$matches[0]);
 $handlers = [];
 preg_match_all('/^# php -- BEGIN cPanel-generated handler.*?^# php -- END cPanel-generated handler[^\r\n]*/ms', $htaccess, $matches);
 foreach ($matches[0] as $block) {
@@ -148,76 +142,49 @@ if ($handlers === []) {
     }
     echo "Web PHP: using the previously HTTPS-verified inherited PHP 8.4 configuration.\n";
 }
-if (preg_match('/^\s*AuthType\s+/mi', $htaccess)) stopDeploy('Existing directory authentication requires explicit preservation before using this script.');
-file_put_contents($work.'/php-handler', implode("\n", array_unique([...$phpConfiguration, ...$handlers]))."\n");
 echo "Private environment, database, migrations, frontend and PHP handler: OK (secrets hidden).\n";
 LAVAGGIO_PREREQUISITES
 
-# Native media stays physically in the document root, with private runtime links pointing outward.
-if [[ -e "$runtime_root/public" || -L "$runtime_root/public" ]]; then
-    [[ -L "$runtime_root/public" && "$(readlink "$runtime_root/public")" == "$public_root" ]] || fail 'runtime/public must be absent or the exact document-root symlink.'
+# Standard Laravel media: real storage/app/public and a public/storage symlink to it.
+[[ -d "$runtime_root/storage/app/public" && ! -L "$runtime_root/storage/app/public" ]] || fail 'Prepare the current native media in the real storage/app/public directory first.'
+if [[ -e "$public_root/storage" || -L "$public_root/storage" ]]; then
+    [[ -L "$public_root/storage" && "$(realpath "$public_root/storage")" == "$runtime_root/storage/app/public" ]] || fail 'public/storage must be absent or point to this project storage/app/public.'
 fi
-[[ -d "$public_root/storage" && ! -L "$public_root/storage" ]] || fail 'Extract the current public-media archive into the real document-root storage directory first.'
-if [[ -e "$runtime_root/storage/app/public" || -L "$runtime_root/storage/app/public" ]]; then
-    [[ -L "$runtime_root/storage/app/public" && "$(readlink "$runtime_root/storage/app/public")" == "$public_root/storage" ]] || fail 'Preserve/move native media first; runtime/storage/app/public must be absent or the exact outward symlink.'
-fi
-for relative in database bootstrap bootstrap/cache storage storage/app storage/framework storage/framework/cache storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs vendor; do
+for relative in database bootstrap bootstrap/cache storage storage/app storage/app/public storage/framework storage/framework/cache storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs vendor; do
     [[ ! -L "$runtime_root/$relative" ]] || fail "Unexpected runtime symlink: $relative"
 done
 
-: > "$work_dir/runtime.list"
-: > "$work_dir/public.list"
-"$git_bin" -C "$source_root" ls-files -z > "$work_dir/tracked.list"
-while IFS= read -r -d '' file; do
-    case "$file" in
-        public/index.php|public/.htaccess|public/.user.ini|public/storage|public/storage/*|public/image/*|public/cache/*|public/hot|public/.well-known/*|public/cgi-bin/*) continue ;;
-        public/*) relative="${file#public/}"; destination="$public_root"; list="$work_dir/public.list" ;;
-        app/*|bootstrap/app.php|bootstrap/providers.php|config/*|routes/*|resources/*|lang/*|database/migrations/*|artisan|composer.json|composer.lock) relative="$file"; destination="$runtime_root"; list="$work_dir/runtime.list" ;;
-        *) continue ;;
-    esac
-    [[ -f "$source_root/$file" && ! -L "$source_root/$file" ]] || fail "Unsupported tracked file: $file"
-    IFS=/ read -r -a components <<< "$relative"
-    for component in "${components[@]}"; do
-        destination="$destination/$component"
-        [[ ! -L "$destination" ]] || fail "Refusing to overwrite a destination symlink: $relative"
-    done
-    printf '%s\0' "$relative" >> "$list"
-done < "$work_dir/tracked.list"
-
 "$php_bin" "$composer_bin" check-platform-reqs --no-dev --lock --working-dir="$source_root"
 printf '%s\n' "Mode: $([[ "$apply" == true ]] && printf APPLY || printf DRY-RUN)" "Revision: $revision"
-du -sh -- "$runtime_root" "$public_root"
-df -h -- "$runtime_root" "$public_root"
-rsync_options=(-a --no-owner --no-group --checksum --from0 --stats --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r)
+du -sh -- "$runtime_root"
+df -h -- "$runtime_root"
 if [[ "$apply" == false ]]; then
-    rsync "${rsync_options[@]}" --dry-run --files-from="$work_dir/runtime.list" "$source_root/" "$runtime_root/"
-    rsync "${rsync_options[@]}" --dry-run --files-from="$work_dir/public.list" "$source_root/public/" "$public_root/"
-    printf '%s\n' 'Plan only: no deployment, Composer install, Artisan boot, database/settings writes, migrations, seeds, key generation, mail/integration activation or cron changes.'
+    printf '%s\n' 'Plan: use the current project checkout, preserve .env/SQLite/uploads, back up generated caches, install locked dependencies, create public/storage if absent, rebuild Laravel caches.' \
+        'Plan only: no Composer install, Artisan boot, permissions changes, symlink creation, database/settings writes, migrations, seeds, key generation, mail/integration activation or cron changes.'
     exit 0
 fi
 
 [[ "$("$git_bin" -C "$source_root" rev-parse HEAD)" == "$revision" && -z "$("$git_bin" -C "$source_root" status --porcelain --untracked-files=normal)" ]] || fail 'The reviewed checkout changed while preparing deployment.'
 [[ ! -L "$backup_base" && ( ! -e "$backup_base" || "$(realpath "$backup_base")" == "$backup_base" ) ]] || fail 'Unsafe private backup directory.'
 mkdir -p "$backup_base"
-chmod 700 "$backup_base" "$runtime_root"
+chmod 700 "$backup_base"
 exec 9>"$backup_base/deploy.lock"
 flock -n 9 || fail 'Another Lavaggio deployment is running.'
 backup_root="$(mktemp -d "$backup_base/$(date -u +%Y%m%dT%H%M%SZ)-${revision:0:12}-XXXXXX")"
-mkdir "$backup_root/runtime" "$backup_root/public" "$backup_root/bootstrap-cache"
+mkdir "$backup_root/bootstrap-cache"
 printf '%s\n' "$revision" > "$backup_root/revision"
-for file in index.php .htaccess .user.ini; do
-    [[ ! -f "$public_root/$file" ]] || cp -p "$public_root/$file" "$backup_root/public/$file"
-done
+[[ ! -f "$runtime_root/storage/app/private/.lavaggio-deploy-revision" ]] || cp -p "$runtime_root/storage/app/private/.lavaggio-deploy-revision" "$backup_root/previous-deployed-revision"
+[[ ! -d "$runtime_root/storage/framework/views" ]] || cp -a "$runtime_root/storage/framework/views" "$backup_root/compiled-views"
+[[ ! -d "$runtime_root/vendor/composer" ]] || cp -a "$runtime_root/vendor/composer" "$backup_root/vendor-composer"
 mkdir -p "$runtime_root/bootstrap/cache" "$runtime_root/storage/framework/cache/data" "$runtime_root/storage/framework/sessions" "$runtime_root/storage/framework/views" "$runtime_root/storage/logs" "$runtime_root/storage/app/private"
-[[ -L "$runtime_root/public" ]] || ln -s "$public_root" "$runtime_root/public"
-[[ -L "$runtime_root/storage/app/public" ]] || ln -s "$public_root/storage" "$runtime_root/storage/app/public"
-# Copy only explicitly selected Git-tracked code/assets; preserve uploads and every unlisted file.
-rsync "${rsync_options[@]}" --backup --backup-dir="$backup_root/runtime" --files-from="$work_dir/runtime.list" "$source_root/" "$runtime_root/"
-rsync "${rsync_options[@]}" --backup --backup-dir="$backup_root/public" --files-from="$work_dir/public.list" "$source_root/public/" "$public_root/"
-chmod 700 "$runtime_root"
+# The web server must traverse the project to reach public/; private data remains owner-only.
+chmod 755 "$runtime_root" "$public_root" "$runtime_root/storage" "$runtime_root/storage/app" "$runtime_root/storage/app/public"
+chmod 700 "$runtime_root/.git" "$runtime_root/storage/app/private"
+chmod 600 "$runtime_root/.env" "$runtime_root/database/database.sqlite"
+[[ -L "$public_root/storage" ]] || ln -s "$runtime_root/storage/app/public" "$public_root/storage"
 
 cd "$runtime_root"
-# Old absolute cache paths must never bootstrap the new runtime.
+# Generated caches may contain paths from a previous installation.
 for cache in bootstrap/cache/*.php; do
     [[ -e "$cache" || -L "$cache" ]] || continue
     [[ -f "$cache" && ! -L "$cache" ]] || fail 'Cached bootstrap files must be regular files.'
@@ -231,26 +198,8 @@ done
 "$php_bin" artisan route:cache
 "$php_bin" artisan view:cache
 
-cat > "$work_dir/public-files/index.php" <<'LAVAGGIO_PUBLIC_INDEX'
-<?php
-use Illuminate\Foundation\Application;
-use Illuminate\Http\Request;
-define('LARAVEL_START', microtime(true));
-$lavaggioRuntime = '/home/baredahr/apps/lavaggio-shop';
-if (file_exists($maintenance = $lavaggioRuntime.'/storage/framework/maintenance.php')) require $maintenance;
-require $lavaggioRuntime.'/vendor/autoload.php';
-/** @var Application $app */
-$app = require_once $lavaggioRuntime.'/bootstrap/app.php';
-$app->usePublicPath('/home/baredahr/shop.lavaggio.hr');
-$app->handleRequest(Request::capture());
-LAVAGGIO_PUBLIC_INDEX
-cat "$source_root/public/.htaccess" > "$work_dir/public-files/.htaccess"
-printf '\n# Preserve the domain-specific cPanel PHP configuration.\n' >> "$work_dir/public-files/.htaccess"
-cat "$work_dir/php-handler" >> "$work_dir/public-files/.htaccess"
-"$php_bin" -l "$work_dir/public-files/index.php"
-[[ "$("$git_bin" -C "$source_root" rev-parse HEAD)" == "$revision" && -z "$("$git_bin" -C "$source_root" status --porcelain --untracked-files=normal)" ]] || fail 'The source changed during deployment; wrapper not published.'
-rsync -a --no-owner --no-group --checksum --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r --backup --backup-dir="$backup_root/public" "$work_dir/public-files/" "$public_root/"
-printf '%s\n' "$revision" > "$runtime_root/.lavaggio-deploy-revision"
-printf '%s\n' "Lavaggio deployed: $revision" "Private changed-file backup: $backup_root" \
-    'The existing .env, SQLite data, media, .user.ini and .well-known were preserved.' \
+[[ "$("$git_bin" -C "$source_root" rev-parse HEAD)" == "$revision" && -z "$("$git_bin" -C "$source_root" status --porcelain --untracked-files=normal)" ]] || fail 'The checkout changed or a runtime file is not ignored; review before continuing.'
+printf '%s\n' "$revision" > "$runtime_root/storage/app/private/.lavaggio-deploy-revision"
+printf '%s\n' "Lavaggio deployed in its project checkout: $revision" "Private generated-cache backup: $backup_root" \
+    'The standard tracked index.php/.htaccess/.user.ini, existing .env, SQLite, media and local hosting files were preserved.' \
     'No migrations, seeds, key rotation, mail/integration activation or cron changes were performed.'
