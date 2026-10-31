@@ -64,6 +64,21 @@ class LavaggioStorefrontTest extends TestCase
             ->assertDontSee('watchline-favicon');
     }
 
+    public function test_sticky_header_reserves_its_space_before_the_search_panel(): void
+    {
+        foreach ([route('home'), route('shop.index')] as $url) {
+            $response = $this->get($url)->assertOk();
+            $document = new \DOMDocument;
+            @$document->loadHTML($response->getContent());
+            $xpath = new \DOMXPath($document);
+            $header = '//header[contains(concat(" ", normalize-space(@class), " "), " lavaggio-header ")]';
+
+            $this->assertSame(1, $xpath->query('//*[@data-site-main-header-spacer]')->length, $url);
+            $this->assertSame(1, $xpath->query($header.'/following-sibling::*[1][@data-site-main-header-spacer]')->length, $url);
+            $this->assertSame(1, $xpath->query($header.'/following-sibling::*[2][@id="header-search-panel"]')->length, $url);
+        }
+    }
+
     public function test_catalog_categories_render_under_web_shop_on_desktop_and_mobile(): void
     {
         $category = Category::create([

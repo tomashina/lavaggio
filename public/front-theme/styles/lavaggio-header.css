@@ -3,6 +3,8 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header,
 html[data-theme] body.lavaggio-storefront .lavaggio-header.is-sticky {
     --lavaggio-header-topbar-height: 32px;
     --lavaggio-header-card-inset: 16px;
+    --lavaggio-header-action-gap: 8px;
+    display: flow-root;
     position: sticky;
     inset: 0 0 auto;
     z-index: 50;
@@ -201,28 +203,28 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-actions {
     display: flex;
     flex: 0 0 auto;
     align-items: center;
-    gap: 4px;
+    gap: var(--lavaggio-header-action-gap);
     margin-left: auto;
 }
 
 html[data-theme] body.lavaggio-storefront .lavaggio-header-cart {
     position: relative;
     display: flex;
-    flex: 0 0 40px;
+    flex: 0 0 44px;
     align-self: center;
-    width: 40px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
 }
 
 html[data-theme] body.lavaggio-storefront .lavaggio-header :is(.lavaggio-header-action, .lavaggio-header-menu-toggle) {
     position: relative;
     display: inline-flex;
-    flex: 0 0 40px;
+    flex: 0 0 44px;
     align-items: center;
     justify-content: center;
-    width: 40px;
+    width: 44px;
     min-width: 0;
-    height: 42px;
+    height: 44px;
     margin: 0;
     padding: 0;
     border: 0;
@@ -367,6 +369,14 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-count {
 
     html[data-theme] body.lavaggio-storefront .lavaggio-header .lavaggio-header-menu-toggle {
         display: inline-flex;
+        border: 1px solid var(--lavaggio-primary, #848ac4);
+        background: var(--lavaggio-primary, #848ac4);
+        color: #fff;
+    }
+
+    html[data-theme] body.lavaggio-storefront .lavaggio-header .lavaggio-header-menu-toggle:is(:hover, :focus-visible, [aria-expanded="true"]) {
+        background: var(--lavaggio-primary-dark, #6f74ad);
+        color: #fff;
     }
 
     html[data-theme] body.lavaggio-storefront [data-mobile-menu-root] {
@@ -374,11 +384,11 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-count {
     }
 
     html[data-theme] body.lavaggio-storefront .lavaggio-header-cart .header-cart-popover {
-        right: -44px;
+        right: calc(-44px - var(--lavaggio-header-action-gap));
     }
 
     html[data-theme] body.lavaggio-storefront .lavaggio-header-cart .header-cart-popover::before {
-        right: 56px;
+        right: calc(56px + var(--lavaggio-header-action-gap));
     }
 }
 
@@ -386,6 +396,7 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-count {
     html[data-theme] body.lavaggio-storefront .lavaggio-header,
     html[data-theme] body.lavaggio-storefront .lavaggio-header.is-sticky {
         --lavaggio-header-card-inset: 10px;
+        --lavaggio-header-action-gap: 6px;
         padding-inline: var(--herrera-layout-gutter, 16px);
         padding-bottom: 12px;
     }
@@ -409,33 +420,26 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-count {
         min-width: 88px;
     }
 
-    html[data-theme] body.lavaggio-storefront .lavaggio-header-actions {
-        gap: 0;
-    }
-
-    html[data-theme] body.lavaggio-storefront .lavaggio-header :is(.lavaggio-header-action, .lavaggio-header-menu-toggle) {
-        flex-basis: 34px;
-        width: 34px;
-        height: 40px;
-    }
-
-    html[data-theme] body.lavaggio-storefront .lavaggio-header-cart {
-        flex-basis: 34px;
-        width: 34px;
-        height: 40px;
-    }
-
-    html[data-theme] body.lavaggio-storefront .lavaggio-header-cart .header-cart-popover {
-        right: -34px;
-    }
-
-    html[data-theme] body.lavaggio-storefront .lavaggio-header-cart .header-cart-popover::before {
-        right: 46px;
-    }
-
     html[data-theme] body.lavaggio-storefront .lavaggio-header :is(.lavaggio-header-action, .lavaggio-header-menu-toggle) svg {
         width: 20px;
         height: 20px;
+    }
+}
+
+@media (max-width: 359px) {
+    html[data-theme] body.lavaggio-storefront .lavaggio-header,
+    html[data-theme] body.lavaggio-storefront .lavaggio-header.is-sticky {
+        --herrera-layout-gutter: 10px;
+        --lavaggio-header-card-inset: 6px;
+        --lavaggio-header-action-gap: 4px;
+    }
+
+    html[data-theme] body.lavaggio-storefront .lavaggio-header-card {
+        gap: 4px;
+    }
+
+    html[data-theme] body.lavaggio-storefront .lavaggio-header-brand {
+        min-width: 80px;
     }
 }
 

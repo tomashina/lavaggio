@@ -162,7 +162,6 @@
 
 @if ($lavaggioStorefront)
     @include('front.partials.lavaggio-header')
-    @include('front.partials.lavaggio-search')
 @else
 <header class="site-main-header sticky top-0 z-40 bg-white">
     @include('front.partials.customer-impersonation')
@@ -534,6 +533,10 @@
 @endif
 
 <div class="site-main-header-spacer" aria-hidden="true" data-site-main-header-spacer></div>
+
+@if ($lavaggioStorefront)
+    @include('front.partials.lavaggio-search')
+@endif
 
 @if ($watchlineStorefront)
     @include('front.partials.store-benefits-bar')
