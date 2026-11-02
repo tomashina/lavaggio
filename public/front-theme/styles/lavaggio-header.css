@@ -15,7 +15,7 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header.is-sticky {
     background: transparent;
     box-shadow: none;
     color: var(--lavaggio-heading, #1e293b);
-    font-family: var(--herrera-font-family, "Satoshi", Arial, sans-serif);
+    font-family: var(--herrera-font-family, "Proxima Nova", Arial, sans-serif);
 }
 
 html[data-theme] body.lavaggio-storefront .lavaggio-header::before {
@@ -117,18 +117,32 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-card {
 html[data-theme] body.lavaggio-storefront .lavaggio-header-brand {
     display: inline-flex;
     flex: 0 0 auto;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
     width: 180px;
     min-height: 44px;
     color: inherit;
     line-height: 1;
+    text-decoration: none;
+}
+
+html[data-theme] body.lavaggio-storefront .lavaggio-header-tagline {
+    display: block;
+    width: 100%;
+    height: auto;
+    color: var(--lavaggio-primary, #848ac4);
+    fill: currentColor;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 html[data-theme] body.lavaggio-storefront .lavaggio-header-brand > img {
     display: block;
     width: 180px;
     max-width: 100%;
-    height: 41px;
+    height: auto;
     max-height: none;
     object-fit: contain;
     object-position: left center;
@@ -360,10 +374,6 @@ html[data-theme] body.lavaggio-storefront .lavaggio-header-count {
 
     html[data-theme] body.lavaggio-storefront .lavaggio-header-brand {
         width: 155px;
-    }
-
-    html[data-theme] body.lavaggio-storefront .lavaggio-header-brand > img {
-        height: 36px;
     }
 
     html[data-theme] body.lavaggio-storefront .lavaggio-header .lavaggio-header-menu-toggle {

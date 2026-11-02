@@ -11,7 +11,7 @@ body.lavaggio-auth.lavaggio-storefront {
     --commerce-form-surface: #fff;
     background: #f8fafc;
     color: #13100d;
-    font-family: "Satoshi", Arial, Helvetica, sans-serif;
+    font-family: var(--herrera-font-family);
 }
 
 body.lavaggio-auth::before {

@@ -34,6 +34,10 @@
             @else
                 <span>{{ $storeBrandName }}</span>
             @endif
+            {{-- Align the text's visible edges with the logo artwork at x=1.8..215.2, allowing for the font's side bearings. --}}
+            <svg class="lavaggio-header-tagline" viewBox="0 0 220 18" width="220" height="18" aria-hidden="true">
+                <text x="1.485" y="13" textLength="214.39" lengthAdjust="spacing">SPECIJALIST ZA RUBLJE</text>
+            </svg>
         </a>
 
         <nav class="lavaggio-header-navigation watchline-desktop-categories" aria-label="Glavna navigacija">

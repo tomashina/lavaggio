@@ -1,18 +1,29 @@
 /* Lavaggio identity from https://www.lavaggio.hr/assets/lavaggio/css/theme.css.
    Keep the inherited shop layout; change its typography, colours and surfaces. */
 @font-face {
-    font-family: "Satoshi";
-    src: url("/assets/lavaggio/fonts/Satoshi-Variable.woff2?v=e739aff9b4d0") format("woff2");
+    font-family: "Proxima Nova";
+    src: url("/assets/fonts/proxima-nova/proxima-nova-light.woff2") format("woff2"),
+        url("/assets/fonts/proxima-nova/proxima-nova-light.woff") format("woff");
     font-style: normal;
-    font-weight: 300 900;
+    font-weight: 300;
     font-display: swap;
 }
 
 @font-face {
-    font-family: "Satoshi";
-    src: url("/assets/lavaggio/fonts/Satoshi-VariableItalic.woff2?v=e7b4e0ec5fbb") format("woff2");
-    font-style: italic;
-    font-weight: 300 900;
+    font-family: "Proxima Nova";
+    src: url("/assets/fonts/proxima-nova/proxima-nova-regular.woff2") format("woff2"),
+        url("/assets/fonts/proxima-nova/proxima-nova-regular.woff") format("woff");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Proxima Nova";
+    src: url("/assets/fonts/proxima-nova/proxima-nova-bold.woff2") format("woff2"),
+        url("/assets/fonts/proxima-nova/proxima-nova-bold.woff") format("woff");
+    font-style: normal;
+    font-weight: 700;
     font-display: swap;
 }
 
@@ -113,7 +124,7 @@ body.lavaggio-storefront {
     --lavaggio-heading-section: clamp(28px, 2.2vw, 36px);
     --lavaggio-heading-card: clamp(24px, 1.8vw, 28px);
     --lavaggio-leading-body: 1.6;
-    --herrera-font-family: "Satoshi", Arial, Helvetica, sans-serif;
+    --herrera-font-family: "Proxima Nova", Arial, Helvetica, sans-serif;
     --font-sans: var(--herrera-font-family);
     --default-font-family: var(--herrera-font-family);
     --cc-font-family: var(--herrera-font-family);
@@ -223,7 +234,7 @@ body.lavaggio-storefront :is(input, button, select, textarea, optgroup, .font-sa
     font-family: var(--herrera-font-family);
 }
 
-/* Match the source site's Satoshi heading metrics rather than the old shop's. */
+/* Keep consistent heading metrics throughout the Lavaggio storefront. */
 html[data-theme] body.lavaggio-storefront :is(h1, h2, h3, h4, .wl-campaign-title, .wl-section-heading h2, .herrera-home-heading h2, .lm-page-title h1) {
     font-family: var(--herrera-font-family);
     font-weight: 700;

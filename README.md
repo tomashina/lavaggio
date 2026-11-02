@@ -1,6 +1,6 @@
 # Lavaggio webshop
 
-Laravel 12 trgovina za Lavaggio. Zadržana je struktura elemenata iz izvornog projekta, uz Lavaggio logo, Satoshi font, ljubičastu paletu i originalni uzorak pozadine.
+Laravel 12 trgovina za Lavaggio. Zadržana je struktura elemenata iz izvornog projekta, uz Lavaggio logo, lokalno učitan Proxima Nova font, ljubičastu paletu i originalni uzorak pozadine.
 
 ## Lokalno
 

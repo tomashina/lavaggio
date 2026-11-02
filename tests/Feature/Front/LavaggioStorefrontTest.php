@@ -58,7 +58,7 @@ class LavaggioStorefrontTest extends TestCase
             ->assertSee('lavaggio-auth')
             ->assertSee('front-theme/styles/lavaggio-auth.css')
             ->assertSee('assets/lavaggio/images/logo/lavaggio-logo-dark.svg')
-            ->assertSee('assets/lavaggio/fonts/Satoshi-Variable.woff2')
+            ->assertSee('assets/fonts/proxima-nova/proxima-nova-regular.woff2')
             ->assertDontSee('storage/assets/lavaggio/')
             ->assertDontSee('watchline-logo.svg')
             ->assertDontSee('watchline-favicon');

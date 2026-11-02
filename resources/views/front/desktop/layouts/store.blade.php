@@ -93,7 +93,8 @@
         <link rel="stylesheet" href="{{ asset('front-theme/styles/watchline-notice-bars.css') }}?v={{ filemtime(public_path('front-theme/styles/watchline-notice-bars.css')) }}">
     @endif
     @if (config('storefront.home') === 'lavaggio')
-        <link rel="preload" href="{{ asset('assets/lavaggio/fonts/Satoshi-Variable.woff2').'?v=e739aff9b4d0' }}" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="{{ asset('assets/fonts/proxima-nova/proxima-nova-regular.woff2') }}" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="{{ asset('assets/fonts/proxima-nova/proxima-nova-bold.woff2') }}" as="font" type="font/woff2" crossorigin>
         <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-header.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-header.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-search.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-search.css')) }}">
