@@ -31,7 +31,10 @@ class BoxNowShipping
     {
         $legacyMeasurements = self::preservesLegacyAvailability($method)
             && (string) $method->missing_measurements_policy === 'allow';
-        $measuredParcels = ((string) $method->missing_measurements_policy === 'block' || self::allowsPreviewMeasurements($method))
+        $configuredMissingMeasurements = self::usesPublicWidget($method)
+            && (string) $method->missing_measurements_policy === 'allow';
+        $measuredParcels = ((string) $method->missing_measurements_policy === 'block'
+                || $configuredMissingMeasurements || self::allowsPreviewMeasurements($method))
             && (float) $method->max_weight_kg > 0
             && (float) $method->max_length_cm > 0
             && (float) $method->max_width_cm > 0

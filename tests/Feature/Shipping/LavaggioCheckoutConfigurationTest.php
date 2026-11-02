@@ -3,6 +3,7 @@
 namespace Tests\Feature\Shipping;
 
 use App\Livewire\Admin\Settings\Local\ResourceManager;
+use App\Livewire\Admin\Shipping\ShippingManager;
 use App\Models\Catalog\Product\Product;
 use App\Models\Sales\Order\Order;
 use App\Models\Settings\Local\Currency;
@@ -122,6 +123,97 @@ class LavaggioCheckoutConfigurationTest extends TestCase
         $product->update(['weight_kg' => 1, 'length_cm' => 70]);
         CartService::forgetRequestSnapshot();
         $this->assertNotContains('boxnow', app(CheckoutService::class)->availableShippingMethods(20, 'HR')->pluck('code'));
+    }
+
+    #[DataProvider('hostedEnvironments')]
+    public function test_admin_can_allow_missing_boxnow_measurements_on_hosted_checkout_and_restore_blocking(string $environment): void
+    {
+        $this->configureCart();
+        config(['commerce.local_safe_mode' => false]);
+        $this->app->detectEnvironment(fn () => $environment);
+        $admin = User::factory()->create();
+        Bouncer::assign('admin')->to($admin);
+        $boxNow = ShippingMethod::where('code', 'boxnow')->sole();
+        $checkout = app(CheckoutService::class);
+        $this->assertNotContains('boxnow', $checkout->availableShippingMethods(20, 'HR')->pluck('code'));
+
+        Livewire::actingAs($admin)->test(ShippingManager::class, ['editPage' => true, 'recordId' => $boxNow->id])
+            ->assertSet('form.missing_measurements_policy', 'block')
+            ->assertSet('form.boxnow_partner_id', '')
+            ->set('form.missing_measurements_policy', 'allow')
+            ->call('save')->assertHasNoErrors()->assertRedirect(route('admin.shipping.index', ['tab' => 'methods']));
+
+        $this->assertSame('allow', $boxNow->fresh()->missing_measurements_policy);
+        Livewire::actingAs($admin)->test(ShippingManager::class, ['editPage' => true, 'recordId' => $boxNow->id])
+            ->assertSet('form.missing_measurements_policy', 'allow')
+            ->assertSet('form.is_active', true);
+        $this->assertContains('boxnow', $checkout->availableShippingMethods(20, 'HR')->pluck('code'));
+        $this->getJson(route('checkout.options'))->assertOk()
+            ->assertJsonFragment(['code' => 'boxnow', 'is_boxnow' => true, 'boxnow_public_widget' => true, 'boxnow_partner_id' => '']);
+
+        // Allowing unknown measurements must not relax mandatory carrier limits or handling rules.
+        Livewire::actingAs($admin)->test(ShippingManager::class, ['editPage' => true, 'recordId' => $boxNow->id])
+            ->set('form.max_weight_kg', 0)->set('form.max_length_cm', 0)
+            ->set('form.max_width_cm', 0)->set('form.max_height_cm', 0)
+            ->set('form.allows_fragile', true)->set('form.allows_oversized', true)->set('form.allows_heavy', true)
+            ->call('save')->assertHasErrors(['form.max_weight_kg', 'form.max_length_cm', 'form.max_width_cm', 'form.max_height_cm',
+                'form.allows_fragile', 'form.allows_oversized', 'form.allows_heavy']);
+        $this->assertSame('allow', $boxNow->fresh()->missing_measurements_policy);
+        $this->assertSame('20.000', $boxNow->max_weight_kg);
+
+        Livewire::actingAs($admin)->test(ShippingManager::class, ['editPage' => true, 'recordId' => $boxNow->id])
+            ->set('form.missing_measurements_policy', 'block')
+            ->call('save')->assertHasNoErrors();
+        $this->assertSame('block', $boxNow->fresh()->missing_measurements_policy);
+        $this->assertNotContains('boxnow', $checkout->availableShippingMethods(20, 'HR')->pluck('code'));
+        $this->getJson(route('checkout.options'))->assertOk()->assertJsonMissing(['code' => 'boxnow']);
+        Http::assertNothingSent();
+    }
+
+    public static function hostedEnvironments(): array
+    {
+        return ['staging' => ['staging'], 'production' => ['production']];
+    }
+
+    public function test_hosted_boxnow_allow_policy_keeps_known_weight_and_partial_dimension_limits(): void
+    {
+        $product = $this->configureCart();
+        config(['commerce.local_safe_mode' => false]);
+        $this->app->detectEnvironment(fn () => 'production');
+        ShippingMethod::where('code', 'boxnow')->update(['missing_measurements_policy' => 'allow']);
+        $checkout = app(CheckoutService::class);
+        $this->assertContains('boxnow', $checkout->availableShippingMethods(20, 'HR')->pluck('code'));
+
+        foreach ([
+            ['weight_kg' => 21, 'length_cm' => null, 'width_cm' => null, 'height_cm' => null],
+            ['weight_kg' => null, 'length_cm' => 70, 'width_cm' => null, 'height_cm' => null],
+            ['weight_kg' => null, 'length_cm' => 55, 'width_cm' => 50, 'height_cm' => null],
+        ] as $measurements) {
+            $product->update($measurements);
+            CartService::forgetRequestSnapshot();
+            $this->assertNotContains('boxnow', $checkout->availableShippingMethods(20, 'HR')->pluck('code'));
+        }
+
+        // Known edges may rotate into the compartment while an unmeasured edge remains allowed.
+        $product->update(['weight_kg' => 1, 'length_cm' => 40, 'width_cm' => 55, 'height_cm' => null]);
+        CartService::forgetRequestSnapshot();
+        $this->assertContains('boxnow', $checkout->availableShippingMethods(20, 'HR')->pluck('code'));
+    }
+
+    public function test_hosted_boxnow_allow_policy_still_blocks_incompatible_goods(): void
+    {
+        $product = $this->configureCart();
+        config(['commerce.local_safe_mode' => false]);
+        $this->app->detectEnvironment(fn () => 'production');
+        ShippingMethod::where('code', 'boxnow')->update(['missing_measurements_policy' => 'allow']);
+        $checkout = app(CheckoutService::class);
+        $this->assertContains('boxnow', $checkout->availableShippingMethods(20, 'HR')->pluck('code'));
+
+        foreach (['no_parcel_locker', 'fragile', 'oversized', 'heavy', 'hazardous', 'refrigerated', 'ships_separately'] as $label) {
+            $product->update(['shipping_labels' => [$label]]);
+            CartService::forgetRequestSnapshot();
+            $this->assertNotContains('boxnow', $checkout->availableShippingMethods(20, 'HR')->pluck('code'), $label);
+        }
     }
 
     public function test_placeholder_order_has_an_obvious_nonpayment_qr_and_no_external_request(): void

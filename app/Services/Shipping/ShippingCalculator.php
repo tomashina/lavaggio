@@ -259,8 +259,9 @@ class ShippingCalculator
         }
 
         if (collect($dimensions)->contains(static fn ($value): bool => $value === null)) {
-            // Preserve limits on every known dimension even in the local demo preview.
-            if (BoxNowShipping::allowsPreviewMeasurements($method)) {
+            // Allow unknown dimensions only when configured, while checking every known edge.
+            if (BoxNowShipping::allowsPreviewMeasurements($method)
+                || (BoxNowShipping::usesPublicWidget($method) && (string) $method->missing_measurements_policy === 'allow')) {
                 $known = array_values(array_filter($dimensions, static fn ($value): bool => $value !== null));
                 $configured = array_map(static fn ($value): float => $value === null ? INF : (float) $value, $limits);
                 rsort($known, SORT_NUMERIC);

@@ -336,7 +336,7 @@ class ShippingManager extends Component
         $method = ShippingMethod::query()->findOrFail($id);
 
         if (! $method->is_active && $this->methodIsBoxNow($method) && ! $this->boxNowMethodIsReady($method)) {
-            $this->addError('form.boxnow_partner_id', __('BOX NOW se može uključiti tek nakon Partner ID-a, svih limita i pravila „Sakrij dostavu” za artikle bez mjera.'));
+            $this->addError('form.boxnow_partner_id', __('Prije uključivanja provjerite BOX NOW konfiguraciju, limite paketa i pravila dostave.'));
             $this->dispatch(
                 'notify',
                 type: 'error',
@@ -440,11 +440,12 @@ class ShippingManager extends Component
     {
         $ready = true;
         $existingMethod = $this->editingId ? ShippingMethod::find($this->editingId) : null;
+        $publicWidget = $existingMethod && BoxNowShipping::usesPublicWidget($existingMethod);
         $legacyMeasurements = $existingMethod && BoxNowShipping::preservesLegacyAvailability($existingMethod)
             && ($form['missing_measurements_policy'] ?? '') === 'allow';
 
         if (trim((string) ($form['boxnow_partner_id'] ?? '')) === ''
-            && ! ($existingMethod && BoxNowShipping::usesPublicWidget($existingMethod))) {
+            && ! $publicWidget) {
             $this->addError('form.boxnow_partner_id', __('BOX NOW partner ID obavezan je za aktivnu BOX NOW dostavu.'));
             $ready = false;
         }
@@ -466,7 +467,7 @@ class ShippingManager extends Component
             }
         }
 
-        if (! $legacyMeasurements && ($form['missing_measurements_policy'] ?? null) !== 'block') {
+        if (! $legacyMeasurements && ! $publicWidget && ($form['missing_measurements_policy'] ?? null) !== 'block') {
             $this->addError('form.missing_measurements_policy', __('Za BOX NOW artikli bez mjera moraju biti skriveni.'));
             $ready = false;
         }
