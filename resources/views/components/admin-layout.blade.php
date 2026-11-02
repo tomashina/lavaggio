@@ -1225,6 +1225,7 @@
                     $integrationsSpreadsheetActive = request()->routeIs('admin.integrations.spreadsheet.*');
                     $integrationsMediaActive = request()->routeIs('admin.integrations.media.*');
                     $isWatchlineIntegrations = config('storefront.home') === 'watchline';
+                    $isLavaggioAdmin = config('storefront.home') === 'lavaggio';
                     $integrationsWatchlineActive = request()->routeIs('admin.integrations.watchline.*');
                     $integrationsWoltActive = request()->routeIs('admin.integrations.wolt.*');
                     $integrationsOpen = $integrationsSupplierCatalogActive || $integrationsEprelActive || $integrationsStockActive || $integrationsEracuniActive || $integrationsSpreadsheetActive || $integrationsMediaActive || $integrationsWatchlineActive || $integrationsWoltActive;
@@ -1248,6 +1249,9 @@
                         auth()->user()->isA('superadmin')
                         || auth()->user()->can('integrations.media.manage')
                     );
+                    $showIntegrationsMenu = ! $isLavaggioAdmin && ($isWatchlineIntegrations
+                        ? $canManageStock
+                        : ($canManageEprel || $canManageStock || $canManageEracuni || $canManageSpreadsheet || $canManageMedia));
                     $settingsOpen = request()->routeIs('admin.settings.*') || request()->routeIs('admin.shipping.*');
                     $settingsLocalOpen = request()->routeIs('admin.settings.local.*') || request()->routeIs('admin.shipping.*');
                     $settingsSystemOpen = request()->routeIs('admin.settings.system.*');
@@ -1310,8 +1314,8 @@
                         'comments' => $canAdminAbility('content.comments.view'),
                         'blocks' => $canAdminAbility('content.blocks.view'),
                         'navigation' => $canAdminAbility('content.navigation.view'),
-                        'supplier_catalogs' => ! $isWatchlineIntegrations && $canAdminAbility('content.supplier_catalogs.manage'),
-                        'references' => ! $isWatchlineIntegrations && $canAdminAbility('content.references.view'),
+                        'supplier_catalogs' => ! $isWatchlineIntegrations && ! $isLavaggioAdmin && $canAdminAbility('content.supplier_catalogs.manage'),
+                        'references' => ! $isWatchlineIntegrations && ! $isLavaggioAdmin && $canAdminAbility('content.references.view'),
                     ];
                     $localSettingResources = array_filter([
                         'payment-methods' => __('admin.layout.menu.payment_methods'),
@@ -1741,7 +1745,7 @@
                     </details>
                     @endif
 
-                    @if ($isWatchlineIntegrations ? $canManageStock : ($canManageEprel || $canManageStock || $canManageEracuni || $canManageSpreadsheet || $canManageMedia))
+                    @if ($showIntegrationsMenu)
                         <details class="group rounded-lg" @if($integrationsOpen) open @endif>
                             <summary class="sidebar-dropdown-summary flex cursor-pointer list-none items-center justify-between rounded-lg font-medium [&::-webkit-details-marker]:hidden [&::marker]:content-[''] {{ $integrationsOpen ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100' }}">
                                 <span class="flex items-center gap-2">

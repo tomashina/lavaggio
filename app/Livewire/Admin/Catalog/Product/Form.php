@@ -184,7 +184,7 @@ class Form extends Component
             return;
         }
 
-        if ($this->isWatchlineEditor() && in_array($tab, ['energy', 'logistics', 'b2b'], true)) {
+        if (! $this->usesExtendedProductTabs() && in_array($tab, ['energy', 'logistics', 'b2b'], true)) {
             return;
         }
 
@@ -193,7 +193,7 @@ class Form extends Component
 
     public function updatedActiveTab(): void
     {
-        if (($this->isWatchlineEditor() && in_array($this->activeTab, ['energy', 'logistics', 'b2b'], true))
+        if ((! $this->usesExtendedProductTabs() && in_array($this->activeTab, ['energy', 'logistics', 'b2b'], true))
             || ($this->activeTab === 'options' && (! $this->isWatchlineEditor() || ! $this->useOptions()))
             || ($this->activeTab === 'promotion' && ! $this->useProductPromotions())) {
             $this->activeTab = 'content';
@@ -275,7 +275,7 @@ class Form extends Component
         }
 
         $validated = $this->validate($this->rules());
-        if (! $this->isWatchlineEditor()
+        if ($this->usesExtendedProductTabs()
             && (! $this->validateCommerceRows($validated) || ! $this->validateEnergyRows($validated))) {
             return null;
         }
@@ -320,8 +320,10 @@ class Form extends Component
                 'updated_by' => $userId,
             ];
             if (! $this->isWatchlineEditor()) {
+                $productData['barcode'] = trim((string) ($validated['form']['barcode'] ?? '')) ?: null;
+            }
+            if ($this->usesExtendedProductTabs()) {
                 $productData += [
-                    'barcode' => trim((string) ($validated['form']['barcode'] ?? '')) ?: null,
                     'unit_of_measure' => (string) $validated['form']['unit_of_measure'],
                     'minimum_order_quantity' => (int) $validated['form']['minimum_order_quantity'],
                     'order_quantity_step' => (int) $validated['form']['order_quantity_step'],
@@ -396,7 +398,7 @@ class Form extends Component
                 $this->syncProfessionalAttribute($product, (bool) $validated['form']['is_professional']);
             }
 
-            if (! $this->isWatchlineEditor()) {
+            if ($this->usesExtendedProductTabs()) {
                 $packageIdsByCode = $this->syncPackages(
                     $product,
                     $validated['packages'] ?? [],
@@ -857,6 +859,7 @@ class Form extends Component
             'useOptions' => $this->useOptions(),
             'watchlineProductEditor' => $this->isWatchlineEditor(),
             'lavaggioProductEditor' => $this->isLavaggioEditor(),
+            'useExtendedProductTabs' => $this->usesExtendedProductTabs(),
             'useProductPromotions' => $this->useProductPromotions(),
             'useManufacturers' => $this->useManufacturers(),
             'unitOptions' => Product::unitOptions(),
@@ -1084,9 +1087,12 @@ class Form extends Component
             ];
         }
 
-        if ($this->isWatchlineEditor()) {
-            $hiddenFields = ['barcode', 'unit_of_measure', 'minimum_order_quantity', 'order_quantity_step',
+        if (! $this->usesExtendedProductTabs()) {
+            $hiddenFields = ['unit_of_measure', 'minimum_order_quantity', 'order_quantity_step',
                 'weight_kg', 'length_cm', 'width_cm', 'height_cm', 'shipping_labels', 'energy_label_required'];
+            if ($this->isWatchlineEditor()) {
+                $hiddenFields[] = 'barcode';
+            }
             foreach (array_keys($rules) as $key) {
                 if (in_array(explode('.', $key)[0], ['packages', 'groupPrices', 'energyDeclarations'], true)
                     || (str_starts_with($key, 'form.') && in_array(explode('.', $key)[1], $hiddenFields, true))) {
@@ -2290,6 +2296,11 @@ class Form extends Component
     private function isWatchlineEditor(): bool
     {
         return config('storefront.home') === 'watchline';
+    }
+
+    private function usesExtendedProductTabs(): bool
+    {
+        return ! $this->isWatchlineEditor() && ! $this->isLavaggioEditor();
     }
 
     private function syncProfessionalAttribute(Product $product, bool $professional): void

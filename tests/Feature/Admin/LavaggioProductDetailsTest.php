@@ -7,7 +7,9 @@ use App\Livewire\Admin\Catalog\Product\PromotionManager;
 use App\Models\Catalog\Action\CatalogAction;
 use App\Models\Catalog\Attribute\Attribute;
 use App\Models\Catalog\Product\Product;
+use App\Models\Catalog\Product\ProductEnergyDeclaration;
 use App\Models\User;
+use App\Models\User\CustomerGroup;
 use App\Services\Settings\SystemSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -17,6 +19,124 @@ use Tests\TestCase;
 class LavaggioProductDetailsTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_lavaggio_create_and_edit_forms_hide_and_reject_unneeded_tabs(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+        $user = User::factory()->create();
+        $product = Product::query()->create(['code' => 'LAV-SIMPLE-EDITOR', 'base_price' => 20]);
+
+        foreach ([[], ['productId' => $product->id]] as $parameters) {
+            $editor = Livewire::actingAs($user)->test(Form::class, $parameters)
+                ->assertDontSee('Energetske oznake')
+                ->assertDontSee('Logistika')
+                ->assertDontSee('B2B cijene')
+                ->assertSeeHtml('wire:model="form.barcode"');
+
+            foreach (['energy', 'logistics', 'b2b'] as $tab) {
+                $editor->call('setTab', $tab)->assertSet('activeTab', 'content')
+                    ->set('activeTab', $tab)->assertSet('activeTab', 'content');
+            }
+        }
+    }
+
+    public function test_lavaggio_content_edits_preserve_hidden_logistics_prices_and_energy_data(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+        $user = User::factory()->create();
+        $product = Product::query()->create([
+            'code' => 'LAV-HIDDEN-DATA', 'barcode' => '3851234567890', 'base_price' => 20,
+            'unit_of_measure' => 'box', 'minimum_order_quantity' => 6, 'order_quantity_step' => 3,
+            'weight_kg' => 2.345, 'length_cm' => 12.34, 'width_cm' => 8.75, 'height_cm' => 4.25,
+            'shipping_labels' => ['fragile', 'no_parcel_locker'], 'energy_label_required' => true,
+            'energy_efficiency_class' => 'D', 'energy_efficiency_scale' => 'A-G',
+            'eprel_registration_number' => '123456', 'eprel_product_group' => 'electronicdisplays',
+            'eprel_lookup_product_group' => 'electronicdisplays', 'eprel_energy_label_image' => 'D.svg',
+            'energy_label_url' => 'https://example.test/label.pdf',
+            'product_information_sheet_url' => 'https://example.test/sheet.pdf',
+            'energy_data_synced_at' => now()->subDay(),
+        ]);
+        $product->translations()->create(['locale' => 'hr', 'name' => 'Izvorni proizvod', 'slug' => 'izvorni-proizvod']);
+        $package = $product->packages()->create([
+            'code' => 'ORIGINAL-BOX', 'name' => 'Izvorno pakiranje', 'quantity' => 6,
+            'is_default' => true, 'is_active' => true, 'sort_order' => 15, 'payload' => ['original' => true],
+        ]);
+        $group = CustomerGroup::query()->create(['code' => 'wholesale', 'name' => 'Wholesale', 'is_active' => true]);
+        $price = $product->groupPrices()->create([
+            'customer_group_id' => $group->id, 'product_package_id' => $package->id,
+            'minimum_quantity' => 6, 'price' => 15.1234, 'currency_code' => 'EUR', 'is_active' => true,
+            'payload' => ['original' => true],
+        ]);
+        $declaration = $product->energyDeclarations()->create([
+            'context_code' => 'original', 'energy_class' => 'D', 'scale_min' => 'A', 'scale_max' => 'G',
+            'source' => ProductEnergyDeclaration::SOURCE_MANUAL, 'is_primary' => true,
+            'payload' => ['original' => true], 'synced_at' => now()->subDay(),
+        ]);
+        $hiddenFields = ['unit_of_measure', 'minimum_order_quantity', 'order_quantity_step',
+            'weight_kg', 'length_cm', 'width_cm', 'height_cm', 'shipping_labels', 'energy_label_required',
+            'energy_efficiency_class', 'energy_efficiency_scale', 'eprel_registration_number', 'eprel_product_group',
+            'eprel_lookup_product_group', 'eprel_energy_label_image', 'energy_label_url',
+            'product_information_sheet_url', 'energy_data_synced_at'];
+        $before = array_intersect_key($product->fresh()->getRawOriginal(), array_flip($hiddenFields));
+        $packageBefore = $package->fresh()->getRawOriginal();
+        $priceBefore = $price->fresh()->getRawOriginal();
+        $declarationBefore = $declaration->fresh()->getRawOriginal();
+
+        // Empty arrays must not delete existing rows, and malformed hidden rows must not block visible edits.
+        foreach ([[], [['invalid' => true]]] as $hiddenRows) {
+            Livewire::withQueryParams(['locale' => 'hr'])->actingAs($user)
+                ->test(Form::class, ['productId' => $product->id])
+                ->set('form.name', 'Ažurirani proizvod')->set('form.base_price', 24.95)
+                ->set('form.barcode', '3851234567891')
+                ->set('form.unit_of_measure', 'invalid')->set('form.minimum_order_quantity', 0)
+                ->set('form.order_quantity_step', 0)->set('form.weight_kg', -5)
+                ->set('form.length_cm', -5)->set('form.width_cm', -5)->set('form.height_cm', -5)
+                ->set('form.shipping_labels', ['invalid'])->set('form.energy_label_required', 'invalid')
+                ->set('packages', $hiddenRows)->set('groupPrices', $hiddenRows)->set('energyDeclarations', $hiddenRows)
+                ->call('save')->assertHasNoErrors();
+
+            $saved = $product->fresh();
+            $this->assertSame($before, array_intersect_key($saved->getRawOriginal(), array_flip($hiddenFields)));
+            $this->assertSame($packageBefore, $package->fresh()->getRawOriginal());
+            $this->assertSame($priceBefore, $price->fresh()->getRawOriginal());
+            $this->assertSame($declarationBefore, $declaration->fresh()->getRawOriginal());
+            $this->assertSame(1, $saved->packages()->count());
+            $this->assertSame(1, $saved->groupPrices()->count());
+            $this->assertSame(1, $saved->energyDeclarations()->count());
+            $this->assertSame('3851234567891', $saved->barcode);
+            $this->assertSame('24.95', $saved->base_price);
+            $this->assertDatabaseHas('product_translations', [
+                'product_id' => $product->id, 'locale' => 'hr', 'name' => 'Ažurirani proizvod',
+            ]);
+        }
+    }
+
+    public function test_new_lavaggio_products_use_native_hidden_defaults_and_save_visible_barcode(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+
+        Livewire::actingAs(User::factory()->create())->test(Form::class)
+            ->set('form.code', 'LAV-DEFAULTS')->set('form.locale', 'hr')
+            ->set('form.name', 'Novi proizvod')->set('form.slug', 'novi-proizvod')
+            ->set('form.base_price', 12.95)->set('form.barcode', '3851234567892')
+            ->set('form.unit_of_measure', 'box')->set('form.minimum_order_quantity', 5)
+            ->set('form.order_quantity_step', 5)->set('form.weight_kg', 10)
+            ->set('form.shipping_labels', ['fragile'])->set('form.energy_label_required', true)
+            ->call('save')->assertHasNoErrors();
+
+        $product = Product::query()->where('code', 'LAV-DEFAULTS')->firstOrFail();
+        $this->assertSame('3851234567892', $product->barcode);
+        $this->assertSame('12.95', $product->base_price);
+        $this->assertSame('pcs', $product->unit_of_measure);
+        $this->assertSame(1, $product->minimum_order_quantity);
+        $this->assertSame(1, $product->order_quantity_step);
+        $this->assertNull($product->weight_kg);
+        $this->assertNull($product->shipping_labels);
+        $this->assertFalse($product->energy_label_required);
+        $this->assertFalse($product->packages()->exists());
+        $this->assertFalse($product->groupPrices()->exists());
+        $this->assertFalse($product->energyDeclarations()->exists());
+    }
 
     public function test_laundry_product_details_can_be_saved_and_reopened_in_admin(): void
     {

@@ -37,6 +37,52 @@ class HerreraResourceIntegrationTest extends TestCase
         }
     }
 
+    public function test_lavaggio_sidebar_hides_integrations_catalogues_and_references_for_admin_and_superadmin(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+
+        foreach (['admin', 'superadmin'] as $role) {
+            $user = User::factory()->create();
+            Bouncer::assign($role)->to($user);
+
+            $response = $this->actingAs($user)->get(route('admin.dashboard'))->assertOk();
+            $sidebar = $this->sidebarHtml($response->getContent());
+
+            $this->assertStringNotContainsString(__('Integracije'), $sidebar);
+            $this->assertStringNotContainsString('/admin/integrations/', $sidebar);
+            $this->assertStringNotContainsString(route('admin.content.supplier-catalogs.index'), $sidebar);
+            $this->assertStringNotContainsString(route('admin.content.references.index'), $sidebar);
+            $this->assertStringContainsString(route('admin.products'), $sidebar);
+            $this->assertStringContainsString(route('admin.content.pages.index'), $sidebar);
+        }
+    }
+
+    public function test_other_store_sidebar_integrations_and_resource_visibility_is_preserved(): void
+    {
+        $admin = User::factory()->create();
+        Bouncer::assign('admin')->to($admin);
+
+        config(['storefront.home' => 'auto']);
+        $response = $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk();
+        $sidebar = $this->sidebarHtml($response->getContent());
+        foreach (['admin.integrations.eprel.settings', 'admin.integrations.eprel.catalog',
+            'admin.integrations.supplier-catalog.index', 'admin.integrations.stock.index',
+            'admin.integrations.eracuni.index', 'admin.integrations.spreadsheet.index',
+            'admin.integrations.media.index', 'admin.content.supplier-catalogs.index',
+            'admin.content.references.index'] as $route) {
+            $this->assertStringContainsString(route($route), $sidebar);
+        }
+
+        config(['storefront.home' => 'watchline']);
+        $response = $this->get(route('admin.dashboard'))->assertOk();
+        $sidebar = $this->sidebarHtml($response->getContent());
+        $this->assertStringContainsString(route('admin.integrations.watchline.index'), $sidebar);
+        $this->assertStringContainsString(route('admin.integrations.wolt.index'), $sidebar);
+        $this->assertStringNotContainsString(route('admin.integrations.eprel.settings'), $sidebar);
+        $this->assertStringNotContainsString(route('admin.content.supplier-catalogs.index'), $sidebar);
+        $this->assertStringNotContainsString(route('admin.content.references.index'), $sidebar);
+    }
+
     public function test_additive_feature_permissions_preserve_explicit_denials_and_existing_custom_abilities(): void
     {
         $admin = User::factory()->create();
@@ -60,5 +106,15 @@ class HerreraResourceIntegrationTest extends TestCase
         $this->assertTrue($rep->can('sales.offers.send'));
         $this->assertFalse($rep->can('content.supplier_catalogs.manage'));
         $this->assertFalse($rep->can('content.references.create'));
+    }
+
+    private function sidebarHtml(string $html): string
+    {
+        $document = new \DOMDocument;
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$html);
+        $sidebar = $document->getElementById('admin-sidebar');
+        $this->assertNotNull($sidebar);
+
+        return (string) $document->saveHTML($sidebar);
     }
 }
