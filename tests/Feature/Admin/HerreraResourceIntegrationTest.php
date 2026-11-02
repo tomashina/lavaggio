@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
+use App\Services\Settings\SystemSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Silber\Bouncer\BouncerFacade as Bouncer;
 use Tests\TestCase;
@@ -40,6 +41,7 @@ class HerreraResourceIntegrationTest extends TestCase
     public function test_lavaggio_sidebar_hides_integrations_catalogues_and_references_for_admin_and_superadmin(): void
     {
         config(['storefront.home' => 'lavaggio']);
+        app(SystemSettingsService::class)->put('catalog_use_api', true);
 
         foreach (['admin', 'superadmin'] as $role) {
             $user = User::factory()->create();
@@ -52,6 +54,7 @@ class HerreraResourceIntegrationTest extends TestCase
             $this->assertStringNotContainsString('/admin/integrations/', $sidebar);
             $this->assertStringNotContainsString(route('admin.content.supplier-catalogs.index'), $sidebar);
             $this->assertStringNotContainsString(route('admin.content.references.index'), $sidebar);
+            $this->assertStringNotContainsString(route('admin.settings.api.wholesale'), $sidebar);
             $this->assertStringContainsString(route('admin.products'), $sidebar);
             $this->assertStringContainsString(route('admin.content.pages.index'), $sidebar);
         }
@@ -59,6 +62,7 @@ class HerreraResourceIntegrationTest extends TestCase
 
     public function test_other_store_sidebar_integrations_and_resource_visibility_is_preserved(): void
     {
+        app(SystemSettingsService::class)->put('catalog_use_api', true);
         $admin = User::factory()->create();
         Bouncer::assign('admin')->to($admin);
 
@@ -69,7 +73,7 @@ class HerreraResourceIntegrationTest extends TestCase
             'admin.integrations.supplier-catalog.index', 'admin.integrations.stock.index',
             'admin.integrations.eracuni.index', 'admin.integrations.spreadsheet.index',
             'admin.integrations.media.index', 'admin.content.supplier-catalogs.index',
-            'admin.content.references.index'] as $route) {
+            'admin.content.references.index', 'admin.settings.api.wholesale'] as $route) {
             $this->assertStringContainsString(route($route), $sidebar);
         }
 
