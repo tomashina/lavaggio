@@ -249,6 +249,25 @@ html[data-theme] body.lavaggio-storefront .site-main-header :is(.watchline-categ
 body.lavaggio-storefront :is(.wl-hero-title, .wl-section-heading h2, .wl-campaign-title, .herrera-home-section-title, .lm-page-title h1) { color: var(--lavaggio-heading); }
 body.lavaggio-storefront :is(.wl-eyebrow, .wl-category-art > svg) { color: var(--lavaggio-primary); }
 body.lavaggio-storefront :focus-visible { outline-color: var(--lavaggio-primary); }
+
+/* Keep discount-code focus inside the rounded fields and their clipped panels. */
+html[data-theme] body.lavaggio-storefront :is(.commerce-main, .checkout-shell) :is(input[name="coupon_code"], input[name="gift_voucher_code"]) {
+    border-radius: 8px;
+}
+
+html[data-theme] body.lavaggio-storefront :is(.commerce-main, .checkout-shell) :is(input[name="coupon_code"], input[name="gift_voucher_code"]):focus {
+    border-color: var(--lavaggio-primary, #848ac4);
+    outline: 2px solid var(--lavaggio-primary, #848ac4);
+    outline-offset: -2px;
+    box-shadow: none !important;
+}
+
+html[data-theme] body.lavaggio-storefront :is(.commerce-main, .checkout-shell) :is(input[name="coupon_code"], input[name="gift_voucher_code"])[aria-invalid="true"]:focus {
+    border-color: #e11d48;
+    outline: 2px solid #e11d48;
+    outline-offset: -2px;
+}
+
 body.lavaggio-storefront .site-main-header { border-bottom-color: var(--lavaggio-line); box-shadow: 0 4px 18px rgb(19 16 13 / 2%); }
 body.lavaggio-storefront .site-top-bar { border-bottom-color: var(--lavaggio-line); }
 body.lavaggio-storefront :is(.site-top-bar-link, .site-top-bar-announcement, .site-top-bar-social-link) { color: #475569; }
