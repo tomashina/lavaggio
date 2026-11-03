@@ -115,8 +115,26 @@ class LavaggioFooterControlsTest extends TestCase
         $this->assertSame('lavaggio-footer-legal-title', $xpath->query($legal)->item(0)->getAttribute('aria-labelledby'));
         $this->assertSame('Pravila naše trgovine', trim($xpath->query($legal.'//*[@id="lavaggio-footer-legal-title"]')->item(0)->textContent));
         $links = iterator_to_array($xpath->query($legal.'//a'));
-        $this->assertSame(['Uvjeti kupnje', 'Zaštita osobnih podataka'], array_map(fn ($link): string => trim($link->textContent), $links));
-        $this->assertSame(['/page/uvjeti-kupnje', '/page/privatnost'], array_map(fn ($link): string => $link->getAttribute('href'), $links));
+        $this->assertSame(['Uvjeti kupnje', 'Zaštita osobnih podataka', 'Raskid ugovora'], array_map(fn ($link): string => trim($link->textContent), $links));
+        $this->assertSame(['/page/uvjeti-kupnje', '/page/privatnost', '/forma-za-povrat-i-reklamacije'], array_map(fn ($link): string => $link->getAttribute('href'), $links));
+    }
+
+    public function test_previous_withdrawal_placeholder_and_footer_open_the_real_form(): void
+    {
+        app(SystemSettingsService::class)->put('store_footer_address', "Bareda d.o.o.\nBarban 70\n52207 Barban");
+        app(SystemSettingsService::class)->put('lavaggio_footer_legal_links', [
+            ['label' => 'Raskid ugovora / prigovor', 'url' => '/page/raskid-ugovora-i-prigovor'],
+        ]);
+
+        $xpath = $this->xpath($this->get(route('home'))->assertOk()->getContent());
+        $this->assertSame(1, $xpath->query('//nav[@class="lavaggio-footer-legal"]//a[@href="/forma-za-povrat-i-reklamacije"]')->length);
+        $response = $this->get('/page/raskid-ugovora-i-prigovor')->assertOk()
+            ->assertSee('data-withdrawal-form', false)
+            ->assertSee('Raskid u roku od 14 dana')
+            ->assertDontSee('Sadržaj ove stranice je u pripremi.');
+        $help = $this->xpath($response->getContent())->query('//aside[contains(@class, "returns-help-card")]')->item(0);
+        $this->assertStringContainsString('Adresa za izjavu i povrat robe', $help->textContent);
+        $this->assertStringContainsString('Barban 70', $help->textContent);
     }
 
     public function test_header_and_footer_share_social_settings_even_when_utility_links_are_disabled(): void

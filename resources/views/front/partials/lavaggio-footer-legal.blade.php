@@ -2,7 +2,18 @@
     $lavaggioFooterLegalSettings = app(\App\Services\Settings\SystemSettingsService::class);
     $lavaggioFooterLegalTitle = (string) $lavaggioFooterLegalSettings->get('lavaggio_footer_legal_title', 'Uvjeti');
     $lavaggioFooterLegalLinks = collect($lavaggioFooterLegalSettings->get('lavaggio_footer_legal_links', []))
-        ->filter(fn ($link) => is_array($link) && filled($link['label'] ?? '') && filled($link['url'] ?? ''));
+        ->filter(fn ($link) => is_array($link) && filled($link['label'] ?? '') && filled($link['url'] ?? ''))
+        ->map(function ($link) {
+            if (parse_url($link['url'], PHP_URL_PATH) === '/page/raskid-ugovora-i-prigovor') {
+                return ['label' => 'Raskid ugovora', 'url' => route('returns.create', ['returnRequestSlug' => __('return_request.slug')], false)];
+            }
+
+            return $link;
+        });
+    $lavaggioWithdrawalUrl = route('returns.create', ['returnRequestSlug' => __('return_request.slug')], false);
+    if (! $lavaggioFooterLegalLinks->contains(fn ($link) => parse_url($link['url'], PHP_URL_PATH) === $lavaggioWithdrawalUrl)) {
+        $lavaggioFooterLegalLinks->push(['label' => 'Raskid ugovora', 'url' => $lavaggioWithdrawalUrl]);
+    }
 @endphp
 @if ($lavaggioFooterLegalLinks->isNotEmpty())
     <nav class="lavaggio-footer-legal" aria-labelledby="lavaggio-footer-legal-title">

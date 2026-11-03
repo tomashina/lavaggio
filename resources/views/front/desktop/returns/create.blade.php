@@ -59,6 +59,9 @@
                 </div>
             @endif
 
+            @if (config('storefront.home') === 'lavaggio')
+                @include('front.partials.lavaggio-withdrawal-fields')
+            @else
             <fieldset>
                 <legend class="mb-4 text-base font-bold text-slate-900">{{ __('return_request.form.identity_section') }}</legend>
                 <div class="grid gap-4 md:grid-cols-2">
@@ -135,6 +138,8 @@
                 </div>
             </fieldset>
 
+            @endif
+
             <p class="mt-5 text-xs leading-5 text-slate-500">{{ __('return_request.form.privacy_note') }}</p>
             @error('recaptcha_token') <p class="mt-2 text-xs font-semibold text-rose-600">{{ $message }}</p> @enderror
             <button type="submit" class="commerce-primary-action mt-6 px-6 py-3" data-submit-button>
@@ -143,6 +148,9 @@
         </form>
 
         <aside class="returns-help-card h-fit border border-slate-200 bg-white p-6">
+            @if (config('storefront.home') === 'lavaggio')
+                @include('front.partials.lavaggio-withdrawal-help')
+            @else
             <h2 class="text-sm font-bold uppercase tracking-wide text-slate-700">{{ __('return_request.help.title') }}</h2>
             <ul class="mt-3 space-y-3 text-sm leading-6 text-slate-700">
                 @foreach (__('return_request.help.items') as $item)
@@ -154,6 +162,7 @@
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('return_request.mail.return_address') }}</p>
                     <p class="mt-2 whitespace-pre-line text-sm text-slate-700">{{ $withdrawalSettings['return_address'] }}</p>
                 </div>
+            @endif
             @endif
         </aside>
     </section>

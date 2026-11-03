@@ -76,7 +76,7 @@ class LavaggioStorefrontSeeder extends Seeder
             'store_newsletter_coupon_enabled' => false,
             'store_email_enabled' => false,
             'store_analytics_enabled' => false,
-            'store_legal_warranty_enabled' => false,
+            'store_legal_warranty_enabled' => true,
             'msan_enabled' => false,
             'msan_price_stock_sync_enabled' => false,
             'catalog_use_blog' => false,

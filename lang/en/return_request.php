@@ -9,6 +9,7 @@ return [
     'intro' => 'You do not need to state a reason. After reviewing your details, the final button will read “Confirm withdrawal”.',
     'scope_note' => 'This form is for exercising the right of withdrawal. For a defective product claim, please contact customer support.',
     'sent_status' => 'Your withdrawal statement has been received. Reference: :reference. An acknowledgement containing the statement and its submission date and time was sent to your email.',
+    'received_status' => 'Your withdrawal statement has been received. Reference: :reference.',
     'confirmation_email_failed' => 'Your statement was recorded, but the email acknowledgement could not be delivered at this time. Keep the displayed reference and contact customer support.',
     'draft_expired' => 'The form review has expired. Please enter your details again and confirm the withdrawal.',
     'captcha_failed' => 'Security verification failed. Please try again.',

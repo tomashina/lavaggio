@@ -148,7 +148,7 @@ class ReturnRequestController extends Controller
 
         $redirect = redirect()
             ->route('returns.create', ['returnRequestSlug' => __('return_request.slug')])
-            ->with('status', __('return_request.sent_status', [
+            ->with('status', __($withdrawal->consumer_notified_at ? 'return_request.sent_status' : 'return_request.received_status', [
                 'reference' => $withdrawal->reference,
             ]))
             ->with('withdrawal_reference', $withdrawal->reference);
@@ -169,20 +169,21 @@ class ReturnRequestController extends Controller
         $captchaEnabled = (bool) ($captchaSettings['recaptcha_v3_enabled'] ?? false)
             && trim((string) ($captchaSettings['recaptcha_v3_site_key'] ?? '')) !== ''
             && trim((string) ($captchaSettings['recaptcha_v3_secret_key'] ?? '')) !== '';
+        $detailsRequired = config('storefront.home') === 'lavaggio' ? 'nullable' : 'required';
 
         return $request->validate(
             [
                 'full_name' => ['required', 'string', 'min:2', 'max:191'],
                 'email' => ['required', 'email', 'max:191'],
                 'phone' => ['nullable', 'string', 'max:80'],
-                'address_line' => ['required', 'string', 'min:3', 'max:255'],
-                'postal_code' => ['required', 'string', 'max:32'],
-                'city' => ['required', 'string', 'max:120'],
-                'country_code' => ['required', 'string', 'size:2'],
+                'address_line' => [$detailsRequired, 'string', 'min:3', 'max:255'],
+                'postal_code' => [$detailsRequired, 'string', 'max:32'],
+                'city' => [$detailsRequired, 'string', 'max:120'],
+                'country_code' => [$detailsRequired, 'string', 'size:2'],
                 'order_number' => ['required', 'string', 'max:80'],
                 'contract_date' => ['nullable', 'date', 'before_or_equal:today'],
                 'received_date' => ['nullable', 'date', 'before_or_equal:today', 'after_or_equal:contract_date'],
-                'items' => ['required', 'string', 'min:2', 'max:5000'],
+                'items' => [$detailsRequired, 'string', 'min:2', 'max:5000'],
                 'note' => ['nullable', 'string', 'max:5000'],
                 'recaptcha_token' => [$captchaEnabled ? 'required' : 'nullable', 'string', 'max:4096'],
             ],
@@ -215,7 +216,7 @@ class ReturnRequestController extends Controller
     }
 
     /**
-     * @param array<string, mixed> $validated
+     * @param  array<string, mixed>  $validated
      * @return array<string, string>
      */
     private function normalize(array $validated): array
@@ -224,20 +225,20 @@ class ReturnRequestController extends Controller
             'full_name' => trim((string) $validated['full_name']),
             'email' => strtolower(trim((string) $validated['email'])),
             'phone' => trim((string) ($validated['phone'] ?? '')),
-            'address_line' => trim((string) $validated['address_line']),
-            'postal_code' => trim((string) $validated['postal_code']),
-            'city' => trim((string) $validated['city']),
-            'country_code' => strtoupper(trim((string) $validated['country_code'])),
+            'address_line' => trim((string) ($validated['address_line'] ?? '')),
+            'postal_code' => trim((string) ($validated['postal_code'] ?? '')),
+            'city' => trim((string) ($validated['city'] ?? '')),
+            'country_code' => strtoupper(trim((string) ($validated['country_code'] ?? ''))),
             'order_number' => trim((string) $validated['order_number']),
             'contract_date' => trim((string) ($validated['contract_date'] ?? '')),
             'received_date' => trim((string) ($validated['received_date'] ?? '')),
-            'items' => trim((string) $validated['items']),
+            'items' => trim((string) ($validated['items'] ?? '')) ?: (config('storefront.home') === 'lavaggio' ? 'Cijela narudžba' : ''),
             'note' => trim((string) ($validated['note'] ?? '')),
         ];
     }
 
     /**
-     * @param array<string, mixed> $validated
+     * @param  array<string, mixed>  $validated
      */
     private function verifyCaptcha(Request $request, array $validated): void
     {

@@ -49,6 +49,7 @@ class ContractWithdrawalNotificationService
 
     public function sendConsumerReceipt(ContractWithdrawal $withdrawal): void
     {
+        $this->requireDeliveringMailer();
         $settings = $this->storeSettings->withdrawal();
         $branding = $this->storeSettings->branding();
 
@@ -68,6 +69,7 @@ class ContractWithdrawalNotificationService
 
     public function sendAdminNotification(ContractWithdrawal $withdrawal): void
     {
+        $this->requireDeliveringMailer();
         $to = $this->adminEmail();
         if ($to === '') {
             throw new \RuntimeException('Nije postavljena administratorska e-mail adresa za raskide ugovora.');
@@ -103,5 +105,14 @@ class ContractWithdrawalNotificationService
         }
 
         return '';
+    }
+
+    private function requireDeliveringMailer(): void
+    {
+        $mailer = (string) config('mail.default');
+        $transport = (string) config('mail.mailers.'.$mailer.'.transport', $mailer);
+        if (in_array($transport, ['log', 'array'], true)) {
+            throw new \RuntimeException('Slanje e-mail potvrda nije aktivno u ovom okruženju.');
+        }
     }
 }

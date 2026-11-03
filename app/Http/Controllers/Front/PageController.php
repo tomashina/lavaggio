@@ -75,6 +75,10 @@ class PageController extends Controller
 
     public function show(Request $request, string $slug): View
     {
+        if (config('storefront.home') === 'lavaggio' && $slug === 'raskid-ugovora-i-prigovor') {
+            return app(ReturnRequestController::class)->create($request);
+        }
+
         $locale = app()->getLocale();
         $fallbackLocale = (string) config('app.locale');
         $variant = $this->frontendVariant($request);

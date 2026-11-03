@@ -422,6 +422,7 @@ class StorefrontFrontFeatureTest extends TestCase
     public function test_contract_withdrawal_requires_review_then_stores_evidence_and_emails_both_parties(): void
     {
         Mail::fake();
+        config(['mail.default' => 'smtp']);
 
         app(SystemSettingsService::class)->putMany([
             'store_withdrawal_admin_email' => 'withdrawals@example.test',

@@ -23,15 +23,23 @@
 
         <div class="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-white">
             <dl class="divide-y divide-slate-100 text-sm">
+                @php
+                    $withdrawalAddress = implode(', ', array_filter([
+                        $withdrawal['address_line'],
+                        trim($withdrawal['postal_code'].' '.$withdrawal['city']),
+                        $withdrawal['country_code'],
+                    ]));
+                @endphp
                 @foreach ([
                     __('return_request.form.full_name') => $withdrawal['full_name'],
                     __('return_request.form.email') => $withdrawal['email'],
                     __('return_request.form.phone') => $withdrawal['phone'],
-                    __('return_request.mail.address') => $withdrawal['address_line'].', '.$withdrawal['postal_code'].' '.$withdrawal['city'].', '.$withdrawal['country_code'],
+                    __('return_request.mail.address') => $withdrawalAddress,
                     __('return_request.form.order_number') => $withdrawal['order_number'],
                     __('return_request.form.contract_date') => $withdrawal['contract_date'],
                     __('return_request.form.received_date') => $withdrawal['received_date'],
                 ] as $label => $value)
+                    @continue(config('storefront.home') === 'lavaggio' && $value === '')
                     <div class="grid gap-1 px-5 py-3 sm:grid-cols-[260px_1fr] sm:gap-4">
                         <dt class="font-semibold text-slate-500">{{ $label }}</dt>
                         <dd class="text-slate-900">{{ $value !== '' ? $value : __('return_request.review.not_provided') }}</dd>

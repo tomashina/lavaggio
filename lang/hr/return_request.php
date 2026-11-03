@@ -9,6 +9,7 @@ return [
     'intro' => 'Za jednostrani raskid ne morate navesti razlog. Nakon pregleda podataka završni gumb bit će označen „Potvrditi raskid ugovora”.',
     'scope_note' => 'Ovaj obrazac služi za jednostrani raskid ugovora. Za reklamaciju neispravnog proizvoda obratite se korisničkoj podršci.',
     'sent_status' => 'Vaša izjava o raskidu ugovora je zaprimljena. Referenca: :reference. Potvrda sa sadržajem te datumom i vremenom podnošenja poslana je na vaš e-mail.',
+    'received_status' => 'Vaša izjava o raskidu ugovora je zaprimljena. Referenca: :reference.',
     'confirmation_email_failed' => 'Zahtjev je evidentiran, ali e-mail potvrda trenutačno nije mogla biti dostavljena. Sačuvajte prikazanu referencu i obratite se korisničkoj podršci.',
     'draft_expired' => 'Pregled obrasca je istekao. Ponovno unesite podatke i potvrdite raskid ugovora.',
     'captcha_failed' => 'Potvrda sigurnosti nije uspjela. Pokušajte ponovno.',

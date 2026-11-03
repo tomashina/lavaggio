@@ -364,6 +364,25 @@ html[data-theme] body.lavaggio-storefront .site-footer .site-footer-mobile-links
 html[data-theme] body.lavaggio-storefront .site-footer a:is(:hover, :focus-visible) { color: #fff; }
 html[data-theme] body.lavaggio-storefront .site-footer .site-footer-socials a { background: #20243c; color: #c4c8e4; }
 html[data-theme] body.lavaggio-storefront .site-footer .site-footer-socials a:is(:hover, :focus-visible) { background: var(--lavaggio-primary); color: #fff; }
+html[data-theme] body.lavaggio-storefront .site-footer .legal-warranty-notice--footer {
+    border: 0;
+    border-radius: 0;
+    padding: 18px 24px;
+    background: var(--lavaggio-primary);
+    box-shadow: 0 0 0 100vmax var(--lavaggio-primary);
+    color: #13100d;
+}
+html[data-theme] body.lavaggio-storefront .site-footer .legal-warranty-notice--footer > a {
+    min-height: 24px;
+    color: #13100d;
+    font-size: 15px;
+    font-weight: 700;
+}
+html[data-theme] body.lavaggio-storefront .site-footer .legal-warranty-notice--footer .legal-warranty-icon {
+    width: 20px;
+    height: 20px;
+    color: #13100d;
+}
 html[data-theme] body.lavaggio-storefront .site-footer .herrera-footer-socials {
     display: flex;
     flex-wrap: wrap;

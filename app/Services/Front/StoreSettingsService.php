@@ -358,17 +358,19 @@ class StoreSettingsService
     /** @return array<string, mixed> */
     public function legalWarranty(): array
     {
+        $lavaggio = config('storefront.home') === 'lavaggio';
         $euUrl = trim((string) $this->settings->get('store_legal_warranty_eu_url', ''));
         if (! filter_var($euUrl, FILTER_VALIDATE_URL) || parse_url($euUrl, PHP_URL_SCHEME) !== 'https') {
             $euUrl = 'https://europa.eu/youreurope/citizens/consumers/shopping/guarantees/index_hr.htm';
         }
 
         return [
-            'enabled' => (bool) $this->settings->get('store_legal_warranty_enabled', false),
-            'footer_enabled' => (bool) $this->settings->get('store_legal_warranty_footer_enabled', true),
-            'product_enabled' => (bool) $this->settings->get('store_legal_warranty_product_enabled', true),
-            'checkout_enabled' => (bool) $this->settings->get('store_legal_warranty_checkout_enabled', true),
-            'email_enabled' => (bool) $this->settings->get('store_legal_warranty_email_enabled', true),
+            // The Lavaggio consumer notice is part of the storefront, including existing previews.
+            'enabled' => $lavaggio || (bool) $this->settings->get('store_legal_warranty_enabled', false),
+            'footer_enabled' => $lavaggio || (bool) $this->settings->get('store_legal_warranty_footer_enabled', true),
+            'product_enabled' => $lavaggio || (bool) $this->settings->get('store_legal_warranty_product_enabled', true),
+            'checkout_enabled' => $lavaggio || (bool) $this->settings->get('store_legal_warranty_checkout_enabled', true),
+            'email_enabled' => $lavaggio || (bool) $this->settings->get('store_legal_warranty_email_enabled', true),
             'asset_url' => asset('assets/legal/legal-guarantee-notice-hr-color.svg'),
             'eu_url' => $euUrl,
         ];
@@ -435,16 +437,24 @@ class StoreSettingsService
                 trim((string) $this->settings->get('store_schema_address_city', '')),
             ]))),
         ]));
+        if (config('storefront.home') === 'lavaggio') {
+            $defaultAddress = trim((string) $this->settings->get('store_footer_address', '')) ?: $defaultAddress;
+        }
+        $returnAddress = trim((string) $this->settings->get('store_withdrawal_return_address', $defaultAddress));
+        $adminEmail = trim((string) $this->settings->get('store_withdrawal_admin_email', $this->settings->get('store_email_orders_to', '')));
+        if (config('storefront.home') === 'lavaggio') {
+            // Discard only the inherited source-project defaults; preserve configured return details.
+            if ($returnAddress === '' || $returnAddress === 'TERMOL d.o.o., Lapovačka 11A, 32100 Vinkovci, Hrvatska') {
+                $returnAddress = $defaultAddress;
+            }
+            if ($adminEmail === '' || $adminEmail === 'webshop@termol.hr') {
+                $adminEmail = trim((string) $this->settings->get('store_footer_email_support', ''));
+            }
+        }
 
         return [
-            'admin_email' => trim((string) $this->settings->get(
-                'store_withdrawal_admin_email',
-                $this->settings->get('store_email_orders_to', ''),
-            )),
-            'return_address' => trim((string) $this->settings->get(
-                'store_withdrawal_return_address',
-                $defaultAddress,
-            )),
+            'admin_email' => $adminEmail,
+            'return_address' => $returnAddress,
             'instructions' => trim((string) $this->settings->get(
                 'store_withdrawal_instructions',
                 '',

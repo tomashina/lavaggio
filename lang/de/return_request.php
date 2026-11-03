@@ -9,6 +9,7 @@ return [
     'intro' => 'Sie müssen keinen Grund angeben. Nach der Prüfung Ihrer Angaben lautet die abschließende Schaltfläche „Widerruf bestätigen“.',
     'scope_note' => 'Dieses Formular dient dem Widerruf. Bei einer Reklamation wegen mangelhafter Ware wenden Sie sich bitte an den Kundendienst.',
     'sent_status' => 'Ihre Widerrufserklärung wurde empfangen. Referenz: :reference. Eine Bestätigung mit Inhalt, Datum und Uhrzeit der Übermittlung wurde an Ihre E-Mail-Adresse gesendet.',
+    'received_status' => 'Ihre Widerrufserklärung wurde empfangen. Referenz: :reference.',
     'confirmation_email_failed' => 'Ihre Erklärung wurde gespeichert, die E-Mail-Bestätigung konnte derzeit jedoch nicht zugestellt werden. Bewahren Sie die Referenz auf und wenden Sie sich an den Kundendienst.',
     'draft_expired' => 'Die Formularvorschau ist abgelaufen. Bitte geben Sie Ihre Daten erneut ein und bestätigen Sie den Widerruf.',
     'captcha_failed' => 'Die Sicherheitsprüfung ist fehlgeschlagen. Bitte versuchen Sie es erneut.',

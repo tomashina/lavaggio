@@ -82,6 +82,7 @@ class ContractWithdrawalsFeatureTest extends TestCase
     public function test_admin_can_resend_both_notifications(): void
     {
         Mail::fake();
+        config(['mail.default' => 'smtp']);
         $admin = $this->makeUserWithRole('admin');
         $withdrawal = $this->makeWithdrawal();
 
@@ -94,11 +95,9 @@ class ContractWithdrawalsFeatureTest extends TestCase
             ->post('/admin/withdrawals/'.$withdrawal->id.'/resend')
             ->assertRedirect('/admin/withdrawals/'.$withdrawal->id);
 
-        Mail::assertSent(ContractWithdrawalReceiptMail::class, static fn ($mail): bool =>
-            $mail->hasTo('buyer@example.test')
+        Mail::assertSent(ContractWithdrawalReceiptMail::class, static fn ($mail): bool => $mail->hasTo('buyer@example.test')
         );
-        Mail::assertSent(ContractWithdrawalAdminMail::class, static fn ($mail): bool =>
-            $mail->hasTo('returns@example.test')
+        Mail::assertSent(ContractWithdrawalAdminMail::class, static fn ($mail): bool => $mail->hasTo('returns@example.test')
         );
 
         $withdrawal->refresh();

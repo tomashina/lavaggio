@@ -57,6 +57,16 @@
 .legal-warranty-modal-footer a { color: #00869b; text-decoration: underline; }
 .legal-warranty-modal-footer button { padding: 8px 16px; border: 1px solid #32373b; }
 .site-footer-contact-address { white-space: pre-line; }
+.lavaggio-storefront .legal-warranty-notice {
+    border-color: #d8daec;
+    border-radius: 8px;
+    background: #f1f2f9;
+    color: #454b81;
+}
+.lavaggio-storefront .legal-warranty-explanation { padding: 4px 8px 20px; font-size: 15px; line-height: 1.6; }
+.lavaggio-storefront .legal-warranty-explanation p + p { margin-top: 12px; }
+.lavaggio-storefront .legal-warranty-explanation a,
+.lavaggio-storefront .legal-warranty-modal-footer a { color: #454b81; text-decoration: underline; }
 @media (max-width: 600px) {
     .legal-warranty-modal-header,
     .legal-warranty-modal-footer { padding: 12px; }

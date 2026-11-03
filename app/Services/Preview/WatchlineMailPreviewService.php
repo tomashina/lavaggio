@@ -7,6 +7,7 @@ use App\Models\Sales\ContractWithdrawal;
 use App\Models\Sales\GiftVoucher;
 use App\Models\Sales\Offer\CustomerOffer;
 use App\Models\Sales\Order\Order;
+use App\Services\Front\StoreSettingsService;
 use App\Support\Mail\StoreMailBrand;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -203,7 +204,9 @@ class WatchlineMailPreviewService
 
         return [
             'store_name' => StoreMailBrand::name(), 'logo_url' => StoreMailBrand::details()['logo'],
-            'legal_warranty' => ['enabled' => ! StoreMailBrand::isLavaggio(), 'email_enabled' => true, 'asset_url' => $this->exampleUrl(), 'eu_url' => $this->exampleUrl()],
+            'legal_warranty' => StoreMailBrand::isLavaggio()
+                ? app(StoreSettingsService::class)->legalWarranty()
+                : ['enabled' => true, 'email_enabled' => true, 'asset_url' => $this->exampleUrl(), 'eu_url' => $this->exampleUrl()],
             'order_number' => 'OGLEDNA-001', 'variant' => $key === 'order-admin' ? 'admin' : 'customer',
             'customer_name' => 'Ogledni kupac', 'customer_contact' => '', 'customer_email' => 'kupac@example.invalid',
             'customer_phone' => '+385 00 000 000', 'placed_at' => '25.10.2026. 10:00',

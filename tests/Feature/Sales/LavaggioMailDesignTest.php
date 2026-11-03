@@ -16,6 +16,7 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\MailManager;
 use Illuminate\Mail\Message;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -127,6 +128,47 @@ class LavaggioMailDesignTest extends TestCase
         $this->app->instance('env', 'production');
         $this->get('/preview/lavaggio-mail')->assertNotFound();
         $this->get('/preview/lavaggio-mail/order-customer')->assertNotFound();
+    }
+
+    public function test_customer_order_mail_includes_official_warranty_and_withdrawal_links_even_with_old_disabled_settings(): void
+    {
+        app(SystemSettingsService::class)->putMany([
+            'store_email_enabled' => true,
+            'store_email_orders_to' => 'narudzbe@example.invalid',
+            'store_legal_warranty_enabled' => false,
+            'store_legal_warranty_email_enabled' => false,
+        ]);
+        config(['mail.default' => 'array', 'mail.from.address' => 'shop@example.invalid']);
+        Mail::swap(new MailManager($this->app));
+        $transport = Mail::mailer()->getSymfonyTransport();
+        $this->mock(BankTransferUpiService::class)->shouldReceive('ensureForOrder')->once()->andReturn(null);
+        $order = new Order([
+            'order_number' => 'LAV-LEGAL-123', 'locale' => 'hr',
+            'customer_name' => 'Ogledni kupac', 'customer_email' => 'kupac@example.invalid',
+            'grand_total' => 25.50, 'currency_code' => 'EUR',
+        ]);
+        $order->setRelation('items', new Collection);
+
+        app(StoreNotificationService::class)->sendOrderNotification($order);
+
+        $messages = $transport->messages();
+        $this->assertCount(2, $messages);
+        $customerMail = $messages->last()->getOriginalMessage();
+        $this->assertSame('kupac@example.invalid', $customerMail->getTo()[0]->getAddress());
+        $html = $customerMail->getHtmlBody();
+        $warranty = app(StoreSettingsService::class)->legalWarranty();
+        $withdrawalUrl = route('returns.create', ['returnRequestSlug' => __('return_request.slug')]);
+        $this->assertStringContainsString('Za materijalne nedostatke robe odgovaramo najmanje dvije godine', $html);
+        $this->assertStringContainsString('href="'.$warranty['asset_url'].'"', $html);
+        $this->assertStringContainsString('href="'.$warranty['eu_url'].'"', $html);
+        $this->assertStringContainsString('href="'.$withdrawalUrl.'"', $html);
+        $this->assertStringContainsString('Razlog nije potrebno navesti.', $html);
+        $this->assertStringNotContainsString('jednostavan obrazac za raskid ugovora', $messages->first()->getOriginalMessage()->getHtmlBody());
+
+        $this->get('/preview/lavaggio-mail/order-customer')->assertOk()
+            ->assertSee($warranty['asset_url'], false)
+            ->assertSee($withdrawalUrl, false)
+            ->assertSee('najmanje dvije godine');
     }
 
     public function test_voucher_receipt_displays_the_square_qr_and_keeps_test_payment_warning(): void

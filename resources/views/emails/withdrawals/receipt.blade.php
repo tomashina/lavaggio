@@ -48,7 +48,9 @@
                     <tr><th>{{ __('return_request.mail.full_name') }}</th><td>{{ $withdrawal->full_name }}</td></tr>
                     <tr><th>{{ __('return_request.mail.email') }}</th><td>{{ $withdrawal->email }}</td></tr>
                     <tr><th>{{ __('return_request.mail.phone') }}</th><td>{{ $withdrawal->phone ?: '—' }}</td></tr>
-                    <tr><th>{{ __('return_request.mail.address') }}</th><td>{{ $withdrawal->address_line }}, {{ $withdrawal->postal_code }} {{ $withdrawal->city }}, {{ $withdrawal->country_code }}</td></tr>
+                    @if ($withdrawal->address_line !== '' || $withdrawal->postal_code !== '' || $withdrawal->city !== '' || $withdrawal->country_code !== '')
+                        <tr><th>{{ __('return_request.mail.address') }}</th><td>{{ implode(', ', array_filter([$withdrawal->address_line, trim($withdrawal->postal_code.' '.$withdrawal->city), $withdrawal->country_code])) }}</td></tr>
+                    @endif
                     <tr><th>{{ __('return_request.mail.order_number') }}</th><td>{{ $withdrawal->order_number }}</td></tr>
                     <tr><th>{{ __('return_request.mail.contract_date') }}</th><td>{{ $withdrawal->contract_date?->format('d.m.Y.') ?: '—' }}</td></tr>
                     <tr><th>{{ __('return_request.mail.received_date') }}</th><td>{{ $withdrawal->received_date?->format('d.m.Y.') ?: '—' }}</td></tr>
