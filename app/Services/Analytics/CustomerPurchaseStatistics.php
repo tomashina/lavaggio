@@ -79,7 +79,7 @@ class CustomerPurchaseStatistics
                     ->orWhereRaw("order_items.code LIKE ? ESCAPE '!'", [$term]));
             })
             ->select('order_items.product_id', 'order_items.product_option_value_id')
-            ->selectRaw($identity.' AS historical_identity')
+            ->selectRaw('MAX('.$identity.') AS historical_identity')
             ->selectRaw('MAX(order_items.name) AS name, MAX(order_items.sku) AS sku, MAX(order_items.code) AS code')
             ->selectRaw('SUM(order_items.quantity) AS quantity, COUNT(DISTINCT orders.id) AS order_count')
             // Both checkout and the legacy importer store line totals before tax.
@@ -145,7 +145,9 @@ class CustomerPurchaseStatistics
             ->leftJoin('user_profiles as purchase_profiles', 'purchase_profiles.user_id', '=', 'orders.user_id')
             ->leftJoinSub($billingCompanies, 'purchase_billing', 'purchase_billing.user_id', '=', 'orders.user_id')
             ->select('orders.user_id')
-            ->selectRaw($email.' AS guest_email, '.$anonymous.' AS anonymous_order_id')
+            // The identity expressions are constant within each group. Aggregate their
+            // selected values explicitly for MySQL/MariaDB ONLY_FULL_GROUP_BY.
+            ->selectRaw('MAX('.$email.') AS guest_email, MAX('.$anonymous.') AS anonymous_order_id')
             ->selectRaw("MAX(COALESCE(NULLIF(users.name, ''), orders.customer_name)) AS name, MAX(COALESCE(NULLIF(users.email, ''), orders.customer_email)) AS email, MAX(COALESCE(NULLIF(TRIM(purchase_accounts.company_name), ''), NULLIF(TRIM(purchase_profiles.company), ''), NULLIF(TRIM(purchase_billing.company), ''), NULLIF(TRIM(orders.billing_company), ''))) AS company")
             ->selectRaw('COUNT(*) AS order_count, SUM(orders.grand_total) AS order_value, AVG(orders.grand_total) AS average_order, SUM(orders.item_qty) AS items_sold')
             ->selectRaw('MIN(COALESCE(orders.placed_at, orders.created_at)) AS first_order_at, MAX(COALESCE(orders.placed_at, orders.created_at)) AS last_order_at')
