@@ -487,6 +487,7 @@ Route::middleware(['admin.locale', 'auth', 'verified', 'admin.access', 'admin.ma
             return view('admin.b2b-prices.edit', compact('rule'));
         })->name('b2b-prices.edit');
         Route::view('users', 'admin.users.index')->name('users');
+        Route::view('users/create', 'admin.users.create')->name('users.create');
         Route::get('users/statistics', CustomerStatisticsController::class)->name('users.statistics');
         Route::view('users/b2b', 'admin.users.b2b')->name('users.b2b');
         Route::view('users/newsletter', 'admin.users.newsletter')->name('users.newsletter');

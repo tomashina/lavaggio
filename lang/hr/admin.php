@@ -220,6 +220,9 @@ return [
         'slider_button_hint' => 'Gumb se prikazuje pri dnu slidea samo kada su upisani tekst i link.',
     ],
     'users' => [
+        'create' => 'Novi korisnik',
+        'name' => 'Ime i prezime',
+        'all_groups' => 'Sve grupe kupaca',
         'search_placeholder' => 'Ime ili e-mail kupca...',
         'customer_group' => 'Grupa kupaca',
         'advanced_filters' => 'Napredni filtri',

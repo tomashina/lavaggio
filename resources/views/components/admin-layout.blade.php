@@ -1276,7 +1276,7 @@
                         || auth()->user()->can('settings.api.manage')
                     );
                     $showSettingsApiMenu = ! $isLavaggioAdmin && $canManageApiSettings && $catalogUseApi;
-                    $usersListActive = request()->routeIs('admin.users') || request()->routeIs('admin.users.edit') || request()->routeIs('admin.users.show');
+                    $usersListActive = request()->routeIs('admin.users', 'admin.users.create', 'admin.users.edit', 'admin.users.show');
                     $usersB2BActive = request()->routeIs('admin.users.b2b');
                     $usersStatisticsActive = request()->routeIs('admin.users.statistics');
                     $usersGroupsActive = request()->routeIs('admin.users.groups*');

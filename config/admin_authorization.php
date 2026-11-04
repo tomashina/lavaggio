@@ -379,6 +379,10 @@ return [
         'admin.users.statistics' => [
             'view' => ['users.list.view'],
         ],
+        'admin.users.create' => [
+            'view' => ['users.profile.update'],
+            'mutate' => ['users.profile.update'],
+        ],
         'admin.users.edit' => [
             'view' => ['users.profile.update'],
             'mutate' => ['users.profile.update'],

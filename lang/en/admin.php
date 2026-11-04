@@ -219,6 +219,9 @@ return [
         'slider_button_hint' => 'The button appears at the bottom of the slide only when both the text and link are entered.',
     ],
     'users' => [
+        'create' => 'New user',
+        'name' => 'Full name',
+        'all_groups' => 'All customer groups',
         'search_placeholder' => 'Customer name or email...',
         'customer_group' => 'Customer group',
         'advanced_filters' => 'Advanced filters',

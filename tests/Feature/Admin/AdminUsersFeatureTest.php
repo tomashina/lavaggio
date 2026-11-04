@@ -44,40 +44,28 @@ class AdminUsersFeatureTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_lavaggio_advanced_filters_open_only_when_active_and_keep_customer_filtering_usable(): void
+    public function test_lavaggio_user_list_hides_commercialist_tools_while_other_stores_keep_them(): void
     {
         config(['storefront.home' => 'lavaggio']);
         $admin = $this->makeUserWithRole('admin');
-        $matching = $this->makeUserWithRole('customer');
-        $matching->profile()->create(['county' => 'Zagrebačka']);
-        $outside = $this->makeUserWithRole('customer');
-        $outside->profile()->create(['county' => 'Splitsko-dalmatinska']);
+        $this->makeUserWithRole('customer');
 
-        $details = function (string $html): \DOMElement {
-            $document = new \DOMDocument;
-            @$document->loadHTML('<?xml encoding="UTF-8">'.$html);
-            $element = $document->getElementById('user-advanced-filters');
-            $this->assertInstanceOf(\DOMElement::class, $element);
-
-            return $element;
-        };
-        $component = Livewire::actingAs($admin)->test(UserManager::class)
-            ->set('role', 'customer');
-        $this->assertFalse($details($component->html())->hasAttribute('open'));
-
-        $component->set('county', 'Zagreba')
-            ->assertViewHas('rows', fn ($rows) => $rows->pluck('id')->all() === [$matching->id])
-            ->assertSee(__('admin.users.active_filters', ['count' => 1]));
-        $this->assertTrue($details($component->html())->hasAttribute('open'));
-
-        $component->set('county', '')->assertSet('role', 'customer')
-            ->assertViewHas('rows', fn ($rows) => $rows->count() === 2);
-        $this->assertFalse($details($component->html())->hasAttribute('open'));
+        Livewire::actingAs($admin)->test(UserManager::class)
+            ->assertSeeHtml(route('admin.users.create'))
+            ->assertDontSeeHtml('id="user-advanced-filters"')
+            ->assertDontSeeHtml('wire:model.live="representative"')
+            ->assertDontSeeHtml('wire:model.live="county"')
+            ->assertDontSeeHtml('wire:model.live="visit"')
+            ->assertDontSeeHtml('wire:model.live="selectedCustomers"')
+            ->assertDontSeeHtml('wire:click="assignSelectedRepresentatives"')
+            ->assertDontSeeHtml('wire:click="assignSelectedSegments"');
 
         config(['storefront.home' => 'auto']);
         Livewire::actingAs($admin)->test(UserManager::class)
-            ->assertDontSeeHtml('id="user-advanced-filters"')
-            ->assertSeeHtml('wire:model.live="representative"');
+            ->assertSeeHtml('wire:model.live="representative"')
+            ->assertSeeHtml('wire:model.live="selectedCustomers"')
+            ->assertSeeHtml('wire:click="assignSelectedRepresentatives"')
+            ->assertSeeHtml('wire:click="assignSelectedSegments"');
     }
 
     public function test_privileged_admin_can_open_user_groups_and_activity_pages(): void

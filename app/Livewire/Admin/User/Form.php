@@ -19,7 +19,7 @@ use Silber\Bouncer\Database\Role;
 class Form extends Component
 {
     #[Locked]
-    public int $userId;
+    public ?int $userId = null;
 
     #[Url(as: 'tab', except: 'profile')]
     public string $tab = 'profile';
@@ -74,11 +74,17 @@ class Form extends Component
         ],
     ];
 
-    public function mount(int $userId): void
+    public function mount(?int $userId = null): void
     {
-        $this->authorizeAccess();
         $this->userId = $userId;
-        $this->loadUser();
+        $this->authorizeAccess();
+        if ($userId !== null) {
+            $this->loadUser();
+        } else {
+            $roles = $this->assignableRoles();
+            $this->form['role'] = (string) ($roles->firstWhere('name', 'customer')?->name ?? $roles->first()?->name ?? '');
+            $this->tab = 'profile';
+        }
         $this->switchTab($this->tab);
     }
 
@@ -87,6 +93,7 @@ class Form extends Component
         $this->authorizeAccess();
         abort_unless(in_array($tab, ['profile', 'pricing'], true), 404);
         if ($tab === 'pricing') {
+            abort_if($this->userId === null, 404);
             app(\App\Services\Pricing\PriceCatalogService::class)->authorize(auth()->user());
         }
         $this->tab = $tab;
@@ -95,9 +102,12 @@ class Form extends Component
     public function save()
     {
         $this->authorizeAccess();
-        $target = User::query()->with('roles')->findOrFail($this->userId);
-        $this->ensureCanManageTargetUser($target);
-        if (app(OrderManagerAccess::class)->isRestricted()) {
+        $isCreate = $this->userId === null;
+        $target = $isCreate ? null : User::query()->with('roles')->findOrFail($this->userId);
+        if ($target !== null) {
+            $this->ensureCanManageTargetUser($target);
+        }
+        if ($target !== null && app(OrderManagerAccess::class)->isRestricted()) {
             abort_if(
                 (string) $this->form['role'] !== $this->resolvePrimaryRoleName($target->roles)
                 || trim((string) $this->form['email']) !== $target->email
@@ -107,19 +117,27 @@ class Form extends Component
                 403
             );
         }
+        $this->form['name'] = trim((string) $this->form['name']);
+        $this->form['email'] = trim((string) $this->form['email']);
         $validated = $this->validate($this->rules());
         $payload = $validated['form'];
 
-        DB::transaction(function () use ($payload): void {
-            $user = User::query()
+        $savedId = DB::transaction(function () use ($payload, $isCreate): int {
+            $user = $isCreate ? new User : User::query()
                 ->with(['customerGroups:id,name'])
                 ->findOrFail($this->userId);
-            $this->ensureCanManageTargetUser($user);
+            if (! $isCreate) {
+                $this->ensureCanManageTargetUser($user);
+            }
 
             $user->name = trim((string) $payload['name']);
             $role = Role::query()->where('name', (string) $payload['role'])->firstOrFail();
             $canManageSecurity = ! app(OrderManagerAccess::class)->isRestricted();
             if ($canManageSecurity) {
+                if ($isCreate) {
+                    $user->account_type = $this->isStaffRole($role->name) ? 'staff' : 'customer';
+                    $user->admin_login_enabled = $user->account_type === 'staff';
+                }
                 if ($this->isStaffRole($role->name) && $user->account_type !== 'staff') {
                     $user->account_type = 'staff';
                     $user->admin_login_enabled = true;
@@ -141,11 +159,18 @@ class Form extends Component
             $profilePayload = $this->normalizeProfilePayload((array) ($payload['profile'] ?? []));
             $billingPayload = $this->normalizeAddressPayload((array) ($payload['billing_address'] ?? []));
             $shippingPayload = $this->normalizeAddressPayload((array) ($payload['shipping_address'] ?? []));
+            $hasShippingData = $this->hasAddressData($shippingPayload);
             $shippingPayload['company'] = $billingPayload['company'];
 
-            $user->profile()->updateOrCreate([], $profilePayload);
-            $this->upsertAddress($user, UserAddress::TYPE_BILLING, $billingPayload);
-            $this->upsertAddress($user, UserAddress::TYPE_SHIPPING, $shippingPayload);
+            if (! $isCreate || collect($profilePayload)->contains(static fn ($value): bool => $value !== null && $value !== false)) {
+                $user->profile()->updateOrCreate([], $profilePayload);
+            }
+            if (! $isCreate || $this->hasAddressData($billingPayload)) {
+                $this->upsertAddress($user, UserAddress::TYPE_BILLING, $billingPayload);
+            }
+            if (! $isCreate || $hasShippingData) {
+                $this->upsertAddress($user, UserAddress::TYPE_SHIPPING, $shippingPayload);
+            }
 
             $groupIds = collect((array) ($payload['customer_groups'] ?? []))
                 ->map(fn ($id): int => (int) $id)
@@ -166,7 +191,7 @@ class Form extends Component
             activity('admin_users')
                 ->performedOn($user)
                 ->causedBy(auth()->user())
-                ->event('updated')
+                ->event($isCreate ? 'created' : 'updated')
                 ->withProperties([
                     'role' => $role->name,
                     'email_verified' => (bool) $payload['email_verified'],
@@ -175,14 +200,19 @@ class Form extends Component
                     'billing_address' => $billingPayload,
                     'shipping_address' => $shippingPayload,
                 ])
-                ->log('Admin user updated');
+                ->log($isCreate ? 'Admin user created' : 'Admin user updated');
+
+            return $user->id;
         });
+        $this->userId = $savedId;
+        $this->form['password'] = '';
+        $this->form['password_confirmation'] = '';
 
         return redirect()
             ->route('admin.users')
             ->with('notify', [
                 'type' => 'success',
-                'message' => __('User updated.'),
+                'message' => $isCreate ? __('Korisnik je kreiran.') : __('User updated.'),
             ]);
     }
 
@@ -226,10 +256,13 @@ class Form extends Component
     public function render()
     {
         $this->authorizeAccess();
-        $this->ensureCanManageTargetUser(User::query()->findOrFail($this->userId));
+        if ($this->userId !== null) {
+            $this->ensureCanManageTargetUser(User::query()->findOrFail($this->userId));
+        }
 
         return view('livewire.admin.user.form', [
-            'canViewPricing' => (bool) (auth()->user()->isA('superadmin') || (auth()->user()->can('admin.access') && auth()->user()->can('catalog.b2b_prices.view'))),
+            'isCreate' => $this->userId === null,
+            'canViewPricing' => $this->userId !== null && (auth()->user()->isA('superadmin') || (auth()->user()->can('admin.access') && auth()->user()->can('catalog.b2b_prices.view'))),
             'canManageSecurity' => ! app(OrderManagerAccess::class)->isRestricted(),
             'roles' => $this->assignableRoles(),
             'customerGroups' => CustomerGroup::query()
@@ -245,7 +278,7 @@ class Form extends Component
      */
     private function rules(): array
     {
-        $accountType = User::query()->whereKey($this->userId)->value('account_type');
+        $accountType = $this->userId === null ? 'customer' : User::query()->whereKey($this->userId)->value('account_type');
         if (! app(OrderManagerAccess::class)->isRestricted() && $this->isStaffRole((string) $this->form['role'])) {
             $accountType = 'staff';
         }
@@ -255,7 +288,7 @@ class Form extends Component
             'form.email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->where('account_type', $accountType)->ignore($this->userId)],
             'form.role' => ['required', 'string', Rule::in($this->assignableRoleNames())],
             'form.email_verified' => ['boolean'],
-            'form.password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'form.password' => [$this->userId === null ? 'required' : 'nullable', 'string', 'min:8', 'confirmed'],
             'form.customer_groups' => ['array'],
             'form.customer_groups.*' => ['integer', Rule::exists('customer_groups', 'id')],
             'form.profile.first_name' => ['nullable', 'string', 'max:120'],
@@ -400,6 +433,12 @@ class Form extends Component
         );
     }
 
+    private function hasAddressData(array $payload): bool
+    {
+        return collect($payload)->except(['country_code', 'state', 'is_default'])
+            ->contains(static fn ($value): bool => $value !== null);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -434,6 +473,10 @@ class Form extends Component
             $user && (Bouncer::is($user)->an('superadmin') || $user->can('users.profile.update')),
             403
         );
+        if ($this->userId === null) {
+            abort_unless($user->isA('superadmin') || $user->can('admin.access'), 403);
+            abort_if(app(OrderManagerAccess::class)->isRestricted(), 403);
+        }
     }
 
     /**

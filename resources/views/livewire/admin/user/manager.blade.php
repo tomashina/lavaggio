@@ -2,17 +2,18 @@
     @php
         $isAssignedCustomerView = app(\App\Services\Admin\OrderManagerAccess::class)->isRestricted();
         $isLavaggioUserList = config('storefront.home') === 'lavaggio';
-        $advancedFilterCount = count(array_filter([
-            $representative, $city, $postalCode, $county, $customerType, $visit, $turnoverYear,
-            strtoupper($turnoverCurrency) !== 'EUR' ? $turnoverCurrency : '',
-        ], static fn ($value) => $value !== ''));
     @endphp
     <div class="admin-panel admin-search-panel p-6">
         <div class="{{ $isLavaggioUserList ? 'flex flex-col gap-4' : 'flex items-end justify-between gap-4' }}">
-            <div>
-                <h1 class="text-xl font-semibold tracking-tight">{{ $isAssignedCustomerView ? __('Moji kupci') : __('Users') }}</h1>
-                <p class="mt-1 text-sm text-slate-600">{{ $isAssignedCustomerView ? __('Prikazani su samo kupci koji su vam dodijeljeni. Za izradu narudžbe odaberite „Naruči za kupca”.') : __('User administration with role-based access and account controls.') }}</p>
-                <p class="mt-2 text-xs text-slate-500">{{ __('Items per page') }}: <span class="admin-chip">{{ $perPage }}</span></p>
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h1 class="text-xl font-semibold tracking-tight">{{ $isAssignedCustomerView ? __('Moji kupci') : __('Users') }}</h1>
+                    <p class="mt-1 text-sm text-slate-600">{{ $isAssignedCustomerView ? __('Prikazani su samo kupci koji su vam dodijeljeni. Za izradu narudžbe odaberite „Naruči za kupca”.') : __('User administration with role-based access and account controls.') }}</p>
+                    <p class="mt-2 text-xs text-slate-500">{{ __('Items per page') }}: <span class="admin-chip">{{ $perPage }}</span></p>
+                </div>
+                @if ($canCreate)
+                    <a href="{{ route('admin.users.create') }}" class="inline-flex shrink-0 items-center justify-center rounded-xl bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800">{{ __('admin.users.create') }}</a>
+                @endif
             </div>
 
             <div class="{{ $isLavaggioUserList ? 'w-full min-w-0' : 'flex w-[64rem] max-w-full items-end justify-end gap-3' }}">
@@ -39,7 +40,7 @@
                     <div>
                         <label for="user-list-group" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ $isLavaggioUserList ? __('admin.users.customer_group') : __('Segment') }}</label>
                         <select id="user-list-group" wire:model.live="segment" data-tom-select class="admin-select w-full rounded-xl border px-3 py-2 text-sm">
-                            <option value="">{{ __('All segments') }}</option>
+                            <option value="">{{ $isLavaggioUserList ? __('admin.users.all_groups') : __('All segments') }}</option>
                             @foreach ($segments as $segmentItem)
                                 <option value="{{ $segmentItem->id }}">{{ $segmentItem->name }}</option>
                             @endforeach
@@ -48,19 +49,8 @@
                 </div>
             </div>
         </div>
-        @if ($isLavaggioUserList)
-            <details id="user-advanced-filters" class="group mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4" @if ($advancedFilterCount > 0 || $errors->has('visitSince') || $errors->has('turnoverYear') || $errors->has('turnoverCurrency')) open @endif>
-                <summary class="flex cursor-pointer items-center justify-between gap-3 text-sm font-semibold text-slate-700">
-                    <span>{{ __('admin.users.advanced_filters') }}</span>
-                    <span class="flex items-center gap-2">
-                        @if ($advancedFilterCount > 0)
-                            <span class="admin-chip">{{ __('admin.users.active_filters', ['count' => $advancedFilterCount]) }}</span>
-                        @endif
-                        <svg class="h-4 w-4 shrink-0 transition group-open:rotate-180" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m5 7.5 5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                    </span>
-                </summary>
-        @endif
-        <div class="{{ $isLavaggioUserList ? 'mt-4' : 'mt-5' }} grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        @unless ($isLavaggioUserList)
+        <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <label class="text-xs font-semibold text-slate-500">{{ __('Komercijalist') }}<select wire:model.live="representative" class="admin-select mt-1 w-full rounded-lg border px-3 py-2 text-sm"><option value="">{{ __('Svi dostupni') }}</option>@if (! $isAssignedCustomerView)<option value="unassigned">{{ __('Bez komercijalista') }}</option>@endif @foreach ($representatives as $rep)<option value="{{ $rep->id }}">{{ $rep->name }}</option>@endforeach</select></label>
             <label class="text-xs font-semibold text-slate-500">{{ __('Mjesto') }}<input wire:model.live.debounce.300ms="city" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"></label>
             <label class="text-xs font-semibold text-slate-500">{{ __('Poštanski broj') }}<input wire:model.live.debounce.300ms="postalCode" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"></label>
@@ -72,9 +62,7 @@
             <label class="text-xs font-semibold text-slate-500">{{ __('Valuta prometa') }}<input maxlength="3" wire:model.live.debounce.500ms="turnoverCurrency" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm uppercase"></label>
             <div class="flex items-end"><a href="{{ route('admin.users.crm') }}" class="rounded-lg border px-3 py-2 text-sm font-semibold text-cyan-700">{{ __('CRM i izvještaj komercijalista') }}</a></div>
         </div>
-        @if ($isLavaggioUserList)
-            </details>
-        @endif
+        @endunless
     </div>
 
     @if ($canAssign || $canSegment)
@@ -99,7 +87,9 @@
 
     <div class="admin-panel admin-panel-soft p-5">
         <h2 class="admin-section-title">{{ __('admin.common.items') }}</h2>
-        <p class="mt-2 text-xs text-slate-500">{{ __('Promet je zbroj webshop narudžbi bez PDV-a i bez otkazanih narudžbi, u odabranoj valuti. Fakturirani ERP promet nije uključen.') }}</p>
+        @unless ($isLavaggioUserList)
+            <p class="mt-2 text-xs text-slate-500">{{ __('Promet je zbroj webshop narudžbi bez PDV-a i bez otkazanih narudžbi, u odabranoj valuti. Fakturirani ERP promet nije uključen.') }}</p>
+        @endunless
 
         <div class="mt-4 overflow-x-auto">
             <table class="admin-items-table min-w-full text-sm">
@@ -111,20 +101,22 @@
                                 {{ __('ID') }} <span class="text-xs">{{ $sortBy === 'id' ? ($sortDir === 'asc' ? '^' : 'v') : '<>' }}</span>
                             </button>
                         </th>
-                        <th class="px-3 py-2 text-left font-semibold">{{ __('Tvrtka / OIB') }}</th>
+                        @unless ($isLavaggioUserList)<th class="px-3 py-2 text-left font-semibold">{{ __('Tvrtka / OIB') }}</th>@endunless
                         <th class="px-3 py-2 text-left font-semibold">
                             <button type="button" wire:click="sort('name')" class="inline-flex items-center gap-1">
-                                {{ __('Kontakt') }} <span class="text-xs">{{ $sortBy === 'name' ? ($sortDir === 'asc' ? '^' : 'v') : '<>' }}</span>
+                                {{ $isLavaggioUserList ? __('admin.users.name') : __('Kontakt') }} <span class="text-xs">{{ $sortBy === 'name' ? ($sortDir === 'asc' ? '^' : 'v') : '<>' }}</span>
                             </button>
                             <span class="mx-1 text-slate-400">/</span>
                             <button type="button" wire:click="sort('email')" class="inline-flex items-center gap-1">
                                 {{ __('Email') }} <span class="text-xs">{{ $sortBy === 'email' ? ($sortDir === 'asc' ? '^' : 'v') : '<>' }}</span>
                             </button>
                         </th>
-                        <th class="px-3 py-2 text-left font-semibold">{{ __('Komercijalist / lokacija') }}</th>
-                        <th class="px-3 py-2 text-right font-semibold"><button type="button" wire:click="sort('webshop_turnover')">{{ __('Promet webshopa bez PDV-a') }} {{ $sortBy === 'webshop_turnover' ? ($sortDir === 'asc' ? '↑' : '↓') : '↕' }}</button></th>
+                        @unless ($isLavaggioUserList)
+                            <th class="px-3 py-2 text-left font-semibold">{{ __('Komercijalist / lokacija') }}</th>
+                            <th class="px-3 py-2 text-right font-semibold"><button type="button" wire:click="sort('webshop_turnover')">{{ __('Promet webshopa bez PDV-a') }} {{ $sortBy === 'webshop_turnover' ? ($sortDir === 'asc' ? '↑' : '↓') : '↕' }}</button></th>
+                        @endunless
                         <th class="px-3 py-2 text-center font-semibold">{{ __('Role') }}</th>
-                        <th class="px-3 py-2 text-center font-semibold">{{ __('Segments') }}</th>
+                        @unless ($isLavaggioUserList)<th class="px-3 py-2 text-center font-semibold">{{ __('Segments') }}</th>@endunless
                         @if ($loyaltyEnabled)
                             <th class="px-3 py-2 text-center font-semibold">{{ __('Loyalty') }}</th>
                         @endif
@@ -159,18 +151,25 @@
                         <tr>
                             @if ($canAssign || $canSegment)<td class="px-3 py-2">@if ($row->account_type === 'customer' && ! $row->can('admin.access') && ! $row->isA('superadmin', 'admin', 'editor', 'order_manager'))<input type="checkbox" wire:model.live="selectedCustomers" value="{{ $row->id }}" aria-label="{{ __('Odaberi kupca') }} {{ $company ?: $row->name }}">@endif</td>@endif
                             <td class="px-3 py-2 text-center font-mono text-xs text-slate-700">{{ $row->id }}</td>
+                            @unless ($isLavaggioUserList)
                             <td class="px-3 py-2 text-slate-800" style="min-width: 15rem;">
                                 <a href="{{ route('admin.users.show', ['user' => $row->id]) }}" class="font-semibold text-slate-900 hover:text-cyan-700">{{ $row->customerDisplayName() }}</a>
                                 <div class="mt-1 font-mono text-xs text-slate-600">{{ __('OIB') }}: {{ $oib ?: '—' }}</div>
                                 <span class="inline-flex rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{{ $row->commerceCustomerType() }}</span>
                             </td>
+                            @endunless
                             <td class="px-3 py-2 text-slate-700">
-                                <div class="font-medium">{{ $row->name }}</div>
+                                @if ($isLavaggioUserList)
+                                    <a href="{{ route('admin.users.show', ['user' => $row->id]) }}" class="font-semibold text-slate-900 hover:text-cyan-700">{{ $row->name }}</a>
+                                @else
+                                    <div class="font-medium">{{ $row->name }}</div>
+                                @endif
                                 <div class="mt-1 text-xs text-slate-500">{{ $row->email }}</div>
                                 @if ($isCurrent)
                                     <div class="text-xs text-cyan-700">{{ __('Current user') }}</div>
                                 @endif
                             </td>
+                            @unless ($isLavaggioUserList)
                             <td class="px-3 py-2 text-xs text-slate-600">
                                 <div class="font-semibold text-slate-800">{{ $row->salesRepresentatives->pluck('name')->join(', ') ?: '—' }}</div>
                                 <div class="mt-1">{{ $row->b2bAccount?->postal_code ?: $billing?->postal_code }} {{ $row->b2bAccount?->city ?: $billing?->city }}</div>
@@ -178,9 +177,11 @@
                                 @if ($row->profile?->customer_type)<div class="mt-1 text-cyan-700">{{ $row->profile->customer_type }}</div>@endif
                             </td>
                             <td class="px-3 py-2 text-right text-xs font-semibold text-slate-700">{{ \App\Support\Currency::format((float) $row->webshop_turnover, strtoupper($turnoverCurrency)) }}</td>
+                            @endunless
                             <td class="px-3 py-2 text-center">
                                 <span class="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700">{{ $roleTitle }}</span>
                             </td>
+                            @unless ($isLavaggioUserList)
                             <td class="px-3 py-2 text-center">
                                 <div class="flex flex-wrap items-center justify-center gap-1.5">
                                     @forelse ($row->customerGroups as $group)
@@ -190,6 +191,7 @@
                                     @endforelse
                                 </div>
                             </td>
+                            @endunless
                             @if ($loyaltyEnabled)
                                 <td class="px-3 py-2 text-center">
                                     @if ((bool) ($row->loyalty_available ?? false))
@@ -226,7 +228,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ ($loyaltyEnabled ? 11 : 10) + (($canAssign || $canSegment) ? 1 : 0) }}" class="px-3 py-8 text-center text-sm text-slate-500">{{ $isAssignedCustomerView ? __('Nema dodijeljenih kupaca koji odgovaraju pretrazi.') : __('No users found.') }}</td>
+                            <td colspan="{{ ($isLavaggioUserList ? 6 : 10) + ($loyaltyEnabled ? 1 : 0) + (($canAssign || $canSegment) ? 1 : 0) }}" class="px-3 py-8 text-center text-sm text-slate-500">{{ $isAssignedCustomerView ? __('Nema dodijeljenih kupaca koji odgovaraju pretrazi.') : __('No users found.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>

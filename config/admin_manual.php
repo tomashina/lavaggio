@@ -804,10 +804,11 @@ return [
                     'id' => 'lista-korisnika',
                     'title' => 'Lista korisnika',
                     'route' => 'admin.users',
-                    'route_patterns' => ['admin.users', 'admin.users.show', 'admin.users.edit'],
+                    'route_patterns' => ['admin.users', 'admin.users.create', 'admin.users.show', 'admin.users.edit'],
                     'ability' => 'users.list.view',
                     'purpose' => 'Pretraga i pregled korisničkih računa, profila, adresa, grupa, narudžbi, aktivnosti i B2B podataka.',
                     'steps' => [
+                        'Za novi račun odaberite Novi korisnik, upišite ime i e-poštu, odaberite ulogu i postavite početnu lozinku.',
                         'Pronađite korisnika po imenu, e-pošti ili drugom dostupnom filtru.',
                         'Otvorite pregled računa i provjerite uloge, grupe, adrese i nedavne narudžbe.',
                         'U uređivanju promijenite samo potvrđene podatke profila i adresa.',

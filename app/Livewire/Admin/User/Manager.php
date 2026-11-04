@@ -60,6 +60,9 @@ class Manager extends Component
     public function mount(): void
     {
         $this->authorizeAccess();
+        if ($this->isLavaggioList()) {
+            return;
+        }
         $this->visit = in_array(request()->query('visit'), ['visited', 'unvisited'], true) ? request()->query('visit') : '';
         $this->visitSince = request()->query('visitSince', now()->subDays(60)->format('Y-m-d'));
         $this->representative = ctype_digit((string) request()->query('representative', '')) ? (string) request()->query('representative') : '';
@@ -82,7 +85,10 @@ class Manager extends Component
 
     public function sort(string $field): void
     {
-        $allowed = ['id', 'name', 'email', 'email_verified_at', 'created_at', 'webshop_turnover'];
+        $allowed = ['id', 'name', 'email', 'email_verified_at', 'created_at'];
+        if (! $this->isLavaggioList()) {
+            $allowed[] = 'webshop_turnover';
+        }
         if (! in_array($field, $allowed, true)) {
             return;
         }
@@ -107,6 +113,7 @@ class Manager extends Component
     public function assignSelectedRepresentatives(): void
     {
         $this->authorizeAccess();
+        abort_if($this->isLavaggioList(), 403);
         $this->validate(['selectedCustomers' => ['required', 'array', 'min:1'], 'bulkRepresentative' => ['required', 'integer', 'min:1']]);
         app(CustomerManagementService::class)->assignRepresentatives($this->selectedCustomers, [(int) $this->bulkRepresentative], auth()->user());
         $this->selectedCustomers = [];
@@ -116,6 +123,7 @@ class Manager extends Component
     public function assignSelectedSegments(): void
     {
         $this->authorizeAccess();
+        abort_if($this->isLavaggioList(), 403);
         $this->validate(['selectedCustomers' => ['required', 'array', 'min:1'], 'bulkSegment' => ['required', 'integer', 'min:1'], 'segmentMode' => ['required', 'in:add,remove']]);
         app(CustomerManagementService::class)->assignBusinessSegments($this->selectedCustomers, [(int) $this->bulkSegment], $this->segmentMode, auth()->user());
         $this->selectedCustomers = [];
@@ -125,6 +133,12 @@ class Manager extends Component
     public function render()
     {
         $this->authorizeAccess();
+        if ($this->isLavaggioList()) {
+            $this->reset('representative', 'city', 'postalCode', 'county', 'customerType', 'visit', 'visitSince', 'turnoverCurrency', 'turnoverYear', 'selectedCustomers', 'bulkRepresentative', 'bulkSegment', 'segmentMode');
+            if ($this->sortBy === 'webshop_turnover') {
+                $this->sortBy = 'created_at';
+            }
+        }
         $this->validate([
             'visitSince' => ['nullable', 'date'], 'visit' => ['nullable', 'in:visited,unvisited'],
             'turnoverCurrency' => ['required', 'string', 'size:3'], 'turnoverYear' => ['nullable', 'digits:4', 'integer', 'min:1900', 'max:2200'],
@@ -144,7 +158,7 @@ class Manager extends Component
         $loyaltyEnabled = $loyaltyService->enabled();
 
         $rowsQuery = app(OrderManagerAccess::class)->scopeCustomers(User::query())
-            ->select('users.*')->addSelect(['webshop_turnover' => $turnover])->with([
+            ->select('users.*')->when(! $this->isLavaggioList(), fn (Builder $query) => $query->addSelect(['webshop_turnover' => $turnover]))->with([
                 'salesRepresentatives:id,name',
                 'roles:id,name,title',
                 'customerGroups:id,name,is_active',
@@ -242,12 +256,19 @@ class Manager extends Component
             'segments' => $segments,
             'perPage' => $perPage,
             'loyaltyEnabled' => $loyaltyEnabled,
-            'representatives' => app(CustomerManagementService::class)->representatives()->when(app(OrderManagerAccess::class)->isRestricted(), fn ($query) => $query->whereKey(auth()->id()))->orderBy('name')->get(['id', 'name']),
-            'businessSegments' => CustomerGroup::query()->businessSegments()->where('is_active', true)->orderBy('name')->get(),
-            'customerTypes' => \App\Models\User\UserProfile::query()->whereIn('user_id', app(OrderManagerAccess::class)->scopeCustomers(User::query())->select('users.id'))->whereNotNull('customer_type')->where('customer_type', '!=', '')->distinct()->orderBy('customer_type')->pluck('customer_type'),
-            'canAssign' => app(CustomerManagementService::class)->canManageAssignments(),
-            'canSegment' => auth()->user()->isA('superadmin') || auth()->user()->can('users.groups.manage'),
+            'representatives' => $this->isLavaggioList() ? collect() : app(CustomerManagementService::class)->representatives()->when(app(OrderManagerAccess::class)->isRestricted(), fn ($query) => $query->whereKey(auth()->id()))->orderBy('name')->get(['id', 'name']),
+            'businessSegments' => $this->isLavaggioList() ? collect() : CustomerGroup::query()->businessSegments()->where('is_active', true)->orderBy('name')->get(),
+            'customerTypes' => $this->isLavaggioList() ? collect() : \App\Models\User\UserProfile::query()->whereIn('user_id', app(OrderManagerAccess::class)->scopeCustomers(User::query())->select('users.id'))->whereNotNull('customer_type')->where('customer_type', '!=', '')->distinct()->orderBy('customer_type')->pluck('customer_type'),
+            'canAssign' => ! $this->isLavaggioList() && app(CustomerManagementService::class)->canManageAssignments(),
+            'canSegment' => ! $this->isLavaggioList() && (auth()->user()->isA('superadmin') || auth()->user()->can('users.groups.manage')),
+            'canCreate' => ! app(OrderManagerAccess::class)->isRestricted()
+                && (auth()->user()->isA('superadmin') || (auth()->user()->can('admin.access') && auth()->user()->can('users.profile.update'))),
         ]);
+    }
+
+    private function isLavaggioList(): bool
+    {
+        return config('storefront.home') === 'lavaggio';
     }
 
     private function filterLocation(Builder $query, string $field, string $value): void
