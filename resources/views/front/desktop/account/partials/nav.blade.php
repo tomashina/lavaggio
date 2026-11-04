@@ -25,13 +25,16 @@
             'url' => route('account.profile'),
             'active' => $current === 'profile',
         ],
-        [
+    ];
+
+    if (config('storefront.home') !== 'lavaggio') {
+        $items[] = [
             'key' => 'customer_offers',
             'label' => __('herrera_resources.offers'),
             'url' => route('account.customer-offers.index'),
             'active' => $current === 'customer_offers',
-        ],
-    ];
+        ];
+    }
 
     $items[] = ['key' => 'statistics', 'label' => __('Moja statistika kupnje'), 'url' => route('account.statistics'), 'active' => $current === 'statistics'];
 

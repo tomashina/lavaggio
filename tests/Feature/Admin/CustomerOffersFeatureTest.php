@@ -191,6 +191,29 @@ class CustomerOffersFeatureTest extends TestCase
         $this->assertPdfLayoutDoesNotOverlap($this->pdfLayout($offer), [1 => 4, 2 => 4], 3);
     }
 
+    public function test_lavaggio_account_hides_customer_offers_and_disables_the_list_and_pdf(): void
+    {
+        [$buyer] = $this->buyer();
+        $offer = app(CustomerOfferService::class)->saveDraft($this->input($buyer, $this->product()), $this->staff());
+        $offer->update(['status' => 'sent', 'sent_at' => now()]);
+        config(['storefront.home' => 'lavaggio', 'commerce.b2c_only' => true]);
+        $this->actingAs($buyer);
+
+        foreach (['Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile'] as $userAgent) {
+            $this->withHeaders(['User-Agent' => $userAgent]);
+            foreach (['account.dashboard', 'account.orders', 'account.profile', 'account.statistics'] as $route) {
+                $this->get(route($route))->assertOk()
+                    ->assertDontSee('href="'.route('account.customer-offers.index').'"', false)
+                    ->assertSee('href="'.route('account.orders').'"', false)
+                    ->assertSee('href="'.route('account.profile').'"', false);
+            }
+        }
+
+        $this->get(route('account.customer-offers.index'))->assertNotFound();
+        $this->get(route('account.customer-offers.pdf', $offer))->assertNotFound();
+        $this->assertDatabaseHas('customer_offers', ['id' => $offer->id, 'status' => 'sent']);
+    }
+
     public function test_explicit_send_attaches_pdf_once_locks_snapshot_and_only_owner_sees_it(): void
     {
         Mail::fake();

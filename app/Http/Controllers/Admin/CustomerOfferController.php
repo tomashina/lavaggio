@@ -138,6 +138,8 @@ class CustomerOfferController extends Controller
 
     public function buyerIndex(Request $request): View
     {
+        abort_if(config('storefront.home') === 'lavaggio', 404);
+
         $offers = CustomerOffer::query()->where('customer_user_id', $request->user()->id)->where('status', 'sent')->latest('sent_at')->paginate(20);
 
         return view('front.desktop.account.customer-offers', compact('offers'));
@@ -145,6 +147,8 @@ class CustomerOfferController extends Controller
 
     public function buyerPdf(Request $request, CustomerOffer $offer, CustomerOfferPdf $pdf): Response
     {
+        abort_if(config('storefront.home') === 'lavaggio', 404);
+
         $this->access->assertBuyer($offer, $request->user());
 
         return $this->pdfResponse($offer, $pdf, $request->boolean('download'));
