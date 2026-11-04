@@ -4,6 +4,10 @@ namespace App\Livewire\Admin\Content\Page;
 
 use App\Models\Content\Page\InfoPage;
 use App\Services\Settings\SystemSettingsService;
+use App\Support\Content\InfoPageHierarchy;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -13,6 +17,7 @@ class Manager extends Component
     use WithPagination;
 
     public string $search = '';
+
     public string $locale = 'en';
 
     public function mount(): void
@@ -35,6 +40,7 @@ class Manager extends Component
         $page = InfoPage::query()->find($pageId);
         if (! $page) {
             $this->dispatch('notify', type: 'danger', message: __('admin.content.pages.manager.notify_not_found'));
+
             return;
         }
 
@@ -57,28 +63,54 @@ class Manager extends Component
             200
         );
 
-        $rows = InfoPage::query()
+        $query = InfoPage::query()
             ->withCount('categories')
             ->with([
-                'translations' => fn ($q) => $q->where('locale', $this->locale),
+                'translations' => fn ($q) => $q->where('locale', $this->locale)
+                    ->select(['id', 'page_id', 'locale', 'title', 'slug']),
             ])
-            ->when($this->search !== '', function ($query): void {
-                $query->where(function ($q): void {
-                    $q->where('code', 'like', '%'.$this->search.'%')
-                        ->orWhere('layout', 'like', '%'.$this->search.'%')
-                        ->orWhereHas('translations', function ($tq): void {
-                            $tq->where('title', 'like', '%'.$this->search.'%')
-                                ->orWhere('slug', 'like', '%'.$this->search.'%');
-                        });
-                });
-            })
             ->orderBy('sort_order')
-            ->orderByDesc('id')
-            ->paginate($perPage);
+            ->orderByDesc('id');
+
+        $pageHierarchy = [];
+        if (config('storefront.home') === 'lavaggio') {
+            $tree = app(InfoPageHierarchy::class)->build($query->get());
+            $pageHierarchy = $tree['context'];
+            $ordered = $tree['pages'];
+            if ($this->search !== '') {
+                $matchingIds = $this->applySearch(InfoPage::query())->pluck('id');
+                $ordered = $ordered->whereIn('id', $matchingIds)->values();
+            }
+
+            $rows = new LengthAwarePaginator(
+                $ordered->forPage($this->getPage(), $perPage)->values(),
+                $ordered->count(),
+                $perPage,
+                $this->getPage(),
+                ['path' => Paginator::resolveCurrentPath(), 'pageName' => 'page']
+            );
+        } else {
+            $rows = $this->applySearch($query)->paginate($perPage);
+        }
 
         return view('livewire.admin.content.page.manager', [
             'rows' => $rows,
             'perPage' => $perPage,
+            'pageHierarchy' => $pageHierarchy,
         ]);
+    }
+
+    private function applySearch(Builder $query): Builder
+    {
+        return $query->when($this->search !== '', function ($query): void {
+            $query->where(function ($q): void {
+                $q->where('code', 'like', '%'.$this->search.'%')
+                    ->orWhere('layout', 'like', '%'.$this->search.'%')
+                    ->orWhereHas('translations', function ($tq): void {
+                        $tq->where('title', 'like', '%'.$this->search.'%')
+                            ->orWhere('slug', 'like', '%'.$this->search.'%');
+                    });
+            });
+        });
     }
 }

@@ -191,6 +191,8 @@ return [
             'manager' => [
                 'title' => 'Info Pages',
                 'subtitle' => 'Manage static/information pages with locale slugs.',
+                'hierarchy_hint' => 'Subpages are listed below their parent. The parent path also provides context in search results.',
+                'parent_path' => 'Parent pages: :path',
                 'items_per_page' => 'Items per page',
                 'search_placeholder' => 'Code, title or slug...',
                 'table' => [

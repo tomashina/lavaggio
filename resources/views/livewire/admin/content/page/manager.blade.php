@@ -44,6 +44,9 @@
 
     <div class="admin-panel admin-panel-soft p-5">
         <h2 class="admin-section-title">{{ __('admin.common.items') }}</h2>
+        @if ($pageHierarchy !== [])
+            <p class="mt-2 text-xs text-slate-500">{{ __('admin.content.pages.manager.hierarchy_hint') }}</p>
+        @endif
 
         <div class="mt-4 overflow-x-auto">
             <table class="admin-items-table min-w-full text-sm">
@@ -59,11 +62,22 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($rows as $row)
-                        @php $tr = $row->translations->first(); @endphp
-                        <tr>
+                        @php
+                            $tr = $row->translations->first();
+                            $node = $pageHierarchy[$row->id] ?? null;
+                        @endphp
+                        <tr wire:key="info-page-{{ $row->id }}">
                             <td class="px-3 py-2 text-slate-800">
-                                <div class="font-medium">{{ $tr?->title ?? __('admin.content.pages.manager.missing_title') }}</div>
-                                <div class="text-xs text-slate-500">{{ $row->code }}</div>
+                                <div @if ($node) style="padding-left: {{ min($node['depth'], 6) * 1.25 }}rem" data-page-depth="{{ $node['depth'] }}" @endif>
+                                    <div class="{{ $node && $node['depth'] === 0 ? 'font-semibold' : 'font-medium' }}">
+                                        @if ($node && $node['depth'] > 0)<span aria-hidden="true" class="mr-1 text-slate-400">↳</span>@endif
+                                        {{ $tr?->title ?? __('admin.content.pages.manager.missing_title') }}
+                                    </div>
+                                    <div class="text-xs text-slate-500">{{ $row->code }}</div>
+                                    @if ($node && $node['path'] !== '')
+                                        <div class="mt-1 text-xs text-slate-500">{{ __('admin.content.pages.manager.parent_path', ['path' => $node['path']]) }}</div>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-3 py-2 font-mono text-xs text-slate-700">{{ $tr?->slug ?? '-' }}</td>
                             <td class="px-3 py-2 text-center text-slate-700">{{ $row->layout }}</td>

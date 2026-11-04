@@ -192,6 +192,8 @@ return [
             'manager' => [
                 'title' => 'Info stranice',
                 'subtitle' => 'Upravljanje statičnim/informativnim stranicama po jeziku.',
+                'hierarchy_hint' => 'Podstranice su poredane ispod nadređene stranice. Putanja prikazuje gdje pripadaju i u rezultatima pretrage.',
+                'parent_path' => 'Nadređene stranice: :path',
                 'items_per_page' => 'Stavki po stranici',
                 'search_placeholder' => 'Kod, naslov ili slug...',
                 'table' => [
