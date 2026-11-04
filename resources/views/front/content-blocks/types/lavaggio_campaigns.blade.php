@@ -6,7 +6,6 @@
 @php
     $settings = \App\Support\WatchlineWidgetSettings::forBlock($block, $translation);
     $mainImage = $settings['main_image'];
-    $catalogueImages = $settings['photo_layout'] === 'products';
 @endphp
 <section class="lavaggio-widget-hero lavaggio-widget-hero--photographic" aria-labelledby="lavaggio-hero-{{ $block->id }}">
     <article class="lavaggio-widget-hero__main">
@@ -20,15 +19,8 @@
             @if(filled($translation?->cta_label) && filled($settings['cta_url'] ?? ''))<a class="lavaggio-widget-button" href="{{ $settings['cta_url'] }}">{{ $translation->cta_label }} <x-fa-icon name="arrow-right" /></a>@endif
         </div>
         @if(filled($mainImage))
-            <div @class(['lavaggio-widget-hero__photographs', 'lavaggio-widget-hero__photographs--single' => ! $catalogueImages])>
-                <img class="lavaggio-widget-hero__product lavaggio-widget-hero__product--main" src="{{ $mainImage }}" alt="{{ $settings['main_image_alt'] }}" width="480" height="911" fetchpriority="high" decoding="async">
-                @if($catalogueImages)
-                    @foreach(['secondary', 'tertiary'] as $productPhoto)
-                        @if(filled($settings['main_'.$productPhoto.'_image']))
-                            <img class="lavaggio-widget-hero__product lavaggio-widget-hero__product--{{ $productPhoto }}" src="{{ $settings['main_'.$productPhoto.'_image'] }}" alt="{{ $settings['main_'.$productPhoto.'_image_alt'] }}" width="480" height="{{ $productPhoto === 'secondary' ? 1249 : 1058 }}" decoding="async">
-                        @endif
-                    @endforeach
-                @endif
+            <div class="lavaggio-widget-hero__photographs lavaggio-widget-hero__photographs--single">
+                <img class="lavaggio-widget-hero__product lavaggio-widget-hero__product--main" src="{{ $mainImage }}" alt="{{ $settings['main_image_alt'] }}" width="1000" height="930" fetchpriority="high" decoding="async">
             </div>
         @endif
     </article>

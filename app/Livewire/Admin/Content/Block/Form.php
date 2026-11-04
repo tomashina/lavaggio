@@ -521,9 +521,16 @@ class Form extends Component
 
         if ($isWatchlineWidget) {
             $type = (string) $validated['form']['type'];
-            $translationPayload['watchline'] = array_intersect_key(
-                array_replace(WatchlineWidgetSettings::defaults($type), (array) ($validated['form']['watchline'] ?? [])),
-                WatchlineWidgetSettings::fields($type),
+            $retainedCampaignSettings = $type === 'lavaggio_campaigns'
+                ? array_intersect_key((array) ($translationPayload['watchline'] ?? []), array_flip([
+                    'photo_layout', 'main_secondary_image', 'main_secondary_image_alt', 'main_tertiary_image', 'main_tertiary_image_alt',
+                ])) : [];
+            $translationPayload['watchline'] = array_replace(
+                $retainedCampaignSettings,
+                array_intersect_key(
+                    array_replace(WatchlineWidgetSettings::defaults($type), (array) ($validated['form']['watchline'] ?? [])),
+                    WatchlineWidgetSettings::fields($type),
+                ),
             );
             foreach (WatchlineWidgetSettings::fields($type) as $key => $field) {
                 if (in_array($field['type'] ?? '', ['categories', 'manufacturers'], true)) {

@@ -61,33 +61,13 @@ body.lavaggio-storefront .lavaggio-widget-hero--photographic .lavaggio-widget-he
 }
 body.lavaggio-storefront .lavaggio-widget-hero--photographic .lavaggio-widget-hero__product {
     position: absolute;
-    bottom: 15px;
+    inset: 0;
     display: block;
-    max-width: none;
-    object-fit: contain;
-    object-position: center bottom;
-}
-body.lavaggio-storefront .lavaggio-widget-hero--photographic .lavaggio-widget-hero__product--main {
-    z-index: 1;
-    left: 0;
-    width: 44%;
-    height: 96%;
-}
-body.lavaggio-storefront .lavaggio-widget-hero--photographic .lavaggio-widget-hero__product--secondary {
-    right: 27%;
-    width: 29%;
-    height: 81%;
-}
-body.lavaggio-storefront .lavaggio-widget-hero--photographic .lavaggio-widget-hero__product--tertiary {
-    z-index: 2;
-    left: 73%;
-    width: 27%;
-    height: 62%;
-}
-body.lavaggio-storefront .lavaggio-widget-hero--photographic .lavaggio-widget-hero__photographs--single .lavaggio-widget-hero__product--main {
     width: 100%;
     height: 100%;
-    bottom: 0;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: center bottom;
 }
 body.lavaggio-storefront .lavaggio-widget-hero--photographic .lavaggio-widget-hero__service {
     display: grid;

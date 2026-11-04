@@ -11,6 +11,8 @@ use App\Models\Content\ContentBlockSlot;
 use App\Models\User;
 use App\Support\WatchlineWidgetSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Silber\Bouncer\BouncerFacade as Bouncer;
 use Tests\TestCase;
@@ -114,37 +116,49 @@ class LavaggioHomepageWidgetsTest extends TestCase
             ->assertSeeLivewire(MediaManager::class);
     }
 
-    public function test_campaign_editor_and_home_use_the_same_replacement_for_the_retired_montage(): void
+    public function test_campaign_editor_and_home_use_one_banner_for_both_retired_default_images(): void
     {
         $this->artisan('lavaggio:configure-home')->assertSuccessful();
         $campaign = ContentBlock::where('code', 'lavaggio-home-campaigns')->sole();
         $translation = $campaign->translations()->sole();
-        $payload = $translation->payload;
-        unset($payload['watchline']['photo_layout']);
-        $payload['watchline']['main_image'] = '/assets/lavaggio/home/lavaggio-product-group-v1.webp';
-        $payload['watchline']['main_image_alt'] = 'Odabrani deterdženti i proizvodi za njegu rublja iz Lavaggio ponude';
-        $payload['watchline']['service_icon'] = 'shirt';
-        $payload['watchline']['self_icon'] = 'washing-machine';
-        $translation->update(['payload' => $payload]);
         $defaults = WatchlineWidgetSettings::defaults('lavaggio_campaigns');
+        $this->assertSame('/assets/lavaggio/home/products/laundry-care-group.svg', $defaults['main_image']);
+        foreach ([
+            '/assets/lavaggio/home/lavaggio-product-group-v1.webp' => 'Odabrani deterdženti i proizvodi za njegu rublja iz Lavaggio ponude',
+            '/assets/lavaggio/home/products/ariel-sensitive.webp' => 'Ariel Sensitive tekući deterdžent za rublje',
+        ] as $source => $description) {
+            $payload = $translation->fresh()->payload;
+            $payload['watchline']['main_image'] = $source;
+            $payload['watchline']['main_image_alt'] = $description;
+            $payload['watchline']['service_icon'] = 'shirt';
+            $payload['watchline']['self_icon'] = 'washing-machine';
+            $translation->update(['payload' => $payload]);
 
-        Livewire::actingAs($this->admin())->test(Form::class, ['blockId' => $campaign->id])
-            ->assertSet('form.watchline.main_image', $defaults['main_image'])
-            ->assertSet('form.watchline.main_image_alt', $defaults['main_image_alt'])
-            ->assertSet('form.watchline.photo_layout', 'products')
-            ->assertSee('src="'.$defaults['main_image'].'"', false)
-            ->assertDontSee('id="watchline-field-service_icon"', false)
-            ->assertDontSee('id="watchline-field-self_icon"', false)
-            ->call('save')->assertHasNoErrors();
+            Livewire::actingAs($this->admin())->test(Form::class, ['blockId' => $campaign->id])
+                ->assertSet('form.watchline.main_image', $defaults['main_image'])
+                ->assertSet('form.watchline.main_image_alt', $defaults['main_image_alt'])
+                ->assertSee('src="'.$defaults['main_image'].'"', false)
+                ->assertSee('id="watchline-field-main_image"', false)
+                ->assertSee('id="watchline-field-main_image_alt"', false)
+                ->assertDontSee('id="watchline-field-photo_layout"', false)
+                ->assertDontSee('id="watchline-field-main_secondary_image"', false)
+                ->assertDontSee('id="watchline-field-main_tertiary_image"', false)
+                ->assertDontSee('id="watchline-field-service_icon"', false)
+                ->assertDontSee('id="watchline-field-self_icon"', false)
+                ->call('save')->assertHasNoErrors();
 
-        $saved = $translation->fresh()->payload['watchline'];
-        $this->assertSame($defaults['main_image'], $saved['main_image']);
-        $this->assertSame($defaults['main_image_alt'], $saved['main_image_alt']);
-        $this->assertArrayNotHasKey('service_icon', $saved);
-        $this->assertArrayNotHasKey('self_icon', $saved);
-        $this->get('/')->assertOk()
-            ->assertSee('src="'.$defaults['main_image'].'" alt="'.$defaults['main_image_alt'].'"', false)
-            ->assertDontSee('/assets/lavaggio/home/lavaggio-product-group-v1.webp');
+            $saved = $translation->fresh()->payload['watchline'];
+            $this->assertSame($defaults['main_image'], $saved['main_image']);
+            $this->assertSame($defaults['main_image_alt'], $saved['main_image_alt']);
+            $this->assertArrayNotHasKey('service_icon', $saved);
+            $this->assertArrayNotHasKey('self_icon', $saved);
+            $html = $this->get('/')->assertOk()
+                ->assertSee('src="'.$defaults['main_image'].'" alt="'.$defaults['main_image_alt'].'"', false)
+                ->assertDontSee($source)->getContent();
+            $this->assertSame(1, substr_count($html, 'class="lavaggio-widget-hero__product lavaggio-widget-hero__product--main"'));
+            $this->assertStringNotContainsString('lavaggio-widget-hero__product--secondary', $html);
+            $this->assertStringNotContainsString('lavaggio-widget-hero__product--tertiary', $html);
+        }
     }
 
     public function test_retired_campaign_image_normalization_preserves_a_custom_description_when_saved(): void
@@ -171,23 +185,24 @@ class LavaggioHomepageWidgetsTest extends TestCase
             ->assertSee('src="'.$mainImage.'" alt="Naš odabrani proizvod za nježno pranje"', false);
     }
 
-    public function test_campaign_without_saved_layout_preserves_a_custom_single_image(): void
+    public function test_campaign_preserves_an_existing_custom_banner_when_saved(): void
     {
         $this->artisan('lavaggio:configure-home')->assertSuccessful();
         $campaign = ContentBlock::where('code', 'lavaggio-home-campaigns')->sole();
         $translation = $campaign->translations()->sole();
         $payload = $translation->payload;
-        unset($payload['watchline']['photo_layout']);
+        $payload['watchline']['photo_layout'] = 'products';
         $payload['watchline']['main_image'] = '/assets/lavaggio/custom-campaign.webp';
         $payload['watchline']['main_image_alt'] = 'Moja kampanja';
         $translation->update(['payload' => $payload]);
 
         Livewire::actingAs($this->admin())->test(Form::class, ['blockId' => $campaign->id])
-            ->assertSet('form.watchline.photo_layout', 'single')
             ->assertSet('form.watchline.main_image', '/assets/lavaggio/custom-campaign.webp')
             ->assertSet('form.watchline.main_image_alt', 'Moja kampanja')
             ->assertDontSee('id="watchline-field-main_secondary_image"', false)
-            ->assertDontSee('id="watchline-field-main_tertiary_image"', false);
+            ->assertDontSee('id="watchline-field-main_tertiary_image"', false)
+            ->call('save')->assertHasNoErrors();
+        $this->assertSame('/assets/lavaggio/custom-campaign.webp', $translation->fresh()->payload['watchline']['main_image']);
         $this->get('/')->assertOk()
             ->assertSee('lavaggio-widget-hero__photographs--single', false)
             ->assertSee('src="/assets/lavaggio/custom-campaign.webp" alt="Moja kampanja"', false)
@@ -195,33 +210,34 @@ class LavaggioHomepageWidgetsTest extends TestCase
             ->assertDontSee('class="lavaggio-widget-hero__product lavaggio-widget-hero__product--tertiary"', false);
     }
 
-    public function test_three_photo_campaign_applies_all_custom_images_and_descriptions_from_the_editor(): void
+    public function test_campaign_banner_upload_and_its_description_are_saved_and_rendered_together(): void
     {
+        Storage::fake('public');
         $this->artisan('lavaggio:configure-home')->assertSuccessful();
         $campaign = ContentBlock::where('code', 'lavaggio-home-campaigns')->sole();
-        $editor = Livewire::actingAs($this->admin())->test(Form::class, ['blockId' => $campaign->id])
-            ->set('form.watchline.photo_layout', 'products')
-            ->assertSee('id="watchline-field-main_secondary_image"', false)
-            ->assertSee('id="watchline-field-main_tertiary_image"', false);
-        foreach (['main' => 'Prvi proizvod', 'main_secondary' => 'Drugi proizvod', 'main_tertiary' => 'Treći proizvod'] as $key => $description) {
-            $editor->set('form.watchline.'.$key.'_image', '/assets/lavaggio/custom-'.$key.'.webp')
-                ->set('form.watchline.'.$key.'_image_alt', $description);
-        }
-        $editor->call('save')->assertHasNoErrors();
+        Livewire::actingAs($this->admin())->test(Form::class, ['blockId' => $campaign->id])
+            ->set('watchlineImageUploads.main_image', UploadedFile::fake()->image('naslovni-banner.png', 1000, 930))
+            ->set('form.watchline.main_image_alt', 'Naš izbor za čisto rublje')
+            ->call('save')->assertHasNoErrors();
 
-        $response = $this->get('/')->assertOk();
-        foreach (['main' => 'Prvi proizvod', 'main_secondary' => 'Drugi proizvod', 'main_tertiary' => 'Treći proizvod'] as $key => $description) {
-            $response->assertSee('src="/assets/lavaggio/custom-'.$key.'.webp" alt="'.$description.'"', false);
-        }
-        $response->assertDontSee('lavaggio-widget-hero__photographs--single', false);
+        $saved = $campaign->fresh()->translations()->sole()->payload['watchline'];
+        Storage::disk('public')->assertExists(substr($saved['main_image'], strlen('/storage/')));
+        $this->assertSame('Naš izbor za čisto rublje', $saved['main_image_alt']);
+        $this->get('/')->assertOk()
+            ->assertSee('src="'.$saved['main_image'].'" alt="Naš izbor za čisto rublje"', false)
+            ->assertSee('lavaggio-widget-hero__photographs--single', false);
+        Livewire::actingAs($this->admin())->test(Form::class, ['blockId' => $campaign->id])
+            ->assertSet('form.watchline.main_image', $saved['main_image'])
+            ->assertSet('form.watchline.main_image_alt', 'Naš izbor za čisto rublje');
     }
 
-    public function test_single_photo_layout_hides_unused_controls_and_retains_the_other_photos_when_saved(): void
+    public function test_single_banner_editor_preserves_retired_photo_settings_without_showing_or_rendering_them(): void
     {
         $this->artisan('lavaggio:configure-home')->assertSuccessful();
         $campaign = ContentBlock::where('code', 'lavaggio-home-campaigns')->sole();
         $translation = $campaign->translations()->sole();
         $payload = $translation->payload;
+        $payload['watchline']['photo_layout'] = 'products';
         $payload['watchline']['main_secondary_image'] = '/assets/lavaggio/retained-secondary.webp';
         $payload['watchline']['main_secondary_image_alt'] = 'Sačuvana druga fotografija';
         $payload['watchline']['main_tertiary_image'] = '/assets/lavaggio/retained-tertiary.webp';
@@ -230,7 +246,7 @@ class LavaggioHomepageWidgetsTest extends TestCase
         $admin = $this->admin();
 
         Livewire::actingAs($admin)->test(Form::class, ['blockId' => $campaign->id])
-            ->set('form.watchline.photo_layout', 'single')
+            ->assertDontSee('id="watchline-field-photo_layout"', false)
             ->assertDontSee('id="watchline-field-main_secondary_image"', false)
             ->assertDontSee('id="watchline-field-main_secondary_image_alt"', false)
             ->assertDontSee('id="watchline-field-main_tertiary_image"', false)
@@ -238,7 +254,7 @@ class LavaggioHomepageWidgetsTest extends TestCase
             ->call('save')->assertHasNoErrors();
 
         $saved = $translation->fresh()->payload['watchline'];
-        $this->assertSame('single', $saved['photo_layout']);
+        $this->assertSame('products', $saved['photo_layout']);
         foreach (['main_secondary_image', 'main_secondary_image_alt', 'main_tertiary_image', 'main_tertiary_image_alt'] as $key) {
             $this->assertSame($payload['watchline'][$key], $saved[$key]);
         }
@@ -246,15 +262,21 @@ class LavaggioHomepageWidgetsTest extends TestCase
             ->assertDontSee('/assets/lavaggio/retained-secondary.webp')
             ->assertDontSee('/assets/lavaggio/retained-tertiary.webp');
 
+    }
+
+    public function test_clearing_the_banner_image_keeps_it_empty_after_save_and_reload(): void
+    {
+        $this->artisan('lavaggio:configure-home')->assertSuccessful();
+        $campaign = ContentBlock::where('code', 'lavaggio-home-campaigns')->sole();
+        $admin = $this->admin();
         Livewire::actingAs($admin)->test(Form::class, ['blockId' => $campaign->id])
-            ->assertSet('form.watchline.photo_layout', 'single')
-            ->set('form.watchline.photo_layout', 'products')
-            ->assertSee('id="watchline-field-main_secondary_image"', false)
-            ->assertSee('id="watchline-field-main_tertiary_image"', false)
-            ->call('save')->assertHasNoErrors();
+            ->set('form.watchline.main_image', '')->call('save')->assertHasNoErrors();
+        $this->assertSame('', $campaign->fresh()->translations()->sole()->payload['watchline']['main_image']);
+        Livewire::actingAs($admin)->test(Form::class, ['blockId' => $campaign->id])
+            ->assertSet('form.watchline.main_image', '');
         $this->get('/')->assertOk()
-            ->assertSee('src="/assets/lavaggio/retained-secondary.webp" alt="Sačuvana druga fotografija"', false)
-            ->assertSee('src="/assets/lavaggio/retained-tertiary.webp" alt="Sačuvana treća fotografija"', false);
+            ->assertDontSee('class="lavaggio-widget-hero__product lavaggio-widget-hero__product--main"', false)
+            ->assertDontSee('src="/assets/lavaggio/home/products/laundry-care-group.svg"', false);
     }
 
     public function test_home_renders_widget_content_and_hiding_all_widgets_does_not_restore_hardcoded_content(): void

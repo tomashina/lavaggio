@@ -365,12 +365,16 @@ html[data-theme] body.lavaggio-storefront .site-footer a:is(:hover, :focus-visib
 html[data-theme] body.lavaggio-storefront .site-footer .site-footer-socials a { background: #20243c; color: #c4c8e4; }
 html[data-theme] body.lavaggio-storefront .site-footer .site-footer-socials a:is(:hover, :focus-visible) { background: var(--lavaggio-primary); color: #fff; }
 html[data-theme] body.lavaggio-storefront .site-footer .legal-warranty-notice--footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: 0;
     border-radius: 0;
-    padding: 18px 24px;
+    padding: 10px 16px;
     background: var(--lavaggio-primary);
     box-shadow: 0 0 0 100vmax var(--lavaggio-primary);
     color: #13100d;
+    text-align: center;
 }
 html[data-theme] body.lavaggio-storefront .site-footer .legal-warranty-notice--footer > a {
     min-height: 24px;
