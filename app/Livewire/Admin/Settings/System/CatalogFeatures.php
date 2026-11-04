@@ -63,7 +63,7 @@ class CatalogFeatures extends Component
         /** @var array<string, bool> $defaults */
         $defaults = config('catalog_features.flags', []);
 
-        foreach ($this->form as $key => $value) {
+        foreach ($this->flagKeys() as $key) {
             $this->form[$key] = (bool) ($defaults[$key] ?? false);
         }
 
@@ -89,12 +89,18 @@ class CatalogFeatures extends Component
      */
     private function flagKeys(): array
     {
-        return array_keys(config('catalog_features.flags', []));
+        $flags = array_keys(config('catalog_features.flags', []));
+
+        return config('storefront.home') === 'lavaggio'
+            ? array_values(array_diff($flags, ['catalog_use_api']))
+            : $flags;
     }
 
     public function render()
     {
-        return view('livewire.admin.settings.system.catalog-features');
+        return view('livewire.admin.settings.system.catalog-features', [
+            'editableFlags' => $this->flagKeys(),
+        ]);
     }
 
     private function authorizeAccess(): void

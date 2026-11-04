@@ -44,6 +44,7 @@
                 <p class="admin-section-title">{{ __('Product Data Model Features') }}</p>
                 <div class="mt-3 grid gap-3 md:grid-cols-2">
                     @foreach ($items as $key => $item)
+                        @continue (! in_array($key, $editableFlags, true))
                         @php $enabled = (bool) ($form[$key] ?? false); @endphp
                         <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
                             <div class="flex items-start justify-between gap-3">

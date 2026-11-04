@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Livewire\Admin\Settings\System\CatalogFeatures;
 use App\Models\User;
 use App\Services\Settings\SystemSettingsService;
 use App\Support\AssetVersion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Silber\Bouncer\BouncerFacade as Bouncer;
 use Tests\TestCase;
 
@@ -62,6 +64,41 @@ class RuntimeAndApiAccessFeatureTest extends TestCase
         $this->actingAs($admin)
             ->get('/admin/settings/api/wholesale')
             ->assertRedirect(route('admin.settings.system.catalog-features'));
+    }
+
+    public function test_lavaggio_catalog_settings_hide_api_controls_and_preserve_the_existing_api_state(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+        $settings = app(SystemSettingsService::class);
+        $settings->put('catalog_use_api', false);
+
+        Livewire::actingAs($this->makeUserWithRole('superadmin'))->test(CatalogFeatures::class)
+            ->assertDontSee(__('Use Wholesale API'))
+            ->assertDontSee(__('Enable API settings page and `/api/v1/wholesale/*` endpoints.'))
+            ->assertSee(__('Use Manufacturers'))
+            ->call('toggle', 'catalog_use_api')
+            ->assertSet('form.catalog_use_api', false)
+            ->call('resetToDefaults')
+            ->assertSet('form.catalog_use_api', false)
+            ->set('form.catalog_use_manufacturers', true)
+            ->call('save')->assertHasNoErrors();
+
+        $this->assertFalse($settings->get('catalog_use_api'));
+        $this->assertTrue($settings->get('catalog_use_manufacturers'));
+    }
+
+    public function test_other_store_catalog_settings_keep_the_api_control_and_can_save_it(): void
+    {
+        config(['storefront.home' => 'auto']);
+        app(SystemSettingsService::class)->put('catalog_use_api', true);
+
+        Livewire::actingAs($this->makeUserWithRole('superadmin'))->test(CatalogFeatures::class)
+            ->assertSee(__('Use Wholesale API'))
+            ->call('toggle', 'catalog_use_api')
+            ->assertSet('form.catalog_use_api', false)
+            ->call('save')->assertHasNoErrors();
+
+        $this->assertFalse(app(SystemSettingsService::class)->get('catalog_use_api'));
     }
 
     public function test_clearing_cache_changes_the_vite_asset_version(): void
