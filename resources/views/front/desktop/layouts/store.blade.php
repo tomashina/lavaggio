@@ -144,7 +144,11 @@
     <div class="herrera-page-loader" data-storefront-page-loader @if ($watchlineStorefront) data-watchline-page-loader @endif aria-hidden="true">
         @if ($watchlineStorefront)
             <div class="watchline-page-loader-content">
-                <img src="{{ $storeBrandLogoUrl }}" alt="" width="{{ $storeBrandLogoWidth }}" height="{{ $storeBrandLogoHeight }}" decoding="async">
+                @if ($lavaggioStorefront)
+                    <img src="{{ asset('assets/lavaggio/preloader.png') }}" alt="" width="72" height="72" decoding="async">
+                @else
+                    <img src="{{ $storeBrandLogoUrl }}" alt="" width="{{ $storeBrandLogoWidth }}" height="{{ $storeBrandLogoHeight }}" decoding="async">
+                @endif
         @endif
         <span class="herrera-page-loader-dots"><span></span><span></span><span></span></span>
         @if ($watchlineStorefront)

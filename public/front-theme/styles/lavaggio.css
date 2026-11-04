@@ -28,6 +28,7 @@
 }
 
 /* Recolour literal accents in inherited shop components; dimensions stay inherited. */
+body.lavaggio-storefront .watchline-page-loader-content > img { width: 72px; height: 72px; object-fit: contain; }
 body.lavaggio-storefront [data-continuous-card-carousel] .splide__slide { border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
 body.lavaggio-storefront .site-main-header { border-bottom: 1px solid #e2e8f0; }
 body.lavaggio-storefront .site-top-bar { border-bottom: 1px solid #e2e8f0; }
