@@ -22,7 +22,7 @@ php_bin=/opt/alt/php84/usr/bin/php
 backup_base=/home/baredahr/.lavaggio-shop-backups
 backup_root=''
 fail() { printf '%s\n' "Lavaggio deployment stopped: $*" >&2; exit 1; }
-trap 'printf "%s\n" "Deployment failed. Review the private backup: ${backup_root:-not created}. No database restore or migration was attempted." >&2' ERR
+trap 'printf "%s\n" "Deployment failed. Review the log and private backup: ${backup_root:-not created}. A reviewed content upgrade may already have completed; no automatic database restore is attempted." >&2' ERR
 
 [[ "$(id -un)" == baredahr && "${HOME:-}" == "$account_root" ]] || fail 'Run as the baredahr account with its normal HOME.'
 for tool in realpath stat du df flock; do command -v "$tool" >/dev/null || fail "Required tool is unavailable: $tool"; done
@@ -141,7 +141,11 @@ if ($connection === 'mysql') {
 }
 $ran = $pdo->query('SELECT migration FROM migrations')->fetchAll(PDO::FETCH_COLUMN);
 $pending = array_values(array_diff(array_map(fn ($file)=>basename($file, '.php'), glob($root.'/database/migrations/*.php')), $ran));
-if ($pending !== []) stopDeploy("Pending migrations require separate review; none were run:\n".implode("\n", $pending));
+require_once $root.'/app/Support/LavaggioDeployMigrations.php';
+$reviewed = array_map(fn ($file)=>basename($file, '.php'), \App\Support\LavaggioDeployMigrations::FILES);
+$unreviewed = array_diff($pending, $reviewed);
+if ($unreviewed !== []) stopDeploy("Pending migrations require separate review; none were run:\n".implode("\n", $unreviewed));
+if ($pending !== []) echo "Reviewed content upgrade will be backed up and applied: ".implode(', ', $pending)."\n";
 $settings = [];
 foreach ($pdo->query("SELECT `key`,`value` FROM system_settings WHERE `key` IN ('store_email_enabled','gls_api_enabled','watchline_integrations')") as $row) {
     $settings[$row['key']] = json_decode($row['value'], true, flags: JSON_THROW_ON_ERROR);
@@ -198,7 +202,7 @@ printf '%s\n' "Mode: $([[ "$apply" == true ]] && printf APPLY || printf DRY-RUN)
 du -sh -- "$runtime_root"
 df -h -- "$runtime_root"
 if [[ "$apply" == false ]]; then
-    printf '%s\n' 'Plan: use the current project checkout, preserve .env/database/uploads, back up generated caches, install locked dependencies, create public/storage if absent, rebuild Laravel caches.' \
+    printf '%s\n' 'Plan: use the current project checkout, preserve .env/uploads, back up generated caches and affected content, install locked dependencies, apply only reviewed content upgrades, create public/storage if absent, rebuild Laravel caches.' \
         'Plan only: no Composer install, Artisan boot, permissions changes, symlink creation, database/settings writes, migrations, seeds, key generation, mail/integration activation or cron changes.'
     exit 0
 fi
@@ -237,6 +241,7 @@ done
 "$php_bin" "$composer_bin" install --no-dev --prefer-dist --no-interaction --optimize-autoloader --no-scripts
 "$php_bin" "$composer_bin" check-platform-reqs --no-dev
 "$php_bin" artisan package:discover --ansi
+"$php_bin" artisan lavaggio:deploy-content-upgrades --apply --backup-dir="$backup_root"
 "$php_bin" artisan config:cache
 "$php_bin" artisan route:cache
 "$php_bin" artisan view:cache
@@ -244,5 +249,5 @@ done
 [[ "$("$git_bin" -C "$source_root" rev-parse HEAD)" == "$revision" && -z "$("$git_bin" -C "$source_root" status --porcelain --untracked-files=normal)" ]] || fail 'The checkout changed or a runtime file is not ignored; review before continuing.'
 printf '%s\n' "$revision" > "$runtime_root/storage/app/private/.lavaggio-deploy-revision"
 printf '%s\n' "Lavaggio deployed in its project checkout: $revision" "Private generated-cache backup: $backup_root" \
-    'The standard tracked index.php/.htaccess/.user.ini, existing .env, database, media and local hosting files were preserved.' \
-    'No migrations, seeds, key rotation, mail/integration activation or cron changes were performed.'
+    'The standard tracked index.php/.htaccess/.user.ini, existing .env, media and local hosting files were preserved. Reviewed content upgrades preserve existing editorial records.' \
+    'Only explicitly reviewed content migrations were allowed. No general migrations, seeds, key rotation, mail/integration activation or cron changes were performed.'
