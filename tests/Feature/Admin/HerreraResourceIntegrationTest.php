@@ -55,6 +55,8 @@ class HerreraResourceIntegrationTest extends TestCase
             $this->assertStringNotContainsString(route('admin.content.supplier-catalogs.index'), $sidebar);
             $this->assertStringNotContainsString(route('admin.content.references.index'), $sidebar);
             $this->assertStringNotContainsString(route('admin.settings.api.wholesale'), $sidebar);
+            $this->assertStringNotContainsString(route('admin.customer-offers.index'), $sidebar);
+            $this->assertStringContainsString(route('admin.orders'), $sidebar);
             $this->assertStringContainsString(route('admin.products'), $sidebar);
             $this->assertStringContainsString(route('admin.content.pages.index'), $sidebar);
         }
@@ -73,7 +75,7 @@ class HerreraResourceIntegrationTest extends TestCase
             'admin.integrations.supplier-catalog.index', 'admin.integrations.stock.index',
             'admin.integrations.eracuni.index', 'admin.integrations.spreadsheet.index',
             'admin.integrations.media.index', 'admin.content.supplier-catalogs.index',
-            'admin.content.references.index', 'admin.settings.api.wholesale'] as $route) {
+            'admin.content.references.index', 'admin.settings.api.wholesale', 'admin.customer-offers.index'] as $route) {
             $this->assertStringContainsString(route($route), $sidebar);
         }
 
@@ -82,6 +84,7 @@ class HerreraResourceIntegrationTest extends TestCase
         $sidebar = $this->sidebarHtml($response->getContent());
         $this->assertStringContainsString(route('admin.integrations.watchline.index'), $sidebar);
         $this->assertStringContainsString(route('admin.integrations.wolt.index'), $sidebar);
+        $this->assertStringContainsString(route('admin.customer-offers.index'), $sidebar);
         $this->assertStringNotContainsString(route('admin.integrations.eprel.settings'), $sidebar);
         $this->assertStringNotContainsString(route('admin.content.supplier-catalogs.index'), $sidebar);
         $this->assertStringNotContainsString(route('admin.content.references.index'), $sidebar);

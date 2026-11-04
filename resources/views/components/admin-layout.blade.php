@@ -1331,7 +1331,7 @@
                     $canViewCatalogSection = in_array(true, $catalogLinks, true);
                     $canViewContentSection = in_array(true, $contentLinks, true);
                     $canViewOrders = $canAdminAbility('sales.orders.view');
-                    $canViewOffers = $canAdminAbility('sales.offers.view');
+                    $canViewOffers = ! $isLavaggioAdmin && $canAdminAbility('sales.offers.view');
                     $canManageAdminAppearance = $canAdminAbility('settings.system.admin_appearance.manage');
                     $canManageUserSettings = $canAdminAbility('settings.user.manage');
                     $canViewSystemSettings = $canManageRuntimeTools || $canManageAdminAppearance || $canManageCatalogFeatures || $canManageStoreSettings;
