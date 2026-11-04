@@ -8,7 +8,7 @@
     $blogWidgetTitle = trim((string) ($translation?->title ?: $block->name));
     $blogWidgetSubtitle = trim((string) ($translation?->subtitle ?? ''));
     $blogWidgetCtaLabel = trim((string) ($translation?->cta_label ?? ''));
-    $blogWidgetCtaUrl = trim((string) ($blogWidgetSettings['cta_url'] ?? ''));
+    $blogWidgetCtaUrl = \App\Support\Lavaggio\PublicUrls::url(trim((string) ($blogWidgetSettings['cta_url'] ?? '')));
     $blogWidgetEyebrow = trim((string) ($blogWidgetSettings['eyebrow'] ?? ''));
     $blogWidgetHeadingId = 'lavaggio-blog-title-'.$block->id;
     $blogWidgetItems = $blockItems ?? $block->items;

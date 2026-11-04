@@ -58,6 +58,7 @@ class LavaggioContentImportService
      */
     public function preview(array $snapshot): array
     {
+        $snapshot = \App\Support\Lavaggio\NovemberFeedback::snapshot($snapshot);
         $resources = $this->prepare($snapshot);
 
         return [
@@ -70,6 +71,7 @@ class LavaggioContentImportService
 
     public function import(array $snapshot): array
     {
+        $snapshot = \App\Support\Lavaggio\NovemberFeedback::snapshot($snapshot);
         $resources = $this->prepare($snapshot);
         $userId = User::query()->where('email', 'tomislav@agmedia.hr')->where('account_type', 'staff')->value('id');
         $prepared = [];
@@ -95,6 +97,8 @@ class LavaggioContentImportService
         }
 
         $ids = DB::transaction(function () use ($prepared, $faqs, $userId): array {
+            InfoPage::query()->whereIn('code', array_map(fn ($id) => 'lavaggio-modx-'.$id, \App\Support\Lavaggio\NovemberFeedback::RETIRED_PAGES))->update(['is_active' => false]);
+            Faq::query()->whereIn('code', array_map(fn ($id) => 'lavaggio-modx-faq-'.$id, \App\Support\Lavaggio\NovemberFeedback::RETIRED_FAQS))->update(['is_active' => false]);
             $ids = ['page_ids' => [], 'blog_ids' => [], 'faq_ids' => []];
             foreach ($prepared as $resource) {
                 $model = $resource['type'] === 'blog' ? BlogPost::class : InfoPage::class;
@@ -177,6 +181,7 @@ class LavaggioContentImportService
 
     private function prepare(array $snapshot): array
     {
+        $snapshot = \App\Support\Lavaggio\NovemberFeedback::snapshot($snapshot);
         $this->sourceOrigin = rtrim((string) ($snapshot['source_origin'] ?? 'https://www.lavaggio.hr'), '/');
         if (! in_array(strtolower((string) parse_url($this->sourceOrigin, PHP_URL_HOST)), self::SOURCE_HOSTS, true)) {
             throw new RuntimeException('The snapshot must originate from the public Lavaggio website.');
@@ -228,7 +233,7 @@ class LavaggioContentImportService
             if ($collision) {
                 throw new RuntimeException('An unrelated local content item already uses the imported slug: '.$slug);
             }
-            $url = $type === 'blog' ? '/blog/'.$slug : '/page/'.$slug;
+            $url = $type === 'blog' ? '/blog/'.$slug : \App\Support\Lavaggio\PublicUrls::url('/page/'.$slug);
             $override = $snapshot['url_overrides'][$id] ?? null;
             if (is_string($override) && str_starts_with($override, '/') && ! str_starts_with($override, '//')) {
                 $url = $override;
@@ -459,8 +464,8 @@ class LavaggioContentImportService
 
             return $local.($fragment !== '' ? '#'.$fragment : '');
         }
-        if (str_starts_with($value, '/') && preg_match('~^/(?:page/|blog(?:/|$)|faq(?:[?#]|$)|shop(?:[?#]|$)|contact(?:[?#]|$))~', $value)) {
-            return $value;
+        if (str_starts_with($value, '/') && preg_match('~^/(?:page/|stranica/|blog(?:/|$)|(?:faq|pitanja-i-odgovori|shop|trgovina|contact|kontakt|cjenik)(?:[?#]|$))~', $value)) {
+            return \App\Support\Lavaggio\PublicUrls::url($value);
         }
 
         return $url;

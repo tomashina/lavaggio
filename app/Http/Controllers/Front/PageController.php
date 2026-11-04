@@ -14,6 +14,13 @@ class PageController extends Controller
 {
     use ResolvesFrontendView;
 
+    public function lavaggioPricing(Request $request): View
+    {
+        abort_unless(config('storefront.home') === 'lavaggio', 404);
+
+        return $this->show($request, 'cjenik-usluzno-pranje');
+    }
+
     public function category(Request $request, string $slug): View
     {
         $locale = app()->getLocale();

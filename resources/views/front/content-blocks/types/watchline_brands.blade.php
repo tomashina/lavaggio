@@ -5,7 +5,7 @@
     $brandWidgetTitle = trim((string) ($translation?->title ?: $block->name));
     $brandWidgetSubtitle = trim((string) ($translation?->subtitle ?? ''));
     $brandWidgetCtaLabel = trim((string) ($translation?->cta_label ?? ''));
-    $brandWidgetCtaUrl = trim((string) ($brandWidgetSettings['cta_url'] ?? ''));
+    $brandWidgetCtaUrl = \App\Support\Lavaggio\PublicUrls::url(trim((string) ($brandWidgetSettings['cta_url'] ?? '')));
     $brandWidgetEyebrow = trim((string) ($brandWidgetSettings['eyebrow'] ?? ''));
     $brandWidgetHeadingId = 'watchline-brands-title-'.$block->id;
     $brandWidgetVisibleCount = max(1, min(12, (int) ($brandWidgetSettings['visible_count'] ?? 6)));

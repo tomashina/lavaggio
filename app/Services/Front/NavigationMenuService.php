@@ -277,7 +277,7 @@ class NavigationMenuService
                                 'key' => 'page-'.$page->id.'-'.$index,
                                 'type' => 'page',
                                 'label' => $label,
-                                'url' => route('pages.show', ['slug' => $slug]),
+                                'url' => \App\Support\Lavaggio\PublicUrls::url(route('pages.show', ['slug' => $slug])),
                                 'children' => [],
                                 'open_in_new_tab' => false,
                                 'mega_promo' => $this->resolveMegaPromo($item, $locale, $fallbackLocale),
@@ -744,7 +744,7 @@ class NavigationMenuService
             $url = trim((string) ($item['url'] ?? ''));
         }
 
-        return $url;
+        return \App\Support\Lavaggio\PublicUrls::url($url);
     }
 
     /**

@@ -159,6 +159,9 @@
                     $commonContentFields = str_starts_with((string) ($form['type'] ?? ''), 'lavaggio_')
                         ? (array) config('lavaggio_widgets.'.$form['type'].'.content_fields', ['title', 'subtitle', 'cta_label', 'cta_url'])
                         : ['title', 'subtitle', 'cta_label', 'cta_url'];
+                    if (($form['type'] ?? '') === 'lavaggio_campaigns' && ($form['watchline']['slides'] ?? []) !== []) {
+                        $commonContentFields = [];
+                    }
                 @endphp
                 @if (! in_array(($form['type'] ?? ''), ['watchline_campaigns', 'watchline_benefits'], true) && $commonContentFields !== [])
                     <div class="mt-4 grid gap-3 md:grid-cols-2">
@@ -204,6 +207,11 @@
                         @foreach ($widgetFields as $fieldKey => $field)
                             @php
                                 $fieldIsVisible = ! in_array($fieldKey, $groupedImageAltFields, true);
+                                if (($form['type'] ?? '') === 'lavaggio_campaigns'
+                                    && (str_starts_with($fieldKey, 'service_') || str_starts_with($fieldKey, 'self_')
+                                        || (($form['watchline']['slides'] ?? []) !== [] && in_array($fieldKey, ['eyebrow', 'main_image', 'main_image_alt', 'slide_display'], true)))) {
+                                    $fieldIsVisible = false;
+                                }
                                 foreach (($field['visible_when'] ?? []) as $conditionKey => $conditionValue) {
                                     if (($form['watchline'][$conditionKey] ?? $widgetFields[$conditionKey]['default'] ?? null) !== $conditionValue) {
                                         $fieldIsVisible = false;
@@ -216,8 +224,10 @@
                             @if (! empty($field['group']))
                                 <h3 class="border-t border-slate-200 pt-5 text-sm font-semibold text-slate-900 md:col-span-2">{{ $field['group'] }}</h3>
                             @endif
-                            <div wire:key="watchline-field-{{ $form['type'] }}-{{ $fieldKey }}" class="{{ ($field['type'] ?? '') === 'textarea' ? 'md:col-span-2' : '' }} {{ $imageAltField ? 'rounded-xl border border-slate-200 bg-slate-50 p-4' : '' }}">
-                                @if (($field['type'] ?? '') === 'checkbox')
+                            <div wire:key="watchline-field-{{ $form['type'] }}-{{ $fieldKey }}" class="{{ in_array(($field['type'] ?? ''), ['textarea', 'slides'], true) ? 'md:col-span-2' : '' }} {{ $imageAltField ? 'rounded-xl border border-slate-200 bg-slate-50 p-4' : '' }}">
+                                @if (($field['type'] ?? '') === 'slides')
+                                    @include('livewire.admin.content.block.partials.lavaggio-slides')
+                                @elseif (($field['type'] ?? '') === 'checkbox')
                                     <label class="inline-flex items-center gap-2 text-sm text-slate-700">
                                         <input type="checkbox" @if ($fieldKey === 'popular_only') wire:model.live="form.watchline.{{ $fieldKey }}" @else wire:model="form.watchline.{{ $fieldKey }}" @endif class="rounded border-slate-300 text-cyan-700 focus:ring-cyan-500">
                                         <span>{{ $field['label'] }}</span>

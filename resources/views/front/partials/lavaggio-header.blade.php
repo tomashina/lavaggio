@@ -6,9 +6,15 @@
             <div class="lavaggio-header-topbar-inner">
                 <nav class="lavaggio-header-contacts" aria-label="Kontakt podaci">
                     @if ($topBar['is_enabled'])
+                        @php($lavaggioPrimaryPhoneShown = false)
                         @foreach ($topBar['links'] as $link)
                             @if ($link['is_active'])
-                                <a href="{{ $link['url'] }}" @if ($link['open_in_new_tab']) target="_blank" rel="noopener noreferrer" @endif>{{ $link['label'] }}</a>
+                                @if (! $lavaggioPrimaryPhoneShown && str_starts_with($link['url'], 'tel:') && filled($storeSettings['footer']['phone'] ?? ''))
+                                    @include('front.partials.lavaggio-contact-phone')
+                                    @php($lavaggioPrimaryPhoneShown = true)
+                                @else
+                                    <a href="{{ $link['url'] }}" @if ($link['open_in_new_tab']) target="_blank" rel="noopener noreferrer" @endif>{{ $link['label'] }}</a>
+                                @endif
                             @endif
                         @endforeach
                     @endif

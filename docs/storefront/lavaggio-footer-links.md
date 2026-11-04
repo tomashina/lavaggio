@@ -14,6 +14,10 @@ In **Settings → Store → Branding & Footer**, the Lavaggio section edits the 
 
 Social icons appear once in the row above the final copyright bar, with cookie preferences at the left edge and the back-to-top button at the right edge. Both controls remain available on mobile and use their existing behavior without floating over page content.
 
+The prominent Lavaggio footer link now opens **Povrati i reklamacije**. A plain **Zakonsko jamstvo** link appears in the **Informacije** column and opens the existing official notice. Product and checkout notices retain their existing behavior.
+
+The support telephone and working hours are shared by the header, footer and contact cards. Edit them in **Postavke → Trgovina → Brendiranje**. Hours appear beside the telephone as `(Pon-Pet: 08h - 16h)`; clearing the hours field removes the suffix. The first active telephone link in the header uses these shared values without rewriting the stored navigation links. Additional telephone links retain their own content.
+
 Six dedicated webshop information pages initially contain only “Sadržaj ove stranice je u pripremi.” They are editable through the existing information page administration. These placeholders do not define payment, delivery, returns, purchase terms or accessibility compliance. Supply the actual approved content before publishing a production shop.
 
 The privacy, cookies and complaint links reuse the imported `lavaggio-modx-84` page and add three anchors without replacing its wording. The employment link reuses `lavaggio-modx-81`. Those two imported pages must already be active and published.

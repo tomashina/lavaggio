@@ -1,4 +1,14 @@
 /* Lavaggio's floating navigation, with shop actions kept in the same row. */
+body.lavaggio-storefront .lavaggio-contact-phone-inline {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 4px;
+}
+body.lavaggio-storefront .lavaggio-contact-hours {
+    font-size: 14px;
+    font-weight: 400;
+}
 html[data-theme] body.lavaggio-storefront .lavaggio-header,
 html[data-theme] body.lavaggio-storefront .lavaggio-header.is-sticky {
     --lavaggio-header-topbar-height: 32px;

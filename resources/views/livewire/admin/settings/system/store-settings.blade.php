@@ -127,7 +127,7 @@
                         <input type="text" wire:model="form.store_brand_name" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Footer Phone') }}</label>
+                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ config('storefront.home') === 'lavaggio' ? 'Telefon podrške (zaglavlje, podnožje i kontakt)' : __('Footer Phone') }}</label>
                         <input type="text" wire:model="form.store_footer_phone" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
                     </div>
                     <div>
@@ -139,9 +139,34 @@
                         <input type="email" wire:model="form.store_footer_email_support" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
                     </div>
                     <div class="md:col-span-2">
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Footer Working Hours') }}</label>
+                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ config('storefront.home') === 'lavaggio' ? 'Radno vrijeme (zaglavlje, podnožje i kontakt)' : __('Footer Working Hours') }}</label>
                         <input type="text" wire:model="form.store_footer_hours" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
                     </div>
+                    @if (config('storefront.home') === 'lavaggio')
+                        <section class="md:col-span-2 rounded-xl border border-slate-200 p-4" aria-label="Kartice na kontakt stranici">
+                            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                <div><h3 class="text-sm font-bold text-slate-800">Kartice na kontakt stranici</h3><p class="mt-1 text-xs text-slate-500">Telefon, e-mail i radno vrijeme preuzimaju se iz zajedničkih postavki iznad. Manji redni broj prikazuje se prvi.</p></div>
+                                <button type="button" wire:click="addLavaggioContactCard" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">Dodaj karticu</button>
+                            </div>
+                            @foreach ($form['lavaggio_contact_cards'] as $cardIndex => $card)
+                                <div wire:key="contact-card-{{ $cardIndex }}" class="mb-3 grid gap-3 rounded-xl border border-slate-200 p-4 md:grid-cols-3">
+                                    <div><label class="mb-1 block text-xs font-semibold">Naslov</label><input type="text" wire:model="form.lavaggio_contact_cards.{{ $cardIndex }}.title" class="w-full rounded-lg border-slate-300 text-sm">@error('form.lavaggio_contact_cards.'.$cardIndex.'.title')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
+                                    <div><label class="mb-1 block text-xs font-semibold">Vrsta kartice</label><select wire:model.live="form.lavaggio_contact_cards.{{ $cardIndex }}.type" class="w-full rounded-lg border-slate-300 text-sm"><option value="phone">Telefon podrške</option><option value="email">E-mail podrške</option><option value="returns">Povrati i reklamacije</option><option value="store">Prodajno mjesto</option><option value="custom">Vlastiti sadržaj</option></select></div>
+                                    <div><label class="mb-1 block text-xs font-semibold">Ikona</label><select wire:model="form.lavaggio_contact_cards.{{ $cardIndex }}.icon" class="w-full rounded-lg border-slate-300 text-sm">@foreach (['phone' => 'Telefon', 'envelope' => 'Pismo', 'arrows-rotate' => 'Povrati', 'location-dot' => 'Lokacija', 'comments' => 'Poruke', 'bag-shopping' => 'Kupnja', 'clock' => 'Sat', 'truck' => 'Dostava'] as $icon => $iconLabel)<option value="{{ $icon }}">{{ $iconLabel }}</option>@endforeach</select></div>
+                                    <div class="md:col-span-3"><label class="mb-1 block text-xs font-semibold">Tekst / adresa</label><textarea rows="2" wire:model="form.lavaggio_contact_cards.{{ $cardIndex }}.text" class="w-full rounded-lg border-slate-300 text-sm"></textarea></div>
+                                    @if (in_array($card['type'], ['store', 'custom'], true))
+                                        <div><label class="mb-1 block text-xs font-semibold">Poveznica</label><input type="text" wire:model="form.lavaggio_contact_cards.{{ $cardIndex }}.url" placeholder="/kontakt ili https://..." class="w-full rounded-lg border-slate-300 text-sm">@error('form.lavaggio_contact_cards.'.$cardIndex.'.url')<p class="text-xs text-rose-600">{{ $message }}</p>@enderror</div>
+                                    @endif
+                                    @if (in_array($card['type'], ['returns', 'store', 'custom'], true))
+                                        <div><label class="mb-1 block text-xs font-semibold">Tekst poveznice</label><input type="text" wire:model="form.lavaggio_contact_cards.{{ $cardIndex }}.link_label" class="w-full rounded-lg border-slate-300 text-sm"></div>
+                                    @endif
+                                    <div><label class="mb-1 block text-xs font-semibold">Redni broj</label><input type="number" min="0" max="9999" wire:model="form.lavaggio_contact_cards.{{ $cardIndex }}.sort_order" class="w-full rounded-lg border-slate-300 text-sm"></div>
+                                    <div class="flex flex-wrap items-center gap-4 md:col-span-3"><label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model="form.lavaggio_contact_cards.{{ $cardIndex }}.show_hours" class="rounded border-slate-300">Prikaži radno vrijeme</label><label class="flex items-center gap-2 text-sm"><input type="checkbox" wire:model="form.lavaggio_contact_cards.{{ $cardIndex }}.is_active" class="rounded border-slate-300">Prikaži karticu</label><button type="button" wire:click="removeLavaggioContactCard({{ $cardIndex }})" class="ml-auto text-sm font-semibold text-rose-700">Ukloni karticu</button></div>
+                                </div>
+                            @endforeach
+                            @error('form.lavaggio_contact_cards')<p class="text-sm text-rose-600">{{ $message }}</p>@enderror
+                        </section>
+                    @endif
                     <div>
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Footer Contact Title') }}</label>
                         <input type="text" wire:model="form.store_footer_contact_title" placeholder="{{ __('ui.front.desktop.footer.support') }}" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />

@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Content\Faq;
 
 use App\Models\Content\Support\Faq;
 use App\Models\Content\Support\FaqTranslation;
+use App\Services\Content\LavaggioFaqGroups;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -36,6 +37,11 @@ class Form extends Component
         if ($faqId) {
             $this->faqId = $faqId;
             $this->loadFaq();
+        } elseif (config('storefront.home') === 'lavaggio') {
+            $groups = app(LavaggioFaqGroups::class)->all();
+            if (! in_array($this->form['group_code'], array_column($groups, 'code'), true)) {
+                $this->form['group_code'] = $groups[0]['code'] ?? 'general';
+            }
         }
     }
 
@@ -132,6 +138,7 @@ class Form extends Component
     {
         return view('livewire.admin.content.faq.form', [
             'isEdit' => (bool) $this->faqId,
+            'faqGroupOptions' => config('storefront.home') === 'lavaggio' ? app(LavaggioFaqGroups::class)->all() : [],
         ]);
     }
 
@@ -142,7 +149,9 @@ class Form extends Component
     {
         return [
             'form.code' => ['required', 'string', 'max:120', Rule::unique('content_faqs', 'code')->ignore($this->faqId)],
-            'form.group_code' => ['nullable', 'string', 'max:80'],
+            'form.group_code' => config('storefront.home') === 'lavaggio'
+                ? ['required', 'string', 'max:80', Rule::in(array_column(app(LavaggioFaqGroups::class)->all(), 'code'))]
+                : ['nullable', 'string', 'max:80'],
             'form.is_active' => ['boolean'],
             'form.is_featured' => ['boolean'],
             'form.sort_order' => ['nullable', 'integer', 'min:0'],
@@ -167,7 +176,7 @@ class Form extends Component
 
     private function loadFaq(): void
     {
-        if (!$this->faqId) {
+        if (! $this->faqId) {
             return;
         }
 
@@ -204,8 +213,9 @@ class Form extends Component
 
     private function loadTranslationForLocale(): void
     {
-        if (!$this->faqId) {
+        if (! $this->faqId) {
             $this->clearTranslationFields();
+
             return;
         }
 
@@ -214,8 +224,9 @@ class Form extends Component
             ->where('locale', $this->form['locale'])
             ->first();
 
-        if (!$translation) {
+        if (! $translation) {
             $this->clearTranslationFields();
+
             return;
         }
 
@@ -254,12 +265,14 @@ class Form extends Component
         if (json_last_error() !== JSON_ERROR_NONE) {
             $this->addError($field, __('Invalid JSON payload.'));
             $this->dispatch('notify', type: 'danger', message: __('Invalid JSON payload.'));
+
             return false;
         }
 
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             $this->addError($field, __('JSON payload must decode to object/array.'));
             $this->dispatch('notify', type: 'danger', message: __('JSON payload must decode to object/array.'));
+
             return false;
         }
 

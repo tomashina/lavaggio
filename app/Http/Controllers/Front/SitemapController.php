@@ -26,6 +26,9 @@ class SitemapController extends Controller
         }
 
         $privatePaths = ['/admin', '/account', '/auth/', '/login', '/register', '/cart', '/checkout', '/wishlist', '/search', '/api/', '/livewire/', '/watchline/cart-recovery/', '/watchline/messages/', '/poklon-bon/narudzba/', '/obavijesti-o-dostupnosti/odjava/'];
+        if (\App\Support\Lavaggio\PublicUrls::enabled()) {
+            $privatePaths = array_values(array_unique([...$privatePaths, '/prijava', ...array_map(fn (string $path): string => \App\Support\Lavaggio\PublicUrls::url($path), $privatePaths)]));
+        }
         $rules = implode("\n", array_map(fn (string $path): string => 'Disallow: '.$path, $privatePaths));
 
         return response("User-agent: *\n".$rules."\nSitemap: ".rtrim(config('app.url'), '/')."/sitemap.xml\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
@@ -69,7 +72,7 @@ class SitemapController extends Controller
             if (! $slug) {
                 continue;
             }
-            $xml .= '<url><loc>'.$this->escape($this->url($route, ['slug' => $slug])).'</loc>';
+            $xml .= '<url><loc>'.$this->escape(\App\Support\Lavaggio\PublicUrls::url($this->url($route, ['slug' => $slug]))).'</loc>';
             $lastModified = collect([$row->updated_at, $row->translations->first()?->updated_at])
                 ->filter()->sortByDesc(fn ($date): int => $date->getTimestamp())->first();
             if ($lastModified) {

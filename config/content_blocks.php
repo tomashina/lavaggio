@@ -12,8 +12,9 @@ return [
     */
     'types' => [
         'lavaggio_campaigns' => 'Lavaggio — uvodni banneri',
+        'lavaggio_problems' => 'Lavaggio — odabir prema problemu',
         'lavaggio_categories' => 'Lavaggio — kategorije i kompleti',
-        'lavaggio_products' => 'Lavaggio — proizvodi u nizu',
+        'lavaggio_products' => 'Lavaggio — kolekcija proizvoda',
         'lavaggio_brands' => 'Lavaggio — brandovi s logotipima',
         'lavaggio_blog' => 'Lavaggio — blog i TV studio',
         'lavaggio_reviews' => 'Lavaggio — komentari kupaca',

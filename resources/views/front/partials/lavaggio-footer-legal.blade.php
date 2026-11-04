@@ -4,7 +4,7 @@
     $lavaggioFooterLegalLinks = collect($lavaggioFooterLegalSettings->get('lavaggio_footer_legal_links', []))
         ->filter(fn ($link) => is_array($link) && filled($link['label'] ?? '') && filled($link['url'] ?? ''))
         ->map(function ($link) {
-            if (parse_url($link['url'], PHP_URL_PATH) === '/page/raskid-ugovora-i-prigovor') {
+            if (in_array(parse_url($link['url'], PHP_URL_PATH), ['/page/raskid-ugovora-i-prigovor', '/stranica/raskid-ugovora-i-prigovor'], true)) {
                 return ['label' => 'Raskid ugovora', 'url' => route('returns.create', ['returnRequestSlug' => __('return_request.slug')], false)];
             }
 

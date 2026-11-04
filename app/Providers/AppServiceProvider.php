@@ -105,6 +105,8 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        URL::formatPathUsing(static fn (string $path): string => \App\Support\Lavaggio\PublicUrls::url($path));
+
         Vite::createAssetPathsUsing(static function (string $path, ?bool $secure = null): string {
             $url = asset($path, $secure);
             $separator = str_contains($url, '?') ? '&' : '?';

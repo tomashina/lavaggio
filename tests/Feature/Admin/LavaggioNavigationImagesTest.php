@@ -118,14 +118,14 @@ class LavaggioNavigationImagesTest extends TestCase
         Storage::disk('public')->assertExists($photo);
         $this->assertSame(Storage::disk('public')->url($photo), $item['children'][0]['menu_image_url']);
         $this->assertSame('Samoposlužna praonica', $item['children'][0]['menu_image_alt']);
-        $this->assertStringEndsWith('/page/kako-prati', $item['children'][0]['children'][0]['url']);
+        $this->assertStringEndsWith('/stranica/kako-prati', $item['children'][0]['children'][0]['url']);
         $this->assertArrayNotHasKey('menu_image_url', $item['children'][1]);
 
         $component->call('removeNestedMenuImage', '0.children.0')->call('save')->assertHasNoErrors();
         $item = $navigation->forLocale('hr')[0];
         $this->assertSame('', $item['children'][0]['menu_image_url']);
-        $this->assertStringEndsWith('/page/rezervacije', $item['children'][1]['url']);
-        $this->assertStringEndsWith('/page/kako-prati', $item['children'][0]['children'][0]['url']);
+        $this->assertStringEndsWith('/stranica/rezervacije', $item['children'][1]['url']);
+        $this->assertStringEndsWith('/stranica/kako-prati', $item['children'][0]['children'][0]['url']);
     }
 
     public function test_new_root_categories_appear_automatically_and_missing_images_do_not_create_broken_urls(): void

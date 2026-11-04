@@ -122,12 +122,14 @@ class LavaggioFooterControlsTest extends TestCase
     public function test_previous_withdrawal_placeholder_and_footer_open_the_real_form(): void
     {
         app(SystemSettingsService::class)->put('store_footer_address', "Bareda d.o.o.\nBarban 70\n52207 Barban");
-        app(SystemSettingsService::class)->put('lavaggio_footer_legal_links', [
-            ['label' => 'Raskid ugovora / prigovor', 'url' => '/page/raskid-ugovora-i-prigovor'],
-        ]);
-
-        $xpath = $this->xpath($this->get(route('home'))->assertOk()->getContent());
-        $this->assertSame(1, $xpath->query('//nav[@class="lavaggio-footer-legal"]//a[@href="/forma-za-povrat-i-reklamacije"]')->length);
+        foreach (['/page/raskid-ugovora-i-prigovor', '/stranica/raskid-ugovora-i-prigovor'] as $oldUrl) {
+            app(SystemSettingsService::class)->put('lavaggio_footer_legal_links', [
+                ['label' => 'Raskid ugovora / prigovor', 'url' => $oldUrl],
+            ]);
+            $xpath = $this->xpath($this->get(route('home'))->assertOk()->getContent());
+            $this->assertSame(1, $xpath->query('//nav[@class="lavaggio-footer-legal"]//a')->length);
+            $this->assertSame(1, $xpath->query('//nav[@class="lavaggio-footer-legal"]//a[@href="/forma-za-povrat-i-reklamacije"]')->length);
+        }
         $response = $this->get('/page/raskid-ugovora-i-prigovor')->assertOk()
             ->assertSee('data-withdrawal-form', false)
             ->assertSee('Raskid u roku od 14 dana')

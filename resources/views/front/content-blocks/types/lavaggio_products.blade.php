@@ -40,7 +40,7 @@
                 </div>
                 <div class="lavaggio-widget-product-actions">
                     @if (filled($settings['cta_label'] ?? '') && filled($settings['cta_url'] ?? ''))
-                        <a class="lavaggio-widget-products-link" href="{{ $settings['cta_url'] }}">{{ $settings['cta_label'] }} <x-fa-icon name="arrow-right" /></a>
+                        <a class="lavaggio-widget-products-link" href="{{ \App\Support\Lavaggio\PublicUrls::url($settings['cta_url']) }}">{{ $settings['cta_label'] }} <x-fa-icon name="arrow-right" /></a>
                     @endif
                     @if ($widgetCount > $mobileColumns)
                         <div class="splide__arrows">

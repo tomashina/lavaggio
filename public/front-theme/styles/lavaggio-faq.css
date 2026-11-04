@@ -199,3 +199,6 @@ html[data-theme] body.lavaggio-storefront .lavaggio-faq-empty {
         padding: 20px;
     }
 }
+
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-group + .lavaggio-faq-group { margin-top: 36px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-faq-group > h2 { margin: 0 0 18px; color: var(--lavaggio-heading); font-size: clamp(22px, 2.5vw, 28px); font-weight: 700; line-height: 1.3; }

@@ -204,7 +204,7 @@ class LavaggioHomepageWidgetsTest extends TestCase
             ->call('save')->assertHasNoErrors();
         $this->assertSame('/assets/lavaggio/custom-campaign.webp', $translation->fresh()->payload['watchline']['main_image']);
         $this->get('/')->assertOk()
-            ->assertSee('lavaggio-widget-hero__photographs--single', false)
+            ->assertSee('lavaggio-promo-image', false)
             ->assertSee('src="/assets/lavaggio/custom-campaign.webp" alt="Moja kampanja"', false)
             ->assertDontSee('class="lavaggio-widget-hero__product lavaggio-widget-hero__product--secondary"', false)
             ->assertDontSee('class="lavaggio-widget-hero__product lavaggio-widget-hero__product--tertiary"', false);
@@ -225,7 +225,7 @@ class LavaggioHomepageWidgetsTest extends TestCase
         $this->assertSame('Naš izbor za čisto rublje', $saved['main_image_alt']);
         $this->get('/')->assertOk()
             ->assertSee('src="'.$saved['main_image'].'" alt="Naš izbor za čisto rublje"', false)
-            ->assertSee('lavaggio-widget-hero__photographs--single', false);
+            ->assertSee('lavaggio-promo-image', false);
         Livewire::actingAs($this->admin())->test(Form::class, ['blockId' => $campaign->id])
             ->assertSet('form.watchline.main_image', $saved['main_image'])
             ->assertSet('form.watchline.main_image_alt', 'Naš izbor za čisto rublje');
@@ -286,7 +286,7 @@ class LavaggioHomepageWidgetsTest extends TestCase
             ->assertSee('data-lavaggio-home-widgets', false)
             ->assertSee('data-lavaggio-home-reviews', false)
             ->assertSee('lavaggio-home-reviews.css', false)
-            ->assertSee('Uslužna praonica rublja')->assertSee('Samoposlužna praonica rublja')
+            ->assertDontSee('lavaggio-widget-hero__service', false)
             ->assertSee('Kupi u kompletu i uštedi')->assertSee('Prvi komentari kupaca stižu uskoro.');
         ContentBlock::query()->update(['is_active' => false]);
         \App\Services\Content\ContentBlockResolver::bumpCacheVersion();

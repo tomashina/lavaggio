@@ -89,9 +89,9 @@ class LavaggioContentImportServiceTest extends TestCase
         app(LavaggioContentImportService::class)->import($snapshot);
         $body = InfoPage::where('code', 'lavaggio-modx-20')->firstOrFail()->translations()->value('body_html');
 
-        $this->assertStringContainsString('href="/faq#telefon"', $body);
-        $this->assertStringContainsString('href="/faq"', $body);
-        $this->assertStringContainsString('href="/faq#pranje"', $body);
+        $this->assertStringContainsString('href="/pitanja-i-odgovori#telefon"', $body);
+        $this->assertStringContainsString('href="/pitanja-i-odgovori"', $body);
+        $this->assertStringContainsString('href="/pitanja-i-odgovori#pranje"', $body);
         $this->assertStringContainsString('href="/">Početna</a>', $body);
         $this->assertStringContainsString('href="/#usluge">Početna sekcija</a>', $body);
         $this->assertStringContainsString('href="https://example.com/info"', $body);
@@ -174,11 +174,11 @@ class LavaggioContentImportServiceTest extends TestCase
         $snapshot['resources'][0]['body_html'] = '<p><a href="[[~2]]">Kontakt</a><a href="/kontakt-praonica.html">Kontakt alias</a><a href="[[~1]]">Početna</a><a href="[[~999]]">Staro</a></p>';
         $stats = app(LavaggioContentImportService::class)->import($snapshot);
         $body = InfoPage::where('code', 'lavaggio-modx-20')->firstOrFail()->translations()->value('body_html');
-        $this->assertSame(2, substr_count($body, 'href="/contact"'));
+        $this->assertSame(2, substr_count($body, 'href="/kontakt"'));
         $this->assertStringContainsString('href="/"', $body);
         $this->assertStringContainsString('href="https://www.lavaggio.hr/index.php?id=999"', $body);
         $this->assertContains('Unresolved MODX resource link ID 999.', $stats['warnings']);
-        $this->assertSame('/contact', $stats['resource_urls'][2]);
+        $this->assertSame('/kontakt', $stats['resource_urls'][2]);
         $this->assertDatabaseCount('content_info_pages', 2);
     }
 
@@ -197,7 +197,7 @@ class LavaggioContentImportServiceTest extends TestCase
         $this->assertStringContainsString('<strong>program vjernosti</strong> i pogodnosti', $body);
         $this->assertStringContainsString('<em>Stari uvjeti</em> ostaju u tekstu.', $body);
         $this->assertStringContainsString('Profesionalno pranje', $body);
-        $this->assertStringContainsString('href="/page/kontakt">Aktivni kontakt</a>', $body);
+        $this->assertStringContainsString('href="/stranica/kontakt">Aktivni kontakt</a>', $body);
         $this->assertStringContainsString('href="https://www.lavaggio.hr/index.php?id=999"', $body);
         $this->assertSame(2, substr_count($body, '<a '));
         $this->assertStringNotContainsString('id=57', $body);
@@ -275,7 +275,7 @@ class LavaggioContentImportServiceTest extends TestCase
             ->assertSee('<title>Odgovori iz praonice | Lavaggio</title>', false)
             ->assertSee('content="Pranje, sušenje i korištenje praonice."', false)
             ->assertSee('Pitanja i odgovori')->assertSee('Za dodatna pitanja')
-            ->assertSee('href="/page/kontakt">kontaktirajte praonicu</a>', false)
+            ->assertSee('href="/stranica/kontakt">kontaktirajte praonicu</a>', false)
             ->assertSee('Kako prati rublje?')->assertSee('Slijedite upute na odjeći.')
             ->assertDontSee('Odgovori na najčešća pitanja kupaca.');
 

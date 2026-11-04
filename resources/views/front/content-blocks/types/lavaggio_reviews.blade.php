@@ -27,7 +27,7 @@
             @if(filled($translation?->subtitle))<p class="lavaggio-widget-subtitle">{{ $translation->subtitle }}</p>@endif
             <p>{{ $settings['empty_message'] }}</p>
             @if(filled($translation?->cta_label) && filled($settings['cta_url'] ?? ''))
-                <a href="{{ $settings['cta_url'] }}">{{ $translation->cta_label }} <x-fa-icon name="arrow-right" /></a>
+                <a href="{{ \App\Support\Lavaggio\PublicUrls::url($settings['cta_url']) }}">{{ $translation->cta_label }} <x-fa-icon name="arrow-right" /></a>
             @endif
         </div>
     </section>

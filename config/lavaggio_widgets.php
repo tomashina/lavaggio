@@ -14,6 +14,30 @@ foreach (range(1, 5) as $index) {
     ];
 }
 
+$problemFields = ['eyebrow' => $field('Mali naslov', 'PRONAĐITE RJEŠENJE')];
+$problems = [
+    ['Neugodni mirisi', 'wind', 'odor'],
+    ['Sivo i požutjelo rublje', 'shirt', 'grey'],
+    ['Tvrdokorne mrlje', 'spray-can-sparkles', 'stains'],
+    ['Mrlje od krema i masnoća', 'droplet', 'grease'],
+    ['Osjetljive tkanine', 'feather', 'delicate'],
+    ['Održavanje perilice rublja', 'washing-machine', 'machine'],
+];
+foreach ($problems as $offset => [$title, $icon, $target]) {
+    $index = $offset + 1;
+    $problemFields += [
+        "card_{$index}_title" => $field('Naziv', $title, 'text', "Kartica {$index}"),
+        "card_{$index}_icon" => $field('Ikona', $icon, 'icon'),
+        "card_{$index}_target" => $field('Prikaži proizvode za', $target, 'select') + ['options' => [
+            'odor' => 'Neugodne mirise', 'grey' => 'Sivo i požutjelo rublje', 'stains' => 'Tvrdokorne mrlje',
+            'grease' => 'Kreme i masnoće', 'delicate' => 'Osjetljive tkanine', 'machine' => 'Održavanje perilice',
+        ]],
+        "card_{$index}_url" => $field('Vlastita poveznica (neobavezno)', '', 'url') + ['help' => 'Prazno polje koristi odabranu namjenu i postojeće filtre/kategorije proizvoda.'],
+        "card_{$index}_order" => $field('Redoslijed', $index * 10, 'number') + ['min' => 0, 'max' => 100],
+        "card_{$index}_enabled" => $field('Prikaži karticu', true, 'checkbox'),
+    ];
+}
+
 return [
     'lavaggio_campaigns' => [
         'label' => 'Lavaggio — uvodni banneri',
@@ -23,6 +47,8 @@ return [
             'main_image' => $field('Fotografija bannera', '/assets/lavaggio/home/products/laundry-care-group.svg', 'image') + ['alt_field' => 'main_image_alt'],
             'main_image_alt' => $field('Opis fotografije bannera', 'Ariel, Lenor i Vanish proizvodi za njegu rublja'),
             'shipping_notice' => $field('Prikaži obavijest o besplatnoj dostavi', true, 'checkbox'),
+            'slide_display' => $field('Prikaz bannera', 'text_image', 'select') + ['options' => ['text_image' => 'Fotografija, tekst i gumb', 'image' => 'Samo fotografija']],
+            'slides' => $field('Promo slajdovi', [], 'slides'),
             'service_eyebrow' => $field('Mali naslov', 'PREPUSTITE RUBLJE NAMA', 'text', 'Uslužna praonica'),
             'service_title' => $field('Naslov', 'Uslužna praonica rublja'),
             'service_description' => $field('Opis', 'Vaše rublje peremo, sušimo i pažljivo pripremamo za preuzimanje.', 'textarea'),
@@ -39,6 +65,12 @@ return [
             'self_image_alt' => $field('Opis fotografije', 'Interijer Lavaggio samoposlužne praonice s profesionalnim perilicama'),
         ],
     ],
+    'lavaggio_problems' => [
+        'label' => 'Lavaggio — odabir prema problemu',
+        'content_fields' => ['title', 'subtitle'],
+        'content_defaults' => ['title' => 'Odaberi deterdžent za problem', 'subtitle' => 'Krenite od onoga što želite riješiti i pronađite odgovarajuću njegu.'],
+        'fields' => $problemFields,
+    ],
     'lavaggio_categories' => [
         'label' => 'Lavaggio — kategorije i kompleti',
         'content_fields' => ['title', 'cta_label', 'cta_url'],
@@ -51,10 +83,10 @@ return [
         ],
     ],
     'lavaggio_products' => [
-        'label' => 'Lavaggio — proizvodi u nizu',
+        'label' => 'Lavaggio — kolekcija proizvoda',
         'fields' => [
             'eyebrow' => $field('Mali naslov', 'LAVAGGIO WEBSHOP'),
-            'source' => $field('Odabir proizvoda', 'latest', 'select') + ['options' => ['manual' => 'Ručni odabir i redoslijed', 'latest' => 'Najnoviji artikli', 'filtered' => 'Automatski iz kategorija i brandova', 'promotions' => 'Artikli na akciji', 'new_products' => 'Artikli s oznakom Novo']],
+            'source' => $field('Odabir proizvoda', 'latest', 'select') + ['help' => 'Svaki blok je zasebna kolekcija s vlastitim naslovom i odabirom proizvoda. Naziv kolekcije ne uključuje automatsku statistiku prodaje ili pretraga.', 'options' => ['manual' => 'Ručni odabir i redoslijed', 'latest' => 'Najnoviji artikli', 'filtered' => 'Automatski iz kategorija i brandova', 'promotions' => 'Artikli na akciji', 'new_products' => 'Artikli s oznakom Novo']],
             'category_ids' => $field('Kategorije', [], 'categories', 'Ponuda u widgetu'),
             'manufacturer_ids' => $field('Brandovi', [], 'manufacturers'),
             'include_children' => $field('Uključi potkategorije', true, 'checkbox'),

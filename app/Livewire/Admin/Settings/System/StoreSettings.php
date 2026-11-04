@@ -10,6 +10,7 @@ use App\Models\Content\Page\InfoPage;
 use App\Models\Settings\Local\Language;
 use App\Models\Settings\Local\ShippingMethod;
 use App\Services\Catalog\CatalogFeatureService;
+use App\Services\Content\LavaggioContactCards;
 use App\Services\Settings\SystemSettingsService;
 use App\Support\Media\MediaProfileRegistry;
 use Closure;
@@ -111,6 +112,7 @@ class StoreSettings extends Component
         'store_footer_bottom_copyright_text' => '',
         'lavaggio_footer_legal_title' => 'Uvjeti',
         'lavaggio_footer_legal_links' => '',
+        'lavaggio_contact_cards' => [],
         'store_social_facebook_url' => '',
         'store_social_facebook_slovenia_url' => '',
         'store_social_instagram_url' => '',
@@ -310,6 +312,9 @@ class StoreSettings extends Component
             $this->form[$key] = $settings->get($key, $default);
         }
         $this->form['lavaggio_footer_legal_links'] = $this->formatFooterLegalLinks($this->form['lavaggio_footer_legal_links']);
+        if (config('storefront.home') === 'lavaggio') {
+            $this->form['lavaggio_contact_cards'] = app(LavaggioContactCards::class)->editable();
+        }
 
         foreach (self::LOCALIZED_SETTING_KEYS as $key) {
             $this->baseLocalizedValues[$key] = $this->form[$key] ?? '';
@@ -388,6 +393,25 @@ class StoreSettings extends Component
         $this->previousLocale = $this->locale;
     }
 
+    public function addLavaggioContactCard(): void
+    {
+        $this->authorizeAccess();
+        abort_unless(config('storefront.home') === 'lavaggio', 404);
+        $this->form['lavaggio_contact_cards'][] = [
+            'title' => '', 'icon' => 'comments', 'type' => 'custom', 'text' => '',
+            'link_label' => '', 'url' => '', 'show_hours' => false,
+            'sort_order' => count($this->form['lavaggio_contact_cards']) * 10, 'is_active' => true,
+        ];
+    }
+
+    public function removeLavaggioContactCard(int $index): void
+    {
+        $this->authorizeAccess();
+        abort_unless(config('storefront.home') === 'lavaggio', 404);
+        unset($this->form['lavaggio_contact_cards'][$index]);
+        $this->form['lavaggio_contact_cards'] = array_values($this->form['lavaggio_contact_cards']);
+    }
+
     public function hasLocalizedSettingsForCurrentTab(): bool
     {
         return array_intersect($this->currentTabSettingKeys(), self::LOCALIZED_SETTING_KEYS) !== [];
@@ -443,6 +467,16 @@ class StoreSettings extends Component
             'form.store_footer_bottom_copyright_text' => ['nullable', 'string', 'max:255'],
             'form.lavaggio_footer_legal_title' => ['nullable', 'string', 'max:120'],
             'form.lavaggio_footer_legal_links' => ['nullable', 'string', 'max:15000', $this->footerLegalLinksRule()],
+            'form.lavaggio_contact_cards' => ['array', 'max:24'],
+            'form.lavaggio_contact_cards.*.title' => ['required', 'string', 'max:120'],
+            'form.lavaggio_contact_cards.*.icon' => ['required', Rule::in(LavaggioContactCards::ICONS)],
+            'form.lavaggio_contact_cards.*.type' => ['required', Rule::in(['phone', 'email', 'returns', 'store', 'custom'])],
+            'form.lavaggio_contact_cards.*.text' => ['nullable', 'string', 'max:1000'],
+            'form.lavaggio_contact_cards.*.link_label' => ['nullable', 'string', 'max:120'],
+            'form.lavaggio_contact_cards.*.url' => ['nullable', 'string', 'max:1000', $this->storeLinkRule()],
+            'form.lavaggio_contact_cards.*.show_hours' => ['boolean'],
+            'form.lavaggio_contact_cards.*.sort_order' => ['required', 'integer', 'min:0', 'max:9999'],
+            'form.lavaggio_contact_cards.*.is_active' => ['boolean'],
             'form.store_social_facebook_url' => ['nullable', 'url', 'max:2048'],
             'form.store_social_facebook_slovenia_url' => ['nullable', 'url', 'max:2048'],
             'form.store_social_instagram_url' => ['nullable', 'url', 'max:2048'],
@@ -619,7 +653,7 @@ class StoreSettings extends Component
                 return true;
             }
 
-            if (str_ends_with($key, '.*')) {
+            if (str_contains($key, '.*')) {
                 return isset($allowedFormRules[Str::before($key, '.*')]);
             }
 
@@ -1389,7 +1423,7 @@ class StoreSettings extends Component
                 'branding' => str_starts_with($key, 'store_brand_')
                     || str_starts_with($key, 'store_footer_')
                     || str_starts_with($key, 'store_social_')
-                    || (config('storefront.home') === 'lavaggio' && str_starts_with($key, 'lavaggio_footer_legal_')),
+                    || (config('storefront.home') === 'lavaggio' && (str_starts_with($key, 'lavaggio_footer_legal_') || $key === 'lavaggio_contact_cards')),
                 'newsletter' => str_starts_with($key, 'store_newsletter_'),
                 'integrations' => str_starts_with($key, 'store_captcha_')
                     || str_starts_with($key, 'store_analytics_'),

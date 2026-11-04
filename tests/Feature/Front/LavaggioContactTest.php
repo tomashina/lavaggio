@@ -24,13 +24,19 @@ class LavaggioContactTest extends TestCase
         $this->seed(LavaggioStorefrontSeeder::class);
     }
 
-    public function test_contact_matches_source_content_and_uses_local_form_and_privacy_links(): void
+    public function test_contact_uses_four_cards_without_map_and_keeps_local_form_and_privacy_links(): void
     {
         $response = $this->get(route('contact.create'))->assertOk()
-            ->assertSee('Barban 70, 52207, Barban')
-            ->assertSee('Trebate čisto rublje bez muke? Javite nam se!')
+            ->assertSee('Barban 70, 52207 Barban')
+            ->assertSee('Kako vam možemo pomoći?')
+            ->assertSee('Web podrška')
+            ->assertSee('Kontakt mailom')
+            ->assertSee('Reklamacije')
+            ->assertSee('Prodajno mjesto Barban')
             ->assertSee('front-theme/styles/lavaggio-contact.css')
-            ->assertSee('maps/embed?pb=', false)
+            ->assertDontSee('maps/embed?pb=', false)
+            ->assertDontSee('Samoposlužna')
+            ->assertSee(route('pages.show', 'povrati-i-reklamacije'))
             ->assertSee(route('pages.show', 'zastita-podataka-i-prigovor'))
             ->assertDontSee(__('contact.subheading'))
             ->assertDontSee(__('contact.help.body'));
@@ -38,6 +44,7 @@ class LavaggioContactTest extends TestCase
         $document = new \DOMDocument;
         @$document->loadHTML($response->getContent());
         $xpath = new \DOMXPath($document);
+        $this->assertSame(4, $xpath->query('//*[@data-lavaggio-contact-card]')->length);
         $form = $xpath->query('//form[@data-contact-form]')->item(0);
         $this->assertSame(route('contact.store'), $form->getAttribute('action'));
         $this->assertSame(1, $xpath->query('.//input[@name="name"]', $form)->length);

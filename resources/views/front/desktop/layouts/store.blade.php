@@ -671,7 +671,16 @@
             @yield('home-footer-benefits')
         @endif
 
-        @include('front.partials.legal-warranty-notice', ['warrantyVariant' => 'footer'])
+        @if ($lavaggioStorefront)
+            <aside class="legal-warranty-notice legal-warranty-notice--footer" data-lavaggio-returns-link>
+                <a href="{{ route('pages.show', 'povrati-i-reklamacije') }}">
+                    <x-fa-icon name="rotate-left" class="legal-warranty-icon" />
+                    <span>Povrati i reklamacije</span>
+                </a>
+            </aside>
+        @else
+            @include('front.partials.legal-warranty-notice', ['warrantyVariant' => 'footer'])
+        @endif
 
         @if (! $watchlineStorefront && (bool) ($benefitsBar['enabled'] ?? true) && $footerBenefits->isNotEmpty())
             <div class="site-footer-benefits grid md:grid-cols-3">
@@ -705,7 +714,7 @@
 
         @php
             $footerColumnsRaw = collect($storeSettings['footer']['link_columns'] ?? [])->take(3)->values();
-            $footerColumns = collect([1, 2, 3])->map(function (int $index) use ($footerColumnsRaw) {
+            $footerColumns = collect([1, 2, 3])->map(function (int $index) use ($footerColumnsRaw, $lavaggioStorefront, $storeSettings) {
                 $defaultTitle = match ($index) {
                     1 => (string) __('ui.front.desktop.footer.shop'),
                     2 => (string) __('ui.front.desktop.footer.help'),
@@ -718,10 +727,16 @@
                     ->map(fn ($link) => [
                         'label' => (string) ($link['label'] ?? ''),
                         'url' => (string) ($link['url'] ?? '#'),
+                        'warranty' => false,
                     ])
                     ->filter(fn (array $link) => trim($link['label']) !== '')
                     ->values()
                     ->all();
+
+                if ($lavaggioStorefront && $index === 2) {
+                    $links = array_values(array_filter($links, fn ($link) => ! str_starts_with($link['label'], 'Zakonsko jamstvo')));
+                    $links[] = ['label' => 'Zakonsko jamstvo', 'url' => $storeSettings['legal_warranty']['asset_url'], 'warranty' => true];
+                }
 
                 return ['title' => $title, 'links' => $links];
             })->values();
@@ -742,12 +757,16 @@
                         <p class="text-slate-500">{{ $footerContactIntro }}</p>
                     @endif
                     @if (!empty($storeSettings['footer']['phone'] ?? ''))
-                        <p><a href="tel:{{ preg_replace('/\\s+/', '', (string) $storeSettings['footer']['phone']) }}" class="text-base font-semibold text-slate-900 transition hover:text-slate-700">@if ($libermediaStorefront)<x-fa-icon name="phone" style="regular" :inline="true" class="lm-footer-phone-icon" />@endif{{ $storeSettings['footer']['phone'] }}</a></p>
+                        @if ($lavaggioStorefront)
+                            <p>@include('front.partials.lavaggio-contact-phone', ['lavaggioPhoneClass' => 'text-base font-semibold text-slate-900 transition hover:text-slate-700'])</p>
+                        @else
+                            <p><a href="tel:{{ preg_replace('/\\s+/', '', (string) $storeSettings['footer']['phone']) }}" class="text-base font-semibold text-slate-900 transition hover:text-slate-700">@if ($libermediaStorefront)<x-fa-icon name="phone" style="regular" :inline="true" class="lm-footer-phone-icon" />@endif{{ $storeSettings['footer']['phone'] }}</a></p>
+                        @endif
                     @endif
                     @foreach ($footerContactEmails as $footerContactEmail)
                         <p><a href="mailto:{{ $footerContactEmail }}" class="transition hover:text-slate-900">{{ $footerContactEmail }}</a></p>
                     @endforeach
-                    @if (!empty($storeSettings['footer']['hours'] ?? ''))
+                    @if (!empty($storeSettings['footer']['hours'] ?? '') && (! $lavaggioStorefront || empty($storeSettings['footer']['phone'] ?? '')))
                         <p>{{ $storeSettings['footer']['hours'] }}</p>
                     @endif
                     @foreach ($footerContactAddressBlocks as $footerAddressBlock)
@@ -765,7 +784,7 @@
                     </summary>
                     <ul class="space-y-2.5 px-4 pb-4 text-sm text-slate-600">
                         @foreach ($column['links'] as $link)
-                            <li><a href="{{ $link['url'] }}" class="transition hover:text-slate-900">{{ $link['label'] }}</a></li>
+                            <li><a href="{{ $link['url'] }}" class="transition hover:text-slate-900" @if ($link['warranty'] ?? false) target="_blank" rel="noopener noreferrer" data-legal-warranty-open aria-controls="legal-warranty-modal" aria-haspopup="dialog" @endif>{{ $link['label'] }}</a></li>
                         @endforeach
                     </ul>
                     @if ($herreraStorefront && ! $lavaggioStorefront && $loop->last)
@@ -783,12 +802,16 @@
                         <p class="site-footer-contact-intro">{{ $footerContactIntro }}</p>
                     @endif
                     @if (!empty($storeSettings['footer']['phone'] ?? ''))
-                        <p><a href="tel:{{ preg_replace('/\\s+/', '', (string) $storeSettings['footer']['phone']) }}" class="site-footer-contact-phone transition">@if ($libermediaStorefront)<x-fa-icon name="phone" style="regular" :inline="true" class="lm-footer-phone-icon" />@endif{{ $storeSettings['footer']['phone'] }}</a></p>
+                        @if ($lavaggioStorefront)
+                            <p>@include('front.partials.lavaggio-contact-phone', ['lavaggioPhoneClass' => 'site-footer-contact-phone transition'])</p>
+                        @else
+                            <p><a href="tel:{{ preg_replace('/\\s+/', '', (string) $storeSettings['footer']['phone']) }}" class="site-footer-contact-phone transition">@if ($libermediaStorefront)<x-fa-icon name="phone" style="regular" :inline="true" class="lm-footer-phone-icon" />@endif{{ $storeSettings['footer']['phone'] }}</a></p>
+                        @endif
                     @endif
                     @foreach ($footerContactEmails as $footerContactEmail)
                         <p><a href="mailto:{{ $footerContactEmail }}" class="transition">{{ $footerContactEmail }}</a></p>
                     @endforeach
-                    @if (!empty($storeSettings['footer']['hours'] ?? ''))
+                    @if (!empty($storeSettings['footer']['hours'] ?? '') && (! $lavaggioStorefront || empty($storeSettings['footer']['phone'] ?? '')))
                         <p>{{ $storeSettings['footer']['hours'] }}</p>
                     @endif
                     @foreach ($footerContactAddressBlocks as $footerAddressBlock)
@@ -826,7 +849,7 @@
                     <h3 class="site-footer-column-title">{{ $column['title'] }}</h3>
                     <ul class="site-footer-link-list">
                         @foreach ($column['links'] as $link)
-                            <li><a href="{{ $link['url'] }}" class="transition">{{ $link['label'] }}</a></li>
+                            <li><a href="{{ $link['url'] }}" class="transition" @if ($link['warranty'] ?? false) target="_blank" rel="noopener noreferrer" data-legal-warranty-open aria-controls="legal-warranty-modal" aria-haspopup="dialog" @endif>{{ $link['label'] }}</a></li>
                         @endforeach
                     </ul>
                     @if ($herreraStorefront && ! $lavaggioStorefront && $loop->last)

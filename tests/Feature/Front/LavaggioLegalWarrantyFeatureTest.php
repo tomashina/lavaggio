@@ -13,7 +13,7 @@ class LavaggioLegalWarrantyFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_footer_product_and_checkout_share_the_official_notice_despite_old_disabled_settings(): void
+    public function test_footer_links_to_returns_and_discreet_warranty_while_product_and_checkout_keep_the_notice(): void
     {
         config(['storefront.home' => 'lavaggio', 'storefront_cache.enabled' => false, 'commerce.b2b_only' => false]);
         app()->setLocale('hr');
@@ -28,7 +28,18 @@ class LavaggioLegalWarrantyFeatureTest extends TestCase
         $this->withSession(['front.cart.items' => [$product->id.':0' => ['product_id' => $product->id, 'product_option_value_id' => null, 'quantity' => 1]]]);
         $asset = asset('assets/legal/legal-guarantee-notice-hr-color.svg');
 
-        foreach ([route('home') => 'footer', route('products.show', ['slug' => 'lavaggio-jamstvo']) => 'product', route('checkout.create') => 'checkout'] as $url => $position) {
+        $home = $this->get(route('home'))->assertOk();
+        $homeXpath = $this->xpath($home->getContent());
+        $this->assertSame(0, $homeXpath->query('//*[@data-legal-warranty-notice="footer"]')->count());
+        $this->assertSame(1, $homeXpath->query('//*[@data-lavaggio-returns-link]//a[@href="'.route('pages.show', 'povrati-i-reklamacije').'"]')->count());
+        $warrantyLinks = $homeXpath->query('//footer//a[@data-legal-warranty-open]');
+        $this->assertSame(2, $warrantyLinks->count());
+        foreach ($warrantyLinks as $link) {
+            $this->assertSame('Zakonsko jamstvo', trim($link->textContent));
+            $this->assertSame($asset, $link->getAttribute('href'));
+        }
+
+        foreach ([route('products.show', ['slug' => 'lavaggio-jamstvo']) => 'product', route('checkout.create') => 'checkout'] as $url => $position) {
             $response = $this->get($url)->assertOk()->assertSee('Zakonsko jamstvo – najmanje 2 godine');
             $xpath = $this->xpath($response->getContent());
             $this->assertSame(1, $xpath->query('//*[@data-legal-warranty-notice="'.$position.'"]//a[@href="'.$asset.'"]')->count(), $position);

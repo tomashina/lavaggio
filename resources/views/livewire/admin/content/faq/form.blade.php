@@ -24,8 +24,16 @@
                     @error('form.code') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                 </div>
                 <div style="grid-column: span 3;">
-                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Group Code') }}</label>
-                    <input type="text" wire:model="form.group_code" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-mono lowercase" />
+                    @if (config('storefront.home') === 'lavaggio')
+                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Tema pitanja</label>
+                        <select wire:model="form.group_code" class="w-full rounded-xl border-slate-300 text-sm">
+                            @foreach ($faqGroupOptions as $faqGroup)<option value="{{ $faqGroup['code'] }}">{{ $faqGroup['title'] }}</option>@endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-slate-500">Temama upravljate na popisu pitanja i odgovora.</p>
+                    @else
+                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Group Code') }}</label>
+                        <input type="text" wire:model="form.group_code" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-mono lowercase" />
+                    @endif
                     @error('form.group_code') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                 </div>
                 <div style="grid-column: span 2;">

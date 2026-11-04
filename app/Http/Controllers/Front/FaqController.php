@@ -7,6 +7,7 @@ use App\Http\Controllers\Front\Concerns\ResolvesFrontendView;
 use App\Models\Content\Page\InfoPage;
 use App\Models\Content\Support\Faq;
 use App\Services\Content\ContentBlockResolver;
+use App\Services\Content\LavaggioFaqGroups;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -56,6 +57,7 @@ class FaqController extends Controller
 
         return view($this->frontendView($request, 'faq.index'), [
             'faqs' => $faqs,
+            'faqSections' => config('storefront.home') === 'lavaggio' ? app(LavaggioFaqGroups::class)->sections($faqs) : collect(),
             'faqPageTranslation' => $faqPageTranslation,
             'topBlocks' => $topBlocks,
             'bottomBlocks' => $bottomBlocks,

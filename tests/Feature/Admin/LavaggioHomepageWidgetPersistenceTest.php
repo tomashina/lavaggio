@@ -67,7 +67,7 @@ class LavaggioHomepageWidgetPersistenceTest extends TestCase
         $html = $this->widgetHtml($block);
         foreach (['Sve za naš dom', 'Cijeli novi izbor', 'Novi mali naslov', 'Mirisna njega',
             'Fotografija mirisne njege', 'Naši novi kompleti', 'Odaberi komplet', $url,
-            'href="/shop?njega=mirisna"', 'href="/bundle-artikli?izbor=novi"', '#heart'] as $text) {
+            'href="/trgovina?njega=mirisna"', 'href="/bundle-artikli?izbor=novi"', '#heart'] as $text) {
             $this->assertStringContainsString($text, $html);
         }
         $this->editor($block)->assertSet('form.watchline.card_1_image', $url)
@@ -98,7 +98,7 @@ class LavaggioHomepageWidgetPersistenceTest extends TestCase
         $html = $this->widgetHtml($block);
         $this->assertStringContainsString('Urednički izbor', $html);
         $this->assertStringContainsString('Proizvodi prema našem redoslijedu', $html);
-        $this->assertStringContainsString('href="/shop?izbor=rucni"', $html);
+        $this->assertStringContainsString('href="/trgovina?izbor=rucni"', $html);
         $this->assertStringContainsString('data-desktop-cols="2"', $html);
         $this->assertStringContainsString('data-mobile-cols="1"', $html);
         $this->assertLessThan(strpos($html, 'saved-first'), strpos($html, 'saved-second'));

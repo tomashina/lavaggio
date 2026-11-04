@@ -10,8 +10,11 @@
         <h1>{{ $faqTitle }}</h1>
     </header>
 
-    <section class="lavaggio-faq-list" aria-label="{{ $faqTitle }}">
-        @forelse ($faqs as $faq)
+    @forelse ($faqSections as $faqSection)
+    <section class="lavaggio-faq-group" aria-labelledby="faq-topic-{{ $loop->index }}">
+        <h2 id="faq-topic-{{ $loop->index }}">{{ $faqSection['title'] }}</h2>
+        <div class="lavaggio-faq-list">
+        @foreach ($faqSection['faqs'] as $faq)
             @php
                 $translation = $faq->translations->firstWhere('locale', $locale)
                     ?? $faq->translations->firstWhere('locale', $fallbackLocale)
@@ -28,10 +31,12 @@
                     </div>
                 </details>
             @endif
-        @empty
-            <p class="lavaggio-faq-empty">{{ __('ui.faq.empty') }}</p>
-        @endforelse
+        @endforeach
+        </div>
     </section>
+    @empty
+        <p class="lavaggio-faq-empty">{{ __('ui.faq.empty') }}</p>
+    @endforelse
 
     @if ($faqPageTranslation?->body_html)
         <div class="content-richtext lavaggio-faq-help">{!! $faqPageTranslation->body_html !!}</div>

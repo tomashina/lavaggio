@@ -28,11 +28,6 @@ class LavaggioContentNavigationSeeder extends Seeder
 
         $items = [
             $page(68, 'Praonica', [
-                $page(69, 'Samoposlužna praonica rublja', [
-                    $page(92, 'Kako prati rublje kod nas'),
-                    $page(154, 'Kako pripremiti rublje za pranje'),
-                    $page(155, 'Koji program odabrati'),
-                ]),
                 $page(73, 'Uslužna praonica rublja', [
                     $page(265, 'Pranje i peglanje košulja'),
                     $page(157, 'Pranje i peglanje kućnog rublja'),
@@ -52,9 +47,7 @@ class LavaggioContentNavigationSeeder extends Seeder
                 ]),
                 $page(267, 'Što peremo u našoj praonici'),
                 $page(359, 'Rezervacije 2027'),
-                $page(70, 'Cjenik', [
-                    $page(87, 'Cjenik samoposlužna'), $page(88, 'Cjenik uslužna'), $page(322, 'Poklon bon'),
-                ]),
+                $page(88, 'Cjenik'),
                 $page(71, 'O praonici', [
                     $page(174, 'Radno vrijeme praonice'), $page(78, 'Recenzije klijenata'), $page(85, 'Kućni red u praonici'),
                 ]),
@@ -78,7 +71,7 @@ class LavaggioContentNavigationSeeder extends Seeder
         app(SystemSettingsService::class)->putMany([
             NavigationMenuService::SETTINGS_KEY => $withOrder($items),
             'catalog_use_blog' => true,
-            'store_footer_col_3_custom_links' => 'Moj račun|'.route('front.auth.login', absolute: false)."\nKošarica|/cart\nPraonica|/page/usluge",
+            'store_footer_col_3_custom_links' => 'Moj račun|'.route('front.auth.login', absolute: false)."\nKošarica|/kosarica\nPraonica|/stranica/usluge",
         ]);
         $this->call(LavaggioLaundryMenuImagesSeeder::class);
     }

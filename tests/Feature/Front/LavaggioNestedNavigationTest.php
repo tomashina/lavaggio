@@ -158,13 +158,13 @@ class LavaggioNestedNavigationTest extends TestCase
         $this->assertSame(['Web shop', 'Praonica', 'Pitanja i odgovori', 'TV studio', 'Tko smo mi', 'Kontakt'], array_column($first, 'label'));
         $groups = $first[1]['children'];
         $this->assertSame([
-            'Samoposlužna praonica rublja', 'Uslužna praonica rublja', 'Prikup i dostava rublja',
+            'Uslužna praonica rublja', 'Prikup i dostava rublja',
             'Ozonsko pranje rublja', 'Što peremo u našoj praonici', 'Rezervacije 2027', 'Cjenik', 'O praonici',
         ], array_column($groups, 'label'));
-        $this->assertSame([3, 8, 6, 2, 0, 0, 3, 3], array_map(fn (array $item): int => count($item['children']), $groups));
-        $this->assertSame('Pranje i održavanje stolnog i kuhinjskog rublja za restorane', $groups[1]['children'][7]['label']);
-        $this->assertSame(['Barban', 'Žminj', 'Marčana', 'Kanfanar', 'Svetvinčenat', 'Vodnjan'], array_column($groups[2]['children'], 'label'));
-        $this->assertSame(route('pages.show', 'import-page-311'), $groups[1]['children'][7]['url']);
+        $this->assertSame([8, 6, 2, 0, 0, 0, 3], array_map(fn (array $item): int => count($item['children']), $groups));
+        $this->assertSame('Pranje i održavanje stolnog i kuhinjskog rublja za restorane', $groups[0]['children'][7]['label']);
+        $this->assertSame(['Barban', 'Žminj', 'Marčana', 'Kanfanar', 'Svetvinčenat', 'Vodnjan'], array_column($groups[1]['children'], 'label'));
+        $this->assertSame(route('pages.show', 'import-page-311'), $groups[0]['children'][7]['url']);
 
         $footer = app(StoreSettingsService::class)->footer()['link_columns'];
         $this->assertSame('Web shop', $footer[0]['title']);
@@ -178,7 +178,7 @@ class LavaggioNestedNavigationTest extends TestCase
         @$document->loadHTML($response->getContent());
         $xpath = new \DOMXPath($document);
         $this->assertSame(2, $xpath->query('//*[@data-lavaggio-catalog-trigger]')->length);
-        $this->assertSame(8, $xpath->query('//*[@data-lavaggio-catalog-menu][not(@id="lavaggio-web-shop-menu")]//a[@data-lavaggio-catalog-root]')->length);
+        $this->assertSame(7, $xpath->query('//*[@data-lavaggio-catalog-menu][not(@id="lavaggio-web-shop-menu")]//a[@data-lavaggio-catalog-root]')->length);
         $this->assertSame(1, $xpath->query('//*[@data-mobile-menu-panel]//a[@href="'.route('pages.show', 'import-page-311').'"]')->length);
         $this->assertDatabaseCount('products', 0);
     }

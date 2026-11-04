@@ -5,36 +5,52 @@
 @endonce
 @php
     $settings = \App\Support\WatchlineWidgetSettings::forBlock($block, $translation);
-    $mainImage = $settings['main_image'];
+    $slides = \App\Support\LavaggioCampaignSlides::visible($settings);
+    $hasMultipleSlides = count($slides) > 1;
+    $promoId = 'lavaggio-promo-'.$block->id;
+    $promoOptions = ['type' => 'slide', 'rewind' => true, 'perPage' => 1, 'perMove' => 1,
+        'arrows' => $hasMultipleSlides, 'pagination' => $hasMultipleSlides, 'autoplay' => false,
+        'speed' => 450, 'gap' => '20px', 'i18n' => ['prev' => 'Prethodna promocija', 'next' => 'Sljedeća promocija',
+            'slideX' => 'Promocija %s', 'pageX' => 'Prikaži promociju %s', 'slideLabel' => '%s od %s']];
 @endphp
-<section class="lavaggio-widget-hero lavaggio-widget-hero--photographic" aria-labelledby="lavaggio-hero-{{ $block->id }}">
-    <article class="lavaggio-widget-hero__main">
-        <div class="lavaggio-widget-hero__copy">
-            @if(filled($settings['eyebrow']))<p class="lavaggio-widget-eyebrow">{{ $settings['eyebrow'] }}</p>@endif
-            <h1 id="lavaggio-hero-{{ $block->id }}">{{ $translation?->title }}</h1>
-            @if(filled($translation?->subtitle))<p class="lavaggio-widget-description">{{ $translation->subtitle }}</p>@endif
-            @if($settings['shipping_notice'])
-                <p class="lavaggio-widget-shipping"><x-fa-icon name="truck-fast" /><span>Besplatna dostava iznad <strong>{{ app(\App\Services\Settings\SystemSettingsService::class)->get('lavaggio_free_shipping_threshold', 50) }} €</strong></span></p>
-            @endif
-            @if(filled($translation?->cta_label) && filled($settings['cta_url'] ?? ''))<a class="lavaggio-widget-button" href="{{ $settings['cta_url'] }}">{{ $translation->cta_label }} <x-fa-icon name="arrow-right" /></a>@endif
+@if ($slides !== [])
+    @if ($hasMultipleSlides) @include('front.partials.splide-assets') @endif
+    <section id="{{ $promoId }}" class="lavaggio-promo{{ $hasMultipleSlides ? ' splide' : '' }}" aria-label="Lavaggio promocije"
+        data-lavaggio-promotions @if ($hasMultipleSlides) data-herrera-home-carousel data-splide='@json($promoOptions)' @endif>
+        <div @class(['splide__track' => $hasMultipleSlides])>
+            <div @class(['splide__list' => $hasMultipleSlides])>
+                @foreach ($slides as $slide)
+                    <article @class(['lavaggio-promo-slide', 'splide__slide' => $hasMultipleSlides,
+                        'lavaggio-promo-slide--image' => $slide['display'] === 'image', 'lavaggio-promo-slide--no-image' => $slide['image'] === ''])>
+                        @if ($slide['display'] === 'image')
+                            @if ($loop->first)<h1 class="sr-only">{{ $slide['title'] ?: 'Lavaggio webshop' }}</h1>@endif
+                            @if ($slide['url'] !== '')<a class="lavaggio-promo-photo-link" href="{{ \App\Support\Lavaggio\PublicUrls::url($slide['url']) }}" aria-label="{{ $slide['cta_label'] ?: ($slide['title'] ?: 'Pogledajte promociju') }}">@endif
+                                <img src="{{ $slide['image'] }}" alt="{{ $slide['image_alt'] }}" width="1600" height="700" @if($loop->first) fetchpriority="high" @else loading="lazy" @endif decoding="async">
+                            @if ($slide['url'] !== '')</a>@endif
+                        @else
+                            <div class="lavaggio-promo-copy">
+                                @if(filled($slide['eyebrow']))<p class="lavaggio-widget-eyebrow">{{ $slide['eyebrow'] }}</p>@endif
+                                @if ($loop->first)<h1>{{ $slide['title'] }}</h1>@else<h2>{{ $slide['title'] }}</h2>@endif
+                                @if(filled($slide['subtitle']))<p class="lavaggio-widget-description">{{ $slide['subtitle'] }}</p>@endif
+                                @if($settings['shipping_notice'])
+                                    <p class="lavaggio-widget-shipping"><x-fa-icon name="truck-fast" /><span>Besplatna dostava iznad <strong>{{ app(\App\Services\Settings\SystemSettingsService::class)->get('lavaggio_free_shipping_threshold', 50) }} €</strong></span></p>
+                                @endif
+                                @if(filled($slide['cta_label']) && filled($slide['url']))<a class="lavaggio-widget-button" href="{{ \App\Support\Lavaggio\PublicUrls::url($slide['url']) }}">{{ $slide['cta_label'] }} <x-fa-icon name="arrow-right" /></a>@endif
+                            </div>
+                            @if(filled($slide['image']))
+                                <div class="lavaggio-promo-image"><img class="lavaggio-widget-hero__product lavaggio-widget-hero__product--main" src="{{ $slide['image'] }}" alt="{{ $slide['image_alt'] }}" width="1000" height="930" @if($loop->first) fetchpriority="high" @else loading="lazy" @endif decoding="async"></div>
+                            @endif
+                        @endif
+                    </article>
+                @endforeach
+            </div>
         </div>
-        @if(filled($mainImage))
-            <div class="lavaggio-widget-hero__photographs lavaggio-widget-hero__photographs--single">
-                <img class="lavaggio-widget-hero__product lavaggio-widget-hero__product--main" src="{{ $mainImage }}" alt="{{ $settings['main_image_alt'] }}" width="1000" height="930" fetchpriority="high" decoding="async">
+        @if ($hasMultipleSlides)
+            <div class="splide__arrows lavaggio-promo-arrows">
+                <button type="button" class="splide__arrow splide__arrow--prev" aria-label="Prethodna promocija"><x-fa-icon name="chevron-right" /></button>
+                <button type="button" class="splide__arrow splide__arrow--next" aria-label="Sljedeća promocija"><x-fa-icon name="chevron-right" /></button>
             </div>
         @endif
-    </article>
-    @foreach(['service', 'self'] as $panel)
-        <article @class(['lavaggio-widget-hero__service', 'lavaggio-widget-hero__service--'.$panel, 'lavaggio-widget-hero__service--with-photo' => filled($settings[$panel.'_image'])])>
-            <div class="lavaggio-widget-hero__service-copy">
-                @if(filled($settings[$panel.'_eyebrow']))<p class="lavaggio-widget-eyebrow">{{ $settings[$panel.'_eyebrow'] }}</p>@endif
-                <h2>{{ $settings[$panel.'_title'] }}</h2>
-                @if(filled($settings[$panel.'_description']))<p class="lavaggio-widget-description">{{ $settings[$panel.'_description'] }}</p>@endif
-                @if(filled($settings[$panel.'_url']) && filled($settings[$panel.'_cta_label']))<a class="lavaggio-widget-hero__service-link" href="{{ $settings[$panel.'_url'] }}">{{ $settings[$panel.'_cta_label'] }} <x-fa-icon name="arrow-right" /></a>@endif
-            </div>
-            @if(filled($settings[$panel.'_image']))
-                <div class="lavaggio-widget-hero__service-photo"><img src="{{ $settings[$panel.'_image'] }}" alt="{{ $settings[$panel.'_image_alt'] }}" width="1000" height="750" decoding="async"></div>
-            @endif
-        </article>
-    @endforeach
-</section>
+    </section>
+    @if ($hasMultipleSlides) @include('front.partials.herrera-home-carousel-script') @endif
+@endif

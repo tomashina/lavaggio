@@ -4,7 +4,14 @@
     $translation = $selectedTranslation
         ?? $page->translations->firstWhere('locale', $locale)
         ?? $page->translations->firstWhere('locale', $fallbackLocale);
+    $pageLinkCards = app(\App\Support\Lavaggio\InfoPageLinkCards::class)->fromHtml((string) $translation?->body_html);
 @endphp
+
+@if (config('storefront.home') === 'lavaggio')
+    @push('head')
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-content-pages.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-content-pages.css')) }}">
+    @endpush
+@endif
 
 @section('title', $translation?->title ?? 'Page')
 @section('main_class', 'mx-auto w-full max-w-7xl px-6 pt-0 pb-8')
@@ -30,11 +37,23 @@
         </div>
     </section>
 
+    @if ($pageLinkCards !== [])
+        <nav class="lavaggio-page-link-cards" aria-label="{{ $translation?->title ?? $page->code }}">
+            @foreach ($pageLinkCards as $card)
+                <a class="lavaggio-page-link-card" href="{{ $card['url'] }}">
+                    <span class="lavaggio-page-link-icon" aria-hidden="true"><x-fa-icon name="file-lines" /></span>
+                    <span>{{ $card['title'] }}</span>
+                    <x-fa-icon name="arrow-right" class="lavaggio-page-link-arrow" />
+                </a>
+            @endforeach
+        </nav>
+    @else
     <article class="lavaggio-content-article bg-white px-2 py-2">
         <div class="content-richtext">
             {!! app(\App\Support\WatchlineArticleImages::class)->render((string) $translation?->body_html) ?: '<p>This page has no body content.</p>' !!}
         </div>
     </article>
+    @endif
 
     @if ($bottomBlocks->isNotEmpty())
         <section class="mt-10">@include('components.content-placement', ['items' => $bottomBlocks])</section>

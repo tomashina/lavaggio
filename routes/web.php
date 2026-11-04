@@ -168,6 +168,9 @@ Route::middleware(['front.customer-impersonation', 'front.locale', 'front.device
         Route::get('reference/{project}/photos/{photo}/{size?}', [\App\Http\Controllers\Front\ReferenceProjectController::class, 'photo'])
             ->whereNumber('project')->whereNumber('photo')->where('size', 'card|large|original')->name('references.photo');
 
+        Route::get('cjenik', [PageController::class, 'lavaggioPricing'])
+            ->middleware(\App\Http\Middleware\RequireLavaggioStorefront::class)->name('lavaggio.pricing');
+
         Route::get('pages/category/{slug}', [PageController::class, 'category'])->name('pages.category');
         Route::get('page/{slug}', [PageController::class, 'show'])->name('pages.show');
 
@@ -777,3 +780,5 @@ require __DIR__.'/watchline-mail-preview.php';
 // A registered fallback makes that middleware run for formerly unregistered
 // paths as well; unknown paths still retain the normal 404 semantics.
 Route::fallback(fn () => abort(404))->middleware(['front.locale', 'front.device']);
+
+\App\Support\Lavaggio\PublicUrls::registerAliases();

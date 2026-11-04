@@ -9,6 +9,7 @@ use App\Models\Content\Blog\BlogPost;
 use App\Models\Content\ContentBlock;
 use App\Services\Content\ContentBlockResolver;
 use App\Services\Content\FeaturedCategoriesService;
+use App\Support\LavaggioCampaignSlides;
 use App\Support\ProductPopularityLabel;
 use App\Support\WatchlineWidgetSettings;
 use Illuminate\Support\Collection;
@@ -68,6 +69,8 @@ class Form extends Component
     public array $form = [];
 
     public array $watchlineImageUploads = [];
+
+    public array $lavaggioSlideUploads = [];
 
     /**
      * @var array<string, string>
@@ -202,6 +205,70 @@ class Form extends Component
         $this->validateOnly('watchlineImageUploads.'.$key, $this->rules());
     }
 
+    public function addLavaggioSlide(): void
+    {
+        if (($this->form['type'] ?? '') !== 'lavaggio_campaigns') {
+            return;
+        }
+        $slides = (array) ($this->form['watchline']['slides'] ?? []);
+        if ($slides === []) {
+            $slides[] = LavaggioCampaignSlides::legacy(array_replace(
+                WatchlineWidgetSettings::defaults('lavaggio_campaigns'), $this->form['watchline'],
+                array_intersect_key($this->form, array_flip(['title', 'subtitle', 'cta_label', 'cta_url'])),
+            ));
+        }
+        if (count($slides) < LavaggioCampaignSlides::LIMIT) {
+            $slides[] = LavaggioCampaignSlides::normalize([['enabled' => true]])[0];
+        }
+        $this->form['watchline']['slides'] = $slides;
+    }
+
+    public function updatedLavaggioSlideUploads(mixed $value, string $key): void
+    {
+        if (($this->form['type'] ?? '') !== 'lavaggio_campaigns'
+            || ! ctype_digit($key) || ! isset($this->form['watchline']['slides'][(int) $key])) {
+            unset($this->lavaggioSlideUploads[$key]);
+
+            return;
+        }
+        $this->validateOnly('lavaggioSlideUploads.'.$key, $this->rules());
+    }
+
+    public function removeLavaggioSlide(int $index): void
+    {
+        if (($this->form['type'] ?? '') !== 'lavaggio_campaigns'
+            || count($this->form['watchline']['slides'] ?? []) <= 1
+            || ! isset($this->form['watchline']['slides'][$index])) {
+            return;
+        }
+        array_splice($this->form['watchline']['slides'], $index, 1);
+        $uploads = [];
+        foreach ($this->lavaggioSlideUploads as $position => $upload) {
+            if ($position !== $index) {
+                $uploads[$position > $index ? $position - 1 : $position] = $upload;
+            }
+        }
+        $this->lavaggioSlideUploads = $uploads;
+        $this->resetValidation();
+    }
+
+    public function moveLavaggioSlide(int $index, string $direction): void
+    {
+        $next = $index + ($direction === 'up' ? -1 : 1);
+        if (($this->form['type'] ?? '') !== 'lavaggio_campaigns'
+            || ! in_array($direction, ['up', 'down'], true)
+            || ! isset($this->form['watchline']['slides'][$index], $this->form['watchline']['slides'][$next])) {
+            return;
+        }
+        $slides = $this->form['watchline']['slides'];
+        [$slides[$index], $slides[$next]] = [$slides[$next], $slides[$index]];
+        $this->form['watchline']['slides'] = $slides;
+        [$this->lavaggioSlideUploads[$index], $this->lavaggioSlideUploads[$next]] = [
+            $this->lavaggioSlideUploads[$next] ?? null, $this->lavaggioSlideUploads[$index] ?? null,
+        ];
+        $this->resetValidation();
+    }
+
     public function getItemOptionsProperty(): Collection
     {
         return $this->loadItemOptions($this->currentItemType);
@@ -333,6 +400,7 @@ class Form extends Component
 
         if ($this->isWatchlineWidgetType($type) && $this->lastType !== $type) {
             $this->watchlineImageUploads = [];
+            $this->lavaggioSlideUploads = [];
             $this->watchlineCategoryFilterSearch = '';
             $this->watchlineManufacturerFilterSearch = '';
             $defaults = WatchlineWidgetSettings::defaults($type);
@@ -533,6 +601,9 @@ class Form extends Component
                 ),
             );
             foreach (WatchlineWidgetSettings::fields($type) as $key => $field) {
+                if (($field['type'] ?? '') === 'slides') {
+                    $translationPayload['watchline'][$key] = LavaggioCampaignSlides::normalize($translationPayload['watchline'][$key] ?? []);
+                }
                 if (in_array($field['type'] ?? '', ['categories', 'manufacturers'], true)) {
                     $translationPayload['watchline'][$key] = collect((array) ($translationPayload['watchline'][$key] ?? []))
                         ->map(static fn ($id): int => (int) $id)->filter()->unique()->values()->all();
@@ -651,6 +722,13 @@ class Form extends Component
                 if ($upload && ($this->watchlineFields[$key]['type'] ?? '') === 'image') {
                     $path = $upload->store('watchline-widgets', 'public');
                     $translationPayload['watchline'][$key] = '/storage/'.$path;
+                }
+            }
+            if (($validated['form']['type'] ?? '') === 'lavaggio_campaigns') {
+                foreach ($this->lavaggioSlideUploads as $index => $upload) {
+                    if ($upload && isset($translationPayload['watchline']['slides'][$index])) {
+                        $translationPayload['watchline']['slides'][$index]['image'] = '/storage/'.$upload->store('lavaggio-campaigns', 'public');
+                    }
                 }
             }
         }
@@ -835,6 +913,7 @@ class Form extends Component
                     $rules['form.watchline.'.$key.'.*'] = ['integer', 'min:1', 'distinct', $exists];
                 }
                 $rules['form.watchline.'.$key] = match ($field['type'] ?? 'text') {
+                    'slides' => ['array', 'max:'.LavaggioCampaignSlides::LIMIT],
                     'categories', 'manufacturers' => ['nullable', 'array', 'max:100'],
                     'checkbox' => ['boolean'],
                     'number' => ['required', 'integer', 'min:'.($field['min'] ?? 1), 'max:'.($field['max'] ?? 50)],
@@ -850,6 +929,26 @@ class Form extends Component
             }
             $rules['watchlineImageUploads'] = $imageKeys !== []
                 ? ['array:'.implode(',', $imageKeys)] : ['array', 'max:0'];
+            if (($this->form['type'] ?? '') === 'lavaggio_campaigns') {
+                $rules['lavaggioSlideUploads'] = ['array', 'max:'.LavaggioCampaignSlides::LIMIT];
+                $rules['lavaggioSlideUploads.*'] = ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'];
+                $rules['form.watchline.slides.*'] = ['array'];
+                foreach (['eyebrow', 'title', 'cta_label', 'image_alt'] as $key) {
+                    $rules['form.watchline.slides.*.'.$key] = ['nullable', 'string', 'max:300'];
+                }
+                $rules['form.watchline.slides.*.subtitle'] = ['nullable', 'string', 'max:1500'];
+                $rules['form.watchline.slides.*.enabled'] = ['boolean'];
+                $rules['form.watchline.slides.*.display'] = ['required', Rule::in(['text_image', 'image'])];
+                foreach (['url', 'image'] as $key) {
+                    $rules['form.watchline.slides.*.'.$key] = ['nullable', 'string', 'max:2048', function (string $attribute, mixed $value, \Closure $fail) use ($key): void {
+                        if (trim((string) $value) !== '' && WatchlineWidgetSettings::safeUrl($value, $key === 'image') === '') {
+                            $fail('Unesite lokalnu poveznicu ili valjanu HTTPS adresu.');
+                        }
+                    }];
+                }
+            } else {
+                $rules['lavaggioSlideUploads'] = ['array', 'max:0'];
+            }
         }
 
         return $rules;

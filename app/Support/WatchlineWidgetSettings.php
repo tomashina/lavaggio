@@ -80,6 +80,7 @@ class WatchlineWidgetSettings
         foreach (self::fields($type) as $key => $field) {
             $value = $settings[$key] ?? $field['default'] ?? '';
             $settings[$key] = match ($field['type'] ?? 'text') {
+                'slides' => LavaggioCampaignSlides::normalize($value),
                 'categories', 'manufacturers' => collect(is_array($value) ? $value : [])
                     ->filter(static fn ($id): bool => (is_int($id) || (is_string($id) && ctype_digit($id))) && (int) $id > 0)
                     ->map(static fn ($id): int => (int) $id)->unique()->values()->all(),
