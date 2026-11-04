@@ -155,38 +155,68 @@
             <div class="admin-panel admin-form-panel p-6">
                 <p class="admin-section-title">{{ __('Content') }}</p>
 
-                @if (! in_array(($form['type'] ?? ''), ['watchline_campaigns', 'watchline_benefits'], true))
-                <div class="mt-4 grid gap-3 md:grid-cols-2">
-                    <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Title') }}</label>
-                        <input type="text" wire:model="form.title" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                @php
+                    $commonContentFields = str_starts_with((string) ($form['type'] ?? ''), 'lavaggio_')
+                        ? (array) config('lavaggio_widgets.'.$form['type'].'.content_fields', ['title', 'subtitle', 'cta_label', 'cta_url'])
+                        : ['title', 'subtitle', 'cta_label', 'cta_url'];
+                @endphp
+                @if (! in_array(($form['type'] ?? ''), ['watchline_campaigns', 'watchline_benefits'], true) && $commonContentFields !== [])
+                    <div class="mt-4 grid gap-3 md:grid-cols-2">
+                        @if (in_array('title', $commonContentFields, true))
+                            <div>
+                                <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Title') }}</label>
+                                <input type="text" wire:model="form.title" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                            </div>
+                        @endif
+                        @if (in_array('subtitle', $commonContentFields, true))
+                            <div>
+                                <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Subtitle') }}</label>
+                                <input type="text" wire:model="form.subtitle" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                            </div>
+                        @endif
+                        @if (in_array('cta_label', $commonContentFields, true))
+                            <div>
+                                <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('CTA Label') }}</label>
+                                <input type="text" wire:model="form.cta_label" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                            </div>
+                        @endif
+                        @if (in_array('cta_url', $commonContentFields, true))
+                            <div>
+                                <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('CTA URL') }}</label>
+                                <input type="text" wire:model="form.cta_url" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="{{ __('/shop or https://...') }}" />
+                            </div>
+                        @endif
                     </div>
-                    <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Subtitle') }}</label>
-                        <input type="text" wire:model="form.subtitle" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
-                    </div>
-                </div>
-
-                <div class="mt-3 grid gap-3 md:grid-cols-2">
-                    <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('CTA Label') }}</label>
-                        <input type="text" wire:model="form.cta_label" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
-                    </div>
-                    <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('CTA URL') }}</label>
-                        <input type="text" wire:model="form.cta_url" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="{{ __('/shop or https://...') }}" />
-                    </div>
-                </div>
                 @endif
 
                 @if ($this->isWatchlineWidget)
                     <p class="mt-3 text-sm text-slate-500">Uredite tekstove, slike i poveznice ovog widgeta.</p>
+                    @php
+                        $widgetFields = $this->watchlineFields;
+                        $groupedImageAltFields = [];
+                        foreach ($widgetFields as $widgetField) {
+                            if (($widgetField['type'] ?? '') === 'image' && isset($widgetField['alt_field'], $widgetFields[$widgetField['alt_field']])) {
+                                $groupedImageAltFields[] = $widgetField['alt_field'];
+                            }
+                        }
+                    @endphp
                     <div class="mt-4 grid gap-4 md:grid-cols-2">
-                        @foreach ($this->watchlineFields as $fieldKey => $field)
+                        @foreach ($widgetFields as $fieldKey => $field)
+                            @php
+                                $fieldIsVisible = ! in_array($fieldKey, $groupedImageAltFields, true);
+                                foreach (($field['visible_when'] ?? []) as $conditionKey => $conditionValue) {
+                                    if (($form['watchline'][$conditionKey] ?? $widgetFields[$conditionKey]['default'] ?? null) !== $conditionValue) {
+                                        $fieldIsVisible = false;
+                                    }
+                                }
+                                $imageAltFieldKey = ($field['type'] ?? '') === 'image' ? ($field['alt_field'] ?? null) : null;
+                                $imageAltField = $widgetFields[$imageAltFieldKey] ?? null;
+                            @endphp
+                            @continue(! $fieldIsVisible)
                             @if (! empty($field['group']))
                                 <h3 class="border-t border-slate-200 pt-5 text-sm font-semibold text-slate-900 md:col-span-2">{{ $field['group'] }}</h3>
                             @endif
-                            <div wire:key="watchline-field-{{ $form['type'] }}-{{ $fieldKey }}" class="{{ ($field['type'] ?? '') === 'textarea' ? 'md:col-span-2' : '' }}">
+                            <div wire:key="watchline-field-{{ $form['type'] }}-{{ $fieldKey }}" class="{{ ($field['type'] ?? '') === 'textarea' ? 'md:col-span-2' : '' }} {{ $imageAltField ? 'rounded-xl border border-slate-200 bg-slate-50 p-4' : '' }}">
                                 @if (($field['type'] ?? '') === 'checkbox')
                                     <label class="inline-flex items-center gap-2 text-sm text-slate-700">
                                         <input type="checkbox" @if ($fieldKey === 'popular_only') wire:model.live="form.watchline.{{ $fieldKey }}" @else wire:model="form.watchline.{{ $fieldKey }}" @endif class="rounded border-slate-300 text-cyan-700 focus:ring-cyan-500">
@@ -268,9 +298,20 @@
                                             <summary class="cursor-pointer">Ili upotrijebite postojeću poveznicu slike</summary>
                                             <input type="text" aria-label="{{ $field['label'] }} — poveznica" wire:model.live.debounce.500ms="form.watchline.{{ $fieldKey }}" placeholder="/image/catalog/... ili https://..." class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
                                         </details>
+                                        @if ($imageAltField)
+                                            <div class="mt-3">
+                                                <label for="watchline-field-{{ $imageAltFieldKey }}" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $imageAltField['label'] }}</label>
+                                                <input id="watchline-field-{{ $imageAltFieldKey }}" type="text" wire:model="form.watchline.{{ $imageAltFieldKey }}" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
+                                                @error('form.watchline.'.$imageAltFieldKey)<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                                                @error('form.watchline.'.$imageAltFieldKey.'.*')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                                            </div>
+                                        @endif
                                     @else
                                         <input id="watchline-field-{{ $fieldKey }}" type="text" @if (($field['type'] ?? '') === 'icon') list="watchline-widget-icons" @endif wire:model="form.watchline.{{ $fieldKey }}" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
                                     @endif
+                                @endif
+                                @if (! empty($field['help']))
+                                    <p class="mt-2 text-xs leading-relaxed text-slate-500">{{ $field['help'] }}</p>
                                 @endif
                                 @error('form.watchline.'.$fieldKey)<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                                 @error('form.watchline.'.$fieldKey.'.*')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
@@ -299,13 +340,17 @@
                         @error('form.items_limit') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
 
                         @if (in_array(($form['type'] ?? ''), ['blogs_carousel', 'watchline_blog', 'lavaggio_blog'], true))
-                            <div class="mt-2 md:max-w-[220px]">
-                                <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Blog source') }}</label>
-                                <select wire:model="form.blog_source" data-tom-select data-tom-no-search="1" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
-                                    <option value="latest">{{ __('Latest') }}</option>
-                                    <option value="featured">{{ __('Featured only') }}</option>
-                                </select>
-                            </div>
+                            @if (($form['type'] ?? '') === 'lavaggio_blog' && (array) ($form['selected_item_ids'] ?? []) !== [])
+                                <p role="status" class="mt-2 text-xs leading-relaxed text-slate-500">Prikazuju se ručno odabrani članci prema redoslijedu odabira ispod.</p>
+                            @else
+                                <div class="mt-2 md:max-w-[220px]">
+                                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Blog source') }}</label>
+                                    <select wire:model="form.blog_source" data-tom-select data-tom-no-search="1" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                                        <option value="latest">{{ __('Latest') }}</option>
+                                        <option value="featured">{{ __('Featured only') }}</option>
+                                    </select>
+                                </div>
+                            @endif
                         @elseif (in_array(($form['type'] ?? ''), ['five_star_reviews_carousel', 'watchline_reviews', 'lavaggio_reviews'], true))
                             <label class="inline-flex items-center gap-2">
                                 <input type="checkbox" wire:model="form.reviews_featured_only" class="h-4 w-4 border-slate-300 text-slate-900 focus:ring-0">
@@ -544,7 +589,7 @@
             </div>
         @endif
 
-        @if ($blockId)
+        @if ($blockId && ! str_starts_with((string) ($form['type'] ?? ''), 'lavaggio_'))
             <livewire:admin.media.manager
                 :model-class="\App\Models\Content\ContentBlock::class"
                 :model-id="$blockId"

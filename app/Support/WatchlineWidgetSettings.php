@@ -57,13 +57,26 @@ class WatchlineWidgetSettings
             };
         }
 
-        $settings = array_replace(
-            self::defaults($type),
+        $storedSettings = array_replace(
             (array) data_get($block->payload, 'watchline', []),
             (array) data_get($translation?->payload, 'watchline', []),
         );
+        $settings = array_replace(self::defaults($type), $storedSettings);
+        if ($type === 'lavaggio_campaigns') {
+            $defaults = self::defaults($type);
+            if ($settings['main_image'] === '/assets/lavaggio/home/lavaggio-product-group-v1.webp') {
+                $settings['main_image'] = $defaults['main_image'];
+                if (in_array(trim((string) $settings['main_image_alt']), ['', 'Odabrani deterdženti i proizvodi za njegu rublja iz Lavaggio ponude'], true)) {
+                    $settings['main_image_alt'] = $defaults['main_image_alt'];
+                }
+            }
+            // Preserve existing single-photo banners while making the layout editable.
+            if (! in_array($storedSettings['photo_layout'] ?? null, ['products', 'single'], true)) {
+                $settings['photo_layout'] = $settings['main_image'] === $defaults['main_image'] ? 'products' : 'single';
+            }
+        }
         foreach (['title', 'subtitle', 'cta_label', 'cta_url'] as $key) {
-            if ($translation?->{$key} !== null) {
+            if ($translation !== null && (str_starts_with($type, 'lavaggio_') || $translation->{$key} !== null)) {
                 $settings[$key] = (string) $translation->{$key};
             }
         }

@@ -21,7 +21,15 @@
 @else
     <section class="lavaggio-widget-section lavaggio-widget-reviews-empty" aria-labelledby="lavaggio-reviews-{{ $block->id }}">
         <x-fa-icon name="comments" style="duotone" />
-        <div><p class="lavaggio-widget-eyebrow">{{ $settings['eyebrow'] }}</p><h2 id="lavaggio-reviews-{{ $block->id }}">{{ $translation?->title }}</h2><p>{{ $settings['empty_message'] }}</p></div>
+        <div>
+            @if(filled($settings['eyebrow']))<p class="lavaggio-widget-eyebrow">{{ $settings['eyebrow'] }}</p>@endif
+            <h2 id="lavaggio-reviews-{{ $block->id }}">{{ $translation?->title }}</h2>
+            @if(filled($translation?->subtitle))<p class="lavaggio-widget-subtitle">{{ $translation->subtitle }}</p>@endif
+            <p>{{ $settings['empty_message'] }}</p>
+            @if(filled($translation?->cta_label) && filled($settings['cta_url'] ?? ''))
+                <a href="{{ $settings['cta_url'] }}">{{ $translation->cta_label }} <x-fa-icon name="arrow-right" /></a>
+            @endif
+        </div>
     </section>
 @endif
 </div>

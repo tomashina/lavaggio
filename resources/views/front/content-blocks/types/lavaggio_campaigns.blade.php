@@ -5,11 +5,8 @@
 @endonce
 @php
     $settings = \App\Support\WatchlineWidgetSettings::forBlock($block, $translation);
-    $heroDefaults = \App\Support\WatchlineWidgetSettings::defaults('lavaggio_campaigns');
-    // Retire the old generated montage while retaining custom CMS photography.
-    $legacyMontage = '/assets/lavaggio/home/lavaggio-product-group-v1.webp';
-    $mainImage = $settings['main_image'] === $legacyMontage ? $heroDefaults['main_image'] : $settings['main_image'];
-    $catalogueImages = in_array($settings['main_image'], [$legacyMontage, $heroDefaults['main_image']], true);
+    $mainImage = $settings['main_image'];
+    $catalogueImages = $settings['photo_layout'] === 'products';
 @endphp
 <section class="lavaggio-widget-hero lavaggio-widget-hero--photographic" aria-labelledby="lavaggio-hero-{{ $block->id }}">
     <article class="lavaggio-widget-hero__main">
