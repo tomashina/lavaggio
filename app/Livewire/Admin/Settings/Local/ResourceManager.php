@@ -15,6 +15,8 @@ use App\Services\Front\AddressDirectoryService;
 use App\Services\Settings\LocalSettingsService;
 use App\Services\Settings\SystemSettingsService;
 use App\Support\AdminLocalSettingAccess;
+use App\Support\OrderStatusLabels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -712,6 +714,9 @@ class ResourceManager extends Component
                 }
                 if ($this->hasColumn('name')) {
                     $builder->orWhere('name', 'like', '%'.$this->search.'%');
+                    if ($this->resource === 'order-statuses') {
+                        $builder->orWhereIn(DB::raw('LOWER(TRIM(name))'), OrderStatusLabels::matchingStoredNames($this->search));
+                    }
                 }
                 if ($this->hasColumn('country_code')) {
                     $builder->orWhere('country_code', 'like', '%'.$this->search.'%');

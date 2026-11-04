@@ -2,6 +2,8 @@
 
 namespace App\Models\Settings\Local;
 
+use App\Support\OrderStatusLabels;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,6 +23,13 @@ class OrderStatus extends Model
         'sort_order',
         'settings',
     ];
+
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: static fn (?string $value): string => OrderStatusLabels::display((string) $value),
+        );
+    }
 
     protected function casts(): array
     {
