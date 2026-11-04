@@ -33,6 +33,33 @@ class CatalogActionsFeatureTest extends TestCase
             ->assertSessionHas('notify.type', 'warning');
     }
 
+    public function test_empty_action_filters_can_be_cleared_to_reveal_active_and_inactive_promotions(): void
+    {
+        $user = $this->makeAdminUser();
+        foreach (['Active saved promotion' => true, 'Inactive saved promotion' => false] as $title => $active) {
+            $action = CatalogAction::query()->create([
+                'code' => str($title)->slug(),
+                'scope' => CatalogAction::SCOPE_PRODUCT,
+                'type' => CatalogAction::TYPE_PERCENTAGE,
+                'discount_value' => 10,
+                'target_type' => CatalogAction::TARGET_ALL,
+                'audience_type' => CatalogAction::AUDIENCE_ALL,
+                'is_active' => $active,
+            ]);
+            $action->translations()->create(['locale' => 'en', 'title' => $title]);
+        }
+
+        Livewire::withQueryParams(['locale' => 'en'])->actingAs($user)->test(ActionManager::class)
+            ->set('search', 'no matching promotion')->set('scopeFilter', CatalogAction::SCOPE_CART)
+            ->set('typeFilter', CatalogAction::TYPE_FIXED)->call('setPage', 2)
+            ->assertSee(__('No actions match these filters.'))
+            ->assertDontSee(__('No actions or discounts yet.'))
+            ->call('clearFilters')->assertSet('search', '')
+            ->assertSet('scopeFilter', 'all')->assertSet('typeFilter', 'all')->assertSet('stateFilter', 'all')
+            ->assertSet('paginators.page', 1)
+            ->assertSee('Active saved promotion')->assertSee('Inactive saved promotion');
+    }
+
     public function test_admin_can_create_product_action_with_target_assignment(): void
     {
         app(SystemSettingsService::class)->put('catalog_use_actions', true);

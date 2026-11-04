@@ -1,29 +1,35 @@
 <div class="space-y-6">
     @php
         $isAssignedCustomerView = app(\App\Services\Admin\OrderManagerAccess::class)->isRestricted();
+        $isLavaggioUserList = config('storefront.home') === 'lavaggio';
+        $advancedFilterCount = count(array_filter([
+            $representative, $city, $postalCode, $county, $customerType, $visit, $turnoverYear,
+            strtoupper($turnoverCurrency) !== 'EUR' ? $turnoverCurrency : '',
+        ], static fn ($value) => $value !== ''));
     @endphp
     <div class="admin-panel admin-search-panel p-6">
-        <div class="flex items-end justify-between gap-4">
+        <div class="{{ $isLavaggioUserList ? 'flex flex-col gap-4' : 'flex items-end justify-between gap-4' }}">
             <div>
                 <h1 class="text-xl font-semibold tracking-tight">{{ $isAssignedCustomerView ? __('Moji kupci') : __('Users') }}</h1>
                 <p class="mt-1 text-sm text-slate-600">{{ $isAssignedCustomerView ? __('Prikazani su samo kupci koji su vam dodijeljeni. Za izradu narudžbe odaberite „Naruči za kupca”.') : __('User administration with role-based access and account controls.') }}</p>
                 <p class="mt-2 text-xs text-slate-500">{{ __('Items per page') }}: <span class="admin-chip">{{ $perPage }}</span></p>
             </div>
 
-            <div class="flex w-[64rem] max-w-full items-end justify-end gap-3">
-                <div class="grid w-full max-w-[68rem] items-end gap-3" style="grid-template-columns: minmax(30rem, 1fr) 12rem 14rem;">
-                    <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('admin.common.search') }}</label>
+            <div class="{{ $isLavaggioUserList ? 'w-full min-w-0' : 'flex w-[64rem] max-w-full items-end justify-end gap-3' }}">
+                <div class="{{ $isLavaggioUserList ? 'grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_12rem_14rem]' : 'grid w-full max-w-[68rem] items-end gap-3' }}" @unless ($isLavaggioUserList) style="grid-template-columns: minmax(30rem, 1fr) 12rem 14rem;" @endunless>
+                    <div class="{{ $isLavaggioUserList ? 'sm:col-span-2 xl:col-span-1' : '' }}">
+                        <label for="user-list-search" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('admin.common.search') }}</label>
                         <input
+                            id="user-list-search"
                             type="text"
                             wire:model.live.debounce.300ms="search"
-                            placeholder="{{ __('Tvrtka, OIB, ime kontakta ili e-mail...') }}"
+                            placeholder="{{ $isLavaggioUserList ? __('admin.users.search_placeholder') : __('Tvrtka, OIB, ime kontakta ili e-mail...') }}"
                             class="admin-search-input w-full rounded-xl border px-3 py-2 text-sm"
                         />
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Role') }}</label>
-                        <select wire:model.live="role" data-tom-select data-tom-no-search="1" class="admin-select w-full rounded-xl border px-3 py-2 text-sm">
+                        <label for="user-list-role" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Role') }}</label>
+                        <select id="user-list-role" wire:model.live="role" data-tom-select data-tom-no-search="1" class="admin-select w-full rounded-xl border px-3 py-2 text-sm">
                             <option value="">{{ __('All roles') }}</option>
                             @foreach ($roles as $roleItem)
                                 <option value="{{ $roleItem->name }}">{{ $roleItem->title ?: ucfirst($roleItem->name) }}</option>
@@ -31,8 +37,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Segment') }}</label>
-                        <select wire:model.live="segment" data-tom-select class="admin-select w-full rounded-xl border px-3 py-2 text-sm">
+                        <label for="user-list-group" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ $isLavaggioUserList ? __('admin.users.customer_group') : __('Segment') }}</label>
+                        <select id="user-list-group" wire:model.live="segment" data-tom-select class="admin-select w-full rounded-xl border px-3 py-2 text-sm">
                             <option value="">{{ __('All segments') }}</option>
                             @foreach ($segments as $segmentItem)
                                 <option value="{{ $segmentItem->id }}">{{ $segmentItem->name }}</option>
@@ -42,7 +48,19 @@
                 </div>
             </div>
         </div>
-        <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        @if ($isLavaggioUserList)
+            <details id="user-advanced-filters" class="group mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4" @if ($advancedFilterCount > 0 || $errors->has('visitSince') || $errors->has('turnoverYear') || $errors->has('turnoverCurrency')) open @endif>
+                <summary class="flex cursor-pointer items-center justify-between gap-3 text-sm font-semibold text-slate-700">
+                    <span>{{ __('admin.users.advanced_filters') }}</span>
+                    <span class="flex items-center gap-2">
+                        @if ($advancedFilterCount > 0)
+                            <span class="admin-chip">{{ __('admin.users.active_filters', ['count' => $advancedFilterCount]) }}</span>
+                        @endif
+                        <svg class="h-4 w-4 shrink-0 transition group-open:rotate-180" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m5 7.5 5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </span>
+                </summary>
+        @endif
+        <div class="{{ $isLavaggioUserList ? 'mt-4' : 'mt-5' }} grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <label class="text-xs font-semibold text-slate-500">{{ __('Komercijalist') }}<select wire:model.live="representative" class="admin-select mt-1 w-full rounded-lg border px-3 py-2 text-sm"><option value="">{{ __('Svi dostupni') }}</option>@if (! $isAssignedCustomerView)<option value="unassigned">{{ __('Bez komercijalista') }}</option>@endif @foreach ($representatives as $rep)<option value="{{ $rep->id }}">{{ $rep->name }}</option>@endforeach</select></label>
             <label class="text-xs font-semibold text-slate-500">{{ __('Mjesto') }}<input wire:model.live.debounce.300ms="city" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"></label>
             <label class="text-xs font-semibold text-slate-500">{{ __('Poštanski broj') }}<input wire:model.live.debounce.300ms="postalCode" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm"></label>
@@ -54,6 +72,9 @@
             <label class="text-xs font-semibold text-slate-500">{{ __('Valuta prometa') }}<input maxlength="3" wire:model.live.debounce.500ms="turnoverCurrency" class="mt-1 w-full rounded-lg border px-3 py-2 text-sm uppercase"></label>
             <div class="flex items-end"><a href="{{ route('admin.users.crm') }}" class="rounded-lg border px-3 py-2 text-sm font-semibold text-cyan-700">{{ __('CRM i izvještaj komercijalista') }}</a></div>
         </div>
+        @if ($isLavaggioUserList)
+            </details>
+        @endif
     </div>
 
     @if ($canAssign || $canSegment)

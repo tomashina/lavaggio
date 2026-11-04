@@ -7,6 +7,7 @@ use App\Models\Catalog\Product\Product;
 use App\Models\User\CustomerGroup;
 use App\Services\Front\CartService;
 use App\Services\Front\GuestStorefrontCache;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
@@ -23,6 +24,8 @@ class Manager extends Component
     public bool $editing = false;
 
     public string $search = '';
+
+    public string $statusFilter = 'all';
 
     public string $productSearch = '';
 
@@ -42,8 +45,14 @@ class Manager extends Component
 
     private function permit(string $ability): void
     {
+        abort_unless($this->can($ability), 403);
+    }
+
+    private function can(string $ability): bool
+    {
         $user = auth()->user();
-        abort_unless($user && ($user->isA('superadmin') || $user->can('catalog.actions.'.$ability)), 403);
+
+        return $user && ($user->isA('superadmin') || $user->can('catalog.actions.'.$ability));
     }
 
     public function mount(): void
@@ -54,6 +63,23 @@ class Manager extends Component
     public function updatedSearch(): void
     {
         $this->resetPage();
+    }
+
+    public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function clearFilters(): void
+    {
+        $this->reset('search', 'statusFilter');
+        $this->resetPage();
+    }
+
+    public function cancel(): void
+    {
+        $this->reset('editing', 'editingId', 'title', 'isActive', 'startsAt', 'endsAt', 'sortOrder', 'products', 'discounts', 'productSearch');
+        $this->resetValidation();
     }
 
     public function create(): void
@@ -73,12 +99,13 @@ class Manager extends Component
         $this->permit('update');
         $bundle = Bundle::with(['products', 'discounts'])->findOrFail($id);
         $this->resetValidation();
+        $this->productSearch = '';
         $this->editingId = $bundle->id;
         $this->editing = true;
         $this->title = $bundle->title;
         $this->isActive = $bundle->is_active;
-        $this->startsAt = $bundle->starts_at?->format('Y-m-d\TH:i');
-        $this->endsAt = $bundle->ends_at?->format('Y-m-d\TH:i');
+        $this->startsAt = $this->formatBundleDate($bundle->starts_at);
+        $this->endsAt = $this->formatBundleDate($bundle->ends_at);
         $this->sortOrder = $bundle->sort_order;
         $this->products = $bundle->products->map(fn ($p) => ['product_id' => $p->id, 'quantity' => $p->pivot->quantity])->all();
         $this->discounts = $bundle->discounts->map(fn ($d) => ['customer_group_id' => $d->customer_group_id, 'type' => $d->type, 'value' => $d->value])->all();
@@ -123,6 +150,7 @@ class Manager extends Component
     public function save(): void
     {
         $this->permit($this->editingId ? 'update' : 'create');
+        $this->title = trim($this->title);
         $this->validate([
             'title' => 'required|string|max:255', 'isActive' => 'boolean', 'sortOrder' => 'integer|min:0|max:999999',
             'startsAt' => 'nullable|date', 'endsAt' => ['nullable', 'date', ...($this->startsAt ? ['after_or_equal:startsAt'] : [])],
@@ -130,6 +158,17 @@ class Manager extends Component
             'products.*.quantity' => 'required|integer|min:1|max:999',
             'discounts' => 'required|array|min:1', 'discounts.*.customer_group_id' => 'required|integer|distinct|exists:customer_groups,id',
             'discounts.*.type' => ['required', Rule::in(['percent', 'fixed'])], 'discounts.*.value' => 'required|numeric|min:0|max:999999',
+        ], [
+            'products.required' => 'Dodajte najmanje dva različita artikla u komplet.',
+            'products.min' => 'Dodajte najmanje dva različita artikla u komplet.',
+            'products.*.product_id.distinct' => 'Isti artikl možete dodati samo jednom. Za više komada povećajte količinu.',
+            'discounts.required' => 'Dodajte popust za komplet.',
+            'discounts.min' => 'Dodajte popust za komplet.',
+            'endsAt.after_or_equal' => 'Završetak ponude mora biti nakon početka ili u isto vrijeme.',
+        ], [
+            'title' => 'naziv ponude', 'sortOrder' => 'redoslijed', 'startsAt' => 'početak ponude', 'endsAt' => 'završetak ponude',
+            'products.*.product_id' => 'artikl', 'products.*.quantity' => 'količina artikla',
+            'discounts.*.customer_group_id' => 'grupa kupaca', 'discounts.*.type' => 'vrsta popusta', 'discounts.*.value' => 'vrijednost popusta',
         ]);
         foreach ($this->discounts as $i => $discount) {
             if ($discount['type'] === 'percent' && $discount['value'] > 100) {
@@ -141,15 +180,15 @@ class Manager extends Component
         DB::transaction(function (): void {
             $bundle = $this->editingId ? Bundle::findOrFail($this->editingId) : new Bundle;
             $bundle->payload = array_merge($bundle->payload ?? [], ['admin_edited_at' => now()->toIso8601String()]);
-            $bundle->fill(['title' => $this->title, 'is_active' => $this->isActive, 'starts_at' => $this->startsAt ?: null,
-                'ends_at' => $this->endsAt ?: null, 'sort_order' => $this->sortOrder])->save();
+            $bundle->fill(['title' => $this->title, 'is_active' => $this->isActive, 'starts_at' => $this->storedBundleDate($this->startsAt),
+                'ends_at' => $this->storedBundleDate($this->endsAt), 'sort_order' => $this->sortOrder])->save();
             $bundle->products()->sync(collect($this->products)->mapWithKeys(fn ($p) => [$p['product_id'] => ['quantity' => $p['quantity']]])->all());
             $bundle->discounts()->delete();
             $bundle->discounts()->createMany($this->discounts);
         });
         CartService::forgetRequestSnapshot();
         app(GuestStorefrontCache::class)->invalidate();
-        $this->editing = false;
+        $this->cancel();
         session()->flash('bundle_status', 'Bundle ponuda je spremljena.');
     }
 
@@ -158,20 +197,60 @@ class Manager extends Component
         $this->permit('delete');
         Bundle::findOrFail($id)->delete();
         app(GuestStorefrontCache::class)->invalidate();
-        $this->editing = false;
+        $this->cancel();
+        $this->resetPage();
+        session()->flash('bundle_status', 'Bundle ponuda je obrisana.');
+    }
+
+    private function formatBundleDate(?Carbon $date): ?string
+    {
+        return $date === null ? null : (config('storefront.home') === 'lavaggio'
+            ? $date->copy()->timezone('Europe/Zagreb')
+            : $date)->format('Y-m-d\TH:i');
+    }
+
+    private function storedBundleDate(?string $value): ?string
+    {
+        if (! filled($value)) {
+            return null;
+        }
+        if (config('storefront.home') !== 'lavaggio') {
+            return $value;
+        }
+
+        return Carbon::parse($value, 'Europe/Zagreb')
+            ->timezone((string) config('app.timezone', 'UTC'))
+            ->format('Y-m-d H:i:s');
     }
 
     public function render()
     {
         $this->permit('view');
         $ids = collect($this->products)->pluck('product_id');
+        $search = trim($this->search);
+        $productSearch = trim($this->productSearch);
+        $bundles = Bundle::withCount('products')->when($search !== '', fn ($query) => $query->where('title', 'like', '%'.$search.'%'));
+        $now = now();
+        match ($this->statusFilter) {
+            'active' => $bundles->available(),
+            'scheduled' => $bundles->where('is_active', true)->where('starts_at', '>', $now)
+                ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>=', $now)),
+            'expired' => $bundles->where('is_active', true)->where('ends_at', '<', $now),
+            'disabled' => $bundles->where('is_active', false),
+            default => null,
+        };
 
         return view('livewire.admin.catalog.bundle.manager', [
-            'bundles' => Bundle::withCount('products')->when($this->search, fn ($q) => $q->where('title', 'like', '%'.$this->search.'%'))->orderBy('sort_order')->orderBy('id')->paginate(20),
+            'bundles' => $bundles->orderBy('sort_order')->orderBy('id')->paginate(20),
             'selectedProducts' => Product::with('translations')->whereIn('id', $ids)->get()->keyBy('id'),
-            'productResults' => mb_strlen(trim($this->productSearch)) < 2 ? collect() : Product::with('translations')->whereNotIn('id', $ids)
-                ->where(fn ($q) => $q->where('sku', 'like', '%'.$this->productSearch.'%')->orWhereHas('translations', fn ($t) => $t->where('name', 'like', '%'.$this->productSearch.'%')))->limit(15)->get(),
-            'groups' => CustomerGroup::where('is_active', true)->get(),
+            'productResults' => mb_strlen($productSearch) < 2 ? collect() : Product::with('translations')->whereNotIn('id', $ids)
+                ->where(fn ($query) => $query->where('sku', 'like', '%'.$productSearch.'%')->orWhere('code', 'like', '%'.$productSearch.'%')
+                    ->orWhereHas('translations', fn ($translations) => $translations->where('name', 'like', '%'.$productSearch.'%')))
+                ->orderBy('id')->limit(15)->get(),
+            'groups' => CustomerGroup::where(fn ($query) => $query->where('is_active', true)
+                ->orWhereIn('id', collect($this->discounts)->pluck('customer_group_id')->filter()))->orderBy('name')->get(),
+            'canCreate' => $this->can('create'), 'canUpdate' => $this->can('update'), 'canDelete' => $this->can('delete'),
+            'displayTimezone' => config('storefront.home') === 'lavaggio' ? 'Europe/Zagreb' : (string) config('app.timezone', 'UTC'),
         ]);
     }
 }

@@ -1,33 +1,41 @@
 <div class="space-y-6">
     <div class="admin-panel admin-search-panel p-6">
-        <div class="flex items-end justify-between gap-4">
+        <div class="flex flex-col gap-4 2xl:flex-row 2xl:items-end 2xl:justify-between">
             <div>
                 <h1 class="text-xl font-semibold tracking-tight">{{ __('Blog Posts') }}</h1>
                 <p class="mt-1 text-sm text-slate-600">{{ __('Manage blog content with locale-specific slugs and SEO fields.') }}</p>
                 <p class="mt-2 text-xs text-slate-500">{{ __('Items per page') }}: <span class="admin-chip">{{ $perPage }}</span></p>
             </div>
 
-            <div class="flex w-[64rem] max-w-full items-end justify-end gap-3">
-                <div class="grid w-full max-w-[56rem] items-end gap-3" style="grid-template-columns: minmax(26rem, 1fr) 8rem;">
+            <div class="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-end 2xl:max-w-2xl">
+                <div class="grid min-w-0 flex-1 gap-3 sm:grid-cols-[minmax(0,1fr)_8rem]">
                     <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Search') }}</label>
-                        <input
-                            type="text"
-                            wire:model.live.debounce.300ms="search"
-                            placeholder="{{ __('Code, title or slug...') }}"
-                            class="admin-search-input w-full rounded-xl border px-3 py-2 text-sm"
-                        />
+                        <label for="blog-list-search" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Search') }}</label>
+                        <div class="relative">
+                            <input
+                                id="blog-list-search"
+                                type="text"
+                                wire:model.live.debounce.300ms="search"
+                                placeholder="{{ __('Code, title or slug...') }}"
+                                class="admin-search-input w-full rounded-xl border px-3 py-2 pr-10 text-sm"
+                            />
+                            @if ($search !== '')
+                                <button type="button" wire:click="$set('search', '')" aria-label="{{ __('admin.common.clear_search') }}" class="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-xl text-lg text-slate-500 hover:text-slate-900">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            @endif
+                        </div>
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Locale') }}</label>
-                        <select wire:model.live="locale" data-tom-select data-tom-no-search="1" class="admin-search-input admin-select w-full rounded-xl border px-3 py-2 text-sm lowercase">
+                        <label for="blog-list-locale" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Locale') }}</label>
+                        <select id="blog-list-locale" wire:model.live="locale" data-tom-select data-tom-no-search="1" class="admin-search-input admin-select w-full rounded-xl border px-3 py-2 text-sm lowercase">
                               @foreach ($adminLocaleOptions as $localeOption)
                                 <option value="{{ $localeOption }}">{{ $localeOption }}</option>
                             @endforeach
                         </select>
                     </div>
                 </div>
-                <a href="{{ route('admin.content.blog.create', ['locale' => $locale]) }}" class="rounded-xl bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800">
+                <a href="{{ route('admin.content.blog.create', ['locale' => $locale]) }}" class="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800">
                     {{ __('Create') }}
                 </a>
             </div>
@@ -89,7 +97,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-3 py-8 text-center text-sm text-slate-500">{{ __('No blog posts yet.') }}</td>
+                            <td colspan="7" class="px-3 py-8 text-center text-sm text-slate-500">{{ $search !== '' ? __('admin.common.no_search_results') : __('No blog posts yet.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>

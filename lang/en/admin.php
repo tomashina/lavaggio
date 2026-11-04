@@ -2,6 +2,8 @@
 
 return [
     'common' => [
+        'clear_search' => 'Clear search',
+        'no_search_results' => 'No results match the selected search and filters.',
         'locale' => 'Locale',
         'search' => 'Search',
         'state' => 'State',
@@ -216,7 +218,21 @@ return [
         'slider_button_url' => 'Button link',
         'slider_button_hint' => 'The button appears at the bottom of the slide only when both the text and link are entered.',
     ],
+    'users' => [
+        'search_placeholder' => 'Customer name or email...',
+        'customer_group' => 'Customer group',
+        'advanced_filters' => 'Advanced filters',
+        'active_filters' => 'Active filters: :count',
+    ],
+    'catalog' => [
+        'lavaggio_options_help' => 'Options are optional. Customers choose values assigned to this product, such as fragrance or package size. For two linked options, enter the available combinations.',
+    ],
     'settings' => [
+        'catalog_intro' => 'Choose the features you use in your catalog and store. Changes apply after saving.',
+        'appearance_intro' => 'Adjust the number of items shown in admin and store lists.',
+        'runtime_intro' => 'Check store availability and refresh cached content after changes.',
+        'users_intro' => 'Manage user activity tracking and loyalty program rules.',
+
         'store' => [
             'cart' => [
                 'tab' => 'Cart',

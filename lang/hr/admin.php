@@ -2,6 +2,8 @@
 
 return [
     'common' => [
+        'clear_search' => 'Poništi pretragu',
+        'no_search_results' => 'Nema rezultata za odabranu pretragu i filtre.',
         'locale' => 'Lokalizacija',
         'search' => 'Pretraga',
         'state' => 'Status',
@@ -217,7 +219,21 @@ return [
         'slider_button_url' => 'Link gumba',
         'slider_button_hint' => 'Gumb se prikazuje pri dnu slidea samo kada su upisani tekst i link.',
     ],
+    'users' => [
+        'search_placeholder' => 'Ime ili e-mail kupca...',
+        'customer_group' => 'Grupa kupaca',
+        'advanced_filters' => 'Napredni filtri',
+        'active_filters' => 'Aktivni filtri: :count',
+    ],
+    'catalog' => [
+        'lavaggio_options_help' => 'Opcije su neobavezne. Kupac bira vrijednosti dodijeljene ovom artiklu, primjerice miris ili veličinu pakiranja. Za dvije povezane opcije unesite dostupne kombinacije.',
+    ],
     'settings' => [
+        'catalog_intro' => 'Odaberite funkcionalnosti koje koristite u katalogu i trgovini. Promjene se primjenjuju nakon spremanja.',
+        'appearance_intro' => 'Prilagodite broj stavki na popisima u administraciji i trgovini.',
+        'runtime_intro' => 'Provjerite dostupnost trgovine i osvježite predmemoriju nakon promjena.',
+        'users_intro' => 'Upravljajte bilježenjem aktivnosti korisnika i pravilima programa vjernosti.',
+
         'store' => [
             'cart' => [
                 'tab' => 'Košarica',

@@ -5,7 +5,7 @@
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{{ __('Catalog / Products / Option Values') }}</p>
                 <h1 class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{{ $productName }}</h1>
                 <p class="mt-2 text-sm text-slate-600">{{ __('Assign option groups and define per-product option value rows with SKU, stock and optional price override.') }}</p>
-                <p class="mt-2 text-sm text-slate-600">{{ app()->getLocale() === 'hr' ? 'Opcije su neobavezne. Kupac bira samo vrijednosti dodijeljene ovom artiklu, primjerice boju, dimenziju, snagu ili boju svjetla. Za dvije povezane opcije unesite dostupne kombinacije.' : 'Options are optional. Customers choose only values assigned to this product, such as color, dimensions, wattage or light temperature. For two linked options, enter the available combinations.' }}</p>
+                <p class="mt-2 text-sm text-slate-600">{{ config('storefront.home') === 'lavaggio' ? __('admin.catalog.lavaggio_options_help') : (app()->getLocale() === 'hr' ? 'Opcije su neobavezne. Kupac bira samo vrijednosti dodijeljene ovom artiklu, primjerice boju, dimenziju, snagu ili boju svjetla. Za dvije povezane opcije unesite dostupne kombinacije.' : 'Options are optional. Customers choose only values assigned to this product, such as color, dimensions, wattage or light temperature. For two linked options, enter the available combinations.') }}</p>
                 <div class="mt-2 flex flex-wrap items-center gap-2">
                     <span class="admin-chip">{{ __('Code:') }} {{ $productCode }}</span>
                     <span class="admin-chip">{{ __('SKU:') }} {{ $productSku !== '' ? $productSku : __('n/a') }}</span>

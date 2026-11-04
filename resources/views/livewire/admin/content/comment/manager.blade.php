@@ -10,38 +10,45 @@
 <div class="space-y-6">
     @unless ($editPage)
     <div class="admin-panel admin-search-panel p-6">
-        <div class="flex items-end justify-between gap-4">
+        <div class="flex flex-col gap-4">
             <div>
                 <h1 class="text-xl font-semibold tracking-tight">{{ __('Comments Moderation') }}</h1>
                 <p class="mt-1 text-sm text-slate-600">{{ __('Review and moderate user comments across product, blog, page, and FAQ content.') }}</p>
                 <p class="mt-2 text-xs text-slate-500">{{ __('Items per page') }}: <span class="admin-chip">{{ $perPage }}</span></p>
             </div>
 
-            <div class="flex w-[74rem] max-w-full items-end justify-end gap-3">
-                <div class="grid w-full max-w-[66rem] items-end gap-3" style="grid-template-columns: minmax(20rem, 1.4fr) 9rem 10rem 8rem;">
+            <div class="w-full min-w-0">
+                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_9rem_10rem_8rem]">
                     <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Search') }}</label>
-                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="{{ __('Body, author, email...') }}" class="admin-search-input w-full rounded-xl border px-3 py-2 text-sm" />
+                        <label for="comment-list-search" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Search') }}</label>
+                        <div class="relative">
+                            <input id="comment-list-search" type="text" wire:model.live.debounce.300ms="search" placeholder="{{ __('Body, author, email...') }}" class="admin-search-input w-full rounded-xl border px-3 py-2 pr-10 text-sm" />
+                            @if ($search !== '')
+                                <button type="button" wire:click="$set('search', '')" aria-label="{{ __('admin.common.clear_search') }}" class="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-xl text-lg text-slate-500 hover:text-slate-900">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            @endif
+                        </div>
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Status') }}</label>
-                        <select wire:model.live="status" data-tom-select data-tom-no-search="1" class="admin-search-input admin-select w-full rounded-xl border px-3 py-2 text-sm">
+                        <label for="comment-list-status" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Status') }}</label>
+                        <select id="comment-list-status" wire:model.live="status" data-tom-select data-tom-no-search="1" class="admin-search-input admin-select w-full rounded-xl border px-3 py-2 text-sm">
                             @foreach ($statusOptions as $key => $label)
                                 <option value="{{ $key }}">{{ $label }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Target') }}</label>
-                        <select wire:model.live="target" data-tom-select data-tom-no-search="1" class="admin-search-input admin-select w-full rounded-xl border px-3 py-2 text-sm">
+                        <label for="comment-list-target" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Target') }}</label>
+                        <select id="comment-list-target" wire:model.live="target" data-tom-select data-tom-no-search="1" class="admin-search-input admin-select w-full rounded-xl border px-3 py-2 text-sm">
                             @foreach ($targetOptions as $key => $label)
                                 <option value="{{ $key }}">{{ $label }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Locale') }}</label>
-                        <select wire:model.live="locale" data-tom-select data-tom-no-search="1" class="admin-search-input admin-select w-full rounded-xl border px-3 py-2 text-sm lowercase">
+                        <label for="comment-list-locale" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Locale') }}</label>
+                        <select id="comment-list-locale" wire:model.live="locale" data-tom-select data-tom-no-search="1" class="admin-search-input admin-select w-full rounded-xl border px-3 py-2 text-sm lowercase">
                             <option value="all">{{ __('all') }}</option>
                             @foreach ($adminLocaleOptions as $localeOption)
                                 <option value="{{ $localeOption }}">{{ $localeOption }}</option>
@@ -198,7 +205,7 @@
                                     };
                                 @endphp
                                 <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusColor }}">
-                                    {{ ucfirst($row->status) }}
+                                    {{ $statusOptions[$row->status] ?? ucfirst($row->status) }}
                                 </span>
                             </td>
                             <td class="px-3 py-2 text-center text-xs text-slate-600">

@@ -1,8 +1,7 @@
 <div class="space-y-6">
     <div class="admin-panel admin-search-panel p-6">
         <h1 class="text-xl font-semibold tracking-tight">{{ __('Catalog Features') }}</h1>
-        <p class="mt-2 text-sm text-slate-600">{{ __('Settings namespace:') }} <code>Settings/System/CatalogFeatures</code></p>
-        <p class="mt-2 text-xs text-slate-500">{{ __('Disable features you do not use to keep admin/front queries lighter.') }}</p>
+        <p class="mt-2 text-sm text-slate-600">{{ __('admin.settings.catalog_intro') }}</p>
     </div>
 
     <div class="admin-panel admin-form-panel p-6">

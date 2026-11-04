@@ -48,6 +48,15 @@ class Manager extends Component
         $this->resetPage();
     }
 
+    public function clearFilters(): void
+    {
+        $this->search = '';
+        $this->scopeFilter = 'all';
+        $this->typeFilter = 'all';
+        $this->stateFilter = 'all';
+        $this->resetPage();
+    }
+
     public function delete(int $actionId): void
     {
         $action = CatalogAction::query()->find($actionId);

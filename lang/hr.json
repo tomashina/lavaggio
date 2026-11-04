@@ -1309,5 +1309,9 @@
     "Latest store orders": "Najnovije narudžbe trgovine",
     "View All": "Prikaži sve",
     "The same package cannot appear more than once.": "Isto pakiranje ne može biti dodano više puta.",
-    "The same price cannot appear more than once.": "Ista cijena ne može biti dodana više puta."
+    "The same price cannot appear more than once.": "Ista cijena ne može biti dodana više puta.",
+    "No items match this search.": "Nema rezultata za ovu pretragu.",
+    "Clear search": "Poništi pretragu",
+    "No actions match these filters.": "Nema akcija za odabrane filtre.",
+    "Show all actions": "Prikaži sve akcije"
 }

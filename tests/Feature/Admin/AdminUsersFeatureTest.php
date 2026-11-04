@@ -44,6 +44,42 @@ class AdminUsersFeatureTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_lavaggio_advanced_filters_open_only_when_active_and_keep_customer_filtering_usable(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+        $admin = $this->makeUserWithRole('admin');
+        $matching = $this->makeUserWithRole('customer');
+        $matching->profile()->create(['county' => 'Zagrebačka']);
+        $outside = $this->makeUserWithRole('customer');
+        $outside->profile()->create(['county' => 'Splitsko-dalmatinska']);
+
+        $details = function (string $html): \DOMElement {
+            $document = new \DOMDocument;
+            @$document->loadHTML('<?xml encoding="UTF-8">'.$html);
+            $element = $document->getElementById('user-advanced-filters');
+            $this->assertInstanceOf(\DOMElement::class, $element);
+
+            return $element;
+        };
+        $component = Livewire::actingAs($admin)->test(UserManager::class)
+            ->set('role', 'customer');
+        $this->assertFalse($details($component->html())->hasAttribute('open'));
+
+        $component->set('county', 'Zagreba')
+            ->assertViewHas('rows', fn ($rows) => $rows->pluck('id')->all() === [$matching->id])
+            ->assertSee(__('admin.users.active_filters', ['count' => 1]));
+        $this->assertTrue($details($component->html())->hasAttribute('open'));
+
+        $component->set('county', '')->assertSet('role', 'customer')
+            ->assertViewHas('rows', fn ($rows) => $rows->count() === 2);
+        $this->assertFalse($details($component->html())->hasAttribute('open'));
+
+        config(['storefront.home' => 'auto']);
+        Livewire::actingAs($admin)->test(UserManager::class)
+            ->assertDontSeeHtml('id="user-advanced-filters"')
+            ->assertSeeHtml('wire:model.live="representative"');
+    }
+
     public function test_privileged_admin_can_open_user_groups_and_activity_pages(): void
     {
         $admin = $this->makeUserWithRole('admin');

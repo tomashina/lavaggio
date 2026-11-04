@@ -1,9 +1,7 @@
 <div class="space-y-6">
     <div class="admin-panel admin-search-panel p-6">
         <h1 class="text-xl font-semibold tracking-tight">{{ __('Runtime Controls') }}</h1>
-        <p class="mt-2 text-sm text-slate-600">
-            {{ __('Settings namespace:') }} <code>Settings/System/Runtime</code>
-        </p>
+        <p class="mt-2 text-sm text-slate-600">{{ __('admin.settings.runtime_intro') }}</p>
     </div>
 
     <div class="grid gap-6 lg:grid-cols-2">
