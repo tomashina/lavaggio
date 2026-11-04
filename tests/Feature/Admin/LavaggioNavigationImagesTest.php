@@ -39,6 +39,8 @@ class LavaggioNavigationImagesTest extends TestCase
         ]]);
 
         $component = Livewire::actingAs($user)->test(NavigationManager::class)
+            ->call('setTab', 'images')
+            ->call('toggleCategoryImage', $root->id)
             ->assertSee('Slike kategorija u Web shop izborniku')
             ->assertSet('form.category_images.'.$root->id.'.image_path', '')
             ->set('form.category_images.'.$root->id.'.image_alt', 'Tekući deterdženti i svježe rublje')
@@ -104,6 +106,8 @@ class LavaggioNavigationImagesTest extends TestCase
         ]]);
 
         $component = Livewire::actingAs($this->admin())->test(NavigationManager::class)
+            ->call('toggleItem', '0')
+            ->call('toggleItem', '0.children.0')
             ->assertSee('Fotografija u izborniku')
             ->set('desktopPromoUploads.0_children_0', UploadedFile::fake()->image('praonica.webp', 1000, 750))
             ->call('save')->assertHasNoErrors();
@@ -137,6 +141,7 @@ class LavaggioNavigationImagesTest extends TestCase
         $newRoot = $this->category('Novi pribor', 'novi-pribor');
 
         Livewire::actingAs($this->admin())->test(NavigationManager::class)
+            ->call('setTab', 'images')
             ->assertSee('Novi pribor')
             ->assertSet('form.category_images.'.$newRoot->id.'.image_path', '')
             ->call('save')->assertHasNoErrors();

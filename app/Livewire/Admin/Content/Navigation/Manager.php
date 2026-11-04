@@ -6,6 +6,7 @@ use App\Models\Catalog\Category\Category;
 use App\Models\Content\Page\InfoPage;
 use App\Services\Front\NavigationMenuService;
 use App\Services\Settings\SystemSettingsService;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -59,6 +60,14 @@ class Manager extends Component
 
     public string $previousLocale = 'en';
 
+    public string $activeTab = 'menu';
+
+    /** @var array<string, bool> */
+    public array $expandedItems = [];
+
+    /** @var array<int, bool> */
+    public array $expandedCategories = [];
+
     /** @var array<int|string, TemporaryUploadedFile|null> */
     public array $desktopPromoUploads = [];
 
@@ -84,18 +93,81 @@ class Manager extends Component
         $this->syncInputsFromLocaleTranslations($this->locale);
     }
 
+    public function setTab(string $tab): void
+    {
+        if (in_array($tab, ['menu', 'appearance', 'top_bar'], true)
+            || ($tab === 'images' && config('storefront.home') === 'lavaggio')) {
+            $this->activeTab = $tab;
+        }
+    }
+
+    public function toggleItem(string $path): void
+    {
+        if (! $this->validItemPath($path) || ! is_array(data_get($this->form['items'], $path))) {
+            return;
+        }
+
+        if ($this->expandedItems[$path] ?? false) {
+            unset($this->expandedItems[$path]);
+        } else {
+            $this->expandItem($path);
+        }
+    }
+
+    public function toggleCategoryImage(int $categoryId): void
+    {
+        if (config('storefront.home') !== 'lavaggio' || ! isset($this->form['category_images'][$categoryId])) {
+            return;
+        }
+
+        if ($this->expandedCategories[$categoryId] ?? false) {
+            unset($this->expandedCategories[$categoryId]);
+        } else {
+            $this->expandedCategories[$categoryId] = true;
+        }
+    }
+
+    private function expandItem(string $path): void
+    {
+        $parts = explode('.children.', $path);
+        $ancestor = (string) array_shift($parts);
+        $this->expandedItems[$ancestor] = true;
+        foreach ($parts as $part) {
+            $ancestor .= '.children.'.$part;
+            $this->expandedItems[$ancestor] = true;
+        }
+    }
+
+    private function appendItem(array $item): void
+    {
+        $item['sort_order'] = $this->form['items'] === []
+            ? 0
+            : min(9999, max(array_column($this->form['items'], 'sort_order')) + 10);
+        $this->form['items'][] = $item;
+        $this->activeTab = 'menu';
+        $this->expandItem((string) array_key_last($this->form['items']));
+    }
+
     public function updatedCategoryMenuUploads(mixed $upload, string $categoryId): void
     {
-        $this->validateOnly('categoryMenuUploads.'.$categoryId, [
-            'categoryMenuUploads.'.$categoryId => ['nullable', 'image', 'max:4096'],
-        ]);
+        $this->validateUpload('categoryMenuUploads.'.$categoryId);
     }
 
     public function updatedDesktopPromoUploads(mixed $upload, string $key): void
     {
-        $this->validateOnly('desktopPromoUploads.'.$key, [
-            'desktopPromoUploads.'.$key => ['nullable', 'image', 'max:4096'],
-        ]);
+        $this->validateUpload('desktopPromoUploads.'.$key);
+    }
+
+    private function validateUpload(string $field): void
+    {
+        try {
+            $this->validateOnly($field, [$field => ['nullable', 'image', 'max:4096']]);
+        } catch (ValidationException $exception) {
+            $this->setErrorBag($exception->validator->errors());
+            $this->revealValidationErrors();
+
+            throw $exception;
+        }
     }
 
     public function updatedLocale(): void
@@ -107,7 +179,7 @@ class Manager extends Component
 
     public function addCategoryItem(): void
     {
-        $this->form['items'][] = $this->makeDefaultItem('category');
+        $this->appendItem($this->makeDefaultItem('category'));
     }
 
     public function addCatalogItem(): void
@@ -117,12 +189,12 @@ class Manager extends Component
         $item['label_translations'] = [$this->locale => (string) __('admin.content.navigation.defaults.catalog')];
         $item['url'] = '/categories';
         $item['url_translations'] = [$this->locale => '/categories'];
-        $this->form['items'][] = $item;
+        $this->appendItem($item);
     }
 
     public function addPageItem(): void
     {
-        $this->form['items'][] = $this->makeDefaultItem('page');
+        $this->appendItem($this->makeDefaultItem('page'));
     }
 
     public function addBlogItem(): void
@@ -130,7 +202,7 @@ class Manager extends Component
         $item = $this->makeDefaultItem('blog');
         $item['label'] = 'Blog';
         $item['label_translations'] = [$this->locale => 'Blog'];
-        $this->form['items'][] = $item;
+        $this->appendItem($item);
     }
 
     public function addContactItem(): void
@@ -138,7 +210,7 @@ class Manager extends Component
         $item = $this->makeDefaultItem('contact');
         $item['label'] = (string) __('admin.content.navigation.defaults.contact');
         $item['label_translations'] = [$this->locale => (string) __('admin.content.navigation.defaults.contact')];
-        $this->form['items'][] = $item;
+        $this->appendItem($item);
     }
 
     public function addFaqItem(): void
@@ -146,7 +218,7 @@ class Manager extends Component
         $item = $this->makeDefaultItem('faq');
         $item['label'] = 'FAQ';
         $item['label_translations'] = [$this->locale => 'FAQ'];
-        $this->form['items'][] = $item;
+        $this->appendItem($item);
     }
 
     public function addCustomItem(): void
@@ -156,7 +228,7 @@ class Manager extends Component
         $item['url'] = '/';
         $item['label_translations'] = [$this->locale => (string) __('admin.content.navigation.defaults.custom_label')];
         $item['url_translations'] = [$this->locale => '/'];
-        $this->form['items'][] = $item;
+        $this->appendItem($item);
     }
 
     public function removeItem(int $index): void
@@ -167,6 +239,7 @@ class Manager extends Component
 
         unset($this->form['items'][$index]);
         $this->form['items'] = array_values($this->form['items']);
+        $this->remapEditorPaths('', $index, null);
     }
 
     public function moveUp(int $index): void
@@ -176,6 +249,9 @@ class Manager extends Component
         }
 
         [$this->form['items'][$index - 1], $this->form['items'][$index]] = [$this->form['items'][$index], $this->form['items'][$index - 1]];
+        $this->remapEditorPaths('', $index, $index - 1);
+        $this->reindexItems();
+        $this->expandItem((string) ($index - 1));
     }
 
     public function moveDown(int $index): void
@@ -187,10 +263,14 @@ class Manager extends Component
         }
 
         [$this->form['items'][$index + 1], $this->form['items'][$index]] = [$this->form['items'][$index], $this->form['items'][$index + 1]];
+        $this->remapEditorPaths('', $index, $index + 1);
+        $this->reindexItems();
+        $this->expandItem((string) ($index + 1));
     }
 
     public function addTopBarLink(): void
     {
+        $this->activeTab = 'top_bar';
         $this->form['top_bar']['links'][] = [
             'label' => (string) __('admin.content.navigation.top_bar_default_link'),
             'url' => '/',
@@ -212,6 +292,7 @@ class Manager extends Component
 
     public function addSocialLink(): void
     {
+        $this->activeTab = 'top_bar';
         $this->form['top_bar']['socials'][] = [
             'network' => 'facebook',
             'url' => '',
@@ -247,6 +328,8 @@ class Manager extends Component
         }
         $children[] = $item;
         data_set($this->form['items'], $parentPath.'.children', $children);
+        $this->activeTab = 'menu';
+        $this->expandItem($parentPath.'.children.'.array_key_last($children));
     }
 
     public function removeNestedItem(string $path): void
@@ -283,12 +366,88 @@ class Manager extends Component
             $items = array_values($items);
         } elseif (isset($items[$index + $direction])) {
             [$items[$index], $items[$index + $direction]] = [$items[$index + $direction], $items[$index]];
+        } else {
+            return;
         }
         foreach ($items as $order => &$item) {
             $item['sort_order'] = $order;
         }
         unset($item);
         data_set($this->form['items'], $listPath, $items);
+        $this->remapEditorPaths($listPath, $index, $direction === null ? null : $index + $direction);
+        $this->activeTab = 'menu';
+        $this->expandItem($direction === null ? substr($listPath, 0, -strlen('.children')) : $listPath.'.'.($index + $direction));
+    }
+
+    private function reindexItems(): void
+    {
+        foreach ($this->form['items'] as $index => &$item) {
+            $item['sort_order'] = $index;
+        }
+        unset($item);
+    }
+
+    private function remapEditorPaths(string $listPath, int $index, ?int $destination): void
+    {
+        $prefix = $listPath === '' ? '' : $listPath.'.';
+        $remap = static function (string $path) use ($prefix, $index, $destination): ?string {
+            if (! str_starts_with($path, $prefix)
+                || ! preg_match('/^(\d+)(\..*)?$/', substr($path, strlen($prefix)), $matches)) {
+                return $path;
+            }
+            $position = (int) $matches[1];
+            if ($destination === null && $position === $index) {
+                return null;
+            }
+            $next = $destination === null
+                ? ($position > $index ? $position - 1 : $position)
+                : ($position === $index ? $destination : ($position === $destination ? $index : $position));
+
+            return $prefix.$next.($matches[2] ?? '');
+        };
+
+        $expanded = [];
+        foreach ($this->expandedItems as $path => $isExpanded) {
+            $next = $remap((string) $path);
+            if ($next !== null) {
+                $expanded[$next] = $isExpanded;
+            }
+        }
+        $uploads = [];
+        foreach ($this->desktopPromoUploads as $key => $upload) {
+            $next = $remap(str_replace('_', '.', (string) $key));
+            if ($next !== null) {
+                $uploads[str_replace('.', '_', $next)] = $upload;
+            }
+        }
+        $this->expandedItems = $expanded;
+        $this->desktopPromoUploads = $uploads;
+        $this->resetValidation();
+    }
+
+    private function revealValidationErrors(): void
+    {
+        $keys = array_keys($this->getErrorBag()->messages());
+        foreach ($keys as $key) {
+            if (preg_match('/^form\.items\.(\d+(?:\.children\.\d+)*)/', $key, $matches)) {
+                $this->expandItem($matches[1]);
+            } elseif (str_starts_with($key, 'desktopPromoUploads.')) {
+                $path = str_replace('_', '.', substr($key, strlen('desktopPromoUploads.')));
+                if ($this->validItemPath($path)) {
+                    $this->expandItem($path);
+                }
+            } elseif (preg_match('/^(?:form\.category_images|categoryMenuUploads)\.(\d+)/', $key, $matches)) {
+                $this->expandedCategories[(int) $matches[1]] = true;
+            }
+        }
+
+        $first = $keys[0] ?? '';
+        $this->activeTab = match (true) {
+            str_starts_with($first, 'form.appearance.') => 'appearance',
+            str_starts_with($first, 'form.top_bar.') => 'top_bar',
+            str_starts_with($first, 'form.category_images.'), str_starts_with($first, 'categoryMenuUploads.') => 'images',
+            default => 'menu',
+        };
     }
 
     private function addNestedValidationRules(array $items, string $path, array $nodeRules, array &$rules, int $depth = 0): void
@@ -398,7 +557,14 @@ class Manager extends Component
         ];
         $nodeRules = array_filter($rules, fn ($key): bool => str_starts_with($key, 'form.items.*.'), ARRAY_FILTER_USE_KEY);
         $this->addNestedValidationRules($this->form['items'], 'form.items', $nodeRules, $rules);
-        $validated = $this->validate($rules);
+        try {
+            $validated = $this->validate($rules);
+        } catch (ValidationException $exception) {
+            $this->setErrorBag($exception->validator->errors());
+            $this->revealValidationErrors();
+
+            throw $exception;
+        }
 
         $normalizedItems = [];
         foreach (($validated['form']['items'] ?? []) as $index => $item) {
@@ -409,6 +575,8 @@ class Manager extends Component
         }
 
         if ($this->getErrorBag()->isNotEmpty()) {
+            $this->revealValidationErrors();
+
             return;
         }
 

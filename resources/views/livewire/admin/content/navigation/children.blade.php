@@ -1,4 +1,4 @@
-<div class="mt-4 space-y-3 border-l-2 border-slate-200 pl-4">
+<div class="mt-4 space-y-3 border-l-2 border-slate-200 pl-2 sm:pl-4">
     <div class="flex flex-wrap items-center gap-2">
         <span class="mr-2 text-sm font-semibold text-slate-600">Podstavke izbornika</span>
         @if ($navigationDepth < 3)
@@ -9,9 +9,27 @@
     @foreach ($navigationChildren as $childIndex => $navigationChild)
         @php
             $childPath = $parentPath.'.children.'.$childIndex;
+            $childExpanded = ! empty($expandedItems[$childPath]);
+            $childCaption = $navigationItemLabel($navigationChild);
+            $childDetailsId = 'navigation-item-details-'.str_replace('.', '-', $childPath);
         @endphp
-        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3" wire:key="navigation-child-{{ $childPath }}-{{ $navigationChild['page_id'] ?? 0 }}">
-            <div class="grid gap-3 lg:grid-cols-[8rem_1fr_1fr_auto] lg:items-end">
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white" wire:key="navigation-child-{{ $childPath }}-{{ $navigationChild['type'] ?? '' }}-{{ $navigationChild['page_id'] ?? 0 }}">
+            <div class="flex flex-wrap items-center gap-2 px-3 py-3">
+                <button type="button" wire:click="toggleItem('{{ $childPath }}')" aria-expanded="{{ $childExpanded ? 'true' : 'false' }}" aria-controls="{{ $childDetailsId }}" class="flex w-full min-w-0 flex-wrap items-center gap-2 text-left sm:w-auto sm:flex-1">
+                    <svg class="h-4 w-4 shrink-0 text-slate-500" style="transform: rotate({{ $childExpanded ? '90' : '0' }}deg)" viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><path d="m7 4 6 6-6 6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    <span class="min-w-0 break-words text-sm font-semibold text-slate-900">{{ $childCaption }}</span>
+                    @if (! empty($navigationChild['children']))<span class="admin-chip shrink-0">{{ __('admin.content.navigation.children_count', ['count' => count($navigationChild['children'])]) }}</span>@endif
+                    @if (! ($navigationChild['is_active'] ?? false))<span class="admin-chip shrink-0">{{ __('admin.common.inactive') }}</span>@endif
+                </button>
+                <div class="ml-auto flex shrink-0 gap-1">
+                    <button type="button" wire:click="moveNestedItem('{{ $childPath }}', -1)" @disabled($loop->first) class="rounded-lg border border-slate-300 px-2 py-1 text-xs disabled:opacity-30" aria-label="{{ __('admin.content.navigation.move_up', ['name' => $childCaption]) }}">↑</button>
+                    <button type="button" wire:click="moveNestedItem('{{ $childPath }}', 1)" @disabled($loop->last) class="rounded-lg border border-slate-300 px-2 py-1 text-xs disabled:opacity-30" aria-label="{{ __('admin.content.navigation.move_down', ['name' => $childCaption]) }}">↓</button>
+                    <button type="button" wire:click="removeNestedItem('{{ $childPath }}')" class="rounded-lg border border-rose-200 px-2 py-1 text-xs text-rose-700">{{ __('admin.content.navigation.remove') }}</button>
+                </div>
+            </div>
+            @if ($childExpanded)
+            <div id="{{ $childDetailsId }}" class="border-t border-slate-200 p-3">
+            <div class="grid gap-3 lg:grid-cols-[8rem_1fr_1fr] lg:items-end">
                 <div>
                     <label class="mb-1 block text-xs font-semibold text-slate-500">Vrsta</label>
                     <select wire:model.live="form.items.{{ $childPath }}.type" class="admin-search-input w-full rounded-xl border px-3 py-2 text-sm">
@@ -40,11 +58,6 @@
                         <input wire:model.live="form.items.{{ $childPath }}.url" type="text" class="admin-search-input w-full rounded-xl border px-3 py-2 text-sm" placeholder="/stranica">
                         @error('form.items.'.$childPath.'.url')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                     @endif
-                </div>
-                <div class="flex gap-1">
-                    <button type="button" wire:click="moveNestedItem('{{ $childPath }}', -1)" class="rounded-lg border border-slate-300 px-2 py-1 text-xs" aria-label="Pomakni gore">↑</button>
-                    <button type="button" wire:click="moveNestedItem('{{ $childPath }}', 1)" class="rounded-lg border border-slate-300 px-2 py-1 text-xs" aria-label="Pomakni dolje">↓</button>
-                    <button type="button" wire:click="removeNestedItem('{{ $childPath }}')" class="rounded-lg border border-rose-200 px-2 py-1 text-xs text-rose-700">Ukloni</button>
                 </div>
             </div>
             <div class="mt-3 flex flex-wrap gap-4 text-xs font-semibold text-slate-700">
@@ -76,6 +89,8 @@
             @endif
             @if ($navigationDepth < 2 || ! empty($navigationChild['children']))
                 @include('livewire.admin.content.navigation.children', ['navigationChildren' => $navigationChild['children'] ?? [], 'parentPath' => $childPath, 'navigationDepth' => $navigationDepth + 1])
+            @endif
+            </div>
             @endif
         </div>
     @endforeach

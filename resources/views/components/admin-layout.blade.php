@@ -1341,7 +1341,7 @@
                         ? 'shipping-methods'
                         : request()->route('resource');
                     $helpRoute = request()->route()?->getName() ?? '';
-                    $helpConfig = config('admin_help', []);
+                    $helpConfig = config($isLavaggioAdmin ? 'admin_help_lavaggio' : 'admin_help', []);
                     $helpEntry = $helpConfig['default'] ?? [];
                     $manualTopic = 'uvod';
                     $canViewUsersSection = auth()->user() && (
@@ -1354,7 +1354,7 @@
                         || auth()->user()->can('users.access.manage')
                     );
 
-                    foreach ((array) config('admin_manual.sections', []) as $manualSection) {
+                    foreach ((array) config($isLavaggioAdmin ? 'admin_manual_lavaggio.sections' : 'admin_manual.sections', []) as $manualSection) {
                         foreach ((array) ($manualSection['items'] ?? []) as $manualItem) {
                             $routeParametersMatch = true;
                             foreach ((array) ($manualItem['route_parameters'] ?? []) as $parameter => $expectedValue) {
@@ -1493,6 +1493,7 @@
                         return $normalized;
                     };
 
+                    if ($isLavaggioAdmin) $helpEntry = $helpConfig['topics'][$manualTopic] ?? $helpEntry;
                     $helpEntry = $normalizeHelpEntry(is_array($helpEntry) ? $helpEntry : []);
 
                 @endphp

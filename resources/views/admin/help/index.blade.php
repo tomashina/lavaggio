@@ -1,7 +1,6 @@
 @php
-    $manual = (array) config('admin_manual', []);
-    $manualSections = (array) ($manual['sections'] ?? []);
-    $manualEntryCount = collect($manualSections)->sum(fn (array $section): int => count((array) ($section['items'] ?? [])));
+    $isLavaggioManual = config('storefront.home') === 'lavaggio';
+    $manual = (array) config($isLavaggioManual ? 'admin_manual_lavaggio' : 'admin_manual', []);
     $manualUser = auth()->user();
     $catalogFeatures = app(\App\Services\Catalog\CatalogFeatureService::class);
     $manualFeatureStates = [
@@ -16,6 +15,31 @@
             (bool) config('user_features.flags.user_loyalty_enabled', false),
         ),
     ];
+    $manualSections = (array) ($manual['sections'] ?? []);
+    if ($isLavaggioManual) {
+        $manualSections = collect($manualSections)->map(function (array $section) use ($manualUser, $manualFeatureStates): array {
+            $section['items'] = array_values(array_filter($section['items'] ?? [], function (array $item) use ($manualUser, $manualFeatureStates): bool {
+                $feature = (string) ($item['feature'] ?? '');
+                if ($feature !== '' && ! ($manualFeatureStates[$feature] ?? false)) return false;
+                if (! \Illuminate\Support\Facades\Route::has((string) ($item['route'] ?? ''))) return false;
+
+                $resource = $item['route_parameters']['resource'] ?? null;
+                if ($resource !== null && ($item['route'] ?? '') === 'admin.settings.local.resource') {
+                    return \App\Support\AdminLocalSettingAccess::allows($manualUser, (string) $resource);
+                }
+
+                $abilities = array_filter([$item['ability'] ?? '', ...($item['abilities'] ?? [])]);
+                foreach ($abilities as $ability) {
+                    if (! $manualUser || (! $manualUser->isA('superadmin') && ! $manualUser->can($ability))) return false;
+                }
+
+                return true;
+            }));
+
+            return $section;
+        })->filter(fn (array $section): bool => $section['items'] !== [])->values()->all();
+    }
+    $manualEntryCount = collect($manualSections)->sum(fn (array $section): int => count((array) ($section['items'] ?? [])));
 @endphp
 
 @push('page-styles')
@@ -251,7 +275,7 @@
         <section id="uvod" class="admin-manual-hero relative scroll-mt-24 overflow-hidden rounded-3xl px-5 py-7 sm:px-8 sm:py-9">
             <div class="admin-manual-hero-grid relative">
                 <div class="max-w-3xl">
-                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700">Herrera administracija</p>
+                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700">{{ $manual['branding'] ?? 'Herrera administracija' }}</p>
                     <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">{{ $manual['title'] ?? 'Upute za administraciju' }}</h1>
                     <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">{{ $manual['intro'] ?? '' }}</p>
 
@@ -264,7 +288,7 @@
 
                 <div class="admin-manual-search-panel rounded-2xl p-4 sm:p-5">
                     <label for="admin-manual-search" class="text-sm font-bold text-slate-900">Što želite napraviti?</label>
-                    <p class="mt-1 text-xs leading-5 text-slate-500">Pretražite naziv, polje ili postupak, primjerice „zaliha”, „EPREL” ili „dostava”.</p>
+                    <p class="mt-1 text-xs leading-5 text-slate-500">{{ $manual['search_hint'] ?? 'Pretražite naziv, polje ili postupak, primjerice „zaliha”, „EPREL” ili „dostava”.' }}</p>
                     <div class="relative mt-3">
                         <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                             <circle cx="8.75" cy="8.75" r="5.25" stroke="currentColor" stroke-width="1.6" />
@@ -381,6 +405,7 @@
                                     $manualRouteParameters = (array) ($item['route_parameters'] ?? []);
                                     $manualAllowed = $manualAbility === ''
                                         || ($manualUser && ($manualUser->isA('superadmin') || $manualUser->can($manualAbility)));
+                                    if ($isLavaggioManual) $manualAllowed = true;
                                     $manualFeatureEnabled = $manualFeature === '' || ($manualFeatureStates[$manualFeature] ?? false);
                                     $manualRouteExists = $manualRoute !== '' && \Illuminate\Support\Facades\Route::has($manualRoute);
                                     $manualCanOpen = $manualAllowed && $manualFeatureEnabled && $manualRouteExists;

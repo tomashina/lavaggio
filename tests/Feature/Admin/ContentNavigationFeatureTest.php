@@ -45,7 +45,7 @@ class ContentNavigationFeatureTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertSame($socials, app(NavigationMenuService::class)->topBar()['socials']);
-        $this->actingAs($user)->get('/admin/content/navigation')->assertOk()
+        Livewire::actingAs($user)->test(NavigationManager::class)->call('setTab', 'top_bar')
             ->assertSee('value="linkedin"', false)->assertSee('value="twitter"', false);
     }
 
