@@ -7,7 +7,7 @@ class LavaggioCampaignSlides
     public const LIMIT = 12;
 
     /** Keep disabled slides in the editor; filter only when rendering. */
-    public static function normalize(mixed $value): array
+    public static function normalize(mixed $value, ?bool $shippingNoticeDefault = null): array
     {
         $slides = [];
         foreach (array_slice(is_array($value) ? $value : [], 0, self::LIMIT) as $slide) {
@@ -22,6 +22,11 @@ class LavaggioCampaignSlides
             $row['url'] = WatchlineWidgetSettings::safeUrl($slide['url'] ?? '');
             $row['display'] = ($slide['display'] ?? '') === 'image' ? 'image' : 'text_image';
             $row['enabled'] = filter_var($slide['enabled'] ?? true, FILTER_VALIDATE_BOOL);
+            if (array_key_exists('shipping_notice', $slide) || $shippingNoticeDefault !== null) {
+                $row['shipping_notice'] = array_key_exists('shipping_notice', $slide)
+                    ? filter_var($slide['shipping_notice'], FILTER_VALIDATE_BOOL)
+                    : ($row['display'] === 'image' ? false : $shippingNoticeDefault);
+            }
             $slides[] = $row;
         }
 
@@ -36,12 +41,12 @@ class LavaggioCampaignSlides
             'url' => $settings['cta_url'] ?? '', 'image' => $settings['main_image'] ?? '',
             'image_alt' => $settings['main_image_alt'] ?? '',
             'display' => $settings['slide_display'] ?? 'text_image', 'enabled' => true,
-        ]])[0];
+        ]], filter_var($settings['shipping_notice'] ?? true, FILTER_VALIDATE_BOOL))[0];
     }
 
     public static function visible(array $settings): array
     {
-        $slides = self::normalize($settings['slides'] ?? []);
+        $slides = self::normalize($settings['slides'] ?? [], filter_var($settings['shipping_notice'] ?? true, FILTER_VALIDATE_BOOL));
         if ($slides === []) {
             $slides = [self::legacy($settings)];
         }

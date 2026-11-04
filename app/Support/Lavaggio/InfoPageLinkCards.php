@@ -5,6 +5,7 @@ namespace App\Support\Lavaggio;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
+use Illuminate\Support\Str;
 
 /** Turn navigation-only page bodies into cards; authored articles keep their original layout. */
 class InfoPageLinkCards
@@ -29,6 +30,7 @@ class InfoPageLinkCards
                     if (trim($list->textContent) !== '') {
                         return [];
                     }
+
                     continue;
                 }
                 if (! in_array($list->tagName, ['ul', 'ol'], true)) {
@@ -52,7 +54,7 @@ class InfoPageLinkCards
                         return [];
                     }
                     if (! PublicUrls::retiredSlug((string) parse_url($url, PHP_URL_PATH))) {
-                        $cards[] = ['title' => $title, 'url' => PublicUrls::url($url)];
+                        $cards[] = ['title' => $title, 'url' => PublicUrls::url($url), 'icon' => $this->icon($url, $title)];
                     }
                 }
             }
@@ -62,5 +64,22 @@ class InfoPageLinkCards
             libxml_clear_errors();
             libxml_use_internal_errors($previous);
         }
+    }
+
+    private function icon(string $url, string $title): string
+    {
+        $subject = Str::lower(Str::ascii((string) parse_url($url, PHP_URL_PATH).' '.$title));
+
+        return match (true) {
+            str_contains($subject, 'radno') => 'clock',
+            str_contains($subject, 'recenz'), str_contains($subject, 'iskustv') => 'star',
+            str_contains($subject, 'kucni'), str_contains($subject, 'pravila') => 'list-check',
+            str_contains($subject, 'zaposlj') => 'user-plus',
+            str_contains($subject, 'zastit'), str_contains($subject, 'privatnost'), str_contains($subject, 'prigovor') => 'shield-halved',
+            str_contains($subject, 'tko-smo'), str_contains($subject, 'tko smo'), str_contains($subject, 'o-nama') => 'user',
+            str_contains($subject, 'dostav'), str_contains($subject, 'prikup') => 'truck',
+            str_contains($subject, 'kontakt') => 'comments',
+            default => 'file-lines',
+        };
     }
 }

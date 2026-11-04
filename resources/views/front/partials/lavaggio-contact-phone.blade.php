@@ -6,6 +6,6 @@
 <span class="lavaggio-contact-phone-inline">
     <a href="tel:{{ $lavaggioPhoneHref }}" @class([$lavaggioPhoneClass ?? ''])>{{ $lavaggioPhone }}</a>
     @if ($lavaggioHours !== '')
-        <span class="lavaggio-contact-hours">({{ $lavaggioHours }})</span>
+        <span class="lavaggio-contact-hours"><x-fa-icon name="clock" inline class="lavaggio-contact-hours-icon" /><span class="sr-only">Radno vrijeme: </span>{{ $lavaggioHours }}</span>
     @endif
 </span>

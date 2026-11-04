@@ -1,33 +1,38 @@
 /* Homepage widgets: solid lavender panels, real product photos and editable content. */
-body.lavaggio-storefront .lavaggio-home-problems .lavaggio-widget-description { max-width: none; margin-top: 12px; font-size: 17px; }
-body.lavaggio-storefront .lavaggio-home-problem-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-body.lavaggio-storefront .lavaggio-home-problem-card { display: flex; align-items: center; gap: 18px; min-height: 122px; padding: 24px; border: 1px solid #e4e3ef; border-radius: 14px; background: #f7f6fc; color: #303346; text-decoration: none; font-size: 18px; font-weight: 650; line-height: 1.35; transition: border-color .18s, background-color .18s; }
-body.lavaggio-storefront .lavaggio-home-problem-card:hover { border-color: #a3a5ce; background: #efedf9; }
-body.lavaggio-storefront .lavaggio-home-problem-card:focus-visible { outline: 3px solid #848ac4; outline-offset: 3px; }
-body.lavaggio-storefront .lavaggio-home-problem-icon { display: flex; align-items: center; justify-content: center; flex: 0 0 52px; width: 52px; height: 52px; border-radius: 12px; background: #eae8f5; color: #7579b5; }
-body.lavaggio-storefront .lavaggio-home-problem-icon svg { width: 30px; height: 30px; }
-body.lavaggio-storefront .lavaggio-home-problem-arrow { flex-shrink: 0; width: 15px; height: 15px; margin-left: auto; color: #7579b5; }
+body.lavaggio-storefront .lavaggio-home-problems { padding: clamp(22px, 2.1vw, 30px); border: 1px solid #e5e1f1; border-radius: 18px; background: #f4f3fb; }
+body.lavaggio-storefront .lavaggio-home-problems .lavaggio-home-problem-heading { margin-bottom: 24px; }
+body.lavaggio-storefront .lavaggio-home-problem-heading .lavaggio-widget-eyebrow { margin-bottom: 9px; color: #746b98; font-size: 11px; font-weight: 700; letter-spacing: .12em; }
+body.lavaggio-storefront .lavaggio-home-problems .lavaggio-home-problem-heading h2 { max-width: 24ch; color: #3c3856; font-weight: 720; line-height: 1.18; letter-spacing: -.035em; }
+body.lavaggio-storefront .lavaggio-home-problems .lavaggio-widget-description { max-width: 42ch; margin-top: 10px; color: #706981; font-size: 15px; line-height: 1.55; }
+body.lavaggio-storefront .lavaggio-home-problem-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+body.lavaggio-storefront .lavaggio-home-problem-card { display: grid; grid-template-columns: 34px minmax(0, 1fr) 14px; align-items: center; gap: 16px; min-height: 108px; padding: 20px; border: 1px solid #fff; border-radius: 14px; background: #fff; box-shadow: 0 2px 6px rgb(66 53 109 / 3%); color: #494354; text-decoration: none; font-size: 16px; font-weight: 650; line-height: 1.35; transition: border-color .2s, box-shadow .2s, transform .2s; }
+body.lavaggio-storefront .lavaggio-home-problem-card:is(:hover, :focus-visible) { border-color: #c3b8df; box-shadow: 0 6px 18px rgb(87 67 131 / 8%); }
+body.lavaggio-storefront .lavaggio-home-problem-card:focus-visible { outline: 3px solid #7468a6; outline-offset: 3px; }
+body.lavaggio-storefront .lavaggio-home-problem-label { min-width: 0; letter-spacing: -.015em; }
+body.lavaggio-storefront .lavaggio-home-problem-icon { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; color: #848ac4; transition: color .2s; }
+body.lavaggio-storefront .lavaggio-home-problem-icon svg { width: 29px; height: 29px; }
+body.lavaggio-storefront .lavaggio-home-problem-arrow { width: 14px; height: 14px; color: #b1a8c9; transition: color .2s, transform .2s; }
+body.lavaggio-storefront .lavaggio-home-problem-card:is(:hover, :focus-visible) :is(.lavaggio-home-problem-icon, .lavaggio-home-problem-arrow) { color: #6e63a2; }
 @media (max-width: 1000px) { body.lavaggio-storefront .lavaggio-home-problem-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 560px) { body.lavaggio-storefront .lavaggio-home-problem-grid { grid-template-columns: 1fr; gap: 10px; } body.lavaggio-storefront .lavaggio-home-problem-card { min-height: 94px; padding: 18px; font-size: 17px; } }
-@media (prefers-reduced-motion: reduce) { body.lavaggio-storefront .lavaggio-home-problem-card { transition: none; } }
+@media (max-width: 560px) { body.lavaggio-storefront .lavaggio-home-problem-grid { grid-template-columns: 1fr; gap: 10px; } body.lavaggio-storefront .lavaggio-home-problem-card { min-height: 88px; padding: 16px 18px; } }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) { body.lavaggio-storefront .lavaggio-home-problem-card:hover { transform: translateY(-2px); } body.lavaggio-storefront .lavaggio-home-problem-card:hover .lavaggio-home-problem-arrow { transform: translate(2px, -2px); } }
+@media (prefers-reduced-motion: reduce) { body.lavaggio-storefront :is(.lavaggio-home-problem-card, .lavaggio-home-problem-icon, .lavaggio-home-problem-arrow) { transition: none; } }
 body.lavaggio-storefront .lavaggio-home { display: flex; flex-direction: column; gap: clamp(42px, 4vw, 72px); }
 body.lavaggio-storefront .lavaggio-home > [data-lavaggio-widget] { min-width: 0; }
 body.lavaggio-storefront .lavaggio-home-intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(32px, 4vw, 48px); min-width: 0; }
 body.lavaggio-storefront .lavaggio-home-intro > [data-lavaggio-widget] { min-width: 0; }
-body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problems { padding: clamp(20px, 2vw, 28px); border: 1px solid #e3e3ed; border-radius: 18px; background: #fff; }
 @media (min-width: 1024px) {
     body.lavaggio-storefront .lavaggio-home-intro { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 24px; }
     body.lavaggio-storefront .lavaggio-home-intro > [data-lavaggio-widget] { display: flex; }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problems { display: flex; flex: 1; flex-direction: column; min-width: 0; }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-grid { flex: 1; }
-    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-widget-heading { margin-bottom: 18px; }
-    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-widget-heading h2 { font-size: clamp(25px, 2.1vw, 30px); }
-    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problems .lavaggio-widget-description { margin-top: 10px; font-size: 16px; line-height: 1.5; }
-    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-card { min-height: 100px; gap: 12px; padding: 16px; font-size: 16px; border-radius: 12px; }
-    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-icon { flex-basis: 40px; width: 40px; height: 40px; border-radius: 10px; }
-    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-icon svg { width: 24px; height: 24px; }
-    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-arrow { width: 13px; height: 13px; }
+    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-heading { margin-bottom: 22px; }
+    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-heading h2 { font-size: clamp(25px, 2.1vw, 29px); }
+    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-card { grid-template-columns: 32px minmax(0, 1fr) 12px; min-height: 96px; gap: 12px; padding: 16px; font-size: 15.5px; border-radius: 12px; }
+    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-icon { width: 32px; height: 32px; }
+    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-icon svg { width: 27px; height: 27px; }
+    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-home-problem-arrow { width: 12px; height: 12px; }
 }
 body.lavaggio-storefront .lavaggio-widget-hero { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 22px; }
 body.lavaggio-storefront .lavaggio-widget-hero > article { position: relative; min-width: 0; overflow: hidden; border: 1px solid #dfdff0; border-radius: 18px; background: #efedf9; background-image: none; }

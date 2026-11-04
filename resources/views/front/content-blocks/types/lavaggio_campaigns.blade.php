@@ -24,6 +24,9 @@
                         'lavaggio-promo-slide--image' => $slide['display'] === 'image', 'lavaggio-promo-slide--no-image' => $slide['image'] === ''])>
                         @if ($slide['display'] === 'image')
                             @if ($loop->first)<h1 class="sr-only">{{ $slide['title'] ?: 'Lavaggio webshop' }}</h1>@endif
+                            @if ($slide['shipping_notice'])
+                                <div class="lavaggio-promo-shipping-overlay">@include('front.partials.lavaggio-promo-shipping-notice')</div>
+                            @endif
                             @if ($slide['url'] !== '')<a class="lavaggio-promo-photo-link" href="{{ \App\Support\Lavaggio\PublicUrls::url($slide['url']) }}" aria-label="{{ $slide['cta_label'] ?: ($slide['title'] ?: 'Pogledajte promociju') }}">@endif
                                 <img src="{{ $slide['image'] }}" alt="{{ $slide['image_alt'] }}" width="1600" height="700" @if($loop->first) fetchpriority="high" @else loading="lazy" @endif decoding="async">
                             @if ($slide['url'] !== '')</a>@endif
@@ -32,8 +35,8 @@
                                 @if(filled($slide['eyebrow']))<p class="lavaggio-widget-eyebrow">{{ $slide['eyebrow'] }}</p>@endif
                                 @if ($loop->first)<h1>{{ $slide['title'] }}</h1>@else<h2>{{ $slide['title'] }}</h2>@endif
                                 @if(filled($slide['subtitle']))<p class="lavaggio-widget-description">{{ $slide['subtitle'] }}</p>@endif
-                                @if($settings['shipping_notice'])
-                                    <p class="lavaggio-widget-shipping"><x-fa-icon name="truck-fast" /><span>Besplatna dostava iznad <strong>{{ app(\App\Services\Settings\SystemSettingsService::class)->get('lavaggio_free_shipping_threshold', 50) }} €</strong></span></p>
+                                @if($slide['shipping_notice'])
+                                    @include('front.partials.lavaggio-promo-shipping-notice')
                                 @endif
                                 @if(filled($slide['cta_label']) && filled($slide['url']))<a class="lavaggio-widget-button" href="{{ \App\Support\Lavaggio\PublicUrls::url($slide['url']) }}">{{ $slide['cta_label'] }} <x-fa-icon name="arrow-right" /></a>@endif
                             </div>

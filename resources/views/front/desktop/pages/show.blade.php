@@ -17,6 +17,9 @@
 @section('main_class', 'mx-auto w-full max-w-7xl px-6 pt-0 pb-8')
 
 @section('content')
+    @if (config('storefront.home') === 'lavaggio')
+        <div class="lavaggio-info-page{{ $pageLinkCards !== [] ? ' lavaggio-info-page--links' : '' }}">
+    @endif
     @if ($topBlocks->isNotEmpty())
         <section class="mb-8">@include('components.content-placement', ['items' => $topBlocks])</section>
     @endif
@@ -41,8 +44,8 @@
         <nav class="lavaggio-page-link-cards" aria-label="{{ $translation?->title ?? $page->code }}">
             @foreach ($pageLinkCards as $card)
                 <a class="lavaggio-page-link-card" href="{{ $card['url'] }}">
-                    <span class="lavaggio-page-link-icon" aria-hidden="true"><x-fa-icon name="file-lines" /></span>
-                    <span>{{ $card['title'] }}</span>
+                    <span class="lavaggio-page-link-icon" aria-hidden="true"><x-fa-icon :name="$card['icon']" /></span>
+                    <span class="lavaggio-page-link-label">{{ $card['title'] }}</span>
                     <x-fa-icon name="arrow-right" class="lavaggio-page-link-arrow" />
                 </a>
             @endforeach
@@ -57,5 +60,8 @@
 
     @if ($bottomBlocks->isNotEmpty())
         <section class="mt-10">@include('components.content-placement', ['items' => $bottomBlocks])</section>
+    @endif
+    @if (config('storefront.home') === 'lavaggio')
+        </div>
     @endif
 @endsection

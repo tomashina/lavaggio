@@ -103,6 +103,7 @@ class LavaggioPromoProblemsTest extends TestCase
     {
         Storage::fake('public');
         $this->editor()->call('addLavaggioSlide')
+            ->assertSet('openLavaggioSlide', 1)
             ->assertSet('form.watchline.slides.0.title', 'Njega rublja s potpisom Lavaggio.')
             ->set('form.watchline.slides.1.title', 'Promocija za osjetljivo rublje')
             ->set('form.watchline.slides.1.subtitle', 'Odabrana njega na jednom mjestu.')
@@ -110,12 +111,15 @@ class LavaggioPromoProblemsTest extends TestCase
             ->set('form.watchline.slides.1.url', '/shop?promo=osjetljivo')
             ->set('form.watchline.slides.1.image_alt', 'Fotografija njege osjetljivog rublja')
             ->set('lavaggioSlideUploads.1', UploadedFile::fake()->image('promo.png', 1200, 800))
-            ->call('moveLavaggioSlide', 1, 'up')->call('save')->assertHasNoErrors();
+            ->call('toggleLavaggioSlide', 0)->assertSet('openLavaggioSlide', 0)
+            ->call('moveLavaggioSlide', 1, 'up')->assertSet('openLavaggioSlide', 1)
+            ->call('save')->assertHasNoErrors();
         $slides = $this->campaign()->translations()->sole()->payload['watchline']['slides'];
         $this->assertSame('Promocija za osjetljivo rublje', $slides[0]['title']);
         $this->assertSame('Njega rublja s potpisom Lavaggio.', $slides[1]['title']);
         Storage::disk('public')->assertExists(substr($slides[0]['image'], strlen('/storage/')));
         $this->editor()->assertSet('form.watchline.slides.0.image', $slides[0]['image'])
+            ->assertSet('openLavaggioSlide', null)
             ->assertDontSeeHtml('wire:model="form.title"');
         $this->get('/')->assertOk()->assertSeeInOrder(['Promocija za osjetljivo rublje', 'Njega rublja s potpisom Lavaggio.'])
             ->assertSee('data-herrera-home-carousel', false)->assertSee($slides[0]['image'], false)
@@ -142,12 +146,105 @@ class LavaggioPromoProblemsTest extends TestCase
 
     public function test_slide_links_are_validated_and_unsafe_images_never_render(): void
     {
-        $this->editor()->call('addLavaggioSlide')->set('form.watchline.slides.1.url', 'javascript:alert(1)')
-            ->call('save')->assertHasErrors('form.watchline.slides.1.url');
+        $this->editor()->call('addLavaggioSlide')->call('toggleLavaggioSlide', 0)
+            ->set('form.watchline.slides.1.url', 'javascript:alert(1)')
+            ->call('save')->assertHasErrors('form.watchline.slides.1.url')->assertSet('openLavaggioSlide', 1);
         $this->assertSame('', LavaggioCampaignSlides::normalize([['image' => 'javascript:alert(1)']])[0]['image']);
         $this->editor()->call('addLavaggioSlide')
             ->set('lavaggioSlideUploads.1', UploadedFile::fake()->create('promo.pdf', 1, 'application/pdf'))
-            ->assertHasErrors('lavaggioSlideUploads.1');
+            ->assertHasErrors('lavaggioSlideUploads.1')->assertSet('openLavaggioSlide', 1);
+    }
+
+    public function test_slide_accordion_keeps_inputs_and_follows_the_open_slide_when_reordered(): void
+    {
+        $editor = $this->editor()->assertSet('openLavaggioSlide', null)->call('addLavaggioSlide')
+            ->assertSet('openLavaggioSlide', 1)->set('form.watchline.slides.1.title', 'Druga promocija')
+            ->call('toggleLavaggioSlide', 1)->assertSet('openLavaggioSlide', null);
+        $document = new \DOMDocument;
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$editor->html());
+        $xpath = new \DOMXPath($document);
+        $this->assertSame(2, $xpath->query('//*[@role="region" and starts-with(@id, "lavaggio-slide-panel-") and @hidden]')->length);
+        $this->assertSame(2, $xpath->query('//input[@type="file" and starts-with(@id, "lavaggio-slide-image-")]')->length);
+        $editor->call('toggleLavaggioSlide', 0)->assertSet('openLavaggioSlide', 0)
+            ->call('toggleLavaggioSlide', 1)->assertSet('openLavaggioSlide', 1)
+            ->assertSet('form.watchline.slides.1.title', 'Druga promocija')
+            ->call('addLavaggioSlide')->assertSet('openLavaggioSlide', 2)
+            ->set('form.watchline.slides.2.title', 'Treća promocija')
+            ->call('moveLavaggioSlide', 2, 'up')->assertSet('openLavaggioSlide', 1)
+            ->assertSet('form.watchline.slides.1.title', 'Treća promocija')
+            ->call('removeLavaggioSlide', 0)->assertSet('openLavaggioSlide', 0)
+            ->assertSet('form.watchline.slides.0.title', 'Treća promocija');
+    }
+
+    public function test_shipping_notice_is_saved_and_rendered_independently_for_each_slide(): void
+    {
+        app(\App\Services\Settings\SystemSettingsService::class)->put('lavaggio_free_shipping_threshold', 73);
+        $this->editor()->call('addLavaggioSlide')
+            ->set('form.watchline.slides.0.shipping_notice', true)
+            ->set('form.watchline.slides.1.title', 'Promocija bez obavijesti')
+            ->set('form.watchline.slides.1.shipping_notice', false)
+            ->call('save')->assertHasNoErrors();
+        $this->editor()->assertSet('form.watchline.slides.0.shipping_notice', true)
+            ->assertSet('form.watchline.slides.1.shipping_notice', false)
+            ->assertDontSeeHtml('wire:model="form.watchline.shipping_notice"');
+        $document = new \DOMDocument;
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$this->get('/')->assertOk()->getContent());
+        $xpath = new \DOMXPath($document);
+        $articles = $xpath->query('//*[@data-lavaggio-promotions]//article');
+        $this->assertSame(2, $articles->length);
+        $this->assertSame(1, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-widget-shipping ")]', $articles->item(0))->length);
+        $this->assertStringContainsString('73 €', $articles->item(0)->textContent);
+        $this->assertSame(0, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-widget-shipping ")]', $articles->item(1))->length);
+    }
+
+    public function test_legacy_banner_and_slides_without_a_notice_flag_keep_the_global_false_default(): void
+    {
+        $translation = $this->campaign()->translations()->sole();
+        $payload = $translation->payload;
+        $payload['watchline']['shipping_notice'] = false;
+        $translation->update(['payload' => $payload]);
+        $this->get('/')->assertOk()->assertDontSee('class="lavaggio-widget-shipping"', false);
+        $payload['watchline']['slides'] = LavaggioCampaignSlides::normalize([
+            ['title' => 'Postojeći prvi slajd'], ['title' => 'Postojeći drugi slajd'],
+        ]);
+        $this->assertArrayNotHasKey('shipping_notice', $payload['watchline']['slides'][0]);
+        $translation->update(['payload' => $payload]);
+        \App\Services\Content\ContentBlockResolver::bumpCacheVersion();
+        $this->editor()->assertSet('form.watchline.slides.0.shipping_notice', false)
+            ->assertSet('form.watchline.slides.1.shipping_notice', false)
+            ->call('save')->assertHasNoErrors();
+        $this->assertFalse($translation->fresh()->payload['watchline']['slides'][0]['shipping_notice']);
+        $this->assertFalse($translation->fresh()->payload['watchline']['slides'][1]['shipping_notice']);
+        $this->get('/')->assertOk()->assertDontSee('class="lavaggio-widget-shipping"', false);
+    }
+
+    public function test_photo_only_slides_keep_old_notices_off_and_can_enable_the_overlay_individually(): void
+    {
+        app(\App\Services\Settings\SystemSettingsService::class)->put('lavaggio_free_shipping_threshold', 83);
+        $translation = $this->campaign()->translations()->sole();
+        $payload = $translation->payload;
+        $payload['watchline']['shipping_notice'] = true;
+        $payload['watchline']['slides'] = LavaggioCampaignSlides::normalize([
+            ['title' => 'Prva slikovna promocija', 'display' => 'image', 'image' => '/assets/lavaggio/home/products/laundry-care-group.svg'],
+            ['title' => 'Druga slikovna promocija', 'display' => 'image', 'image' => '/assets/lavaggio/home/products/vanish-oxi-action.webp'],
+        ]);
+        $translation->update(['payload' => $payload]);
+        $this->get('/')->assertOk()->assertDontSee('lavaggio-promo-shipping-overlay', false);
+        $this->editor()->assertSet('form.watchline.slides.0.shipping_notice', false)
+            ->assertSet('form.watchline.slides.1.shipping_notice', false)
+            ->set('form.watchline.slides.0.shipping_notice', true)
+            ->call('save')->assertHasNoErrors();
+        $this->editor()->assertSet('form.watchline.slides.0.shipping_notice', true)
+            ->assertSet('form.watchline.slides.1.shipping_notice', false);
+        $document = new \DOMDocument;
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$this->get('/')->assertOk()->getContent());
+        $xpath = new \DOMXPath($document);
+        $articles = $xpath->query('//*[@data-lavaggio-promotions]//article');
+        $this->assertSame(2, $articles->length);
+        $this->assertSame(1, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-promo-shipping-overlay ")]', $articles->item(0))->length);
+        $this->assertStringContainsString('83 €', $articles->item(0)->textContent);
+        $this->assertSame(0, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-promo-shipping-overlay ")]', $articles->item(1))->length);
+        $this->assertSame(0, $xpath->query('//*[@data-lavaggio-promotions]//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-promo-copy ")]')->length);
     }
 
     public function test_problem_cards_use_real_filters_and_categories_and_remain_editable(): void

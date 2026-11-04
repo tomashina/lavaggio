@@ -1,0 +1,1 @@
+<p class="lavaggio-widget-shipping"><x-fa-icon name="truck-fast" /><span>Besplatna dostava iznad <strong>{{ app(\App\Services\Settings\SystemSettingsService::class)->get('lavaggio_free_shipping_threshold', 50) }} €</strong></span></p>

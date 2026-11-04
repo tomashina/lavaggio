@@ -209,7 +209,7 @@
                                 $fieldIsVisible = ! in_array($fieldKey, $groupedImageAltFields, true);
                                 if (($form['type'] ?? '') === 'lavaggio_campaigns'
                                     && (str_starts_with($fieldKey, 'service_') || str_starts_with($fieldKey, 'self_')
-                                        || (($form['watchline']['slides'] ?? []) !== [] && in_array($fieldKey, ['eyebrow', 'main_image', 'main_image_alt', 'slide_display'], true)))) {
+                                        || (($form['watchline']['slides'] ?? []) !== [] && in_array($fieldKey, ['eyebrow', 'main_image', 'main_image_alt', 'slide_display', 'shipping_notice'], true)))) {
                                     $fieldIsVisible = false;
                                 }
                                 foreach (($field['visible_when'] ?? []) as $conditionKey => $conditionValue) {

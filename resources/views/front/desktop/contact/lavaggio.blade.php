@@ -20,7 +20,7 @@
             @if ($card['href'] !== '' && $card['link_label'] !== '')
                 <a class="lavaggio-contact-card-link" href="{{ $card['href'] }}">{{ $card['link_label'] }} <span aria-hidden="true">→</span></a>
             @endif
-            @if ($card['hours'] !== '')<p class="lavaggio-contact-card-hours">{{ $card['hours'] }}</p>@endif
+            @if ($card['hours'] !== '')<p class="lavaggio-contact-card-hours lavaggio-contact-hours"><x-fa-icon name="clock" inline class="lavaggio-contact-hours-icon" /><span class="sr-only">Radno vrijeme: </span>{{ $card['hours'] }}</p>@endif
         </article>
     @endforeach
 </section>

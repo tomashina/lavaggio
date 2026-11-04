@@ -34,11 +34,14 @@ class LavaggioContactHoursTest extends TestCase
         foreach ($phones as $phone) {
             $this->assertSame('tel:0911112233', $xpath->query('.//a', $phone)->item(0)->getAttribute('href'));
             $this->assertStringContainsString('091 111 22 33', $phone->textContent);
-            $this->assertStringContainsString('(Pon-Pet: 09h - 17h)', $phone->textContent);
+            $this->assertStringContainsString('Radno vrijeme:', $phone->textContent);
+            $this->assertStringContainsString('Pon-Pet: 09h - 17h', $phone->textContent);
+            $this->assertStringNotContainsString('(Pon-Pet:', $phone->textContent);
+            $this->assertSame(1, $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " lavaggio-contact-hours-icon ")]', $phone)->length);
         }
         $this->assertSame($navigation, $settings->get(NavigationMenuService::TOP_BAR_SETTINGS_KEY));
 
         $settings->put('store_footer_hours', '');
-        $this->get(route('home'))->assertOk()->assertDontSee('(Pon-Pet: 09h - 17h)');
+        $this->get(route('home'))->assertOk()->assertDontSee('Pon-Pet: 09h - 17h');
     }
 }

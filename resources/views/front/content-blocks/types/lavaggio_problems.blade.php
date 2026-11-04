@@ -4,7 +4,7 @@
 @endphp
 @if ($problemCards !== [])
     <section class="lavaggio-home-problems" aria-labelledby="lavaggio-problems-{{ $block->id }}" data-lavaggio-problems>
-        <header class="lavaggio-widget-heading">
+        <header class="lavaggio-widget-heading lavaggio-home-problem-heading">
             <div>
                 @if(filled($problemSettings['eyebrow']))<p class="lavaggio-widget-eyebrow">{{ $problemSettings['eyebrow'] }}</p>@endif
                 <h2 id="lavaggio-problems-{{ $block->id }}">{{ $problemSettings['title'] }}</h2>
@@ -15,7 +15,7 @@
             @foreach ($problemCards as $problemCard)
                 <a href="{{ \App\Support\Lavaggio\PublicUrls::url($problemCard['url']) }}" class="lavaggio-home-problem-card">
                     <span class="lavaggio-home-problem-icon"><x-fa-icon :name="$problemCard['icon']" /></span>
-                    <span>{{ $problemCard['title'] }}</span>
+                    <span class="lavaggio-home-problem-label">{{ $problemCard['title'] }}</span>
                     <x-fa-icon name="arrow-up-right" class="lavaggio-home-problem-arrow" />
                 </a>
             @endforeach

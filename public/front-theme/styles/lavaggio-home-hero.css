@@ -1,5 +1,5 @@
 /* Editable promotions retain the Lavaggio palette and work as a static banner without JS. */
-body.lavaggio-storefront .lavaggio-promo { position: relative; visibility: visible; }
+body.lavaggio-storefront .lavaggio-promo { --lavaggio-promo-image-start: 51.22%; position: relative; visibility: visible; }
 body.lavaggio-storefront .lavaggio-promo .splide__track { overflow: hidden; border-radius: 18px; }
 body.lavaggio-storefront .lavaggio-promo .splide__list { display: flex; margin: 0; padding: 0; }
 body.lavaggio-storefront .lavaggio-promo:not(.is-initialized) .splide__slide { flex: 0 0 100%; }
@@ -12,26 +12,29 @@ body.lavaggio-storefront .lavaggio-promo-copy .lavaggio-widget-button { margin-t
 body.lavaggio-storefront .lavaggio-promo-image { display: flex; align-items: center; justify-content: center; align-self: stretch; min-width: 0; padding: 26px; background: #fff; }
 body.lavaggio-storefront .lavaggio-promo-image img { display: block; width: 100%; height: 100%; max-height: 420px; object-fit: contain; }
 body.lavaggio-storefront .lavaggio-promo-slide--no-image { grid-template-columns: 1fr; }
-body.lavaggio-storefront .lavaggio-promo-slide--image { display: block; min-height: 0; background: #fff; }
+body.lavaggio-storefront .lavaggio-promo-slide--image { position: relative; display: block; min-height: 0; background: #fff; }
 body.lavaggio-storefront .lavaggio-promo-slide--image img { display: block; width: 100%; height: auto; max-height: 560px; object-fit: contain; }
 body.lavaggio-storefront .lavaggio-promo-photo-link { display: block; }
-body.lavaggio-storefront .lavaggio-promo-arrows { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+body.lavaggio-storefront .lavaggio-promo-shipping-overlay { position: absolute; top: 20px; left: 20px; z-index: 2; max-width: calc(100% - 40px); pointer-events: none; }
+body.lavaggio-storefront .lavaggio-promo-slide--image .lavaggio-promo-shipping-overlay .lavaggio-widget-shipping { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; padding: 10px 14px; border: 1px solid #e6e4ef; border-radius: 12px; background: rgb(255 255 255 / 96%); color: #494354; box-shadow: 0 2px 10px rgb(66 53 109 / 5%); font-size: 14px; line-height: 1.4; }
+body.lavaggio-storefront .lavaggio-promo-slide--image .lavaggio-promo-shipping-overlay .lavaggio-widget-shipping svg { flex: 0 0 auto; width: 16px; height: 16px; }
+body.lavaggio-storefront .lavaggio-promo-arrows { position: absolute; right: 16px; bottom: 14px; z-index: 3; display: flex; justify-content: flex-end; gap: 8px; margin: 0; padding: 0; }
 body.lavaggio-storefront .lavaggio-promo-arrows .splide__arrow { position: static; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 1px solid #dedfea; border-radius: 50%; background: #fff; color: #555a91; opacity: 1; transform: none; }
 body.lavaggio-storefront .lavaggio-promo-arrows .splide__arrow:hover { border-color: #848ac4; background: #f3f3f9; }
 body.lavaggio-storefront .lavaggio-promo-arrows svg { width: 15px; height: 15px; }
 body.lavaggio-storefront .lavaggio-promo-arrows .splide__arrow--prev svg { transform: rotate(180deg); }
-body.lavaggio-storefront .lavaggio-promo .splide__pagination { position: absolute; inset: auto auto 10px 0; display: flex; gap: 8px; margin: 0; padding: 0; }
+body.lavaggio-storefront .lavaggio-promo .splide__pagination { position: absolute; inset: auto auto 29px calc(var(--lavaggio-promo-image-start) + 16px); z-index: 3; display: flex; gap: 8px; margin: 0; padding: 0; }
 body.lavaggio-storefront .lavaggio-promo .splide__pagination__page { display: block; width: 9px; height: 9px; margin: 0; border: 0; border-radius: 50%; background: #d2d4e5; transform: none; }
 body.lavaggio-storefront .lavaggio-promo .splide__pagination__page.is-active { background: #7379b5; }
 body.lavaggio-storefront .lavaggio-promo :is(a, button):focus-visible { outline: 3px solid #848ac4; outline-offset: 3px; }
+body.lavaggio-storefront .lavaggio-promo:has(.lavaggio-promo-slide--image.is-active, .lavaggio-promo-slide--no-image.is-active) { --lavaggio-promo-image-start: 0%; }
+body.lavaggio-storefront .lavaggio-promo-slide--no-image .lavaggio-promo-copy { padding-bottom: 80px; }
 @media (min-width: 1024px) {
-    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo { display: flex; flex: 1; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid #e3e3ed; border-radius: 18px; background: #f6f5fb; }
+    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo { --lavaggio-promo-image-start: 55%; display: flex; flex: 1; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid #e3e3ed; border-radius: 18px; background: #f6f5fb; }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo > div:first-child { display: flex; flex: 1; min-height: 0; border-radius: 0; }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo > div:first-child > div { display: flex; align-items: stretch; width: 100%; height: auto; }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo-slide { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); min-height: 430px; height: auto; border: 0; border-radius: 0; }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo:not(.splide) .lavaggio-promo-slide { width: 100%; }
-    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo-arrows { margin: 0; padding: 12px 16px; }
-    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo .splide__pagination { bottom: 27px; left: 18px; }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo-copy { padding: 28px; }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo-copy :is(h1, h2) { margin-bottom: 16px; font-size: clamp(28px, 2.35vw, 34px); }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo-copy .lavaggio-widget-description { font-size: 16px; line-height: 1.55; }
@@ -42,8 +45,11 @@ body.lavaggio-storefront .lavaggio-promo :is(a, button):focus-visible { outline:
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo-slide--no-image { grid-template-columns: 1fr; }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo-slide--image { min-height: 0; }
     body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo-slide--image img { max-height: 430px; }
+    body.lavaggio-storefront .lavaggio-home-intro .lavaggio-promo:has(.lavaggio-promo-slide--image.is-active, .lavaggio-promo-slide--no-image.is-active) { --lavaggio-promo-image-start: 0%; }
 }
 @media (max-width: 767px) {
+    body.lavaggio-storefront .lavaggio-promo { --lavaggio-promo-image-start: 0%; }
+    body.lavaggio-storefront .lavaggio-promo-shipping-overlay { top: 14px; left: 14px; max-width: calc(100% - 28px); }
     body.lavaggio-storefront .lavaggio-promo-slide { grid-template-columns: 1fr; min-height: 0; border-radius: 14px; }
     body.lavaggio-storefront .lavaggio-promo-copy { padding: 28px; }
     body.lavaggio-storefront .lavaggio-promo-copy :is(h1, h2) { font-size: clamp(29px, 7vw, 38px); }

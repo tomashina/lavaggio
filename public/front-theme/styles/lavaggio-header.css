@@ -6,8 +6,16 @@ body.lavaggio-storefront .lavaggio-contact-phone-inline {
     column-gap: 4px;
 }
 body.lavaggio-storefront .lavaggio-contact-hours {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-size: 14px;
     font-weight: 400;
+}
+body.lavaggio-storefront .lavaggio-contact-hours-icon {
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
 }
 html[data-theme] body.lavaggio-storefront .lavaggio-header,
 html[data-theme] body.lavaggio-storefront .lavaggio-header.is-sticky {

@@ -16,6 +16,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -71,6 +72,8 @@ class Form extends Component
     public array $watchlineImageUploads = [];
 
     public array $lavaggioSlideUploads = [];
+
+    public ?int $openLavaggioSlide = null;
 
     /**
      * @var array<string, string>
@@ -218,9 +221,17 @@ class Form extends Component
             ));
         }
         if (count($slides) < LavaggioCampaignSlides::LIMIT) {
-            $slides[] = LavaggioCampaignSlides::normalize([['enabled' => true]])[0];
+            $slides[] = LavaggioCampaignSlides::normalize([['enabled' => true]], filter_var($this->form['watchline']['shipping_notice'] ?? true, FILTER_VALIDATE_BOOL))[0];
+            $this->openLavaggioSlide = count($slides) - 1;
         }
         $this->form['watchline']['slides'] = $slides;
+    }
+
+    public function toggleLavaggioSlide(int $index): void
+    {
+        if (($this->form['type'] ?? '') === 'lavaggio_campaigns' && isset($this->form['watchline']['slides'][$index])) {
+            $this->openLavaggioSlide = $this->openLavaggioSlide === $index ? null : $index;
+        }
     }
 
     public function updatedLavaggioSlideUploads(mixed $value, string $key): void
@@ -231,6 +242,7 @@ class Form extends Component
 
             return;
         }
+        $this->openLavaggioSlide = (int) $key;
         $this->validateOnly('lavaggioSlideUploads.'.$key, $this->rules());
     }
 
@@ -249,6 +261,11 @@ class Form extends Component
             }
         }
         $this->lavaggioSlideUploads = $uploads;
+        if ($this->openLavaggioSlide === $index) {
+            $this->openLavaggioSlide = null;
+        } elseif ($this->openLavaggioSlide !== null && $this->openLavaggioSlide > $index) {
+            $this->openLavaggioSlide--;
+        }
         $this->resetValidation();
     }
 
@@ -266,6 +283,11 @@ class Form extends Component
         [$this->lavaggioSlideUploads[$index], $this->lavaggioSlideUploads[$next]] = [
             $this->lavaggioSlideUploads[$next] ?? null, $this->lavaggioSlideUploads[$index] ?? null,
         ];
+        if ($this->openLavaggioSlide === $index) {
+            $this->openLavaggioSlide = $next;
+        } elseif ($this->openLavaggioSlide === $next) {
+            $this->openLavaggioSlide = $index;
+        }
         $this->resetValidation();
     }
 
@@ -401,6 +423,7 @@ class Form extends Component
         if ($this->isWatchlineWidgetType($type) && $this->lastType !== $type) {
             $this->watchlineImageUploads = [];
             $this->lavaggioSlideUploads = [];
+            $this->openLavaggioSlide = null;
             $this->watchlineCategoryFilterSearch = '';
             $this->watchlineManufacturerFilterSearch = '';
             $defaults = WatchlineWidgetSettings::defaults($type);
@@ -553,9 +576,20 @@ class Form extends Component
     public function save()
     {
         $this->useAutomaticProductsWhenManualSelectionIsEmpty();
-        $validated = $this->validate($this->rules(), [
-            'form.slot_ends_at.after_or_equal' => __('End date must be after or equal to start date.'),
-        ]);
+        try {
+            $validated = $this->validate($this->rules(), [
+                'form.slot_ends_at.after_or_equal' => __('End date must be after or equal to start date.'),
+            ]);
+        } catch (ValidationException $exception) {
+            foreach (array_keys($exception->errors()) as $field) {
+                if (preg_match('#^(?:form[.]watchline[.]slides|lavaggioSlideUploads)[.]([0-9]+)(?:[.]|$)#', $field, $match)
+                    && isset($this->form['watchline']['slides'][(int) $match[1]])) {
+                    $this->openLavaggioSlide = (int) $match[1];
+                    break;
+                }
+            }
+            throw $exception;
+        }
         $userId = auth()->id();
         $isEdit = $this->blockId !== null;
         $isWatchlineWidget = $this->isWatchlineWidgetType((string) $validated['form']['type']);
@@ -602,7 +636,10 @@ class Form extends Component
             );
             foreach (WatchlineWidgetSettings::fields($type) as $key => $field) {
                 if (($field['type'] ?? '') === 'slides') {
-                    $translationPayload['watchline'][$key] = LavaggioCampaignSlides::normalize($translationPayload['watchline'][$key] ?? []);
+                    $translationPayload['watchline'][$key] = LavaggioCampaignSlides::normalize(
+                        $translationPayload['watchline'][$key] ?? [],
+                        filter_var($translationPayload['watchline']['shipping_notice'] ?? true, FILTER_VALIDATE_BOOL),
+                    );
                 }
                 if (in_array($field['type'] ?? '', ['categories', 'manufacturers'], true)) {
                     $translationPayload['watchline'][$key] = collect((array) ($translationPayload['watchline'][$key] ?? []))
@@ -938,6 +975,7 @@ class Form extends Component
                 }
                 $rules['form.watchline.slides.*.subtitle'] = ['nullable', 'string', 'max:1500'];
                 $rules['form.watchline.slides.*.enabled'] = ['boolean'];
+                $rules['form.watchline.slides.*.shipping_notice'] = ['sometimes', 'boolean'];
                 $rules['form.watchline.slides.*.display'] = ['required', Rule::in(['text_image', 'image'])];
                 foreach (['url', 'image'] as $key) {
                     $rules['form.watchline.slides.*.'.$key] = ['nullable', 'string', 'max:2048', function (string $attribute, mixed $value, \Closure $fail) use ($key): void {

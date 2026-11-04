@@ -22,7 +22,11 @@ class LavaggioInfoPageCardsTest extends TestCase
         ]);
         $this->get(route('pages.show', 'o-praonici'))->assertOk()
             ->assertSee('lavaggio-page-link-cards')
+            ->assertSee('lavaggio-info-page--links')
             ->assertSee('href="/stranica/tko-smo-mi"', false)->assertSee('href="/kontakt"', false);
+        $cards = app(InfoPageLinkCards::class)->fromHtml($translation->body_html);
+        $this->assertSame(['Tko smo mi?', 'Kontakt'], array_column($cards, 'title'));
+        $this->assertSame(['user', 'comments'], array_column($cards, 'icon'));
         $translation->update(['body_html' => '<p>Upute za njegu rublja.</p><ul><li><a href="/contact">Kontakt</a></li></ul>']);
         $this->get(route('pages.show', 'o-praonici'))->assertOk()
             ->assertDontSee('class="lavaggio-page-link-cards"', false)->assertSee('Upute za njegu rublja.');
