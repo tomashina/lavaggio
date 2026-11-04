@@ -17,6 +17,10 @@ body.lavaggio-storefront .lavaggio-contact-hours-icon {
     width: 14px;
     height: 14px;
 }
+body.lavaggio-storefront .lavaggio-header-contacts .lavaggio-contact-phone-inline {
+    align-items: center;
+    column-gap: 18px;
+}
 html[data-theme] body.lavaggio-storefront .lavaggio-header,
 html[data-theme] body.lavaggio-storefront .lavaggio-header.is-sticky {
     --lavaggio-header-topbar-height: 32px;

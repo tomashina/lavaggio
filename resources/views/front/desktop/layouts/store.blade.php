@@ -758,7 +758,7 @@
                     @endif
                     @if (!empty($storeSettings['footer']['phone'] ?? ''))
                         @if ($lavaggioStorefront)
-                            <p>@include('front.partials.lavaggio-contact-phone', ['lavaggioPhoneClass' => 'text-base font-semibold text-slate-900 transition hover:text-slate-700'])</p>
+                            <p>@include('front.partials.lavaggio-contact-phone', ['lavaggioPhoneClass' => 'text-base font-semibold text-slate-900 transition hover:text-slate-700', 'lavaggioShowHours' => false])</p>
                         @else
                             <p><a href="tel:{{ preg_replace('/\\s+/', '', (string) $storeSettings['footer']['phone']) }}" class="text-base font-semibold text-slate-900 transition hover:text-slate-700">@if ($libermediaStorefront)<x-fa-icon name="phone" style="regular" :inline="true" class="lm-footer-phone-icon" />@endif{{ $storeSettings['footer']['phone'] }}</a></p>
                         @endif
@@ -766,12 +766,15 @@
                     @foreach ($footerContactEmails as $footerContactEmail)
                         <p><a href="mailto:{{ $footerContactEmail }}" class="transition hover:text-slate-900">{{ $footerContactEmail }}</a></p>
                     @endforeach
-                    @if (!empty($storeSettings['footer']['hours'] ?? '') && (! $lavaggioStorefront || empty($storeSettings['footer']['phone'] ?? '')))
+                    @if (! $lavaggioStorefront && !empty($storeSettings['footer']['hours'] ?? ''))
                         <p>{{ $storeSettings['footer']['hours'] }}</p>
                     @endif
                     @foreach ($footerContactAddressBlocks as $footerAddressBlock)
                         <p>{!! nl2br(e($footerAddressBlock)) !!}</p>
                     @endforeach
+                    @if ($lavaggioStorefront && filled($storeSettings['footer']['hours'] ?? ''))
+                        <p>@include('front.partials.lavaggio-contact-hours', ['lavaggioHours' => $storeSettings['footer']['hours']])</p>
+                    @endif
                 </div>
             </details>
 
@@ -803,7 +806,7 @@
                     @endif
                     @if (!empty($storeSettings['footer']['phone'] ?? ''))
                         @if ($lavaggioStorefront)
-                            <p>@include('front.partials.lavaggio-contact-phone', ['lavaggioPhoneClass' => 'site-footer-contact-phone transition'])</p>
+                            <p>@include('front.partials.lavaggio-contact-phone', ['lavaggioPhoneClass' => 'site-footer-contact-phone transition', 'lavaggioShowHours' => false])</p>
                         @else
                             <p><a href="tel:{{ preg_replace('/\\s+/', '', (string) $storeSettings['footer']['phone']) }}" class="site-footer-contact-phone transition">@if ($libermediaStorefront)<x-fa-icon name="phone" style="regular" :inline="true" class="lm-footer-phone-icon" />@endif{{ $storeSettings['footer']['phone'] }}</a></p>
                         @endif
@@ -811,12 +814,15 @@
                     @foreach ($footerContactEmails as $footerContactEmail)
                         <p><a href="mailto:{{ $footerContactEmail }}" class="transition">{{ $footerContactEmail }}</a></p>
                     @endforeach
-                    @if (!empty($storeSettings['footer']['hours'] ?? '') && (! $lavaggioStorefront || empty($storeSettings['footer']['phone'] ?? '')))
+                    @if (! $lavaggioStorefront && !empty($storeSettings['footer']['hours'] ?? ''))
                         <p>{{ $storeSettings['footer']['hours'] }}</p>
                     @endif
                     @foreach ($footerContactAddressBlocks as $footerAddressBlock)
                         <p>{!! nl2br(e($footerAddressBlock)) !!}</p>
                     @endforeach
+                    @if ($lavaggioStorefront && filled($storeSettings['footer']['hours'] ?? ''))
+                        <p>@include('front.partials.lavaggio-contact-hours', ['lavaggioHours' => $storeSettings['footer']['hours']])</p>
+                    @endif
                 </div>
                 <div class="site-footer-socials flex items-center gap-2">
                     @unless ($herreraStorefront)

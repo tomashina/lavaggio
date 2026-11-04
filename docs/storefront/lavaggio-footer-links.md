@@ -16,7 +16,7 @@ Social icons appear once in the row above the final copyright bar, with cookie p
 
 The prominent Lavaggio footer link now opens **Povrati i reklamacije**. A plain **Zakonsko jamstvo** link appears in the **Informacije** column and opens the existing official notice. Product and checkout notices retain their existing behavior.
 
-The support telephone and working hours are shared by the header, footer and contact cards. Edit them in **Postavke → Trgovina → Brendiranje**. Hours appear beside the telephone with a clock icon, without parentheses; clearing the hours field removes the suffix. The first active telephone link in the header uses these shared values without rewriting the stored navigation links. Additional telephone links retain their own content.
+The support telephone and working hours are shared by the header, footer and contact cards. Edit them in **Postavke → Trgovina → Brendiranje**. The header shows hours beside the telephone, without an icon or parentheses and with the same spacing as the other contact details. Both footer layouts show hours with a clock icon as the last contact row, below the address and OIB. Clearing the hours field removes the row. The first active telephone link in the header uses these shared values without rewriting the stored navigation links. Additional telephone links retain their own content.
 
 Six dedicated webshop information pages initially contain only “Sadržaj ove stranice je u pripremi.” They are editable through the existing information page administration. These placeholders do not define payment, delivery, returns, purchase terms or accessibility compliance. Supply the actual approved content before publishing a production shop.
 
