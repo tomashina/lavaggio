@@ -176,7 +176,7 @@ class Form extends Component
             return;
         }
 
-        if ($tab === 'options' && (! $this->isWatchlineEditor() || ! $this->useOptions())) {
+        if ($tab === 'options' && (! $this->usesInlineOptionsEditor() || ! $this->useOptions())) {
             return;
         }
 
@@ -194,7 +194,7 @@ class Form extends Component
     public function updatedActiveTab(): void
     {
         if ((! $this->usesExtendedProductTabs() && in_array($this->activeTab, ['energy', 'logistics', 'b2b'], true))
-            || ($this->activeTab === 'options' && (! $this->isWatchlineEditor() || ! $this->useOptions()))
+            || ($this->activeTab === 'options' && (! $this->usesInlineOptionsEditor() || ! $this->useOptions()))
             || ($this->activeTab === 'promotion' && ! $this->useProductPromotions())) {
             $this->activeTab = 'content';
         }
@@ -859,6 +859,7 @@ class Form extends Component
             'useOptions' => $this->useOptions(),
             'watchlineProductEditor' => $this->isWatchlineEditor(),
             'lavaggioProductEditor' => $this->isLavaggioEditor(),
+            'inlineOptionsEditor' => $this->usesInlineOptionsEditor(),
             'useExtendedProductTabs' => $this->usesExtendedProductTabs(),
             'useProductPromotions' => $this->useProductPromotions(),
             'useManufacturers' => $this->useManufacturers(),
@@ -2301,6 +2302,11 @@ class Form extends Component
     private function usesExtendedProductTabs(): bool
     {
         return ! $this->isWatchlineEditor() && ! $this->isLavaggioEditor();
+    }
+
+    private function usesInlineOptionsEditor(): bool
+    {
+        return $this->isWatchlineEditor() || $this->isLavaggioEditor();
     }
 
     private function syncProfessionalAttribute(Product $product, bool $professional): void

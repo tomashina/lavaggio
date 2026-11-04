@@ -38,7 +38,7 @@
                         {{ __('Atributi') }}
                     </button>
                 @endif
-                @if ($watchlineProductEditor && $useOptions)
+                @if ($inlineOptionsEditor && $useOptions)
                     <button type="button" wire:click="setTab('options')" class="rounded-lg border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] {{ $activeTab === 'options' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100' }}">
                         {{ __('Opcije') }}
                     </button>
@@ -61,7 +61,7 @@
             </div>
         </div>
 
-        @if ($watchlineProductEditor && $useOptions && $activeTab === 'options')
+        @if ($inlineOptionsEditor && $useOptions && $activeTab === 'options')
             @if ($productId)
                 <livewire:admin.catalog.product.option-values-manager
                     :product-id="$productId"
@@ -941,7 +941,7 @@
 
         @if ($activeTab === 'catalog')
         <div class="admin-panel admin-form-panel p-6">
-            <p class="admin-section-title">{{ $watchlineProductEditor ? __('Kategorije') : __('Kategorije i opcije') }}</p>
+            <p class="admin-section-title">{{ $inlineOptionsEditor ? __('Kategorije') : __('Kategorije i opcije') }}</p>
             <div class="mt-4 rounded-xl border border-slate-200 p-4">
                 <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Categories (order defines primary)') }}</p>
                 <input type="text" wire:model.live.debounce.250ms="categorySearch" class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="{{ __('Pretraga kategorija...') }}">
@@ -971,7 +971,7 @@
                 @error('form.category_ids.*') <p class="mt-2 text-xs text-rose-600">{{ $message }}</p> @enderror
             </div>
 
-            @if ($useOptions && ! $watchlineProductEditor)
+            @if ($useOptions && ! $inlineOptionsEditor)
                 <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                     <div class="flex items-center justify-between gap-2">
                         <div>

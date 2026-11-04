@@ -485,6 +485,9 @@ class Manager extends Component
         if (config('storefront.home') === 'watchline' && $this->modelClass === Product::class) {
             return Arr::only($collections, ['product_main', 'product_gallery']);
         }
+        if (config('storefront.home') === 'lavaggio' && $this->modelClass === Product::class) {
+            return Arr::except($collections, ['product_energy_label', 'product_information_sheet']);
+        }
         $record = $this->record;
 
         if (! $record instanceof ContentBlock) {
@@ -721,7 +724,7 @@ class Manager extends Component
         }
 
         $query = $record->media()->whereKey($mediaId);
-        if (config('storefront.home') === 'watchline' && $record instanceof Product) {
+        if (in_array(config('storefront.home'), ['watchline', 'lavaggio'], true) && $record instanceof Product) {
             $query->whereIn('collection_name', array_keys($this->collections));
         }
 

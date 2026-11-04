@@ -245,7 +245,7 @@
                                     >
                                         <x-fa-icon name="pen-to-square" class="h-4 w-4" />
                                     </a>
-                                    @if ($features['catalog_use_options'] && config('storefront.home') !== 'watchline')
+                                    @if ($features['catalog_use_options'] && ! in_array(config('storefront.home'), ['watchline', 'lavaggio'], true))
                                         <a href="{{ route('admin.products.options', ['product' => $row->id, 'locale' => $locale]) }}" class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">
                                             {{ __('Option Values') }}
                                         </a>

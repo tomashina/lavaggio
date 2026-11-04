@@ -3,9 +3,13 @@
 namespace Tests\Feature\Admin;
 
 use App\Livewire\Admin\Catalog\Product\Form;
+use App\Livewire\Admin\Catalog\Product\Manager as ProductManager;
+use App\Livewire\Admin\Catalog\Product\OptionValuesManager;
 use App\Livewire\Admin\Catalog\Product\PromotionManager;
 use App\Models\Catalog\Action\CatalogAction;
 use App\Models\Catalog\Attribute\Attribute;
+use App\Models\Catalog\Option\Option;
+use App\Models\Catalog\Option\OptionValue;
 use App\Models\Catalog\Product\Product;
 use App\Models\Catalog\Product\ProductEnergyDeclaration;
 use App\Models\User;
@@ -38,6 +42,91 @@ class LavaggioProductDetailsTest extends TestCase
                     ->set('activeTab', $tab)->assertSet('activeTab', 'content');
             }
         }
+    }
+
+    public function test_lavaggio_product_list_omits_the_separate_option_values_action_while_other_stores_keep_it(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+        app(SystemSettingsService::class)->put('catalog_use_options', true);
+        $user = User::factory()->create();
+        Bouncer::assign('admin')->to($user);
+        $product = Product::query()->create(['code' => 'LAV-OPTION-ACTIONS', 'base_price' => 20, 'is_active' => true]);
+        $product->translations()->create(['locale' => 'hr', 'name' => 'Proizvod s opcijama', 'slug' => 'proizvod-s-opcijama']);
+        $optionsUrl = route('admin.products.options', ['product' => $product->id, 'locale' => 'hr']);
+        $editUrl = route('admin.products.edit', ['product' => $product->id, 'locale' => 'hr']);
+
+        Livewire::withQueryParams(['locale' => 'hr'])->actingAs($user)->test(ProductManager::class)
+            ->assertSeeHtml($editUrl)->assertDontSeeHtml($optionsUrl);
+
+        config(['storefront.home' => 'auto']);
+        Livewire::withQueryParams(['locale' => 'hr'])->actingAs($user)->test(ProductManager::class)
+            ->assertSeeHtml($optionsUrl);
+    }
+
+    public function test_lavaggio_options_tab_can_assign_groups_and_save_values_without_product_edits_removing_them(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+        app(SystemSettingsService::class)->put('catalog_use_options', true);
+        $user = User::factory()->create();
+        Bouncer::assign('admin')->to($user);
+        $product = Product::query()->create(['code' => 'LAV-OPTIONS-EDITOR', 'base_price' => 20, 'stock_qty' => 10]);
+        $product->translations()->create(['locale' => 'hr', 'name' => 'Deterdžent', 'slug' => 'deterdzent']);
+        $option = Option::query()->create(['code' => 'fragrance', 'type' => Option::TYPE_SELECT, 'is_active' => true]);
+        $option->translations()->create(['locale' => 'hr', 'name' => 'Miris', 'slug' => 'miris']);
+        $value = OptionValue::query()->create(['option_id' => $option->id, 'code' => 'lavender', 'is_active' => true]);
+        $value->translations()->create(['locale' => 'hr', 'name' => 'Lavanda', 'slug' => 'lavanda']);
+
+        $editor = Livewire::withQueryParams(['locale' => 'hr'])->actingAs($user)
+            ->test(Form::class, ['productId' => $product->id])
+            ->assertSeeHtml("wire:click=\"setTab('options')\"")
+            ->call('setTab', 'catalog')->assertDontSee(__('Manage Option Values'))
+            ->call('setTab', 'options')->assertSet('activeTab', 'options')
+            ->assertSeeLivewire(OptionValuesManager::class)
+            ->assertDontSee(__('Update Product'));
+
+        Livewire::actingAs($user)->test(OptionValuesManager::class, ['productId' => $product->id, 'locale' => 'hr'])
+            ->assertSee('Miris')
+            ->set('selectedOptionIds', [$option->id])->call('saveOptionGroups')->assertHasNoErrors()
+            ->call('addRow')->assertSet('rows.0.option_value_id', $value->id)
+            ->set('rows.0.sku', 'DETERGENT-LAVENDER')->set('rows.0.stock_qty', 8)
+            ->set('rows.0.price_override', '22.50')
+            ->call('save')->assertHasNoErrors();
+
+        $this->assertTrue($product->options()->whereKey($option->id)->exists());
+        $variant = $product->optionValues()->sole();
+        $this->assertSame($value->id, $variant->option_value_id);
+        $this->assertSame('DETERGENT-LAVENDER', $variant->sku);
+        $this->assertSame(8, $variant->stock_qty);
+        $this->assertSame(22.5, (float) $variant->price_override);
+        $before = $variant->getRawOriginal();
+
+        $editor->call('setTab', 'content')->set('form.name', 'Deterdžent s mirisom')
+            ->set('form.base_price', 21)->call('save')->assertHasNoErrors();
+        $this->assertSame($before, $variant->fresh()->getRawOriginal());
+        $this->assertTrue($product->options()->whereKey($option->id)->exists());
+        Livewire::actingAs($user)->test(OptionValuesManager::class, ['productId' => $product->id, 'locale' => 'hr'])
+            ->assertSet('rows.0.id', $variant->id)
+            ->assertSet('rows.0.sku', 'DETERGENT-LAVENDER')
+            ->assertSet('rows.0.stock_qty', 8);
+    }
+
+    public function test_lavaggio_options_tab_requires_enabled_options_and_a_saved_product(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+        $settings = app(SystemSettingsService::class);
+        $settings->put('catalog_use_options', true);
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)->test(Form::class)
+            ->call('setTab', 'options')->assertSet('activeTab', 'options')
+            ->assertSee('Najprije spremite artikl kako biste dodali opcije.')
+            ->assertDontSeeLivewire(OptionValuesManager::class);
+
+        $settings->put('catalog_use_options', false);
+        Livewire::actingAs($user)->test(Form::class)
+            ->assertDontSeeHtml("wire:click=\"setTab('options')\"")
+            ->call('setTab', 'options')->assertSet('activeTab', 'content')
+            ->set('activeTab', 'options')->assertSet('activeTab', 'content');
     }
 
     public function test_lavaggio_content_edits_preserve_hidden_logistics_prices_and_energy_data(): void
