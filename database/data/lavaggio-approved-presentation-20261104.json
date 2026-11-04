@@ -1,0 +1,657 @@
+{
+  "schema": 1,
+  "scope": "lavaggio-approved-public-presentation",
+  "approved_date": "2026-11-04",
+  "settings_from_effective_defaults": [
+    "lavaggio_footer_legal_title",
+    "store_footer_hours_translations",
+    "lavaggio_contact_cards",
+    "lavaggio_faq_groups"
+  ],
+  "settings": {
+    "front_navigation_appearance": {
+      "container_width": 1860,
+      "header_content_width": 1860,
+      "background_color": "#848ac4",
+      "text_color": "#13100d",
+      "highlight_color": "#6c73b0"
+    },
+    "front_navigation_top_bar": {
+      "is_enabled": true,
+      "height": 34,
+      "font_size": 12,
+      "background_color": "#f1f2f9",
+      "text_color": "#13100d",
+      "border_color": "#e4e5f0",
+      "links": [
+        {
+          "label": "info@lavaggio.hr",
+          "url": "mailto:info@lavaggio.hr",
+          "is_active": true,
+          "sort_order": 0
+        },
+        {
+          "label": "097 799 44 11",
+          "url": "tel:+385977994411",
+          "is_active": true,
+          "sort_order": 1
+        }
+      ],
+      "socials": [
+        {
+          "network": "facebook",
+          "url": "https://www.facebook.com/lavaggio.praonica",
+          "is_active": true,
+          "sort_order": 0
+        },
+        {
+          "network": "instagram",
+          "url": "https://www.instagram.com/lavaggio.hr/",
+          "is_active": true,
+          "sort_order": 1
+        }
+      ]
+    },
+    "lavaggio_contact_cards": [
+      {
+        "title": "Web podrška",
+        "icon": "phone",
+        "type": "phone",
+        "text": "",
+        "link_label": "",
+        "url": "",
+        "show_hours": true,
+        "sort_order": 0,
+        "is_active": true
+      },
+      {
+        "title": "Kontakt mailom",
+        "icon": "envelope",
+        "type": "email",
+        "text": "Pišite nam, rado ćemo pomoći.",
+        "link_label": "",
+        "url": "",
+        "show_hours": false,
+        "sort_order": 10,
+        "is_active": true
+      },
+      {
+        "title": "Reklamacije",
+        "icon": "arrows-rotate",
+        "type": "returns",
+        "text": "Kako mogu podnijeti reklamaciju?",
+        "link_label": "Povrati i reklamacije",
+        "url": "",
+        "show_hours": false,
+        "sort_order": 20,
+        "is_active": true
+      },
+      {
+        "title": "Prodajno mjesto Barban",
+        "icon": "location-dot",
+        "type": "store",
+        "text": "Barban 70, 52207 Barban",
+        "link_label": "",
+        "url": "",
+        "show_hours": true,
+        "sort_order": 30,
+        "is_active": true
+      }
+    ],
+    "lavaggio_faq_groups": [
+      {
+        "code": "narucivanje",
+        "title": "Pitanja o naručivanju",
+        "sort_order": 0
+      },
+      {
+        "code": "lavaggio",
+        "title": "Pitanja o praonici",
+        "sort_order": 10
+      },
+      {
+        "code": "general",
+        "title": "Opća pitanja",
+        "sort_order": 20
+      }
+    ],
+    "lavaggio_footer_legal_links": [
+      {
+        "label": "Načini plaćanja",
+        "url": "/stranica/webshop-nacini-placanja"
+      },
+      {
+        "label": "Povrati i reklamacije",
+        "url": "/stranica/povrati-i-reklamacije"
+      },
+      {
+        "label": "Dostava",
+        "url": "/stranica/dostava"
+      },
+      {
+        "label": "Raskid ugovora / prigovor",
+        "url": "/stranica/raskid-ugovora-i-prigovor"
+      },
+      {
+        "label": "Zaštita podataka",
+        "url": "/stranica/zastita-podataka-i-prigovor#zastita-podataka"
+      },
+      {
+        "label": "Podnošenje prigovora",
+        "url": "/stranica/zastita-podataka-i-prigovor#podnosenje-prigovora"
+      },
+      {
+        "label": "Privatnost i kolačići",
+        "url": "/stranica/zastita-podataka-i-prigovor#privatnost-i-kolacici"
+      },
+      {
+        "label": "Uvjeti kupnje i poslovanja",
+        "url": "/stranica/uvjeti-kupnje-i-poslovanja"
+      },
+      {
+        "label": "Izjava o pristupačnosti",
+        "url": "/stranica/izjava-o-pristupacnosti"
+      },
+      {
+        "label": "Zapošljavamo",
+        "url": "/stranica/zaposljavamo"
+      }
+    ],
+    "lavaggio_footer_legal_title": "Uvjeti",
+    "lavaggio_free_shipping_threshold": 50,
+    "store_announcement_enabled": true,
+    "store_announcement_text": "Besplatna dostava za narudžbe iznad 50 €",
+    "store_footer_address": "Bareda d.o.o.\nBarban 70\n52207 Barban\nOIB: 96889385802",
+    "store_footer_bottom_copyright_text": "Lavaggio® · Sva prava pridržana.",
+    "store_footer_bottom_link_page_ids": [],
+    "store_footer_col_1_category_ids": [],
+    "store_footer_col_1_title": "Web shop",
+    "store_footer_col_1_title_translations": {
+      "hr": "Web shop"
+    },
+    "store_footer_col_2_custom_links": "",
+    "store_footer_col_2_page_ids": [],
+    "store_footer_col_2_title": "Informacije",
+    "store_footer_col_2_title_translations": {
+      "hr": "Informacije"
+    },
+    "store_footer_col_3_custom_links": "Moj račun|/prijava\nKošarica|/kosarica\nPraonica|/stranica/usluge",
+    "store_footer_col_3_title": "Korisne poveznice",
+    "store_footer_col_3_title_translations": {
+      "hr": "Korisne poveznice"
+    },
+    "store_footer_contact_intro": "Sve za čisto, svježe i njegovano rublje.",
+    "store_footer_contact_title": "Lavaggio",
+    "store_footer_email_sales": "info@lavaggio.hr",
+    "store_footer_email_support": "info@lavaggio.hr",
+    "store_footer_hours": "Pon-Pet: 08h - 16h",
+    "store_footer_hours_translations": {},
+    "store_footer_phone": "097 799 44 11",
+    "store_footer_social_facebook_enabled": true,
+    "store_footer_social_instagram_enabled": true,
+    "store_footer_social_linkedin_enabled": true,
+    "store_footer_social_tiktok_enabled": true,
+    "store_footer_social_youtube_enabled": true,
+    "store_social_facebook_url": "https://www.facebook.com/lavaggio.praonica",
+    "store_social_instagram_url": "https://www.instagram.com/lavaggio.hr/",
+    "store_social_linkedin_url": "https://www.linkedin.com/company/lavaggio-laundry/",
+    "store_social_tiktok_url": "https://www.tiktok.com/@lavaggio.hr",
+    "store_social_youtube_url": "https://www.youtube.com/@lavaggiohr"
+  },
+  "blocks": [
+    {
+      "code": "lavaggio-home-campaigns",
+      "name": "Početna — webshop i praonica",
+      "type": "lavaggio_campaigns",
+      "is_active": true,
+      "payload": {
+        "lavaggio_widget_version": 1
+      },
+      "translations": [
+        {
+          "locale": "hr",
+          "title": "Njega rublja s potpisom Lavaggio.",
+          "subtitle": "Iskustvo profesionalne praonice u vašem domu. Pažljivo odabrana njega za rublje koje volite.",
+          "body_html": null,
+          "cta_label": "Istražite ponudu",
+          "cta_url": "/trgovina",
+          "payload": {
+            "watchline": {
+              "eyebrow": "LAVAGGIO WEBSHOP",
+              "main_image": "/assets/lavaggio/home/lavaggio-product-group-v1.webp",
+              "main_image_alt": "Odabrani deterdženti i proizvodi za njegu rublja iz Lavaggio ponude",
+              "shipping_notice": true,
+              "slides": [
+                {
+                  "eyebrow": "LAVAGGIO WEBSHOP",
+                  "title": "Njega rublja s potpisom Lavaggio.",
+                  "subtitle": "Iskustvo profesionalne praonice u vašem domu. Pažljivo odabrana njega za rublje koje volite.",
+                  "cta_label": "Istražite ponudu",
+                  "image_alt": "Ariel, Lenor i Vanish proizvodi za njegu rublja",
+                  "image": "/assets/lavaggio/home/products/laundry-care-group.svg",
+                  "url": "/trgovina",
+                  "display": "text_image",
+                  "enabled": true,
+                  "shipping_notice": true
+                },
+                {
+                  "eyebrow": "RJEŠENJA ZA MRLJE",
+                  "title": "Mrlje imaju svoje rješenje.",
+                  "subtitle": "Istražite sredstva za predtretman i uklanjanje mrlja iz naše ponude.",
+                  "cta_label": "Pronađite rješenje za mrlje",
+                  "image_alt": "Vanish Oxi Action Pink gel za odstranjivanje mrlja, 1 l",
+                  "image": {
+                    "$ref": "product_image",
+                    "code": "lavaggio-5999109563200",
+                    "conversion": "card_720w_webp"
+                  },
+                  "url": "/kategorija/uklanjanje-mrlja",
+                  "display": "text_image",
+                  "enabled": true,
+                  "shipping_notice": true
+                },
+                {
+                  "eyebrow": "PAŽLJIVO ODABRANA NJEGA",
+                  "title": "Njega za osjetljivo rublje.",
+                  "subtitle": "Pronađite proizvode za rublje kojem želite posvetiti posebnu pažnju.",
+                  "cta_label": "Istražite njegu rublja",
+                  "image_alt": "Persil Expert Sensitive tekući deterdžent za pranje rublja Deep Clean, 60 pranja, 2,7 l",
+                  "image": {
+                    "$ref": "product_image",
+                    "code": "lavaggio-9000101566789",
+                    "conversion": "card_720w_webp"
+                  },
+                  "url": {
+                    "$ref": "url",
+                    "path": "/trgovina",
+                    "query": {
+                      "attr_lavaggio_fabric": {
+                        "$ref": "attribute_id",
+                        "code": "lavaggio-fabric-osjetljive-tkanine"
+                      }
+                    },
+                    "fragment": ""
+                  },
+                  "display": "text_image",
+                  "enabled": true,
+                  "shipping_notice": true
+                }
+              ]
+            },
+            "items_limit": 12,
+            "blog_source": "latest"
+          }
+        }
+      ],
+      "slots": [
+        {
+          "placement": "home.content",
+          "frontend_variant": "all",
+          "target_type": null,
+          "target_ref": null,
+          "sort_order": 10,
+          "is_active": true,
+          "starts_at": null,
+          "ends_at": null
+        }
+      ],
+      "items": []
+    },
+    {
+      "code": "lavaggio-home-categories",
+      "name": "Početna — kategorije i kompleti",
+      "type": "lavaggio_categories",
+      "is_active": true,
+      "payload": {
+        "lavaggio_widget_version": 1
+      },
+      "translations": [
+        {
+          "locale": "hr",
+          "title": "Sve za njegu rublja.",
+          "subtitle": null,
+          "body_html": null,
+          "cta_label": "Cijela ponuda",
+          "cta_url": "/trgovina",
+          "payload": {
+            "watchline": {
+              "eyebrow": "LAVAGGIO PONUDA",
+              "card_1_title": "Deterdženti",
+              "card_1_description": "Za bijelo, šareno, crno i osjetljivo rublje.",
+              "card_1_url": "/kategorija/deterdzenti",
+              "card_1_image": "/assets/lavaggio/home/categories/deterdzenti.webp",
+              "card_1_image_alt": "Deterdženti",
+              "card_2_title": "Uklanjanje mrlja",
+              "card_2_description": "Pronađite pomoć za tvrdokorne mrlje na rublju.",
+              "card_2_url": "/kategorija/uklanjanje-mrlja",
+              "card_2_image": "/assets/lavaggio/home/categories/uklanjanje-mrlja.webp",
+              "card_2_image_alt": "Uklanjanje mrlja",
+              "card_3_title": "Mirisi i njega rublja",
+              "card_3_description": "Omekšivači i mirisi za svježinu nakon svakog pranja.",
+              "card_3_url": "/kategorija/mirisi-i-njega-rublja",
+              "card_3_image": "/assets/lavaggio/home/categories/mirisi-i-njega-rublja.webp",
+              "card_3_image_alt": "Mirisi i njega rublja",
+              "card_4_title": "Higijena i održavanje",
+              "card_4_description": "Njega rublja započinje čistom perilicom.",
+              "card_4_url": "/kategorija/higijena-i-odrzavanje",
+              "card_4_image": "/assets/lavaggio/home/categories/higijena-i-odrzavanje.webp",
+              "card_4_image_alt": "Higijena i održavanje",
+              "card_5_title": "Pribor i dodaci za rublje",
+              "card_5_description": "Praktični dodaci za pranje, sušenje i njegu odjeće.",
+              "card_5_url": "/kategorija/pribor-i-dodaci-za-rublje",
+              "card_5_image": "/assets/lavaggio/home/categories/pribor-i-dodaci-za-rublje.webp",
+              "card_5_image_alt": "Pribor i dodaci za rublje",
+              "card_6_title": "Kupi u kompletu i uštedi",
+              "card_6_description": "Otkrijte odabrane komplete za pranje i njegu rublja.",
+              "card_6_url": "/bundle-artikli"
+            },
+            "items_limit": 12,
+            "blog_source": "latest"
+          }
+        }
+      ],
+      "slots": [
+        {
+          "placement": "home.content",
+          "frontend_variant": "all",
+          "target_type": null,
+          "target_ref": null,
+          "sort_order": 20,
+          "is_active": true,
+          "starts_at": null,
+          "ends_at": null
+        }
+      ],
+      "items": []
+    },
+    {
+      "code": "lavaggio-home-latest",
+      "name": "Početna — novo u ponudi",
+      "type": "lavaggio_products",
+      "is_active": true,
+      "payload": {
+        "lavaggio_widget_version": 1
+      },
+      "translations": [
+        {
+          "locale": "hr",
+          "title": "Novo u ponudi",
+          "subtitle": null,
+          "body_html": null,
+          "cta_label": "Svi proizvodi",
+          "cta_url": "/trgovina",
+          "payload": {
+            "watchline": {
+              "eyebrow": "LAVAGGIO WEBSHOP",
+              "source": "latest",
+              "category_ids": [],
+              "manufacturer_ids": [],
+              "include_children": true,
+              "in_stock_only": false,
+              "promotions_only": false,
+              "product_sort": "source",
+              "desktop_columns": 6,
+              "tablet_columns": 3,
+              "mobile_columns": 2
+            },
+            "items_limit": 12,
+            "blog_source": "latest"
+          }
+        }
+      ],
+      "slots": [
+        {
+          "placement": "home.content",
+          "frontend_variant": "all",
+          "target_type": null,
+          "target_ref": null,
+          "sort_order": 30,
+          "is_active": true,
+          "starts_at": null,
+          "ends_at": null
+        }
+      ],
+      "items": []
+    },
+    {
+      "code": "lavaggio-home-brands",
+      "name": "Početna — brandovi s logotipima",
+      "type": "lavaggio_brands",
+      "is_active": true,
+      "payload": {
+        "lavaggio_widget_version": 1
+      },
+      "translations": [
+        {
+          "locale": "hr",
+          "title": "Brandovi kojima vjerujete",
+          "subtitle": null,
+          "body_html": null,
+          "cta_label": "Svi brandovi",
+          "cta_url": "/brendovi",
+          "payload": {
+            "watchline": {
+              "eyebrow": "ODABRANI BRANDOVI",
+              "visible_count": 6,
+              "source": "all"
+            },
+            "items_limit": 12,
+            "blog_source": "latest"
+          }
+        }
+      ],
+      "slots": [
+        {
+          "placement": "home.content",
+          "frontend_variant": "all",
+          "target_type": null,
+          "target_ref": null,
+          "sort_order": 40,
+          "is_active": true,
+          "starts_at": null,
+          "ends_at": null
+        }
+      ],
+      "items": []
+    },
+    {
+      "code": "lavaggio-home-promotions",
+      "name": "Početna — artikli na akciji",
+      "type": "lavaggio_products",
+      "is_active": true,
+      "payload": {
+        "lavaggio_widget_version": 1
+      },
+      "translations": [
+        {
+          "locale": "hr",
+          "title": "Artikli na akciji",
+          "subtitle": null,
+          "body_html": null,
+          "cta_label": "Sve akcije",
+          "cta_url": "/akcije",
+          "payload": {
+            "watchline": {
+              "eyebrow": "ODABRANA AKCIJSKA PONUDA",
+              "source": "promotions",
+              "category_ids": [],
+              "manufacturer_ids": [],
+              "include_children": true,
+              "in_stock_only": false,
+              "promotions_only": true,
+              "product_sort": "largest_discount",
+              "desktop_columns": 6,
+              "tablet_columns": 3,
+              "mobile_columns": 2
+            },
+            "items_limit": 12,
+            "blog_source": "latest"
+          }
+        }
+      ],
+      "slots": [
+        {
+          "placement": "home.content",
+          "frontend_variant": "all",
+          "target_type": null,
+          "target_ref": null,
+          "sort_order": 50,
+          "is_active": true,
+          "starts_at": null,
+          "ends_at": null
+        }
+      ],
+      "items": []
+    },
+    {
+      "code": "lavaggio-home-blog",
+      "name": "Početna — zadnje s bloga i iz TV studija",
+      "type": "lavaggio_blog",
+      "is_active": true,
+      "payload": {
+        "lavaggio_widget_version": 1
+      },
+      "translations": [
+        {
+          "locale": "hr",
+          "title": "Zadnje s bloga i iz TV studija",
+          "subtitle": null,
+          "body_html": null,
+          "cta_label": "Svi članci",
+          "cta_url": "/blog",
+          "payload": {
+            "watchline": {
+              "eyebrow": "SAVJETI IZ PRAONICE"
+            },
+            "items_limit": 4,
+            "blog_source": "latest"
+          }
+        }
+      ],
+      "slots": [
+        {
+          "placement": "home.content",
+          "frontend_variant": "all",
+          "target_type": null,
+          "target_ref": null,
+          "sort_order": 70,
+          "is_active": true,
+          "starts_at": null,
+          "ends_at": null
+        }
+      ],
+      "items": []
+    },
+    {
+      "code": "lavaggio-home-reviews",
+      "name": "Početna — komentari kupaca",
+      "type": "lavaggio_reviews",
+      "is_active": true,
+      "payload": {
+        "lavaggio_widget_version": 1
+      },
+      "translations": [
+        {
+          "locale": "hr",
+          "title": "Što kažu naši kupci",
+          "subtitle": null,
+          "body_html": null,
+          "cta_label": "Sva iskustva kupaca",
+          "cta_url": "/iskustva-kupaca",
+          "payload": {
+            "watchline": {
+              "eyebrow": "ISKUSTVA KUPACA",
+              "empty_message": "Prvi komentari kupaca stižu uskoro. Nakon kupnje podijelite svoje iskustvo na stranici proizvoda."
+            },
+            "items_limit": 12,
+            "blog_source": "latest"
+          }
+        }
+      ],
+      "slots": [
+        {
+          "placement": "home.content",
+          "frontend_variant": "all",
+          "target_type": null,
+          "target_ref": null,
+          "sort_order": 60,
+          "is_active": true,
+          "starts_at": null,
+          "ends_at": null
+        }
+      ],
+      "items": []
+    },
+    {
+      "code": "lavaggio-home-problems",
+      "name": "Početna — odabir prema problemu",
+      "type": "lavaggio_problems",
+      "is_active": true,
+      "payload": {},
+      "translations": [
+        {
+          "locale": "hr",
+          "title": "Odaberi deterdžent za problem",
+          "subtitle": "Krenite od onoga što želite riješiti i pronađite odgovarajuću njegu.",
+          "body_html": null,
+          "cta_label": null,
+          "cta_url": null,
+          "payload": {
+            "watchline": {
+              "eyebrow": "PRONAĐITE RJEŠENJE",
+              "card_1_title": "Neugodni mirisi",
+              "card_1_icon": "wind",
+              "card_1_target": "odor",
+              "card_1_url": "",
+              "card_1_order": 10,
+              "card_1_enabled": true,
+              "card_2_title": "Sivo i požutjelo rublje",
+              "card_2_icon": "shirt",
+              "card_2_target": "grey",
+              "card_2_url": "",
+              "card_2_order": 20,
+              "card_2_enabled": true,
+              "card_3_title": "Tvrdokorne mrlje",
+              "card_3_icon": "spray-can-sparkles",
+              "card_3_target": "stains",
+              "card_3_url": "",
+              "card_3_order": 30,
+              "card_3_enabled": true,
+              "card_4_title": "Mrlje od krema i masnoća",
+              "card_4_icon": "droplet",
+              "card_4_target": "grease",
+              "card_4_url": "",
+              "card_4_order": 40,
+              "card_4_enabled": true,
+              "card_5_title": "Osjetljive tkanine",
+              "card_5_icon": "feather",
+              "card_5_target": "delicate",
+              "card_5_url": "",
+              "card_5_order": 50,
+              "card_5_enabled": true,
+              "card_6_title": "Održavanje perilice rublja",
+              "card_6_icon": "washing-machine",
+              "card_6_target": "machine",
+              "card_6_url": "",
+              "card_6_order": 60,
+              "card_6_enabled": true
+            }
+          }
+        }
+      ],
+      "slots": [
+        {
+          "placement": "home.content",
+          "frontend_variant": "all",
+          "target_type": null,
+          "target_ref": null,
+          "sort_order": 15,
+          "is_active": true,
+          "starts_at": null,
+          "ends_at": null
+        }
+      ],
+      "items": []
+    }
+  ]
+}

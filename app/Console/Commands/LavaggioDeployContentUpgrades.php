@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Services\Content\ContentBlockResolver;
 use App\Services\Front\GuestStorefrontCache;
+use App\Services\Import\LavaggioPresentationSyncService;
+use App\Services\Settings\SystemSettingsService;
 use App\Support\LavaggioDeployMigrations;
 use Illuminate\Console\Command;
 use Illuminate\Database\Migrations\Migrator;
@@ -45,6 +47,9 @@ class LavaggioDeployContentUpgrades extends Command
                 return self::SUCCESS;
             }
             $this->ensureHomepageExists();
+            if (in_array('2026_11_04_120100_sync_lavaggio_approved_presentation', $pending, true)) {
+                app(LavaggioPresentationSyncService::class)->plan();
+            }
             $this->info('Pending reviewed content migration: '.implode(', ', $pending));
             if (! $this->option('apply')) {
                 $this->info('Preview only. No backup or database writes were performed.');
@@ -61,8 +66,14 @@ class LavaggioDeployContentUpgrades extends Command
             if (array_diff($pending, $repository->getRan()) !== []) {
                 throw new RuntimeException('The reviewed migration was not recorded.');
             }
-            if (! $this->problemWidgetExists()) {
+            if (in_array('2026_11_04_113000_add_lavaggio_home_problems_widget', $pending, true) && ! $this->problemWidgetExists()) {
                 throw new RuntimeException('The problem widget was not found after the content upgrade.');
+            }
+            if (in_array('2026_11_04_120100_sync_lavaggio_approved_presentation', $pending, true)) {
+                $remaining = app(LavaggioPresentationSyncService::class)->plan();
+                if ($remaining['settings'] !== [] || $remaining['blocks'] !== []) {
+                    throw new RuntimeException('The approved presentation still differs after the upgrade. Inspect the private snapshot.');
+                }
             }
             $this->invalidateCaches();
             $this->info('Reviewed Lavaggio content upgrade completed and storefront caches invalidated.');
@@ -137,8 +148,7 @@ class LavaggioDeployContentUpgrades extends Command
             || collect($publicDirectories)->contains(fn ($public) => $directory === $public || str_starts_with($directory, $public.'/'))) {
             throw new RuntimeException('Provide an existing canonical private backup directory (0700).');
         }
-        $blocks = DB::table('content_blocks')->where('code', 'lavaggio-home-problems')
-            ->orWhereIn('type', ['lavaggio_campaigns', 'lavaggio_problems'])->get();
+        $blocks = DB::table('content_blocks')->orderBy('id')->get();
         $ids = $blocks->pluck('id')->all();
         $snapshot = [
             'upgrade' => LavaggioDeployMigrations::FILES,
@@ -146,9 +156,17 @@ class LavaggioDeployContentUpgrades extends Command
             'database' => DB::connection()->getDatabaseName(),
             'content_blocks' => $blocks,
             'content_block_translations' => DB::table('content_block_translations')->whereIn('content_block_id', $ids)->get(),
-            'content_block_slots' => DB::table('content_block_slots')->where('placement', 'home.content')->orWhereIn('content_block_id', $ids)->get(),
+            'content_block_slots' => DB::table('content_block_slots')->orderBy('id')->get(),
+            'system_settings' => DB::table('system_settings')->where(function ($query): void {
+                foreach (['front_navigation_', 'lavaggio_', 'store_footer_', 'store_announcement_', 'store_social_'] as $prefix) {
+                    $query->orWhere('key', 'like', $prefix.'%');
+                }
+            })->orderBy('id')->get(),
             'migrations' => DB::table('migrations')->orderBy('id')->get(),
         ];
+        foreach (['content_block_items', 'content_info_pages', 'content_info_page_translations', 'content_faqs', 'content_faq_translations', 'content_blog_post_translations'] as $table) {
+            $snapshot[$table] = DB::table($table)->orderBy('id')->get();
+        }
         $json = json_encode($snapshot, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         $path = $directory.'/before-content-upgrade-'.now()->format('Ymd-His').'-'.bin2hex(random_bytes(6)).'.json';
         $previousMask = umask(0077);
@@ -173,6 +191,7 @@ class LavaggioDeployContentUpgrades extends Command
 
     private function invalidateCaches(): void
     {
+        app(SystemSettingsService::class)->flush();
         ContentBlockResolver::bumpCacheVersion();
         app(GuestStorefrontCache::class)->invalidate();
     }

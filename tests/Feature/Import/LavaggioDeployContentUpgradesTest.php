@@ -4,6 +4,7 @@ namespace Tests\Feature\Import;
 
 use App\Models\Content\ContentBlock;
 use App\Services\Front\GuestStorefrontCache;
+use App\Support\LavaggioDeployMigrations;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -82,7 +83,7 @@ class LavaggioDeployContentUpgradesTest extends TestCase
             $this->assertSame(posix_geteuid(), fileowner($files[0]->getPathname()));
         }
         $backup = json_decode(File::get($files[0]->getPathname()), true, flags: JSON_THROW_ON_ERROR);
-        $this->assertSame([self::PATH], $backup['upgrade']);
+        $this->assertSame(LavaggioDeployMigrations::FILES, $backup['upgrade']);
         $this->assertSame(':memory:', $backup['database']);
         $this->assertNotEmpty($backup['captured_at']);
         foreach (['content_blocks', 'content_block_translations', 'content_block_slots', 'migrations'] as $table) {
