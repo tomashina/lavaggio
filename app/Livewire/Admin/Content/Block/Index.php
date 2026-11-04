@@ -6,6 +6,7 @@ use App\Models\Content\ContentBlock;
 use App\Models\Content\ContentBlockSlot;
 use App\Services\Content\ContentBlockResolver;
 use App\Services\Settings\SystemSettingsService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Livewire\Component;
@@ -117,8 +118,41 @@ class Index extends Component
             ->orderBy('sort_order')->orderBy('id');
     }
 
+    private function filterWidgetSlots(Builder $query): Builder
+    {
+        if ($this->search !== '') {
+            $query->whereHas('block', fn (Builder $block) => $this->searchBlocks($block));
+        }
+        if (in_array($this->surface, ['desktop', 'mobile'], true)) {
+            $query->where(fn (Builder $slot) => $slot->whereNull('frontend_variant')
+                ->orWhere('frontend_variant', 'all')->orWhere('frontend_variant', $this->surface));
+        }
+
+        return $query;
+    }
+
+    private function searchBlocks(Builder $query): Builder
+    {
+        return $query->where(function (Builder $block): void {
+            $block->where('name', 'like', '%'.$this->search.'%')
+                ->orWhere('code', 'like', '%'.$this->search.'%')
+                ->orWhere('type', 'like', '%'.$this->search.'%')
+                ->orWhereHas('translations', fn (Builder $translation) => $translation->where('title', 'like', '%'.$this->search.'%'));
+        });
+    }
+
+    private function onlyOtherBlocks(Builder $query): Builder
+    {
+        return $query->where(function (Builder $block): void {
+            $block->where(fn (Builder $type) => $type->where('type', 'not like', 'watchline_%')->where('type', 'not like', 'lavaggio_%'))
+                ->orWhereDoesntHave('slots', fn (Builder $slot) => $slot->whereIn('placement', ['home.content', 'footer.benefits']))
+                ->orWhereHas('slots', fn (Builder $slot) => $slot->whereNotIn('placement', ['home.content', 'footer.benefits']));
+        });
+    }
+
     public function render()
     {
+        $lavaggioManager = config('storefront.home') === 'lavaggio';
         $perPage = app(SystemSettingsService::class)->getInt(
             'admin_items_per_page',
             (int) config('admin_ui.pagination.admin_items_per_page', 20),
@@ -132,31 +166,37 @@ class Index extends Component
                 'translations' => fn ($q) => $q->where('locale', $this->locale),
                 'slots' => fn ($q) => $q->orderBy('sort_order')->orderBy('id'),
             ])
-            ->when($this->search !== '', function ($query): void {
-                $query->where(function ($q): void {
-                    $q->where('name', 'like', '%'.$this->search.'%')
-                        ->orWhere('code', 'like', '%'.$this->search.'%')
-                        ->orWhere('type', 'like', '%'.$this->search.'%')
-                        ->orWhereHas('translations', function ($tq): void {
-                            $tq->where('title', 'like', '%'.$this->search.'%');
-                        });
-                });
-            })
-            ->when(in_array($this->surface, ['desktop', 'mobile', 'all'], true), function ($query): void {
+            ->when($lavaggioManager, fn (Builder $query) => $this->onlyOtherBlocks($query))
+            ->when($this->search !== '', fn (Builder $query) => $this->searchBlocks($query))
+            ->when(in_array($this->surface, ['desktop', 'mobile', 'all'], true), function ($query) use ($lavaggioManager): void {
                 if ($this->surface === 'all') {
                     return;
                 }
 
-                $query->whereHas('slots', function ($slotQuery): void {
+                $query->whereHas('slots', function ($slotQuery) use ($lavaggioManager): void {
                     $slotQuery->where(function ($variantQuery): void {
                         $variantQuery->whereNull('frontend_variant')
                             ->orWhere('frontend_variant', 'all')
                             ->orWhere('frontend_variant', $this->surface);
                     });
+                    if ($lavaggioManager) {
+                        $slotQuery->where(fn (Builder $slot) => $slot->whereNotIn('placement', ['home.content', 'footer.benefits'])
+                            ->orWhereHas('block', fn (Builder $type) => $type->where('type', 'not like', 'watchline_%')->where('type', 'not like', 'lavaggio_%')));
+                    }
                 });
             })
             ->orderByDesc('id')
             ->paginate($perPage, ['*'], self::PAGE_NAME);
+
+        $allHomeSlots = $this->homeWidgetQuery()->with('block.translations')->get();
+        $footerQuery = ContentBlockSlot::query()->where('placement', 'footer.benefits')
+            ->whereHas('block', fn ($query) => $query->where(fn ($type) => $type->where('type', 'like', 'watchline_%')->orWhere('type', 'like', 'lavaggio_%')))
+            ->with('block.translations')->orderBy('sort_order')->orderBy('id');
+        $filterWidgets = $lavaggioManager && ($this->search !== '' || in_array($this->surface, ['desktop', 'mobile'], true));
+        $homeWidgetSlots = $filterWidgets
+            ? $this->filterWidgetSlots($this->homeWidgetQuery())->with('block.translations')->get()
+            : $allHomeSlots;
+        $footerWidgetSlots = $filterWidgets ? $this->filterWidgetSlots($footerQuery)->get() : $footerQuery->get();
 
         $previewBlock = null;
         if ($this->previewBlockId) {
@@ -173,10 +213,11 @@ class Index extends Component
             'rows' => $rows,
             'perPage' => $perPage,
             'previewBlock' => $previewBlock,
-            'homeWidgetSlots' => $this->homeWidgetQuery()->with('block.translations')->get(),
-            'footerWidgetSlots' => ContentBlockSlot::query()->where('placement', 'footer.benefits')
-                ->whereHas('block', fn ($query) => $query->where(fn ($type) => $type->where('type', 'like', 'watchline_%')->orWhere('type', 'like', 'lavaggio_%')))
-                ->with('block.translations')->orderBy('sort_order')->get(),
+            'lavaggioManager' => $lavaggioManager,
+            'homeWidgetSlots' => $homeWidgetSlots,
+            'footerWidgetSlots' => $footerWidgetSlots,
+            'homeWidgetPositions' => $allHomeSlots->values()->mapWithKeys(fn ($slot, $index) => [$slot->id => $index + 1])->all(),
+            'homeWidgetTotal' => $allHomeSlots->count(),
         ]);
     }
 

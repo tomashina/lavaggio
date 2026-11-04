@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -65,6 +66,7 @@ class Form extends Component
         'blogs' => 'blog',
     ];
 
+    #[Locked]
     public ?int $blockId = null;
 
     public array $form = [];
@@ -120,14 +122,11 @@ class Form extends Component
 
     public function mount(?int $blockId = null): void
     {
-        /** @var array<string, string> $types */
-        $types = config('content_blocks.types', []);
+        $this->blockId = $blockId;
         /** @var array<string, string> $placements */
         $placements = config('content_blocks.placements', []);
 
-        $this->types = collect($this->orderedTypes($types))
-            ->mapWithKeys(static fn ($label, $key) => [$key => __((string) $label)])
-            ->all();
+        $this->types = $this->typeOptions;
         $this->placements = $placements;
         $this->targetTypes = collect($this->targetTypes)
             ->map(static fn ($label) => __((string) $label))
@@ -140,9 +139,31 @@ class Form extends Component
         $this->lastType = (string) ($this->form['type'] ?? '');
 
         if ($blockId) {
-            $this->blockId = $blockId;
             $this->loadBlock();
+        } elseif (config('storefront.home') === 'lavaggio') {
+            $this->lastType = '';
+            $this->updatedFormType((string) $this->form['type']);
         }
+    }
+
+    /** Server-owned choices; the public types snapshot never authorizes a type. */
+    public function getTypeOptionsProperty(): array
+    {
+        $types = (array) config('content_blocks.types', []);
+        if (config('storefront.home') === 'lavaggio') {
+            $allowed = array_intersect_key($types, (array) config('lavaggio_widgets', []));
+            if ($this->blockId) {
+                $existingType = ContentBlock::query()->whereKey($this->blockId)->value('type');
+                if (is_string($existingType) && $existingType !== '') {
+                    $allowed[$existingType] = $types[$existingType] ?? $existingType;
+                }
+            }
+            $types = $allowed;
+        }
+
+        return collect($this->orderedTypes($types))
+            ->mapWithKeys(static fn ($label, $key) => [$key => __((string) $label)])
+            ->all();
     }
 
     public function getIsEditProperty(): bool
@@ -411,7 +432,7 @@ class Form extends Component
 
     public function updatedFormType(string $type): void
     {
-        if (! array_key_exists($type, $this->types)) {
+        if (! array_key_exists($type, $this->typeOptions)) {
             return;
         }
 
@@ -888,7 +909,7 @@ class Form extends Component
         $rules = [
             'form.code' => ['required', 'string', 'max:120', 'alpha_dash', Rule::unique('content_blocks', 'code')->ignore($this->blockId)],
             'form.name' => ['required', 'string', 'max:180'],
-            'form.type' => ['required', Rule::in(array_keys($this->types))],
+            'form.type' => ['required', Rule::in(array_keys($this->typeOptions))],
             'form.is_active' => ['boolean'],
 
             'form.locale' => ['required', 'string', 'max:12'],
@@ -994,9 +1015,10 @@ class Form extends Component
 
     private function resetForm(): void
     {
-        $defaultType = array_key_exists('banner', $this->types)
-            ? 'banner'
-            : (array_key_first($this->types) ?: 'custom');
+        $types = $this->typeOptions;
+        $defaultType = config('storefront.home') === 'lavaggio' && array_key_exists('lavaggio_products', $types)
+            ? 'lavaggio_products'
+            : (array_key_exists('banner', $types) ? 'banner' : (array_key_first($types) ?: 'custom'));
 
         $this->form = [
             'code' => '',

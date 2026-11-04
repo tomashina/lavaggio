@@ -72,6 +72,7 @@ $overrides = [
         'purpose' => 'Uređivanje naslovnice: promo slajdova, šest kartica prema problemu, kolekcija artikala, brendova, bundle ponuda i drugih prikazanih blokova.',
         'steps' => [
             'U Sadržaj / Blokovi otvorite blok koji želite promijeniti.',
+            'Naslovnicom i podnožjem upravljate iz gornjeg popisa. Pregled i brisanje nalaze se u izborniku s tri točkice; Ostali blokovi prikazuju se samo ako postoje dodatni blokovi ili druge pozicije.',
             'U uvodnim bannerima možete urediti do 12 promo slajdova. Odaberite fotografiju s tekstom i gumbom ili prikaz samo fotografije; unesite opis slike i poveznicu.',
             'Ako blok još koristi izvorni glavni banner, Dodaj slajd čuva njegov sadržaj kao prvi slajd. Slajdove pomičite gumbima Gore i Dolje, a opcijom Prikaži slajd uključite ili isključite pojedinu promociju.',
             'U bloku odabira prema problemu uredite šest kartica: naziv, ikonu, namjenu, redoslijed i vidljivost. Prazna vlastita poveznica koristi proizvode za odabranu namjenu.',

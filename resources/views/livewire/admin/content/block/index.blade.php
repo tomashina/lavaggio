@@ -3,8 +3,10 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 <h1 class="text-xl font-semibold tracking-tight">{{ __('Content Blocks') }}</h1>
-                <p class="mt-1 text-sm text-slate-600">{{ __('Unified builder: block, primary slot, and selected items.') }}</p>
-                <p class="mt-2 text-xs text-slate-500">{{ __('Items per page') }}: <span class="admin-chip">{{ $perPage }}</span></p>
+                <p class="mt-1 text-sm text-slate-600">{{ $lavaggioManager ? 'Uredite sadržaj, redoslijed i vidljivost blokova.' : __('Unified builder: block, primary slot, and selected items.') }}</p>
+                @if (! $lavaggioManager || $rows->total() > 0)
+                    <p class="mt-2 text-xs text-slate-500">{{ __('Items per page') }}: <span class="admin-chip">{{ $perPage }}</span></p>
+                @endif
             </div>
             <div class="flex w-full gap-2 sm:w-auto sm:items-end">
                 <div class="w-full sm:w-80">
@@ -19,7 +21,7 @@
                 </div>
                 <div class="w-full sm:w-44">
                     <label for="content-block-surface" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Surface') }}</label>
-                    <select id="content-block-surface" wire:model="surface" data-tom-select data-tom-no-search="1" class="admin-select w-full rounded-xl border px-3 py-2 text-sm">
+                    <select id="content-block-surface" @if ($lavaggioManager) wire:model.live="surface" @else wire:model="surface" @endif data-tom-select data-tom-no-search="1" class="admin-select w-full rounded-xl border px-3 py-2 text-sm">
                         <option value="all">{{ __('All') }}</option>
                         <option value="desktop">{{ __('Desktop') }}</option>
                         <option value="mobile">{{ __('Mobile') }}</option>
@@ -30,49 +32,60 @@
         </div>
     </div>
 
-    @if ($homeWidgetSlots->isNotEmpty())
+    @if ($homeWidgetSlots->isNotEmpty() || ($lavaggioManager && $footerWidgetSlots->isNotEmpty()))
         <section class="admin-panel admin-form-panel p-5" data-watchline-home-manager>
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 class="text-lg font-semibold">Početna — raspored blokova</h2>
+                    <h2 class="text-lg font-semibold">{{ $lavaggioManager && $homeWidgetSlots->isEmpty() ? 'Podnožje — blokovi' : 'Početna — raspored blokova' }}</h2>
                     <p class="mt-1 text-sm text-slate-600">Pomaknite blok strelicama, uključite ga ili otvorite uređivanje sadržaja. Isključeni blokovi ostaju spremljeni.</p>
                 </div>
                 <a href="{{ route('home') }}" target="_blank" rel="noopener" class="rounded-lg border border-cyan-200 px-3 py-2 text-sm font-semibold text-cyan-800">Otvori početnu ↗</a>
             </div>
+            @if ($homeWidgetSlots->isNotEmpty())
             <ol class="mt-5 divide-y divide-slate-200 rounded-xl border border-slate-200">
                 @foreach ($homeWidgetSlots as $homeSlot)
                     @php
                         $homeActive = $homeSlot->is_active && $homeSlot->block->is_active;
+                        $homePosition = $lavaggioManager ? $homeWidgetPositions[$homeSlot->id] : $loop->iteration;
                     @endphp
                     <li class="flex flex-wrap items-center gap-3 px-4 py-3" wire:key="home-widget-{{ $homeSlot->id }}">
-                        <span class="w-6 text-sm font-semibold text-slate-400">{{ $loop->iteration }}</span>
+                        <span class="w-6 text-sm font-semibold text-slate-400">{{ $homePosition }}</span>
                         <div class="min-w-0 flex-1">
                             <p class="font-semibold text-slate-900">{{ $homeSlot->block->name }}</p>
                             <p class="mt-1 text-xs text-slate-500">{{ config('content_blocks.types.'.$homeSlot->block->type) }}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button type="button" wire:click="moveHomeWidget({{ $homeSlot->id }}, 'up')" @disabled($loop->first) aria-label="Pomakni gore: {{ $homeSlot->block->name }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-30">↑</button>
-                            <button type="button" wire:click="moveHomeWidget({{ $homeSlot->id }}, 'down')" @disabled($loop->last) aria-label="Pomakni dolje: {{ $homeSlot->block->name }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-30">↓</button>
+                            <button type="button" wire:click="moveHomeWidget({{ $homeSlot->id }}, 'up')" @disabled($lavaggioManager ? $homePosition === 1 : $loop->first) aria-label="Pomakni gore: {{ $homeSlot->block->name }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-30">↑</button>
+                            <button type="button" wire:click="moveHomeWidget({{ $homeSlot->id }}, 'down')" @disabled($lavaggioManager ? $homePosition === $homeWidgetTotal : $loop->last) aria-label="Pomakni dolje: {{ $homeSlot->block->name }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-30">↓</button>
                             <button type="button" wire:click="toggleHomeWidget({{ $homeSlot->id }})" class="rounded-lg border px-3 py-2 text-xs font-semibold {{ $homeActive ? 'border-cyan-200 bg-cyan-50 text-cyan-800' : 'border-slate-300 bg-slate-100 text-slate-500' }}" aria-label="Promijeni vidljivost: {{ $homeSlot->block->name }}">{{ $homeActive ? 'Uključen' : 'Isključen' }}</button>
                             <a href="{{ route('admin.content.blocks.edit', ['block' => $homeSlot->block->id]) }}" class="rounded-lg bg-cyan-700 px-3 py-2 text-xs font-semibold text-white">Uredi</a>
+                            @if ($lavaggioManager)
+                                @include('livewire.admin.content.block.partials.index-actions', ['actionBlock' => $homeSlot->block])
+                            @endif
                         </div>
                     </li>
                 @endforeach
             </ol>
+            @endif
             @foreach ($footerWidgetSlots as $footerSlot)
-                <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3">
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3" wire:key="footer-widget-{{ $footerSlot->id }}">
                     <div><p class="font-semibold">{{ $footerSlot->block->name }}</p><p class="mt-1 text-xs text-slate-500">Zajednički widget u podnožju svih stranica.</p></div>
                     <div class="flex items-center gap-2">
                         <button type="button" wire:click="toggleHomeWidget({{ $footerSlot->id }})" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">{{ $footerSlot->is_active && $footerSlot->block->is_active ? 'Uključen' : 'Isključen' }}</button>
                         <a href="{{ route('admin.content.blocks.edit', ['block' => $footerSlot->block->id]) }}" class="rounded-lg bg-cyan-700 px-3 py-2 text-xs font-semibold text-white">Uredi</a>
+                        @if ($lavaggioManager)
+                            @include('livewire.admin.content.block.partials.index-actions', ['actionBlock' => $footerSlot->block])
+                        @endif
                     </div>
                 </div>
             @endforeach
         </section>
     @endif
 
-    <div class="admin-panel admin-panel-soft p-5">
-        <h2 class="admin-section-title">{{ __('Items') }}</h2>
+    @if (! $lavaggioManager || $rows->total() > 0)
+    <div class="admin-panel admin-panel-soft p-5" @if ($lavaggioManager) data-lavaggio-other-blocks @endif>
+        <h2 class="admin-section-title">{{ $lavaggioManager ? 'Ostali blokovi' : __('Items') }}</h2>
+        @if ($lavaggioManager)<p class="mt-1 text-sm text-slate-600">Blokovi koji nisu u gornjem popisu ili se koriste i na drugim stranicama.</p>@endif
 
         <div class="mt-4 overflow-x-auto">
             <table class="admin-items-table min-w-full text-sm">
@@ -95,6 +108,13 @@
                         @php
                             $title = $row->translations->first()?->title;
                             $primarySlot = $row->slots->first();
+                            if ($lavaggioManager) {
+                                $otherSlots = $row->slots;
+                                if (str_starts_with($row->type, 'lavaggio_') || str_starts_with($row->type, 'watchline_')) {
+                                    $otherSlots = $otherSlots->reject(fn ($slot) => in_array($slot->placement, ['home.content', 'footer.benefits'], true));
+                                }
+                                $primarySlot = $otherSlots->first(fn ($slot) => $surface === 'all' || in_array($slot->frontend_variant, [null, 'all', $surface], true)) ?? $otherSlots->first() ?? $primarySlot;
+                            }
                         @endphp
                         <tr>
                             <td class="px-3 py-2 font-mono text-xs text-slate-700">{{ $row->code }}</td>
@@ -113,11 +133,11 @@
                             </td>
                             <td class="px-3 py-2 text-xs text-slate-700">
                                 @php
-                                    $surface = (string) ($primarySlot?->frontend_variant ?? 'all');
+                                    $rowSurface = (string) ($primarySlot?->frontend_variant ?? 'all');
                                 @endphp
-                                @if ($surface === 'desktop')
+                                @if ($rowSurface === 'desktop')
                                     {{ __('Desktop') }}
-                                @elseif ($surface === 'mobile')
+                                @elseif ($rowSurface === 'mobile')
                                     {{ __('Mobile') }}
                                 @else
                                     {{ __('All') }}
@@ -154,6 +174,10 @@
             {{ $rows->links() }}
         </div>
     </div>
+    @endif
+    @if ($lavaggioManager && $rows->total() === 0 && $homeWidgetSlots->isEmpty() && $footerWidgetSlots->isEmpty())
+        <div class="admin-panel p-6 text-sm text-slate-500" role="status">{{ $search !== '' || $surface !== 'all' ? 'Nema blokova za odabrane filtre.' : __('No content blocks yet.') }}</div>
+    @endif
 
     @if ($previewBlock)
         @php

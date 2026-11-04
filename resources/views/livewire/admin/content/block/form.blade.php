@@ -37,8 +37,8 @@
 
                 <div>
                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Type') }}</label>
-                    <select wire:model.live="form.type" data-tom-select data-tom-no-search="1" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
-                        @foreach ($types as $typeKey => $typeLabel)
+                    <select id="content-block-type" wire:model.live="form.type" data-tom-select data-tom-no-search="1" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                        @foreach ($this->typeOptions as $typeKey => $typeLabel)
                             <option value="{{ $typeKey }}" @selected(($form['type'] ?? '') === $typeKey)>{{ $typeLabel }}</option>
                         @endforeach
                     </select>

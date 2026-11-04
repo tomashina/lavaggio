@@ -1,6 +1,6 @@
 # Lavaggio početna kroz widgete
 
-Početna se sastoji isključivo od uređenih `ContentBlock` zapisa u poziciji `home.content`. U administraciji **Sadržaj → Blokovi** dostupni su raspored, uključivanje/isključivanje i uređivanje svakog widgeta. Uredničke promjene ne zahtijevaju izmjenu predloška.
+Početna se sastoji isključivo od uređenih `ContentBlock` zapisa u poziciji `home.content`. U administraciji **Sadržaj → Blokovi** dostupni su raspored, uključivanje/isključivanje i uređivanje svakog widgeta. Uredničke promjene ne zahtijevaju izmjenu predloška. Novi Lavaggio blok može biti samo jedan od sedam tipova naslovnice: uvodni banneri, odabir prema problemu, kategorije i kompleti, kolekcija proizvoda, brandovi, komentari kupaca ili blog i TV studio. Novi obrazac započinje kolekcijom proizvoda; postojeći stariji blokovi zadržavaju mogućnost uređivanja svog spremljenog tipa.
 
 Na desktopu od 1024 px aktivni promo blok i odmah sljedeći aktivni blok odabira prema problemu dijele red u omjeru 50/50. Obje vanjske kartice imaju jednaku ukupnu visinu koja se prilagođava sadržaju; desna obuhvaća naslov, opis i šest kartica u dva stupca. Na manjim ekranima blokovi se prikazuju jedan ispod drugog s automatskom visinom. Ako se između njih postavi drugi blok, promijeni njihov redoslijed ili se jedan isključi, preostali sadržaj zadržava zadani redoslijed i koristi puni red. Isto vrijedi kada nema vidljivih promo slajdova ili problemskih kartica.
 
