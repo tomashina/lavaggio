@@ -11,3 +11,11 @@ Na izričitu potvrdu korisnika svi postojeći iznosi i uređena tablica uslužno
 Hrvatske javne adrese vrijede samo za Lavaggio. Postojeća imena ruta ostaju, a hrvatski aliasi koriste iste kontrolere i pravila pristupa. Stare javne GET/HEAD adrese vode 301 na hrvatske, uz sačuvan upit. Ugašene stranice vraćaju 410 s poveznicom na kontakt i uslužni cjenik. Adrese platnih providera, callbackovi, administracija, API i potpisane obavijesti ostaju u postojećem protokolu. Drugi storefrontovi zadržavaju svoje adrese.
 
 Za objavu slijedi projektni Git postupak iz `docs/lavaggio-cpanel-deployment.md`. Ova lokalna komanda nije postupak objave i ne pristupa poslužitelju.
+
+## Dopuna 06.11.2026.
+
+Recenzije klijenata prikazuju se u prilagodljivim karticama. Dostava koristi postojeće naslove h2/h3 za grupiranje sadržaja u boksove, bez zamjene uredničkog teksta ili cijena. Uvod FAQ-a već se uređuje u **Sadržaj → Stranice → Pitanja i odgovori → Sadržaj**, pa ostaje sačuvan.
+
+Radno vrijeme u podnožju sada stoji odmah ispod telefona, a zakonsko jamstvo u donjim pravnim poveznicama. Dodani su postojeći izvorni logotipi CorvusPay, Visa, Mastercard, Maestro, Diners, Apple Pay i Google Pay. Dodatna pregledana migracija `2026_11_06_090000_add_lavaggio_payment_information` dopisuje korisnikov IBAN `HR9423800061171000708` u uređivu adresu te identificira sustav i prihvaćene načine plaćanja na webshop stranici plaćanja. Ne aktivira platni servis ni digitalne novčanike.
+
+Corvus povratne adrese su `https://shop.lavaggio.hr/checkout/corvus/success` za uspjeh i `https://shop.lavaggio.hr/checkout/corvus/cancel` za neuspjeh, uz HTTP metodu `POST`. U administraciji webshopa CorvusPay ima polja Mode (Test/Live), Store ID i Secret key; ID i ključ moraju pripadati odabranom okruženju. Apple Pay i Google Pay uključuje Corvus podrška za odgovarajuće prodajno mjesto.

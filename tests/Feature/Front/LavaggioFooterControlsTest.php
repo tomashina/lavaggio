@@ -115,8 +115,8 @@ class LavaggioFooterControlsTest extends TestCase
         $this->assertSame('lavaggio-footer-legal-title', $xpath->query($legal)->item(0)->getAttribute('aria-labelledby'));
         $this->assertSame('Pravila naše trgovine', trim($xpath->query($legal.'//*[@id="lavaggio-footer-legal-title"]')->item(0)->textContent));
         $links = iterator_to_array($xpath->query($legal.'//a'));
-        $this->assertSame(['Uvjeti kupnje', 'Zaštita osobnih podataka', 'Raskid ugovora'], array_map(fn ($link): string => trim($link->textContent), $links));
-        $this->assertSame(['/page/uvjeti-kupnje', '/page/privatnost', '/forma-za-povrat-i-reklamacije'], array_map(fn ($link): string => $link->getAttribute('href'), $links));
+        $this->assertSame(['Uvjeti kupnje', 'Zaštita osobnih podataka', 'Raskid ugovora', 'Zakonsko jamstvo'], array_map(fn ($link): string => trim($link->textContent), $links));
+        $this->assertSame(['/page/uvjeti-kupnje', '/page/privatnost', '/forma-za-povrat-i-reklamacije', asset('assets/legal/legal-guarantee-notice-hr-color.svg')], array_map(fn ($link): string => $link->getAttribute('href'), $links));
     }
 
     public function test_previous_withdrawal_placeholder_and_footer_open_the_real_form(): void
@@ -127,7 +127,7 @@ class LavaggioFooterControlsTest extends TestCase
                 ['label' => 'Raskid ugovora / prigovor', 'url' => $oldUrl],
             ]);
             $xpath = $this->xpath($this->get(route('home'))->assertOk()->getContent());
-            $this->assertSame(1, $xpath->query('//nav[@class="lavaggio-footer-legal"]//a')->length);
+            $this->assertSame(2, $xpath->query('//nav[@class="lavaggio-footer-legal"]//a')->length);
             $this->assertSame(1, $xpath->query('//nav[@class="lavaggio-footer-legal"]//a[@href="/forma-za-povrat-i-reklamacije"]')->length);
         }
         $response = $this->get('/page/raskid-ugovora-i-prigovor')->assertOk()

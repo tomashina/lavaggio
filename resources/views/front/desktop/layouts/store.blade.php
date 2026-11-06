@@ -96,6 +96,7 @@
         <link rel="preload" href="{{ asset('assets/fonts/proxima-nova/proxima-nova-regular.woff2') }}" as="font" type="font/woff2" crossorigin>
         <link rel="preload" href="{{ asset('assets/fonts/proxima-nova/proxima-nova-bold.woff2') }}" as="font" type="font/woff2" crossorigin>
         <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio.css')) }}">
+        <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-footer.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-footer.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-header.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-header.css')) }}">
         <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-search.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-search.css')) }}">
     @endif
@@ -733,9 +734,8 @@
                     ->values()
                     ->all();
 
-                if ($lavaggioStorefront && $index === 2) {
-                    $links = array_values(array_filter($links, fn ($link) => ! str_starts_with($link['label'], 'Zakonsko jamstvo')));
-                    $links[] = ['label' => 'Zakonsko jamstvo', 'url' => $storeSettings['legal_warranty']['asset_url'], 'warranty' => true];
+                if ($lavaggioStorefront) {
+                    $links = array_values(array_filter($links, fn ($link) => ! str_starts_with(mb_strtolower(trim($link['label'])), 'zakonsko jamstvo')));
                 }
 
                 return ['title' => $title, 'links' => $links];
@@ -753,7 +753,7 @@
                     <span class="hidden h-6 w-6 items-center justify-center text-[21px] font-light leading-none text-slate-500 group-open:inline-flex">−</span>
                 </summary>
                 <div class="space-y-2 px-4 pb-4 text-sm text-slate-600">
-                    @if ($footerContactIntro !== '')
+                    @if (! $lavaggioStorefront && $footerContactIntro !== '')
                         <p class="text-slate-500">{{ $footerContactIntro }}</p>
                     @endif
                     @if (!empty($storeSettings['footer']['phone'] ?? ''))
@@ -762,6 +762,9 @@
                         @else
                             <p><a href="tel:{{ preg_replace('/\\s+/', '', (string) $storeSettings['footer']['phone']) }}" class="text-base font-semibold text-slate-900 transition hover:text-slate-700">@if ($libermediaStorefront)<x-fa-icon name="phone" style="regular" :inline="true" class="lm-footer-phone-icon" />@endif{{ $storeSettings['footer']['phone'] }}</a></p>
                         @endif
+                    @endif
+                    @if ($lavaggioStorefront && filled($storeSettings['footer']['hours'] ?? ''))
+                        <p class="lavaggio-footer-contact-hours">@include('front.partials.lavaggio-contact-hours', ['lavaggioHours' => $storeSettings['footer']['hours'], 'lavaggioHoursIcon' => false, 'lavaggioHoursLabelVisible' => true])</p>
                     @endif
                     @foreach ($footerContactEmails as $footerContactEmail)
                         <p><a href="mailto:{{ $footerContactEmail }}" class="transition hover:text-slate-900">{{ $footerContactEmail }}</a></p>
@@ -772,9 +775,6 @@
                     @foreach ($footerContactAddressBlocks as $footerAddressBlock)
                         <p>{!! nl2br(e($footerAddressBlock)) !!}</p>
                     @endforeach
-                    @if ($lavaggioStorefront && filled($storeSettings['footer']['hours'] ?? ''))
-                        <p>@include('front.partials.lavaggio-contact-hours', ['lavaggioHours' => $storeSettings['footer']['hours']])</p>
-                    @endif
                 </div>
             </details>
 
@@ -801,7 +801,7 @@
             <div class="site-footer-link-column site-footer-contact">
                 <h3 class="site-footer-contact-title">{{ $footerContactTitle }}</h3>
                 <div class="site-footer-contact-details">
-                    @if ($footerContactIntro !== '')
+                    @if (! $lavaggioStorefront && $footerContactIntro !== '')
                         <p class="site-footer-contact-intro">{{ $footerContactIntro }}</p>
                     @endif
                     @if (!empty($storeSettings['footer']['phone'] ?? ''))
@@ -810,6 +810,9 @@
                         @else
                             <p><a href="tel:{{ preg_replace('/\\s+/', '', (string) $storeSettings['footer']['phone']) }}" class="site-footer-contact-phone transition">@if ($libermediaStorefront)<x-fa-icon name="phone" style="regular" :inline="true" class="lm-footer-phone-icon" />@endif{{ $storeSettings['footer']['phone'] }}</a></p>
                         @endif
+                    @endif
+                    @if ($lavaggioStorefront && filled($storeSettings['footer']['hours'] ?? ''))
+                        <p class="lavaggio-footer-contact-hours">@include('front.partials.lavaggio-contact-hours', ['lavaggioHours' => $storeSettings['footer']['hours'], 'lavaggioHoursIcon' => false, 'lavaggioHoursLabelVisible' => true])</p>
                     @endif
                     @foreach ($footerContactEmails as $footerContactEmail)
                         <p><a href="mailto:{{ $footerContactEmail }}" class="transition">{{ $footerContactEmail }}</a></p>
@@ -820,9 +823,6 @@
                     @foreach ($footerContactAddressBlocks as $footerAddressBlock)
                         <p>{!! nl2br(e($footerAddressBlock)) !!}</p>
                     @endforeach
-                    @if ($lavaggioStorefront && filled($storeSettings['footer']['hours'] ?? ''))
-                        <p>@include('front.partials.lavaggio-contact-hours', ['lavaggioHours' => $storeSettings['footer']['hours']])</p>
-                    @endif
                 </div>
                 <div class="site-footer-socials flex items-center gap-2">
                     @unless ($herreraStorefront)
@@ -865,7 +865,9 @@
             @endforeach
         </div>
 
-        @unless ($herreraStorefront)
+        @if ($lavaggioStorefront)
+            @include('front.partials.lavaggio-payment-logos')
+        @elseif (! $herreraStorefront)
         <div class="site-footer-payments">
             <div class="site-footer-payment-logos flex flex-wrap items-center justify-center gap-2.5">
                 <span class="site-footer-payment-logo inline-flex h-12 w-28 items-center justify-center px-1">
@@ -891,7 +893,7 @@
                 </span>
             </div>
         </div>
-        @endunless
+        @endif
 
         @if ($lavaggioStorefront)
             @include('front.partials.lavaggio-footer-legal')

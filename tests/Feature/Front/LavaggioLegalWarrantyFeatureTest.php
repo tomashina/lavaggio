@@ -33,7 +33,9 @@ class LavaggioLegalWarrantyFeatureTest extends TestCase
         $this->assertSame(0, $homeXpath->query('//*[@data-legal-warranty-notice="footer"]')->count());
         $this->assertSame(1, $homeXpath->query('//*[@data-lavaggio-returns-link]//a[@href="'.route('pages.show', 'povrati-i-reklamacije').'"]')->count());
         $warrantyLinks = $homeXpath->query('//footer//a[@data-legal-warranty-open]');
-        $this->assertSame(2, $warrantyLinks->count());
+        $this->assertSame(1, $warrantyLinks->count());
+        $this->assertSame(1, $homeXpath->query('//nav[contains(@class, "lavaggio-footer-legal")]//a[@data-legal-warranty-open]')->count());
+        $this->assertSame(0, $homeXpath->query('//*[contains(@class, "site-footer-link-list") or contains(@class, "site-footer-mobile-links")]//a[@data-legal-warranty-open]')->count());
         foreach ($warrantyLinks as $link) {
             $this->assertSame('Zakonsko jamstvo', trim($link->textContent));
             $this->assertSame($asset, $link->getAttribute('href'));

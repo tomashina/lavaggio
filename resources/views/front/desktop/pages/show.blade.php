@@ -5,6 +5,10 @@
         ?? $page->translations->firstWhere('locale', $locale)
         ?? $page->translations->firstWhere('locale', $fallbackLocale);
     $pageLinkCards = app(\App\Support\Lavaggio\InfoPageLinkCards::class)->fromHtml((string) $translation?->body_html);
+    $isLavaggio = config('storefront.home') === 'lavaggio';
+    $isReviewPage = $isLavaggio && ($page->code === 'lavaggio-modx-78' || $translation?->slug === 'recenzije-klijenata');
+    $isDeliveryPage = $isLavaggio && ($page->code === 'lavaggio-shop-dostava' || $translation?->slug === 'dostava');
+    $deliverySections = $isDeliveryPage ? app(\App\Support\Lavaggio\DeliveryPageSections::class)->fromHtml((string) $translation?->body_html) : null;
 @endphp
 
 @if (config('storefront.home') === 'lavaggio')
@@ -18,7 +22,7 @@
 
 @section('content')
     @if (config('storefront.home') === 'lavaggio')
-        <div class="lavaggio-info-page{{ $pageLinkCards !== [] ? ' lavaggio-info-page--links' : '' }}">
+        <div class="lavaggio-info-page{{ $pageLinkCards !== [] ? ' lavaggio-info-page--links' : '' }}{{ $isReviewPage ? ' lavaggio-info-page--reviews' : '' }}{{ $isDeliveryPage ? ' lavaggio-info-page--delivery' : '' }}">
     @endif
     @if ($topBlocks->isNotEmpty())
         <section class="mb-8">@include('components.content-placement', ['items' => $topBlocks])</section>
@@ -50,6 +54,8 @@
                 </a>
             @endforeach
         </nav>
+    @elseif ($deliverySections)
+        @include('front.desktop.pages.partials.lavaggio-delivery')
     @else
     <article class="lavaggio-content-article bg-white px-2 py-2">
         <div class="content-richtext">

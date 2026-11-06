@@ -30,7 +30,7 @@ class LavaggioStorefrontSeeder extends Seeder
             'store_footer_email_sales' => 'info@lavaggio.hr',
             'store_footer_email_support' => 'info@lavaggio.hr',
             'store_footer_phone' => '097 799 44 11',
-            'store_footer_address' => "Bareda d.o.o.\nBarban 70\n52207 Barban\nOIB: 96889385802",
+            'store_footer_address' => "Bareda d.o.o.\nBarban 70\n52207 Barban\nOIB: 96889385802\nIBAN: HR9423800061171000708",
             'store_footer_hours' => 'Pon-Pet: 08h - 16h',
             'store_footer_bottom_copyright_text' => 'Lavaggio® · Sva prava pridržana.',
             'store_footer_col_1_title' => 'Web shop',

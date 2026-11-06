@@ -24,3 +24,163 @@ body.lavaggio-storefront .lavaggio-page-link-arrow { flex: 0 0 16px; width: 16px
     body.lavaggio-storefront .lavaggio-page-link-cards { grid-template-columns: minmax(0, 1fr); gap: 12px; }
     html[data-theme] body.lavaggio-storefront .lavaggio-page-link-card { min-height: 92px; padding: 18px; font-size: 17px; gap: 14px; }
 }
+
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-info-page--reviews, .lavaggio-info-page--delivery) {
+    padding: 26px 12px 36px;
+}
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-info-page--reviews, .lavaggio-info-page--delivery) > .lavaggio-content-title {
+    margin: 0 0 30px;
+    padding: 0;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews .lavaggio-content-article {
+    padding: 0;
+    background: none;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews .lavaggio-content-article > .content-richtext {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 20px;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews .content-richtext > :not(figure) {
+    grid-column: 1 / -1;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews .content-richtext > figure {
+    min-width: 0;
+    margin: 0;
+    padding: 26px;
+    border: 1px solid #e1e3f1;
+    border-radius: 16px;
+    background: #faf9fd;
+    overflow-wrap: anywhere;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews figure:has(> blockquote)::before {
+    display: block;
+    height: 40px;
+    margin-bottom: 8px;
+    color: var(--lavaggio-primary, #848ac4);
+    font-family: Georgia, serif;
+    font-size: 64px;
+    line-height: 1;
+    content: "“";
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews figure > blockquote {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #475569;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 450;
+    line-height: 1.8;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews figure > blockquote p {
+    margin: 0 0 14px;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews figure > blockquote > :last-child {
+    margin-bottom: 0;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews figure > figcaption {
+    margin: 20px 0 0;
+    padding: 16px 0 0;
+    border-top: 1px solid #e4e3ed;
+    color: var(--lavaggio-heading, #1e293b);
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 1.5;
+    text-align: left;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-content {
+    display: grid;
+    gap: 28px;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-intro {
+    max-width: 960px;
+    margin: 0 auto;
+    color: #64748b;
+    text-align: center;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-group > h2 {
+    margin: 0 0 20px;
+    color: var(--lavaggio-heading, #1e293b);
+    font-size: clamp(23px, 2.5vw, 28px);
+    font-weight: 700;
+    line-height: 1.35;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-cards--single {
+    grid-template-columns: minmax(0, 1fr);
+}
+html[data-theme] body.lavaggio-storefront :is(.lavaggio-delivery-card, .lavaggio-delivery-group--text) {
+    min-width: 0;
+    padding: 26px;
+    border: 1px solid #e1e3f1;
+    border-radius: 16px;
+    background: #faf9fd;
+    overflow-wrap: anywhere;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-cards--single > .lavaggio-delivery-card {
+    border-color: #d9dbed;
+    background: #eeedf7;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-card > h3 {
+    margin: 0 0 16px;
+    color: var(--lavaggio-heading, #1e293b);
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-content .content-richtext {
+    color: #475569;
+    font-size: 17px;
+    font-weight: 450;
+    line-height: 1.8;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-content .content-richtext :is(p, ul, ol) {
+    margin-top: 0;
+    margin-bottom: 14px;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-content .content-richtext > :last-child {
+    margin-bottom: 0;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-group-copy + .lavaggio-delivery-cards {
+    margin-top: 20px;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-delivery-content a {
+    color: #646bae;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+@media (max-width: 1023px) {
+    html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews .lavaggio-content-article > .content-richtext {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 639px) {
+    html[data-theme] body.lavaggio-storefront :is(.lavaggio-info-page--reviews, .lavaggio-info-page--delivery) {
+        padding: 20px 0 24px;
+    }
+    html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews .lavaggio-content-article > .content-richtext,
+    html[data-theme] body.lavaggio-storefront .lavaggio-delivery-cards {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+    html[data-theme] body.lavaggio-storefront .lavaggio-info-page--reviews .content-richtext > figure,
+    html[data-theme] body.lavaggio-storefront :is(.lavaggio-delivery-card, .lavaggio-delivery-group--text) {
+        padding: 22px;
+    }
+}
