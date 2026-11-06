@@ -53,6 +53,11 @@
                     ->map(static fn ($id) => (int) $id)
                     ->unique()
                     ->values();
+                if (\App\Support\Lavaggio\PublicUrls::enabled()) {
+                    $statusSteps = ($statusSteps ?? collect())->filter(
+                        static fn ($step, $index) => $index < 4 || $visitedStatusIds->contains((int) $step->id)
+                    );
+                }
                 $statusDateMap = [];
                 foreach ($order->history->sortBy('id') as $historyEntry) {
                     $statusId = (int) ($historyEntry->to_status_id ?? 0);
