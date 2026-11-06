@@ -23,3 +23,9 @@ Izvori specifikacija:
 - [EPC069-12 v3.1 specifikacija SEPA QR koda](https://www.europeanpaymentscouncil.eu/document-library/guidance-documents/quick-response-code-guidelines-enable-data-capture-initiation)
 
 Regresijske provjere pokrivaju čuvanje administratorskih izmjena, unos stvarnog IBAN-a kroz postojeći obrazac, izračun i ograničenja dostave, obavezni odabir paketomata, lokalne ogledne naloge, zabranu neispravnog računa izvan pregleda te generiranje stvarnih kodova bez mrežnih poziva.
+
+## Slanje potvrde narudžbe
+
+Bankovna narudžba šalje potvrdu kupcu odmah po naručivanju, prije evidentirane uplate. Slanje je izravno i ne čeka queue worker. U administraciji **Postavke → Sustav → Postavke trgovine → Email** moraju biti uključene notifikacije i spremljen ispravan SMTP račun.
+
+Za objavljeni Lavaggio u okruženju staging/production izričito uključene, potpune SMTP postavke imaju prednost pred testnim zapisivanjem maila. Lokalni/testing sigurni način i ostali storefrontovi i dalje koriste zapisnik. Postojeće postavke plaćanja, GLS API-ja i drugih integracija ostaju odvojene od ove odluke. Razmaci oko hosta, korisničkog imena i adresa uklanjaju se pri konfiguriranju slanja; lozinka se ne mijenja. Provjera SMTP veze i prijave ne šalje poruku. Već propuštena potvrda ne šalje se automatski pri objavi popravka.

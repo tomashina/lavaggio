@@ -147,10 +147,19 @@ $unreviewed = array_diff($pending, $reviewed);
 if ($unreviewed !== []) stopDeploy("Pending migrations require separate review; none were run:\n".implode("\n", $unreviewed));
 if ($pending !== []) echo "Reviewed content upgrade will be backed up and applied: ".implode(', ', $pending)."\n";
 $settings = [];
-foreach ($pdo->query("SELECT `key`,`value` FROM system_settings WHERE `key` IN ('store_email_enabled','gls_api_enabled','watchline_integrations')") as $row) {
+foreach ($pdo->query("SELECT `key`,`value` FROM system_settings WHERE `key` IN ('store_email_enabled','store_email_mailer','store_email_smtp_host','store_email_smtp_port','store_email_smtp_username','store_email_smtp_password','store_email_smtp_encryption','store_email_from_address','store_email_reply_to','gls_api_enabled','watchline_integrations')") as $row) {
     $settings[$row['key']] = json_decode($row['value'], true, flags: JSON_THROW_ON_ERROR);
 }
-if (filter_var($settings['store_email_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) stopDeploy('Mail must remain disabled for this preview.');
+if (filter_var($settings['store_email_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+    require_once $root.'/app/Support/Mail/StoreMailConfiguration.php';
+    $mailSettings = ['enabled' => true];
+    foreach (['mailer'=>'mailer', 'smtp_host'=>'host', 'smtp_port'=>'port', 'smtp_username'=>'username', 'smtp_password'=>'password', 'smtp_encryption'=>'encryption', 'from_address'=>'from_address', 'reply_to'=>'reply_to'] as $stored=>$field) {
+        $mailSettings[$field] = $settings['store_email_'.$stored] ?? null;
+    }
+    $mailError = \App\Support\Mail\StoreMailConfiguration::smtpConfigurationError($mailSettings);
+    if ($mailError !== null) stopDeploy($mailError);
+    if (! \App\Support\Mail\StoreMailConfiguration::allowsSmtpInSafeMode($values['STOREFRONT_HOME'], $values['APP_ENV'], $mailSettings)) stopDeploy('Store email is not permitted for this deployment profile.');
+}
 if (filter_var($settings['gls_api_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) stopDeploy('GLS API must remain disabled for this preview.');
 $integrations = $settings['watchline_integrations'] ?? [];
 if (filter_var($integrations['live_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) stopDeploy('Inherited integrations must remain disabled.');

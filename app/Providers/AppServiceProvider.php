@@ -41,6 +41,7 @@ use App\Services\Settings\LocalSettingsService;
 use App\Services\Settings\SystemSettingsService;
 use App\Services\UserTracking\UserTrackingService;
 use App\Support\AssetVersion;
+use App\Support\Mail\StoreMailConfiguration;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Events\QueryExecuted;
@@ -395,15 +396,19 @@ class AppServiceProvider extends ServiceProvider
 
     private function applyDynamicStoreMailSettings(): void
     {
-        if ((bool) config('commerce.local_safe_mode')) {
+        $safeMode = (bool) config('commerce.local_safe_mode');
+        if ($safeMode) {
             Config::set('mail.default', 'log');
-
-            return;
         }
 
         try {
-            $settings = app(StoreSettingsService::class)->email();
+            $settings = StoreMailConfiguration::normalize(app(StoreSettingsService::class)->email());
             if (! (bool) ($settings['enabled'] ?? false)) {
+                return;
+            }
+            if ($safeMode && ! StoreMailConfiguration::allowsSmtpInSafeMode(
+                (string) config('storefront.home'), app()->environment(), $settings,
+            )) {
                 return;
             }
 
@@ -416,6 +421,11 @@ class AppServiceProvider extends ServiceProvider
                 Config::set('mail.mailers.smtp.username', (string) ($settings['username'] ?? ''));
                 Config::set('mail.mailers.smtp.password', (string) ($settings['password'] ?? ''));
                 Config::set('mail.mailers.smtp.encryption', (string) ($settings['encryption'] ?? ''));
+                // Laravel 12 uses scheme/STARTTLS options rather than encryption.
+                Config::set('mail.mailers.smtp.url', null);
+                Config::set('mail.mailers.smtp.scheme', ($settings['encryption'] ?? '') === 'ssl' ? 'smtps' : 'smtp');
+                Config::set('mail.mailers.smtp.auto_tls', true);
+                Config::set('mail.mailers.smtp.require_tls', ($settings['encryption'] ?? '') === 'tls');
             }
 
             if ($mailer === 'sendmail') {

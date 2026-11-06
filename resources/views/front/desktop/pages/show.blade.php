@@ -9,11 +9,19 @@
     $isReviewPage = $isLavaggio && ($page->code === 'lavaggio-modx-78' || $translation?->slug === 'recenzije-klijenata');
     $isDeliveryPage = $isLavaggio && ($page->code === 'lavaggio-shop-dostava' || $translation?->slug === 'dostava');
     $deliverySections = $isDeliveryPage ? app(\App\Support\Lavaggio\DeliveryPageSections::class)->fromHtml((string) $translation?->body_html) : null;
+    $isPricingPage = $isLavaggio && $page->code === 'lavaggio-modx-88';
+    $pageBody = (string) $translation?->body_html;
+    if ($isPricingPage) {
+        $pageBody = app(\App\Support\Lavaggio\ServicePricingAnchorPrices::class)->render($pageBody);
+    }
 @endphp
 
 @if (config('storefront.home') === 'lavaggio')
     @push('head')
         <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-content-pages.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-content-pages.css')) }}">
+        @if ($isPricingPage)
+            <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-service-pricing.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-service-pricing.css')) }}">
+        @endif
     @endpush
 @endif
 
@@ -22,7 +30,7 @@
 
 @section('content')
     @if (config('storefront.home') === 'lavaggio')
-        <div class="lavaggio-info-page{{ $pageLinkCards !== [] ? ' lavaggio-info-page--links' : '' }}{{ $isReviewPage ? ' lavaggio-info-page--reviews' : '' }}{{ $isDeliveryPage ? ' lavaggio-info-page--delivery' : '' }}">
+        <div class="lavaggio-info-page{{ $pageLinkCards !== [] ? ' lavaggio-info-page--links' : '' }}{{ $isReviewPage ? ' lavaggio-info-page--reviews' : '' }}{{ $isDeliveryPage ? ' lavaggio-info-page--delivery' : '' }}{{ $isPricingPage ? ' lavaggio-info-page--pricing' : '' }}">
     @endif
     @if ($topBlocks->isNotEmpty())
         <section class="mb-8">@include('components.content-placement', ['items' => $topBlocks])</section>
@@ -59,7 +67,7 @@
     @else
     <article class="lavaggio-content-article bg-white px-2 py-2">
         <div class="content-richtext">
-            {!! app(\App\Support\WatchlineArticleImages::class)->render((string) $translation?->body_html) ?: '<p>This page has no body content.</p>' !!}
+            {!! app(\App\Support\WatchlineArticleImages::class)->render($pageBody) ?: '<p>This page has no body content.</p>' !!}
         </div>
     </article>
     @endif

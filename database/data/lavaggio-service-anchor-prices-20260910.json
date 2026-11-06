@@ -1,0 +1,127 @@
+{
+  "reference_date": "2026-09-10",
+  "page_code": "lavaggio-modx-88",
+  "source": "Existing service prices from the reviewed Lavaggio content snapshot (2026-10-28), confirmed unchanged on the live /cjenik page on 2026-11-06. User explicitly approved these current amounts as the 10 September 2026 anchor prices.",
+  "rows": [
+    {
+      "service": "Oprano, osušeno i složeno (idealno za ručnike)",
+      "variant": "",
+      "price": "4,00 € / kg"
+    },
+    {
+      "service": "Oprano, osušeno i opeglano rublje (idealno za posteljinu)",
+      "variant": "",
+      "price": "6,50 € / kg"
+    },
+    {
+      "service": "Košulja - kratki rukavi",
+      "variant": "",
+      "price": "3,50€ / kom"
+    },
+    {
+      "service": "Košulja - dugi rukavi",
+      "variant": "",
+      "price": "4,00€ / kom"
+    },
+    {
+      "service": "Košulja - volani ili falde",
+      "variant": "",
+      "price": "5,50€ / kom"
+    },
+    {
+      "service": "Opran, osušen i složeni veš spreman za nošenje (wash and fold)",
+      "variant": "",
+      "price": "4,00€ / kg"
+    },
+    {
+      "service": "Opran, osušeni i opeglani veš spreman za nošenje",
+      "variant": "",
+      "price": "6,50€ / kg"
+    },
+    {
+      "service": "Oprano, osušeno i složeno - idealno za kuhinjske krpe koje ne trebaju peglanje",
+      "variant": "",
+      "price": "4,00€ / kg"
+    },
+    {
+      "service": "Oprano, osušeno i opeglano - idealno za stolnjake, salvete, uniforme",
+      "variant": "",
+      "price": "6,50€ / kg"
+    },
+    {
+      "service": "DEKA / POPLUN * - skidanje fleka, pranje, dezinfekcija ozonom, sušenje",
+      "variant": "Mali format",
+      "price": "Mali format: 15,00 € / kom"
+    },
+    {
+      "service": "DEKA / POPLUN * - skidanje fleka, pranje, dezinfekcija ozonom, sušenje",
+      "variant": "Srednji format",
+      "price": "Srednji format: 17,00 € / kom"
+    },
+    {
+      "service": "DEKA / POPLUN * - skidanje fleka, pranje, dezinfekcija ozonom, sušenje",
+      "variant": "Veliki format",
+      "price": "Veliki format: 22,00 € / kom"
+    },
+    {
+      "service": "JASTUK * - skidanje fleka, pranje, dezinfekcija ozonom, sušenje",
+      "variant": "Poliester punjenje",
+      "price": "Poliester punjenje: 6,00 € / kom"
+    },
+    {
+      "service": "JASTUK * - skidanje fleka, pranje, dezinfekcija ozonom, sušenje",
+      "variant": "Perjano punjenje",
+      "price": "Perjano punjenje: 9,00 € / kom"
+    },
+    {
+      "service": "ZAŠTITA ZA MADRAC * - skidanje fleka, pranje, dezinfekcija ozonom, sušenje",
+      "variant": "Mali format",
+      "price": "Mali format: 17€ / kom"
+    },
+    {
+      "service": "ZAŠTITA ZA MADRAC * - skidanje fleka, pranje, dezinfekcija ozonom, sušenje",
+      "variant": "Srednji format",
+      "price": "Srednji format: 22€ / kom"
+    },
+    {
+      "service": "ZAŠTITA ZA MADRAC * - skidanje fleka, pranje, dezinfekcija ozonom, sušenje",
+      "variant": "Veliki format",
+      "price": "Veliki format: 35€ / kom"
+    },
+    {
+      "service": "SAMO PEGLANJE (bez pranja kod nas) *****",
+      "variant": "",
+      "price": "3,90€ / kg"
+    },
+    {
+      "service": "DANAS ZA DANAS (obavezno donošenje rublja kod nas do 10h radnim danom, preuzimanje istog dana od 15h )",
+      "variant": "",
+      "price": "Cijena uvećana za 100%"
+    },
+    {
+      "service": "Tretiranje mrlja Fe, Cu, Zn ** (prije procesa pranja)",
+      "variant": "",
+      "price": "5€  po tretiranju"
+    },
+    {
+      "service": "Tretiranje jake zaprljanosti rublja od kućnih ljubimaca",
+      "variant": "",
+      "price": "50€ po mašini"
+    },
+    {
+      "service": "Otpakiravanje novog rublja iz ambalaže",
+      "variant": "",
+      "price": "25,00 € / sat"
+    },
+    {
+      "service": "Skladištenje rublja (ukoliko rublje nije podignuto nakon roka) ****",
+      "variant": "",
+      "price": "1€ kg / dan"
+    },
+    {
+      "service": "Van tih uvjeta",
+      "variant": "",
+      "price": "0,80 € / km"
+    }
+  ]
+}

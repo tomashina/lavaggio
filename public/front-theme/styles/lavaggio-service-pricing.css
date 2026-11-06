@@ -1,0 +1,78 @@
+html[data-theme] body.lavaggio-storefront .lavaggio-info-page--pricing .content-richtext {
+    overflow: visible;
+}
+body.lavaggio-storefront .lavaggio-service-pricing-scroll {
+    max-width: 100%;
+    margin: 24px 0;
+    border: 1px solid #e1e3f1;
+    border-radius: 14px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+}
+body.lavaggio-storefront .lavaggio-service-pricing-scroll:focus-visible {
+    outline: 3px solid var(--lavaggio-primary, #848ac4);
+    outline-offset: 3px;
+}
+html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-service-pricing {
+    width: 100%;
+    min-width: 620px;
+    margin: 0;
+    border: 0;
+    table-layout: fixed;
+}
+html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-service-pricing :is(th, td) {
+    padding: 16px 20px;
+    border-color: #e1e3f1;
+    font-size: 15px;
+    line-height: 1.65;
+}
+html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-service-pricing thead th {
+    width: 25%;
+    background: #eeedf7;
+    color: var(--lavaggio-heading, #1e293b);
+    font-weight: 700;
+    vertical-align: middle;
+}
+html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-service-pricing thead th:first-child {
+    width: 50%;
+}
+html[data-theme] body.lavaggio-storefront .lavaggio-service-pricing-date {
+    display: block;
+    font-size: 13px;
+    font-weight: 550;
+}
+html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-service-pricing .lavaggio-service-pricing-category td {
+    background: #f3f2fa;
+    color: var(--lavaggio-heading, #1e293b);
+    font-weight: 700;
+}
+html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-service-pricing-current {
+    color: var(--lavaggio-heading, #1e293b);
+    font-weight: 650;
+}
+html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-service-pricing-anchor {
+    color: #64748b;
+}
+@media (max-width: 639px) {
+    html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-service-pricing {
+        min-width: 0;
+    }
+    html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-service-pricing :is(th, td) {
+        min-width: 0;
+        padding: 10px 8px;
+        font-size: 13px;
+        line-height: 1.5;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+    html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-service-pricing thead th {
+        width: 26%;
+    }
+    html[data-theme] body.lavaggio-storefront .content-richtext .lavaggio-service-pricing thead th:first-child {
+        width: 48%;
+    }
+    html[data-theme] body.lavaggio-storefront .lavaggio-service-pricing-date {
+        font-size: 12px;
+    }
+}
