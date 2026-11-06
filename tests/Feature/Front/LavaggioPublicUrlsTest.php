@@ -3,6 +3,8 @@
 namespace Tests\Feature\Front;
 
 use App\Models\Content\Page\InfoPage;
+use App\Models\Sales\Order\Order;
+use App\Models\User;
 use App\Support\Lavaggio\PublicUrls;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -58,6 +60,52 @@ class LavaggioPublicUrlsTest extends TestCase
             $route = app('router')->getRoutes()->match(Request::create('/'.$uri, 'POST'));
             $this->assertFalse(str_starts_with((string) $route->getName(), 'lavaggio.localized.'));
         }
+    }
+
+    public function test_cached_croatian_aliases_preserve_dynamic_parameters_and_route_constraints(): void
+    {
+        $this->cacheRoutesInMemory();
+        foreach ([
+            ['GET', '/moj-racun/narudzbe/AG-20261106-5424', ['orderNumber' => 'AG-20261106-5424']],
+            ['POST', '/moj-racun/narudzbe/AG-20261106-5424/reorder', ['orderNumber' => 'AG-20261106-5424']],
+            ['GET', '/moj-racun/ponude/42/pdf', ['offer' => '42']],
+            ['PUT', '/moj-racun/adrese/billing', ['type' => 'billing']],
+            ['GET', '/prijava/obnova-lozinke/test-token', ['token' => 'test-token']],
+        ] as [$method, $uri, $parameters]) {
+            $route = app('router')->getRoutes()->match(Request::create($uri, $method));
+            $this->assertSame(ltrim($uri, '/'), preg_replace_callback('/\{([^}]+)\}/', fn ($match) => $parameters[$match[1]], $route->uri()));
+            $this->assertSame($parameters, $route->parameters(), $uri);
+        }
+
+        $this->get('/moj-racun/narudzbe/INVALID_ORDER')->assertNotFound();
+    }
+
+    public function test_cached_account_order_detail_renders_the_selected_order_and_keeps_ownership_checks(): void
+    {
+        config(['commerce.b2c_only' => true]);
+        $customer = User::factory()->create();
+        $otherCustomer = User::factory()->create();
+        $order = Order::query()->create([
+            'user_id' => $customer->id, 'order_number' => 'AG-20261106-5424',
+            'source' => 'web', 'locale' => 'hr', 'currency_code' => 'EUR', 'currency_rate' => 1,
+            'customer_name' => $customer->name, 'customer_email' => $customer->email,
+        ]);
+        $this->cacheRoutesInMemory();
+
+        $this->actingAs($customer)->get('/moj-racun/narudzbe/'.$order->order_number)
+            ->assertOk()->assertViewHas('order', fn (Order $selected) => $selected->is($order))
+            ->assertSee($order->order_number);
+        $this->actingAs($otherCustomer)->get('/moj-racun/narudzbe/'.$order->order_number)->assertNotFound();
+        $this->actingAs($customer)->get('/moj-racun/narudzbe/AG-UNKNOWN')->assertNotFound();
+    }
+
+    private function cacheRoutesInMemory(): void
+    {
+        // Exercise the same route reconstruction used by route:cache without writing a shared cache file.
+        $router = app('router');
+        $router->getRoutes()->refreshNameLookups();
+        $router->getRoutes()->refreshActionLookups();
+        $router->setCompiledRoutes($router->getRoutes()->compile());
     }
 
     public function test_other_storefronts_keep_original_urls_and_croatian_aliases_are_unavailable(): void

@@ -102,6 +102,8 @@ class PublicUrls
             $alias = clone $route;
             $alias->setUri($uri);
             $action = $alias->getAction();
+            // The alias URI is complete. Cached routes must not reapply the original English group prefix.
+            unset($action['prefix']);
             $action['lavaggio_original_name'] = $route->getName();
             $action['as'] = 'lavaggio.localized.'.($route->getName() ?: md5($route->uri()));
             $action['middleware'] = [\App\Http\Middleware\RequireLavaggioStorefront::class, ...($action['middleware'] ?? [])];
