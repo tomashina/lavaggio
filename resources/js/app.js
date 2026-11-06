@@ -3,9 +3,13 @@ import TomSelect from 'tom-select';
 import 'tom-select/dist/css/tom-select.css';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
+import { registerAdminVideoFormat, setupRichTextMediaTools, initRichTextHtmlModes } from './admin-rich-text-media';
+import '../css/admin-rich-text-media.css';
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
 import Chart from 'chart.js/auto';
+
+registerAdminVideoFormat(Quill);
 
 let aceLoaderPromise = null;
 let aceInlineFailureNotified = false;
@@ -732,7 +736,7 @@ const initQuillEditors = () => {
                         [{ header: [2, 3, false] }],
                         ['bold', 'italic', 'underline'],
                         [{ list: 'ordered' }, { list: 'bullet' }],
-                        ['blockquote', 'link'],
+                        ['blockquote', 'link', 'video'],
                         ['clean'],
                     ],
                 },
@@ -794,7 +798,7 @@ const initQuillEditors = () => {
             syncingFromTextarea: false,
             syncTextareaFromQuill(dispatchChange = false) {
                 const activeTextarea = state.textarea;
-                if (!(activeTextarea instanceof HTMLTextAreaElement) || state.syncingFromTextarea) {
+                if (!(activeTextarea instanceof HTMLTextAreaElement) || state.syncingFromTextarea || state.htmlSourceMode) {
                     return;
                 }
 
@@ -819,7 +823,7 @@ const initQuillEditors = () => {
             },
             syncQuillFromTextarea() {
                 const activeTextarea = state.textarea;
-                if (!(activeTextarea instanceof HTMLTextAreaElement) || state.syncingFromQuill) {
+                if (!(activeTextarea instanceof HTMLTextAreaElement) || state.syncingFromQuill || state.htmlSourceMode) {
                     return;
                 }
 
@@ -851,6 +855,7 @@ const initQuillEditors = () => {
         };
 
         attachTextareaToState(state, textarea);
+        setupRichTextMediaTools(state);
 
         quill.on('text-change', () => {
             state.syncTextareaFromQuill(false);
@@ -874,6 +879,7 @@ const initQuillEditors = () => {
             bindElement(root);
         }
         root.querySelectorAll?.(selector).forEach(bindElement);
+        initRichTextHtmlModes(root);
     };
 
     bindAll(document);

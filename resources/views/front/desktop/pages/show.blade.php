@@ -16,6 +16,10 @@
     }
 @endphp
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('front-theme/styles/richtext-media.css') }}?v={{ filemtime(public_path('front-theme/styles/richtext-media.css')) }}">
+@endpush
+
 @if (config('storefront.home') === 'lavaggio')
     @push('head')
         <link rel="stylesheet" href="{{ asset('front-theme/styles/lavaggio-content-pages.css') }}?v={{ filemtime(public_path('front-theme/styles/lavaggio-content-pages.css')) }}">

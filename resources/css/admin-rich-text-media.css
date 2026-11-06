@@ -1,0 +1,99 @@
+.admin-quill .ql-toolbar .admin-quill-document-button {
+    width: auto;
+    padding: 0 8px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 600;
+}
+.admin-quill .ql-editor iframe.ql-video {
+    display: block;
+    max-width: 100%;
+    border: 0;
+}
+.admin-quill .ql-editor iframe.ql-video[width][height] { height: auto; }
+.admin-quill .ql-editor iframe.ql-video:not([width]):not([height]) {
+    height: auto;
+    width: 100%;
+    max-width: 640px;
+    aspect-ratio: 16 / 9;
+}
+.admin-editor-dialog {
+    width: min(720px, calc(100vw - 32px));
+    max-height: calc(100dvh - 48px);
+    margin: auto;
+    padding: 0;
+    overflow: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    background: #fff;
+    color: #334155;
+    box-shadow: 0 24px 80px #0f172a38;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+}
+.admin-editor-dialog::backdrop { background: #0f172a80; }
+.admin-editor-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.admin-editor-dialog h2 { margin: 0; color: #0f172a; font-size: 20px; font-weight: 700; }
+.admin-editor-dialog h3 { margin: 0; color: #0f172a; font-size: 15px; font-weight: 600; }
+.admin-editor-dialog p { margin: 0; }
+.admin-editor-dialog-body { display: grid; gap: 18px; padding: 24px; }
+.admin-editor-dialog label { display: grid; gap: 6px; color: #334155; font-size: 13px; font-weight: 600; }
+.admin-editor-dialog :is(input, select) {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 400;
+}
+.admin-editor-dialog input[type="file"] { padding: 8px; font-size: 13px; }
+.admin-editor-dialog button {
+    min-height: 34px;
+    padding: 6px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.admin-editor-dialog button:hover { background: #f1f5f9; }
+.admin-editor-dialog button:disabled { opacity: .5; cursor: default; }
+.admin-editor-dialog :is(button, input, select):focus-visible { outline: 3px solid #a5f3fc; outline-offset: 2px; }
+.admin-editor-dialog button.admin-editor-primary { border-color: #0e7490; background: #0e7490; color: #fff; }
+.admin-editor-dialog button.admin-editor-primary:hover { background: #155e75; }
+.admin-editor-dialog button[data-editor-dialog-close] { width: 34px; padding: 0; border: 0; font-size: 24px; line-height: 1; }
+.admin-editor-dialog-actions { display: flex; justify-content: end; }
+.admin-editor-document-upload { display: grid; gap: 12px; padding: 18px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; }
+.admin-editor-document-upload button { justify-self: start; }
+.admin-editor-document-upload p { color: #64748b; font-size: 12px; }
+.admin-editor-library-filters { display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; }
+.admin-editor-dialog-status:empty { display: none; }
+.admin-editor-dialog-status { color: #9f1239; }
+.admin-editor-document-list { display: grid; gap: 0; max-height: 280px; margin: 0; padding: 0; overflow: auto; list-style: none; }
+.admin-editor-document-list li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+.admin-editor-document-list li:first-child { padding-top: 0; }
+.admin-editor-document-list strong { display: block; overflow-wrap: anywhere; font-weight: 600; }
+.admin-editor-document-list small { display: block; margin-top: 2px; color: #64748b; font-size: 12px; }
+.admin-editor-document-list button { flex-shrink: 0; }
+.admin-editor-library-pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.admin-editor-library-pagination span { color: #64748b; font-size: 12px; }
+@media (max-width: 480px) {
+    .admin-editor-dialog-header { padding: 16px; }
+    .admin-editor-dialog-body { padding: 16px; }
+    .admin-editor-library-filters { grid-template-columns: 1fr; }
+}

@@ -603,6 +603,9 @@ Route::middleware(['admin.locale', 'auth', 'verified', 'admin.access', 'admin.ma
             ->as('content.')
             ->group(function (): void {
                 Route::redirect('/', '/admin/content/blocks')->name('index');
+                Route::get('documents', [\App\Http\Controllers\Admin\ContentDocumentController::class, 'index'])->name('documents.index');
+                Route::post('documents', [\App\Http\Controllers\Admin\ContentDocumentController::class, 'store'])
+                    ->middleware('throttle:30,1')->name('documents.store');
                 Route::view('supplier-catalogs', 'admin.content.supplier-catalogs.index')->name('supplier-catalogs.index');
                 Route::post('supplier-catalogs/{catalog}/upload', \App\Http\Controllers\Admin\SupplierCatalogUploadController::class)
                     ->whereNumber('catalog')->name('supplier-catalogs.upload');

@@ -107,9 +107,16 @@
                     <textarea rows="3" wire:model="form.excerpt" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"></textarea>
                 </div>
 
-                <div class="mt-4" wire:key="blog-post-body-{{ $postId ?? 'new' }}-{{ $form['locale'] }}">
-                    <label for="blog-post-body-html" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Body') }}</label>
-                    <x-admin.quill-field id="blog-post-body-html" rows="14" wire:model.live.debounce.300ms="form.body_html" />
+                <div class="mt-4" data-rich-text-html-mode wire:key="blog-post-body-{{ $postId ?? 'new' }}-{{ $form['locale'] }}">
+                    <div class="mb-1 flex items-center justify-between gap-2">
+                        <label for="blog-post-body-html" class="block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Body') }}</label>
+                        <div wire:ignore class="inline-flex items-center gap-2">
+                            <button type="button" class="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-700 hover:bg-slate-100" data-html-mode-open>HTML</button>
+                            <button type="button" class="hidden rounded-md border border-slate-300 bg-slate-900 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white hover:bg-slate-700" data-html-mode-apply>Vizualno</button>
+                        </div>
+                    </div>
+                    <x-admin.quill-field :media-tools="true" id="blog-post-body-html" rows="14" wire:model.live="form.body_html" />
+                    <textarea wire:ignore rows="16" class="hidden w-full rounded-xl border border-slate-300 bg-slate-950 px-3 py-2 font-mono text-xs leading-5 text-slate-100" spellcheck="false" data-html-mode-source></textarea>
                 </div>
 
                 <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">

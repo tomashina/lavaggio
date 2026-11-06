@@ -56,6 +56,7 @@
 @section('main_class', 'mx-auto w-full max-w-7xl px-6 pt-0 pb-8')
 
 @push('styles')
+    <link rel="stylesheet" href="{{ asset('front-theme/styles/richtext-media.css') }}?v={{ filemtime(public_path('front-theme/styles/richtext-media.css')) }}">
     <link rel="stylesheet" href="{{ asset('front-theme/styles/herrera-home-blog.css') }}?v={{ filemtime(public_path('front-theme/styles/herrera-home-blog.css')) }}">
     <link rel="stylesheet" href="{{ asset('front-theme/styles/blog-detail.css') }}?v={{ filemtime(public_path('front-theme/styles/blog-detail.css')) }}">
     @if (config('storefront.home') === 'lavaggio')
