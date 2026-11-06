@@ -827,20 +827,12 @@ class CheckoutController extends Controller
             ->where('order_number', $orderNumber)
             ->firstOrFail();
 
+        if (strtolower($context) === 'cancel') {
+            return $this->handleCorvusCancellationReturn($request, $order);
+        }
+
         $corvus = app(CorvusPayFormService::class);
         $result = $corvus->handleCallback($order, $request->all(), $context);
-
-        $cancellationAuthorized = strtolower($context) === 'cancel'
-            && ($result['status'] ?? null) === 'cancelled'
-            && (bool) ($result['callback_authorized'] ?? false)
-            && (bool) ($result['cancellation_applied'] ?? false);
-
-        if ($cancellationAuthorized) {
-            $freshOrder = Order::query()->with('items')->find($order->id);
-            if ($freshOrder) {
-                $this->restoreCartFromOrder($freshOrder);
-            }
-        }
 
         // The locked notification marker prevents duplicate sends while allowing
         // a callback replay to retry after a transient notification failure.
@@ -862,17 +854,77 @@ class CheckoutController extends Controller
             default => 'ui.checkout.corvus.status.declined',
         };
 
-        if (strtolower($context) === 'cancel') {
-            return redirect()
-                ->route('cart.index')
-                ->with('status', $cancellationAuthorized
-                    ? __('ui.checkout.corvus.status.cancelled_to_cart')
-                    : __($statusKey));
-        }
-
         return redirect()
             ->route('checkout.success', ['orderNumber' => $order->order_number])
             ->with('status', __($statusKey));
+    }
+
+    private function handleCorvusCancellationReturn(Request $request, Order $order): RedirectResponse
+    {
+        $returnedOrder = $request->input('order_number');
+        if ($returnedOrder !== null && (! is_string($returnedOrder) || ! hash_equals((string) $order->order_number, $returnedOrder))) {
+            return redirect()->route('cart.index')->with('status', __('ui.checkout.corvus.status.invalid_signature'));
+        }
+
+        $lastOrderId = (int) $request->session()->get('front.checkout.last_order_id', 0);
+        $boundOrderNumber = $request->route('orderNumber');
+        $allowedByUrl = is_string($boundOrderNumber)
+            && hash_equals((string) $order->order_number, $boundOrderNumber)
+            && URL::hasValidSignature($request, true, ['order_number', 'language']);
+        $corvus = app(CorvusPayFormService::class);
+        $result = $allowedByUrl
+            ? $corvus->abandonOrder($order)
+            : $corvus->handleCallback($order, $request->all(), 'cancel');
+        $cancelled = ($result['status'] ?? '') === 'cancelled';
+
+        if ($cancelled) {
+            $freshOrder = $order->fresh('items');
+            if ($freshOrder && $freshOrder->paid_at === null) {
+                $this->restoreCorvusCartFromOrder($request, $freshOrder);
+                // An older return must not take ownership of a more recent checkout.
+                if ($lastOrderId === 0 || $lastOrderId === (int) $order->id) {
+                    $request->session()->put('front.checkout.last_order_id', (int) $order->id);
+                    $request->session()->put('front.checkout.last_order_number', (string) $order->order_number);
+                }
+            }
+        }
+
+        return redirect()->route('cart.index')->with('status', $cancelled
+            ? __('ui.checkout.corvus.status.cancelled_to_cart')
+            : __('ui.checkout.corvus.status.'.(($result['status'] ?? '') === 'invalid_signature' ? 'invalid_signature' : 'declined')));
+    }
+
+    private function restoreCorvusCartFromOrder(Request $request, Order $order): void
+    {
+        $marker = 'front.checkout.corvus_restored.'.$order->id;
+        $lastOrderId = (int) $request->session()->get('front.checkout.last_order_id', 0);
+        if ($request->session()->get($marker) || ($lastOrderId !== 0 && $lastOrderId !== (int) $order->id)
+            || (bool) data_get($order->payload, 'gift_voucher_purchase')
+            || ! app(B2BAccessService::class)->canViewPrices($request->user())) {
+            return;
+        }
+
+        $current = $this->cart->raw();
+        $lines = $current;
+        foreach ($order->items as $item) {
+            $productId = (int) $item->product_id;
+            $optionId = (int) $item->product_option_value_id;
+            if ($productId <= 0 || (int) $item->quantity <= 0) {
+                continue;
+            }
+            // Existing quantities and variant selections are newer buyer choices.
+            $lines[$productId.':'.$optionId] ??= [
+                'product_id' => $productId,
+                'product_option_value_id' => $optionId > 0 ? $optionId : null,
+                'quantity' => (int) $item->quantity,
+            ];
+        }
+        $coupon = $this->cart->couponCode();
+        if ($current === [] && $coupon === '') {
+            $coupon = (string) data_get($order->payload, 'coupon_code', '');
+        }
+        $this->cart->replaceRaw(array_values($lines), $coupon !== '' ? $coupon : null);
+        $request->session()->put($marker, true);
     }
 
     private function sendCorvusNotificationOnce(Order $order): void
@@ -910,6 +962,8 @@ class CheckoutController extends Controller
 
     private function resolveCorvusOrderNumber(Request $request): string
     {
-        return trim((string) ($request->input('order_number', '')));
+        $number = $request->input('order_number', '');
+
+        return is_string($number) ? trim($number) : '';
     }
 }

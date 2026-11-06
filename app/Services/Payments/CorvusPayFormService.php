@@ -9,6 +9,7 @@ use App\Models\Settings\Local\OrderStatus;
 use App\Models\Settings\Local\PaymentMethod;
 use App\Services\Front\OrderStockAllocationService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 
 class CorvusPayFormService
 {
@@ -97,7 +98,9 @@ class CorvusPayFormService
             'cardholder_name' => $this->limit((string) ($order->billing_first_name ?: $order->shipping_first_name ?: ''), 40),
             'cardholder_surname' => $this->limit((string) ($order->billing_last_name ?: $order->shipping_last_name ?: ''), 40),
             'cardholder_zip_code' => $this->limit((string) ($order->billing_postal_code ?: $order->shipping_postal_code ?: ''), 9),
-            'cancel_url' => route('checkout.corvus.cancel.static'),
+            'cancel_url' => URL::temporarySignedRoute('checkout.corvus.cancel', now()->addHours(2), [
+                'orderNumber' => $order->order_number,
+            ]),
             'cart' => $this->limit($this->buildCartDescription($order), 255),
             'currency' => $currency,
             'language' => $language,
@@ -172,7 +175,9 @@ class CorvusPayFormService
         $normalizedContext = strtolower($context);
         $callbackAuthorized = $signatureValid
             && $orderNumber !== ''
-            && hash_equals((string) $order->order_number, $orderNumber);
+            && hash_equals((string) $order->order_number, $orderNumber)
+            // A signed payment approval cannot be replayed as an abandonment.
+            && ($normalizedContext !== 'cancel' || $approvalCode === '');
 
         if (! $callbackAuthorized) {
             return [
@@ -319,6 +324,41 @@ class CorvusPayFormService
         });
     }
 
+    /**
+     * The controller has verified an app-signed return URL.
+     * Corvus cancellation redirects are unsigned; they are not payment confirmations.
+     *
+     * @return array{status:string,cancellation_applied:bool}
+     */
+    public function abandonOrder(Order $order): array
+    {
+        if (! $this->isCorvusOrder($order)) {
+            return ['status' => 'ignored', 'cancellation_applied' => false];
+        }
+
+        return DB::transaction(function () use ($order): array {
+            $locked = Order::query()->whereKey($order->id)->lockForUpdate()->with('items')->firstOrFail();
+            if ($locked->paid_at !== null) {
+                return ['status' => 'already_paid', 'cancellation_applied' => false];
+            }
+
+            $payload = is_array($locked->payload) ? $locked->payload : [];
+            $existing = is_array($payload[self::PAYLOAD_KEY] ?? null) ? $payload[self::PAYLOAD_KEY] : [];
+            if (! empty($existing['cancel_restocked_at'])) {
+                return ['status' => 'cancelled', 'cancellation_applied' => false];
+            }
+            $payload[self::PAYLOAD_KEY] = array_merge($existing, [
+                'status' => 'cancelled',
+                'browser_cancellation_authorized' => true,
+            ]);
+            $locked->payload = $payload;
+            $applied = $this->applyCancellationEffectsToLockedOrder($locked);
+            $locked->save();
+
+            return ['status' => 'cancelled', 'cancellation_applied' => $applied];
+        });
+    }
+
     private function applyCancellationEffectsToLockedOrder(Order $locked): bool
     {
         $payload = is_array($locked->payload) ? $locked->payload : [];
@@ -326,7 +366,7 @@ class CorvusPayFormService
         if (
             $locked->paid_at !== null
             || ($existing['status'] ?? null) !== 'cancelled'
-            || ! ($existing['callback_authorized'] ?? false)
+            || ! (($existing['callback_authorized'] ?? false) || ($existing['browser_cancellation_authorized'] ?? false))
             || ! empty($existing['cancel_restocked_at'])
         ) {
             return false;
@@ -345,7 +385,9 @@ class CorvusPayFormService
                 'from_status_id' => $beforeStatusId > 0 ? $beforeStatusId : null,
                 'to_status_id' => (int) $cancelledStatus->id,
                 'changed_by' => $locked->user_id,
-                'comment' => 'CorvusPay callback: payment cancelled, stock restored.',
+                'comment' => ($existing['browser_cancellation_authorized'] ?? false)
+                    ? 'CorvusPay checkout: payment abandoned, stock restored.'
+                    : 'CorvusPay callback: payment cancelled, stock restored.',
             ]);
         }
 

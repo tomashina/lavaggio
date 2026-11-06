@@ -16,7 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(\App\Http\Middleware\PreventPreviewIndexing::class);
         $middleware->prepend(\App\Http\Middleware\LavaggioPublicUrls::class);
         $middleware->prependToGroup('web', \App\Http\Middleware\ResolveHerreraLegacyUrl::class);
+        $middleware->prependToGroup('web', \App\Http\Middleware\CorvusCancelPostback::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\CaptureWatchlineAbandonedCart::class);
+
+        $middleware->prependToPriorityList(
+            \Illuminate\Session\Middleware\StartSession::class,
+            \App\Http\Middleware\CorvusCancelPostback::class,
+        );
 
         $middleware->prependToPriorityList(
             \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
