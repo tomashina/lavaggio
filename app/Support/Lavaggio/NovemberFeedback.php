@@ -15,8 +15,8 @@ class NovemberFeedback
     {
         $snapshot['inactive_resource_ids'] = array_values(array_unique([...($snapshot['inactive_resource_ids'] ?? []), ...array_diff(self::RETIRED_PAGES, [70])]));
         $snapshot['resources'] = array_values(array_filter(array_map(fn (array $resource): array => self::resource($resource), $snapshot['resources'] ?? []), fn (array $resource): bool => (int) ($resource['id'] ?? 0) !== 70));
-        $snapshot['url_overrides'][70] = '/cjenik';
-        $snapshot['url_overrides'][88] = '/cjenik';
+        $snapshot['url_overrides'][70] = '/cjenik-usluzno-pranje';
+        $snapshot['url_overrides'][88] = '/cjenik-usluzno-pranje';
         $snapshot['faqs'] = array_values(array_filter($snapshot['faqs'] ?? [], fn (array $faq): bool => ! in_array((string) ($faq['id'] ?? ''), self::RETIRED_FAQS, true)));
         $snapshot['faqs'] = array_map(function (array $faq): array {
             if ($answer = self::faqAnswer((string) ($faq['id'] ?? ''))) {

@@ -67,7 +67,7 @@ class LavaggioCatalogSetupTest extends TestCase
         $this->seed([LavaggioStorefrontSeeder::class, LavaggioCatalogSeeder::class]);
         $navigation = app(NavigationMenuService::class);
         $items = $navigation->storefrontItemsForLocale('hr');
-        $this->assertSame(['Web shop', 'Praonica', 'Usluge', 'Cjenik', 'Pitanja i odgovori', 'Blog', 'Kontakt'], array_column($items, 'label'));
+        $this->assertSame(['Trgovina', 'Praonica', 'Usluge', 'Cjenik', 'Pitanja i odgovori', 'Blog', 'Kontakt'], array_column($items, 'label'));
         $this->assertSame('catalog', $items[0]['type']);
         $this->assertCount(5, $items[0]['children']);
         $this->assertCount(5, $items[0]['children'][0]['children']);
@@ -84,7 +84,7 @@ class LavaggioCatalogSetupTest extends TestCase
         ]);
         Category::where('code', 'lavaggio-deterdzenti')->firstOrFail()->update(['show_in_menu' => false]);
         $items = $navigation->storefrontItemsForLocale('hr');
-        $this->assertSame(['Web shop', 'Naša praonica'], array_column($items, 'label'));
+        $this->assertSame(['Trgovina', 'Naša praonica'], array_column($items, 'label'));
         $this->assertCount(4, $items[0]['children']);
         $columns = app(StoreSettingsService::class)->footer()['link_columns'];
         $this->assertCount(4, $columns[0]['links']);

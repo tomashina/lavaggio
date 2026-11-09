@@ -168,7 +168,7 @@ Route::middleware(['front.customer-impersonation', 'front.locale', 'front.device
         Route::get('reference/{project}/photos/{photo}/{size?}', [\App\Http\Controllers\Front\ReferenceProjectController::class, 'photo'])
             ->whereNumber('project')->whereNumber('photo')->where('size', 'card|large|original')->name('references.photo');
 
-        Route::get('cjenik', [PageController::class, 'lavaggioPricing'])
+        Route::get('cjenik-usluzno-pranje', [PageController::class, 'lavaggioPricing'])
             ->middleware(\App\Http\Middleware\RequireLavaggioStorefront::class)->name('lavaggio.pricing');
 
         Route::get('pages/category/{slug}', [PageController::class, 'category'])->name('pages.category');
@@ -688,6 +688,7 @@ Route::middleware(['admin.locale', 'auth', 'verified', 'admin.access', 'admin.ma
                 Route::view('system/catalog-features', 'admin.settings.system.catalog-features')->name('system.catalog-features');
                 Route::view('system/store-settings', 'admin.settings.system.store-settings')->name('system.store-settings');
                 Route::view('system/withdrawal-settings', 'admin.settings.system.withdrawal-settings')->name('system.withdrawal-settings');
+                Route::view('api/fira', 'admin.integrations.fira.index')->name('api.fira');
                 Route::prefix('api')
                     ->as('api.')
                     ->group(function (): void {

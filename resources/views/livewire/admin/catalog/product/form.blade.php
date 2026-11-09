@@ -204,6 +204,12 @@
                     @error('form.barcode') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
+                    <label for="lavaggio-product-weight" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Težina za dostavu (kg)') }}</label>
+                    <input id="lavaggio-product-weight" type="number" min="0" step="0.001" wire:model="form.weight_kg" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                    <p class="mt-1 text-xs text-slate-500">{{ __('Težina jednog prodajnog artikla s ambalažom. Ostavite prazno ako težina nije poznata.') }}</p>
+                    @error('form.weight_kg') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Količina sadržaja') }}</label>
                     <input type="number" min="0.001" step="0.001" wire:model="form.content_quantity" placeholder="2.7" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
                     @error('form.content_quantity') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror

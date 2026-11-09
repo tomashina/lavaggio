@@ -365,12 +365,12 @@ class StoreSettingsService
         }
 
         return [
-            // The Lavaggio consumer notice is part of the storefront, including existing previews.
+            // Lavaggio keeps the notice in its legal footer and checkout only.
             'enabled' => $lavaggio || (bool) $this->settings->get('store_legal_warranty_enabled', false),
             'footer_enabled' => $lavaggio || (bool) $this->settings->get('store_legal_warranty_footer_enabled', true),
-            'product_enabled' => $lavaggio || (bool) $this->settings->get('store_legal_warranty_product_enabled', true),
+            'product_enabled' => ! $lavaggio && (bool) $this->settings->get('store_legal_warranty_product_enabled', true),
             'checkout_enabled' => $lavaggio || (bool) $this->settings->get('store_legal_warranty_checkout_enabled', true),
-            'email_enabled' => $lavaggio || (bool) $this->settings->get('store_legal_warranty_email_enabled', true),
+            'email_enabled' => ! $lavaggio && (bool) $this->settings->get('store_legal_warranty_email_enabled', true),
             'asset_url' => asset('assets/legal/legal-guarantee-notice-hr-color.svg'),
             'eu_url' => $euUrl,
         ];

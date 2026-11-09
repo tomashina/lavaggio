@@ -464,7 +464,7 @@ class LavaggioContentImportService
 
             return $local.($fragment !== '' ? '#'.$fragment : '');
         }
-        if (str_starts_with($value, '/') && preg_match('~^/(?:page/|stranica/|blog(?:/|$)|(?:faq|pitanja-i-odgovori|shop|trgovina|contact|kontakt|cjenik)(?:[?#]|$))~', $value)) {
+        if (str_starts_with($value, '/') && preg_match('~^/(?:page/|stranica/|blog(?:/|$)|(?:faq|pitanja-i-odgovori|shop|trgovina|contact|kontakt|cjenik|cjenik-usluzno-pranje)(?:[?#]|$))~', $value)) {
             return \App\Support\Lavaggio\PublicUrls::url($value);
         }
 

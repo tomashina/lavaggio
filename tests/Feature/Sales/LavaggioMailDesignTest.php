@@ -55,6 +55,14 @@ class LavaggioMailDesignTest extends TestCase
             $this->assertStringContainsString('#848ac4', $html, $key);
             $this->assertStringContainsString('podrska@example.invalid', $html, $key);
             $this->assertStringContainsString('Ogledna tvrtka', $html, $key);
+            $this->assertSame(1, substr_count($html, 'data-lavaggio-consumer-footer'), $key);
+            $this->assertStringContainsString('Bareda d.o.o., Barban 70, 52207 Barban, Hrvatska, OIB: 96889385802.', $html, $key);
+            $this->assertStringContainsString('Ovo pravo ne odnosi se na kupnje za poslovne ili profesionalne potrebe.', $html, $key);
+            $this->assertStringContainsString('mailto:webshop@lavaggio.hr', $html, $key);
+            $this->assertStringContainsString('href="'.route('returns.create', ['returnRequestSlug' => __('return_request.slug')]).'" style="color:#b91c1c;"', $html, $key);
+            foreach (['Zakonsko jamstvo', 'legal-guarantee-notice-hr-color.svg', 'Za materijalne nedostatke robe odgovaramo najmanje dvije godine', 'jednostavan obrazac za raskid ugovora'] as $removedCopy) {
+                $this->assertStringNotContainsString($removedCopy, $html, $key);
+            }
             foreach (['Watchline', 'Liber Media', 'BALI', 'igru i učenje', 'sunčane naočale'] as $oldCopy) {
                 $this->assertStringNotContainsString($oldCopy, $html, $key);
             }
@@ -130,7 +138,7 @@ class LavaggioMailDesignTest extends TestCase
         $this->get('/preview/lavaggio-mail/order-customer')->assertNotFound();
     }
 
-    public function test_customer_order_mail_includes_official_warranty_and_withdrawal_links_even_with_old_disabled_settings(): void
+    public function test_customer_order_mail_replaces_old_warranty_with_discreet_consumer_footer(): void
     {
         app(SystemSettingsService::class)->putMany([
             'store_email_enabled' => true,
@@ -158,17 +166,18 @@ class LavaggioMailDesignTest extends TestCase
         $html = $customerMail->getHtmlBody();
         $warranty = app(StoreSettingsService::class)->legalWarranty();
         $withdrawalUrl = route('returns.create', ['returnRequestSlug' => __('return_request.slug')]);
-        $this->assertStringContainsString('Za materijalne nedostatke robe odgovaramo najmanje dvije godine', $html);
-        $this->assertStringContainsString('href="'.$warranty['asset_url'].'"', $html);
-        $this->assertStringContainsString('href="'.$warranty['eu_url'].'"', $html);
+        $this->assertStringNotContainsString('Za materijalne nedostatke robe odgovaramo najmanje dvije godine', $html);
+        $this->assertStringNotContainsString('href="'.$warranty['asset_url'].'"', $html);
+        $this->assertStringNotContainsString('href="'.$warranty['eu_url'].'"', $html);
         $this->assertStringContainsString('href="'.$withdrawalUrl.'"', $html);
-        $this->assertStringContainsString('Razlog nije potrebno navesti.', $html);
+        $this->assertStringContainsString('bez navođenja razloga, osim u zakonom propisanim slučajevima.', $html);
+        $this->assertStringContainsString('data-lavaggio-consumer-footer', $html);
         $this->assertStringNotContainsString('jednostavan obrazac za raskid ugovora', $messages->first()->getOriginalMessage()->getHtmlBody());
 
         $this->get('/preview/lavaggio-mail/order-customer')->assertOk()
-            ->assertSee($warranty['asset_url'], false)
+            ->assertDontSee($warranty['asset_url'], false)
             ->assertSee($withdrawalUrl, false)
-            ->assertSee('najmanje dvije godine');
+            ->assertDontSee('najmanje dvije godine');
     }
 
     public function test_voucher_receipt_displays_the_square_qr_and_keeps_test_payment_warning(): void

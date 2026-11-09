@@ -76,7 +76,7 @@
             <p class="mt-3 text-sm text-slate-600">{{ __('ui.auth.login.new_customer_text') }}</p>
 
             <a href="{{ route(! app(\App\Services\Pricing\B2BAccessService::class)->allowsPrivateCustomers() ? 'front.auth.b2b-register' : 'front.auth.register', ['intended' => (string) request('intended', route('account.dashboard'))]) }}" class="commerce-secondary-action mt-5 px-6 py-2.5 text-sm">
-                {{ ! app(\App\Services\Pricing\B2BAccessService::class)->allowsPrivateCustomers() ? __('ui.b2b.pricing.register') : __('Registracija privatnog kupca') }}
+                {{ ! app(\App\Services\Pricing\B2BAccessService::class)->allowsPrivateCustomers() ? __('ui.b2b.pricing.register') : __(config('storefront.home') === 'lavaggio' ? 'Registracija' : 'Registracija privatnog kupca') }}
             </a>
             @if (! $libermediaStorefront && app(\App\Services\Pricing\B2BAccessService::class)->b2cEnabled())
                 <a href="{{ route('front.auth.b2b-register', ['intended' => request('intended', route('account.dashboard'))]) }}" class="commerce-secondary-action mt-3 px-6 py-2.5 text-sm">{{ __('Registracija tvrtke') }}</a>

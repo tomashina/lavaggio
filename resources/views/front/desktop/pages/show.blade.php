@@ -6,6 +6,13 @@
         ?? $page->translations->firstWhere('locale', $fallbackLocale);
     $pageLinkCards = app(\App\Support\Lavaggio\InfoPageLinkCards::class)->fromHtml((string) $translation?->body_html);
     $isLavaggio = config('storefront.home') === 'lavaggio';
+    if ($isLavaggio && $page->code === 'lavaggio-modx-68' && $pageLinkCards !== []) {
+        $pricingUrl = route('lavaggio.pricing', absolute: false);
+        $hasPricingCard = collect($pageLinkCards)->contains(fn ($card) => rtrim((string) parse_url($card['url'], PHP_URL_PATH), '/') === $pricingUrl);
+        if (! $hasPricingCard) {
+            $pageLinkCards[] = ['title' => 'Cjenik uslužnog pranja', 'url' => $pricingUrl, 'icon' => 'file-lines'];
+        }
+    }
     $isReviewPage = $isLavaggio && ($page->code === 'lavaggio-modx-78' || $translation?->slug === 'recenzije-klijenata');
     $isDeliveryPage = $isLavaggio && ($page->code === 'lavaggio-shop-dostava' || $translation?->slug === 'dostava');
     $deliverySections = $isDeliveryPage ? app(\App\Support\Lavaggio\DeliveryPageSections::class)->fromHtml((string) $translation?->body_html) : null;

@@ -27,7 +27,7 @@ class ServicePricingAnchorPrices
             $xpath = new DOMXPath($document);
             $changed = false;
             foreach (iterator_to_array($xpath->query('//*[@id="service-pricing-root"]//table[not(ancestor::table)]')) as $table) {
-                $header = $xpath->query('./thead/tr[1]', $table)->item(0);
+                $header = $this->header($document, $xpath, $table);
                 $headings = $header ? $this->cells($header) : [];
                 if (count($headings) !== 2 || $this->normalize($headings[0]->textContent) !== 'usluga' || $this->normalize($headings[1]->textContent) !== 'cijena') {
                     continue;
@@ -45,7 +45,7 @@ class ServicePricingAnchorPrices
 
                 $prices = $this->baseline();
                 $service = '';
-                foreach ($xpath->query('./tbody/tr', $table) as $row) {
+                foreach ($xpath->query('./tbody/tr|./tr', $table) as $row) {
                     $cells = $this->cells($row);
                     if (count($cells) !== 2) {
                         continue;
@@ -105,6 +105,36 @@ class ServicePricingAnchorPrices
             libxml_clear_errors();
             libxml_use_internal_errors($previous);
         }
+    }
+
+    private function header(DOMDocument $document, DOMXPath $xpath, DOMElement $table): ?DOMElement
+    {
+        $header = $xpath->query('./thead/tr[1]', $table)->item(0);
+        if ($header instanceof DOMElement) {
+            return $header;
+        }
+
+        // Quill saves pasted table headings as ordinary cells, sometimes merging both labels.
+        $firstRow = $xpath->query('./tbody/tr[1]|./tr[1]', $table)->item(0);
+        $cells = $firstRow instanceof DOMElement ? $this->cells($firstRow) : [];
+        $isMergedHeading = count($cells) === 1 && str_replace(' ', '', $this->normalize($cells[0]->textContent)) === 'uslugacijena';
+        $isTwoCellHeading = count($cells) === 2 && $this->normalize($cells[0]->textContent) === 'usluga' && $this->normalize($cells[1]->textContent) === 'cijena';
+        if (! $isMergedHeading && ! $isTwoCellHeading) {
+            return null;
+        }
+
+        $thead = $document->createElement('thead');
+        $header = $document->createElement('tr');
+        foreach (['Usluga', 'Cijena'] as $label) {
+            $heading = $document->createElement('th', $label);
+            $heading->setAttribute('scope', 'col');
+            $header->appendChild($heading);
+        }
+        $thead->appendChild($header);
+        $table->insertBefore($thead, $table->firstChild);
+        $firstRow->parentNode->removeChild($firstRow);
+
+        return $header;
     }
 
     private function cells(DOMElement $row): array

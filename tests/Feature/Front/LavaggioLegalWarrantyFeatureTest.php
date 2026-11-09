@@ -13,7 +13,7 @@ class LavaggioLegalWarrantyFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_footer_links_to_returns_and_discreet_warranty_while_product_and_checkout_keep_the_notice(): void
+    public function test_footer_and_checkout_keep_the_notice_without_showing_it_beneath_product_actions(): void
     {
         config(['storefront.home' => 'lavaggio', 'storefront_cache.enabled' => false, 'commerce.b2b_only' => false]);
         app()->setLocale('hr');
@@ -42,9 +42,9 @@ class LavaggioLegalWarrantyFeatureTest extends TestCase
         }
 
         foreach ([route('products.show', ['slug' => 'lavaggio-jamstvo']) => 'product', route('checkout.create') => 'checkout'] as $url => $position) {
-            $response = $this->get($url)->assertOk()->assertSee('Zakonsko jamstvo – najmanje 2 godine');
+            $response = $this->get($url)->assertOk();
             $xpath = $this->xpath($response->getContent());
-            $this->assertSame(1, $xpath->query('//*[@data-legal-warranty-notice="'.$position.'"]//a[@href="'.$asset.'"]')->count(), $position);
+            $this->assertSame($position === 'product' ? 0 : 1, $xpath->query('//*[@data-legal-warranty-notice="'.$position.'"]//a[@href="'.$asset.'"]')->count(), $position);
             $this->assertSame(1, $xpath->query('//dialog[@id="legal-warranty-modal"]//img[@src="'.$asset.'"]')->count(), $position);
             $this->assertSame(1, $xpath->query('//dialog[@id="legal-warranty-modal"]')->count(), $position);
         }

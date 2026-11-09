@@ -83,8 +83,8 @@ class PublicUrls
             return $url;
         }
         $path = '/'.self::uri(ltrim((string) ($parts['path'] ?? ''), '/'));
-        if (in_array(rtrim($path, '/'), ['/stranica/cjenik', '/stranica/cjenik-usluzno-pranje'], true)) {
-            $path = '/cjenik';
+        if (in_array(rtrim($path, '/'), ['/cjenik', '/cjenik-usluzno-pranje', '/stranica/cjenik', '/stranica/cjenik-usluzno-pranje'], true)) {
+            $path = '/cjenik-usluzno-pranje';
         }
         $prefix = isset($parts['host']) ? (($parts['scheme'] ?? 'https').'://'.$parts['host'].(isset($parts['port']) ? ':'.$parts['port'] : '')) : '';
 

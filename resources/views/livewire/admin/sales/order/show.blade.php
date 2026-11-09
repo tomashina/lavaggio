@@ -58,6 +58,10 @@
         </div>
     </div>
 
+    @if (config('storefront.home') === 'lavaggio' && (auth()->user()->isA('superadmin') || auth()->user()->can('sales.orders.update')))
+        <livewire:admin.integrations.fira.order-panel :order-id="$order->id" :key="'fira-order-'.$order->id" />
+    @endif
+
     <div class="grid gap-6 xl:grid-cols-3">
         <div class="admin-panel admin-form-panel p-6 xl:col-span-2">
             <p class="admin-section-title">{{ __('Order Snapshot') }}</p>

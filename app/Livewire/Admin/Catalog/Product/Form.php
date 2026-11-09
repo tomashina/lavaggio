@@ -340,6 +340,7 @@ class Form extends Component
             }
             if ($this->isLavaggioEditor()) {
                 $productData += [
+                    'weight_kg' => ($validated['form']['weight_kg'] ?? '') === '' ? null : $validated['form']['weight_kg'],
                     'is_professional' => (bool) ($validated['form']['is_professional'] ?? false),
                     'supplier_stock_qty' => (int) $validated['form']['supplier_stock_qty'],
                     'content_quantity' => $validated['form']['content_quantity'] ?: null,
@@ -1071,6 +1072,7 @@ class Form extends Component
 
         if ($this->isLavaggioEditor()) {
             $rules['form.supplier_stock_qty'] = ['required', 'integer', 'min:0'];
+            $rules['form.weight_kg'] = ['nullable', 'numeric', 'min:0', 'max:9999999.999'];
         }
 
         if ($this->useManufacturers()) {
@@ -1091,6 +1093,9 @@ class Form extends Component
         if (! $this->usesExtendedProductTabs()) {
             $hiddenFields = ['unit_of_measure', 'minimum_order_quantity', 'order_quantity_step',
                 'weight_kg', 'length_cm', 'width_cm', 'height_cm', 'shipping_labels', 'energy_label_required'];
+            if ($this->isLavaggioEditor()) {
+                $hiddenFields = array_diff($hiddenFields, ['weight_kg']);
+            }
             if ($this->isWatchlineEditor()) {
                 $hiddenFields[] = 'barcode';
             }

@@ -101,7 +101,7 @@ class LavaggioStorefrontTest extends TestCase
         $xpath = new \DOMXPath($document);
         $triggers = $xpath->query('//nav[contains(@class,"lavaggio-header-navigation")]//button[@data-lavaggio-catalog-trigger]');
         $this->assertSame(1, $triggers->length);
-        $this->assertStringContainsString('Web shop', $triggers->item(0)->textContent);
+        $this->assertStringContainsString('Trgovina', $triggers->item(0)->textContent);
         $this->assertSame('false', $triggers->item(0)->getAttribute('aria-expanded'));
         $links = $xpath->query('//*[@data-lavaggio-catalog-menu]//a[@data-lavaggio-catalog-root]');
         $this->assertSame(1, $links->length);
@@ -111,7 +111,7 @@ class LavaggioStorefrontTest extends TestCase
         $this->assertSame(0, $xpath->query('//*[@data-lavaggio-catalog-menu]//img')->length);
         $mobileCatalog = '//*[@data-mobile-menu-panel]//details[@data-mobile-menu-catalog]';
         $this->assertSame(1, $xpath->query($mobileCatalog)->length);
-        $this->assertStringContainsString('Web shop', $xpath->query($mobileCatalog.'/summary')->item(0)->textContent);
+        $this->assertStringContainsString('Trgovina', $xpath->query($mobileCatalog.'/summary')->item(0)->textContent);
         $this->assertSame(1, $xpath->query($mobileCatalog.'//a[@href="'.route('categories.show', 'njega').'"]')->length);
         $this->assertSame(1, $xpath->query($mobileCatalog.'//a[@href="'.route('categories.show', 'omeksivaci').'"]')->length);
 

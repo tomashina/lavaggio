@@ -43,6 +43,8 @@ U administraciji **Sadržaj → Stranice**, **Blog** i **Česta pitanja** uređu
 
 U administraciji **Sadržaj → Navigacija → Slike kategorija u Web shop izborniku** moguće je učitati, zamijeniti ili ukloniti fotografiju svake glavne kategorije i promijeniti njezin alt opis. Slike se mijenjaju zajedno s odabranom kategorijom u desktop izborniku. `LavaggioNavigationImagesSeeder` postavlja početnih pet fotografija samo ako kategorija još nema spremljen odabir; čuva zamjene i namjerna uklanjanja. Optimizirane slike, izvori referentnih fotografija i korišteni promptovi nalaze se u `public/assets/lavaggio/images/categories/`.
 
+U **Katalog → Proizvodi → Sadržaj → Podaci za prikaz artikla** polje **Težina za dostavu (kg)** sprema težinu jednog prodajnog artikla s ambalažom, na tri decimale. Nepoznata težina ostaje prazna. Postojeći izračun dostave zbraja težinu artikala pomnoženu količinama; ova promjena ne uvodi nove cijene dostave za pošiljke iznad 20 kg.
+
 Postavke brenda i početne stranice nalaze se u `system_settings`, početne vrijednosti u `LavaggioStorefrontSeeder`. Poruke se lokalno bilježe u zapisnik; stare integracije nisu aktivirane.
 
 `php artisan lavaggio:configure-checkout` postavlja lokalni pregled GLS dostave na adresu, GLS paketomata i BOX NOW paketomata te pouzeća i bankovne transakcije. Naredba čuva sigurnosnu kopiju baze, nasljeđuje postojeću cijenu dostave i prag besplatne dostave te pri ponovnom pokretanju čuva naknadne izmjene u administraciji. Početni lokalni pregled koristi 4,90 € i besplatnu dostavu iznad 50 €; cijene dostavnih službi uređuju se u administraciji.

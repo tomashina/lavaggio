@@ -1,0 +1,6 @@
+<div data-lavaggio-consumer-footer style="margin-top:20px;text-align:left;font-size:11px;line-height:1.7;color:#6b6772;">
+    <p style="margin:0 0 10px;">Internetskom trgovinom <a href="https://www.lavaggio.hr" style="color:#656ba8;">www.lavaggio.hr</a> upravlja Bareda d.o.o., Barban 70, 52207 Barban, Hrvatska, OIB: 96889385802.</p>
+    <p style="margin:0 0 10px;">Potrošači (fizičke osobe koje kupuju izvan svoje poslovne ili profesionalne djelatnosti) imaju pravo na jednostrani raskid ugovora u roku od 14 dana od preuzimanja robe, bez navođenja razloga, osim u zakonom propisanim slučajevima. Ovo pravo ne odnosi se na kupnje za poslovne ili profesionalne potrebe.</p>
+    <p style="margin:0 0 10px;">Detaljne informacije o uvjetima kupnje, dostavi, povratima i reklamacijama dostupne su na našoj internetskoj trgovini. Propisane informacije o jednostranom raskidu ugovora i obrazac nalaze se na <a href="{{ route('returns.create', ['returnRequestSlug' => __('return_request.slug')]) }}" style="color:#b91c1c;">ovom linku</a>.</p>
+    <p style="margin:0;">Za sva pitanja obratite nam se na <a href="mailto:webshop@lavaggio.hr" style="color:#656ba8;font-weight:bold;">webshop@lavaggio.hr</a>.</p>
+</div>

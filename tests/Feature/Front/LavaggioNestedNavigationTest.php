@@ -52,7 +52,7 @@ class LavaggioNestedNavigationTest extends TestCase
 
         $navigation = app(NavigationMenuService::class);
         $items = $navigation->storefrontItemsForLocale('hr');
-        $this->assertSame(['Web shop', 'Praonica', 'ČPP'], array_column($items, 'label'));
+        $this->assertSame(['Trgovina', 'Praonica', 'ČPP'], array_column($items, 'label'));
         $this->assertSame(['Kako prati rublje kod nas'], array_column($items[1]['children'][0]['children'], 'label'));
         $english = $navigation->storefrontItemsForLocale('en')[1]['children'][0]['children'][0];
         $this->assertSame('How to wash', $english['label']);
@@ -128,6 +128,33 @@ class LavaggioNestedNavigationTest extends TestCase
         $this->assertSame(['Usluge'], array_column(app(NavigationMenuService::class)->configuredItems()[0]['children'], 'label'));
     }
 
+    public function test_mobile_laundry_show_all_page_includes_canonical_service_pricing_card(): void
+    {
+        $parent = $this->page('Praonica', 'usluge');
+        $parent->update(['code' => 'lavaggio-modx-68']);
+        $body = '<ul><li><a href="/stranica/usluzna-praonica-rublja">Uslužna praonica rublja</a></li></ul>';
+        $translation = $parent->translations()->first();
+        $translation->update(['body_html' => $body]);
+        $pricing = $this->page('Cjenik', 'cjenik-usluzno-pranje');
+        $pricing->update(['code' => 'lavaggio-modx-88']);
+        $this->settings([['type' => 'page', 'page_id' => $parent->id, 'children' => [
+            ['type' => 'page', 'page_id' => $pricing->id],
+        ]]]);
+
+        $response = $this->get(route('home'))->assertOk();
+        $document = new \DOMDocument;
+        @$document->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($document);
+        $this->assertSame(1, $xpath->query('//*[@data-mobile-menu-panel]//a[@href="'.route('pages.show', 'usluge').'"][contains(., "Prikaži sve")]')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-mobile-menu-panel]//a[@href="'.route('lavaggio.pricing').'"]')->length);
+
+        $this->get(route('pages.show', 'usluge'))->assertOk()
+            ->assertSee('href="/cjenik-usluzno-pranje"', false)->assertSee('Cjenik uslužnog pranja');
+        $this->assertSame($body, $translation->fresh()->body_html);
+        $translation->update(['body_html' => str_replace('</ul>', '<li><a href="/cjenik">Moj cjenik</a></li></ul>', $body)]);
+        $this->get(route('pages.show', 'usluge'))->assertOk()->assertSee('Moj cjenik')->assertDontSee('Cjenik uslužnog pranja');
+    }
+
     public function test_invalid_nested_page_does_not_overwrite_saved_navigation(): void
     {
         $user = User::factory()->create();
@@ -155,7 +182,7 @@ class LavaggioNestedNavigationTest extends TestCase
         $first = $service->storefrontItemsForLocale('hr');
         $this->seed(LavaggioContentNavigationSeeder::class);
         $this->assertSame($first, $service->storefrontItemsForLocale('hr'));
-        $this->assertSame(['Web shop', 'Praonica', 'Pitanja i odgovori', 'TV studio', 'Tko smo mi', 'Kontakt'], array_column($first, 'label'));
+        $this->assertSame(['Trgovina', 'Praonica', 'Pitanja i odgovori', 'TV studio', 'Tko smo mi', 'Kontakt'], array_column($first, 'label'));
         $groups = $first[1]['children'];
         $this->assertSame([
             'Uslužna praonica rublja', 'Prikup i dostava rublja',

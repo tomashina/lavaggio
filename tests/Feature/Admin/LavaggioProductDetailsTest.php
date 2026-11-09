@@ -15,6 +15,7 @@ use App\Models\Catalog\Product\ProductEnergyDeclaration;
 use App\Models\User;
 use App\Models\User\CustomerGroup;
 use App\Services\Settings\SystemSettingsService;
+use App\Services\Shipping\ShippingCalculator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Silber\Bouncer\BouncerFacade as Bouncer;
@@ -35,7 +36,8 @@ class LavaggioProductDetailsTest extends TestCase
                 ->assertDontSee('Energetske oznake')
                 ->assertDontSee('Logistika')
                 ->assertDontSee('B2B cijene')
-                ->assertSeeHtml('wire:model="form.barcode"');
+                ->assertSeeHtml('wire:model="form.barcode"')
+                ->assertSeeHtml('wire:model="form.weight_kg"');
 
             foreach (['energy', 'logistics', 'b2b'] as $tab) {
                 $editor->call('setTab', $tab)->assertSet('activeTab', 'content')
@@ -178,7 +180,7 @@ class LavaggioProductDetailsTest extends TestCase
                 ->set('form.name', 'Ažurirani proizvod')->set('form.base_price', 24.95)
                 ->set('form.barcode', '3851234567891')
                 ->set('form.unit_of_measure', 'invalid')->set('form.minimum_order_quantity', 0)
-                ->set('form.order_quantity_step', 0)->set('form.weight_kg', -5)
+                ->set('form.order_quantity_step', 0)
                 ->set('form.length_cm', -5)->set('form.width_cm', -5)->set('form.height_cm', -5)
                 ->set('form.shipping_labels', ['invalid'])->set('form.energy_label_required', 'invalid')
                 ->set('packages', $hiddenRows)->set('groupPrices', $hiddenRows)->set('energyDeclarations', $hiddenRows)
@@ -219,12 +221,44 @@ class LavaggioProductDetailsTest extends TestCase
         $this->assertSame('pcs', $product->unit_of_measure);
         $this->assertSame(1, $product->minimum_order_quantity);
         $this->assertSame(1, $product->order_quantity_step);
-        $this->assertNull($product->weight_kg);
+        $this->assertSame('10.000', $product->weight_kg);
         $this->assertNull($product->shipping_labels);
         $this->assertFalse($product->energy_label_required);
         $this->assertFalse($product->packages()->exists());
         $this->assertFalse($product->groupPrices()->exists());
         $this->assertFalse($product->energyDeclarations()->exists());
+    }
+
+    public function test_lavaggio_shipping_weight_can_be_edited_cleared_and_multiplied_by_cart_quantity(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+        $user = User::factory()->create();
+        $product = Product::query()->create(['code' => 'LAV-WEIGHT', 'base_price' => 20, 'weight_kg' => 2.5]);
+        $product->translations()->create(['locale' => 'hr', 'name' => 'Deterdžent', 'slug' => 'deterdzent-weight']);
+
+        $editor = Livewire::actingAs($user)->test(Form::class, ['productId' => $product->id])
+            ->assertSet('form.weight_kg', '2.500')
+            ->set('form.weight_kg', 10.125)->call('save')->assertHasNoErrors();
+        $this->assertSame('10.125', $product->fresh()->weight_kg);
+        $profile = app(ShippingCalculator::class)->profile(collect([
+            ['product' => $product->fresh(), 'quantity' => 3],
+            ['product' => new Product(['weight_kg' => 0.75]), 'quantity' => 2],
+        ]));
+        $this->assertSame(31.875, $profile['total_weight_kg']);
+        $this->assertSame(31.875, $profile['chargeable_weight_kg']);
+        $this->assertFalse($profile['has_missing_weight']);
+
+        foreach ([-1, 'nepoznato', 10000000] as $invalidWeight) {
+            $editor->set('form.weight_kg', $invalidWeight)->call('save')
+                ->assertHasErrors('form.weight_kg');
+            $this->assertSame('10.125', $product->fresh()->weight_kg);
+        }
+
+        $editor->set('form.weight_kg', '')->call('save')->assertHasNoErrors();
+        $this->assertNull($product->fresh()->weight_kg);
+        $this->assertTrue(app(ShippingCalculator::class)->profile(collect([
+            ['product' => $product->fresh(), 'quantity' => 1],
+        ]))['has_missing_weight']);
     }
 
     public function test_laundry_product_details_can_be_saved_and_reopened_in_admin(): void

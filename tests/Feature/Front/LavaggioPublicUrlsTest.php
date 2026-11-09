@@ -31,8 +31,10 @@ class LavaggioPublicUrlsTest extends TestCase
         $this->assertSame('/prijava', route('front.auth.login', absolute: false));
         $this->assertSame('/naplata', route('checkout.create', absolute: false));
         $this->get('http://localhost/contact?tema=narudzba')->assertRedirect('/kontakt?tema=narudzba')->assertStatus(301);
-        $this->get('http://localhost/page/cjenik-usluzno-pranje')->assertRedirect('/cjenik')->assertStatus(301);
-        $this->get('http://localhost/stranica/cjenik')->assertRedirect('/cjenik')->assertStatus(301);
+        $this->assertSame('/cjenik-usluzno-pranje', route('lavaggio.pricing', absolute: false));
+        foreach (['/cjenik', '/page/cjenik-usluzno-pranje', '/stranica/cjenik', '/stranica/cjenik-usluzno-pranje'] as $legacy) {
+            $this->get('http://localhost'.$legacy.'?izvor=meni')->assertRedirect('/cjenik-usluzno-pranje?izvor=meni')->assertStatus(301);
+        }
         $this->assertSame('/kontakt#podrska', PublicUrls::url('/contact#podrska'));
         $this->assertSame('https://example.org/contact', PublicUrls::url('https://example.org/contact'));
         $this->assertSame('#kontakt', PublicUrls::url('#kontakt'));

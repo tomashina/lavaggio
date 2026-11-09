@@ -68,7 +68,7 @@ class LavaggioNovemberFeedbackTest extends TestCase
         foreach ([69, 87, 92, 154, 155, 322] as $id) {
             $this->assertContains($id, $next['inactive_resource_ids']);
         }
-        $this->assertSame('/cjenik', $next['url_overrides'][88]);
+        $this->assertSame('/cjenik-usluzno-pranje', $next['url_overrides'][88]);
         $this->assertNotContains('72-1', array_column($next['faqs'], 'id'));
     }
 

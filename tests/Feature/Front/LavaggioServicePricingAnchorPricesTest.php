@@ -2,9 +2,13 @@
 
 namespace Tests\Feature\Front;
 
+use App\Livewire\Admin\Content\Page\Form;
 use App\Models\Content\Page\InfoPage;
+use App\Models\User;
 use App\Support\Lavaggio\ServicePricingAnchorPrices;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
+use Silber\Bouncer\BouncerFacade as Bouncer;
 use Tests\TestCase;
 
 class LavaggioServicePricingAnchorPricesTest extends TestCase
@@ -46,7 +50,7 @@ class LavaggioServicePricingAnchorPricesTest extends TestCase
         $page = InfoPage::create(['code' => 'lavaggio-modx-88', 'is_active' => true]);
         $translation = $page->translations()->create(['locale' => 'hr', 'slug' => 'cjenik-usluzno-pranje', 'title' => 'Cjenik', 'body_html' => $body]);
 
-        $response = $this->get('/cjenik')->assertOk()->assertSee('lavaggio-service-pricing.css')
+        $response = $this->get('/cjenik-usluzno-pranje')->assertOk()->assertSee('lavaggio-service-pricing.css')
             ->assertSee('Moja nova napomena.')->assertSee('<strong>5,00€ / kom</strong>', false);
         $xpath = $this->xpath($response->getContent());
         $anchors = $xpath->query('//td[@class="lavaggio-service-pricing-anchor"]');
@@ -56,6 +60,29 @@ class LavaggioServicePricingAnchorPricesTest extends TestCase
         config(['storefront.home' => 'watchline']);
         $this->get(route('pages.show', 'cjenik-usluzno-pranje'))->assertOk()
             ->assertDontSee('lavaggio-service-pricing.css')->assertSee($body, false);
+    }
+
+    public function test_editor_saved_merged_or_plain_heading_keeps_the_fixed_reference_prices(): void
+    {
+        config(['storefront.home' => 'lavaggio', 'storefront.theme' => 'herrera', 'app.locale' => 'hr']);
+        app()->setLocale('hr');
+        $page = InfoPage::create(['code' => 'lavaggio-modx-88', 'is_active' => true]);
+        $translation = $page->translations()->create(['locale' => 'hr', 'slug' => 'cjenik-usluzno-pranje', 'title' => 'Cjenik']);
+        $admin = User::factory()->create();
+        Bouncer::assign('admin')->to($admin);
+        foreach (['<td data-row="1">UslugaCijena</td>', '<td>Usluga</td><td>Cijena</td>'] as $heading) {
+            $body = '<table><tbody><tr>'.$heading.'</tr>'
+                .'<tr><td data-row="2">Košulja - dugi rukavi</td><td data-row="2">8,00 € / kom</td></tr>'
+                .'<tr><td>Dostava</td><td><br></td></tr></tbody></table><p>Urednička napomena.</p>';
+            Livewire::actingAs($admin)->test(Form::class, ['pageId' => $page->id])
+                ->set('form.body_html', $body)->call('save')->assertHasNoErrors();
+            $response = $this->get('/cjenik-usluzno-pranje')->assertOk()
+                ->assertSee('na dan 10.09.2026.')->assertSee('8,00 € / kom')->assertSee('Urednička napomena.');
+            $xpath = $this->xpath($response->getContent());
+            $this->assertSame(3, $xpath->query('//table/thead/tr/th')->length);
+            $this->assertSame('4,00€ / kom', $xpath->query('//td[@class="lavaggio-service-pricing-anchor"]')->item(0)->textContent);
+            $this->assertSame($body, $translation->fresh()->body_html);
+        }
     }
 
     private function xpath(string $html): \DOMXPath

@@ -2,7 +2,9 @@
 
 `php artisan lavaggio:apply-november-feedback` prikazuje plan bez upisa. Nakon pregleda, `php artisan lavaggio:apply-november-feedback --apply` primjenjuje uske izmjene samo na provjerenoj lokalnoj SQLite bazi. Komanda odbija produkcijsku ili drugu bazu. Prije upisa sprema konzistentnu privatnu SQLite kopiju u `storage/app/private/lavaggio-feedback-backups/` i primjenjuje plan unutar transakcije. Ne pokretati globalni seed/import preko sadržaja koji je klijent uređivao.
 
-Plan deaktivira uvezenu samoposlužnu granu i cjenik (69, 87, 92, 154, 155), informativni poklon bon (322) i posrednu stranicu Cjenik (70). Uslužni cjenik (88) ostaje aktivan, dostupan izravno na `/cjenik`. Navigacija zadržava ostale korisnikove stavke. Opća webshop funkcija poklon bonova i postojeće narudžbe ne mijenjaju se.
+Plan deaktivira uvezenu samoposlužnu granu i cjenik (69, 87, 92, 154, 155), informativni poklon bon (322) i posrednu stranicu Cjenik (70). Uslužni cjenik (88) ostaje aktivan, dostupan izravno na `/cjenik-usluzno-pranje`; stari `/cjenik` i stare adrese ispod `/page` i `/stranica` trajno se preusmjeravaju na njega. Navigacija zadržava ostale korisnikove stavke. Opća webshop funkcija poklon bonova i postojeće narudžbe ne mijenjaju se.
+
+Dopuna od 9. studenoga 2026. vraća prethodno odobren datum 10.09.2026. ako je u uređivaču ponovno spremljen 01.06.2026., bez izmjene cijena ili ostalog teksta. Prikaz sidrenih cijena prepoznaje i tablice spremljene u uređivaču sa zaglavljem `UslugaCijena` u prvom retku. Stranica Praonice iza mobilnog „Prikaži sve” dodaje karticu cjenika uz postojeće kartice; izvorni uređeni sadržaj ostaje spremljen bez izmjena.
 
 Samo prepoznati izvorni tekstovi FAQ-a, načina plaćanja, radnog vremena i uvjeta praonice usklađuju se s prestankom samoposlužne usluge. Ako je urednik promijenio tekst, komanda ga čuva i prijavljuje za ručni pregled. Poveznice se prevode zasebno, bez prepisivanja ostalog sadržaja. Povijesne blog objave zadržavaju tekst, uključujući povijesne spomene ugašene usluge; nedostupne poveznice postaju običan tekst.
 

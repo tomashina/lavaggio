@@ -66,7 +66,7 @@ class LavaggioNovemberFeedbackMigrationTest extends TestCase
         $this->assertStringContainsString('od 08h do 16h', $hours);
         $this->assertStringNotContainsString('Samoposlužna', $hours);
         $this->assertStringContainsString('/stranica/radno-vrijeme-praonice-rublja', $hours);
-        $this->assertStringContainsString('href="/cjenik"', $faqs['72-4']->translations()->sole()->answer_html);
+        $this->assertStringContainsString('href="/cjenik-usluzno-pranje"', $faqs['72-4']->translations()->sole()->answer_html);
         foreach ([68, 80, 174] as $id) {
             $translation = $pages[$id]->translations()->sole();
             $this->assertStringNotContainsString('samopos', mb_strtolower((string) $translation->meta_description));

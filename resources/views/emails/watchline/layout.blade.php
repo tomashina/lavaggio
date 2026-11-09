@@ -37,6 +37,9 @@
                 @if ($mailBrand['email'] || $mailBrand['phone'])<br>@endif
                 @if ($mailBrand['address'])<span style="white-space:pre-line;">{{ $mailBrand['address'] }}</span><br>@endif
                 @isset($footer){{ $footer }}@else{{ now()->year }} · Hvala na povjerenju.@endisset
+                @if (\App\Support\Mail\StoreMailBrand::isLavaggio())
+                    @include('emails.lavaggio.consumer-footer')
+                @endif
             </td></tr>
         </table>
     </td></tr>

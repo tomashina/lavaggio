@@ -90,7 +90,7 @@ class NavigationMenuService
         return [[
             'key' => 'lavaggio-catalog',
             'type' => 'catalog',
-            'label' => 'Web shop',
+            'label' => 'Trgovina',
             'url' => $shopUrl,
             'children' => $categories,
             'open_in_new_tab' => false,

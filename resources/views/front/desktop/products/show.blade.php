@@ -874,7 +874,6 @@
             </form>
 
             @if ($isLavaggioProductDetail)
-                @include('front.partials.legal-warranty-notice', ['warrantyVariant' => 'product'])
                 @include('front.partials.herrera-product-specifications')
                 @include('front.partials.product-documents')
             @else

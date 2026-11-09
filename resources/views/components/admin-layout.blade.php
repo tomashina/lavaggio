@@ -1336,7 +1336,7 @@
                     $canManageAdminAppearance = $canAdminAbility('settings.system.admin_appearance.manage');
                     $canManageUserSettings = $canAdminAbility('settings.user.manage');
                     $canViewSystemSettings = $canManageRuntimeTools || $canManageAdminAppearance || $canManageCatalogFeatures || $canManageStoreSettings;
-                    $canViewSettingsSection = $localSettingResources !== [] || $canViewSystemSettings || $showSettingsApiMenu || $canManageUserSettings;
+                    $canViewSettingsSection = $localSettingResources !== [] || $canViewSystemSettings || $showSettingsApiMenu || $canManageUserSettings || ($isLavaggioAdmin && $canManageApiSettings);
                     $settingsResource = request()->routeIs('admin.shipping.*')
                         ? 'shipping-methods'
                         : request()->route('resource');
@@ -1818,6 +1818,11 @@
                         </summary>
 
                         <div class="ml-3 mt-1 space-y-1 border-l border-slate-200 pl-2">
+                            @if ($isLavaggioAdmin && $canManageApiSettings)
+                                <a href="{{ route('admin.settings.api.fira') }}" class="sidebar-dropdown-link block rounded-lg font-medium {{ request()->routeIs('admin.settings.api.fira') ? 'is-active-leaf' : 'text-slate-700 hover:bg-slate-100' }}">
+                                    <span class="flex items-center gap-2"><span class="sidebar-dot"></span><span>FIRA ponude i računi</span></span>
+                                </a>
+                            @endif
                             @if ($localSettingResources !== [])
                             <details class="group rounded-lg" @if($settingsLocalOpen) open @endif>
                                 <summary class="sidebar-dropdown-summary flex cursor-pointer list-none items-center justify-between rounded-lg text-xs font-semibold [&::-webkit-details-marker]:hidden [&::marker]:content-[''] {{ $settingsLocalOpen ? 'bg-slate-200 text-slate-900' : 'text-slate-700 hover:bg-slate-100' }}">
