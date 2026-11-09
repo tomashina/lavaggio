@@ -269,6 +269,13 @@ class WSPayFormService
             $locked->payload = $payload;
             $locked->save();
 
+            if ($newlyPaid && config('storefront.home') === 'lavaggio') {
+                $orderId = (int) $locked->id;
+                DB::afterCommit(static function () use ($orderId): void {
+                    app(\App\Services\Integrations\Fira\FiraInvoiceService::class)->issueAfterCardPayment($orderId, 'wspay');
+                });
+            }
+
             return ['paid' => $isPaid || $wasPaid, 'newly_paid' => $newlyPaid, 'status' => $status];
         });
 

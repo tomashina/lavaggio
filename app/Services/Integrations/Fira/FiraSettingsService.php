@@ -22,18 +22,29 @@ class FiraSettingsService
             'point_of_sale_registered' => false,
             'fira_sequence_confirmed' => false,
             'send_enabled' => false,
+            'auto_card_invoices_enabled' => false,
         ], (array) $this->settings->get('lavaggio_fira', []));
     }
 
     public function save(array $options, #[\SensitiveParameter] string $secret = ''): void
     {
+        // Older callers cannot opt into automatic fiscalization by omitting this new field.
+        $options = array_replace(['auto_card_invoices_enabled' => false], $options);
         $validated = Validator::make($options, [
             'document_type' => ['required', Rule::in(['PONUDA', 'FISKALNI_RAČUN'])],
             'point_of_sale_registered' => ['required', 'boolean'],
             'fira_sequence_confirmed' => ['required', 'boolean'],
             'send_enabled' => ['required', 'boolean'],
+            'auto_card_invoices_enabled' => ['required', 'boolean'],
         ])->validate();
         Validator::make(['secret' => $secret], ['secret' => ['nullable', 'string', 'max:4096', 'not_regex:/[\r\n]/']])->validate();
+        $validated['auto_card_invoices_enabled'] = (bool) $validated['auto_card_invoices_enabled'];
+        if ($validated['auto_card_invoices_enabled'] && ($validated['document_type'] !== 'FISKALNI_RAČUN'
+            || ! $validated['send_enabled'] || ! $validated['point_of_sale_registered'] || ! $validated['fira_sequence_confirmed'])) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'form.auto_card_invoices_enabled' => 'Automatska izrada zahtijeva odabrani fiskalni račun, uključenu izradu dokumenata te potvrđeno prodajno mjesto i fiskalnu konfiguraciju.',
+            ]);
+        }
         if ($validated['send_enabled'] && $validated['document_type'] === 'FISKALNI_RAČUN'
             && (! $validated['point_of_sale_registered'] || ! $validated['fira_sequence_confirmed'])) {
             throw \Illuminate\Validation\ValidationException::withMessages([
@@ -45,6 +56,12 @@ class FiraSettingsService
             $entries['lavaggio_fira_secret'] = Crypt::encryptString(trim($secret));
         }
         $this->settings->putMany($entries);
+    }
+
+    /** The checkbox is an opt-in; all transport/fiscal guards still apply when issuing. */
+    public function autoCardInvoicesEnabled(): bool
+    {
+        return (bool) $this->options()['auto_card_invoices_enabled'];
     }
 
     public function secret(): string
@@ -78,7 +95,7 @@ class FiraSettingsService
             $blockers[] = 'U FIRA-i treba postaviti i potvrditi slijed 1-web-1.';
         }
         if (! $options['send_enabled']) {
-            $blockers[] = 'Ručna izrada odabrane vrste dokumenta nije uključena.';
+            $blockers[] = 'Izrada odabrane vrste dokumenta nije uključena.';
         }
         if ($this->secret() === '') {
             $blockers[] = 'Nedostaje tajni ključ za FIRA-u.';

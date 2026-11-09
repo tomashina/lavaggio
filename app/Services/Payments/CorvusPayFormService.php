@@ -285,6 +285,13 @@ class CorvusPayFormService
                 : false;
             $locked->save();
 
+            if ($newlyPaid && config('storefront.home') === 'lavaggio') {
+                $orderId = (int) $locked->id;
+                DB::afterCommit(static function () use ($orderId): void {
+                    app(\App\Services\Integrations\Fira\FiraInvoiceService::class)->issueAfterCardPayment($orderId, 'corvuspay');
+                });
+            }
+
             return [
                 'paid' => $isPaid,
                 'newly_paid' => $newlyPaid,

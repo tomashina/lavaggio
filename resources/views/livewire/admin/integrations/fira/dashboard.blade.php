@@ -1,7 +1,7 @@
 <div class="admin-panel space-y-5 p-6">
     <div>
         <h1 class="text-2xl font-semibold text-slate-900">FIRA ponude i računi</h1>
-        <p class="mt-2 text-sm text-slate-600">Dokumenti se izrađuju isključivo ručnim klikom iz pojedine narudžbe. Spremanje postavki ne šalje dokument.</p>
+        <p class="mt-2 text-sm text-slate-600">Dokument izradite iz pojedine narudžbe. Za fiskalne račune možete zasebno uključiti automatsku izradu nakon potvrđene kartične uplate. Spremanje postavki ne šalje dokumente za postojeće narudžbe.</p>
     </div>
     <div class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
         Za provjeru odaberite ponudu, koja se ne fiskalizira. Fiskalni račun smije se uključiti tek nakon prijave prodajnog mjesta Poreznoj i dovršene FIRA konfiguracije.
@@ -26,8 +26,11 @@
         <label class="flex items-start gap-2 text-sm"><input type="checkbox" wire:model="form.point_of_sale_registered" class="mt-1" />Za fiskalne račune: potvrđujem da je prodajno mjesto prijavljeno Poreznoj.</label>
         <label class="flex items-start gap-2 text-sm"><input type="checkbox" wire:model="form.fira_sequence_confirmed" class="mt-1" />Za fiskalne račune: potvrđujem da je u FIRA-i postavljen slijed 1-web-1 i dovršena fiskalna konfiguracija.</label>
         <p class="text-xs text-slate-500">Ove dvije potvrde nisu potrebne za ponude. Slijed fiskalnih računa 1-web-1 bira se u FIRA postavkama integracije lavaggioshop za odgovarajuće načine plaćanja.</p>
-        <label class="flex items-start gap-2 text-sm font-semibold"><input type="checkbox" wire:model="form.send_enabled" class="mt-1" />Uključi ručnu izradu odabrane vrste dokumenta iz narudžbe</label>
+        <label class="flex items-start gap-2 text-sm font-semibold"><input type="checkbox" wire:model="form.send_enabled" class="mt-1" />Uključi izradu odabrane vrste dokumenta iz narudžbe</label>
         @error('form.send_enabled') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+        <label class="flex items-start gap-2 text-sm font-semibold"><input type="checkbox" wire:model="form.auto_card_invoices_enabled" class="mt-1" />Automatski izradi račun nakon potvrđene kartične uplate</label>
+        <p class="text-xs text-slate-500">Vrijedi samo za uključeni fiskalni način nakon potvrđene uspješne kartične uplate. Ponude i bankovne transakcije ostaju ručne. Spremanje ove postavke ne šalje račune za ranije narudžbe.</p>
+        @error('form.auto_card_invoices_enabled') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
         <button class="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white" wire:loading.attr="disabled">Spremi postavke</button>
     </form>
     @if ($blockers)
