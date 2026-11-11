@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeVideoUrl, videoEmbedValue, linkDocumentToEditor, editorRange, registerAdminVideoFormat } from '../../resources/js/admin-rich-text-media.js';
+import { normalizeVideoUrl, videoEmbedValue, linkDocumentToEditor, editorRange, registerAdminVideoFormat, insertImageToEditor, richTextEditorHtml } from '../../resources/js/admin-rich-text-media.js';
 
 test('video links support YouTube, Shorts, private embeds and Vimeo with start positions', () => {
     for (const [input, expected] of [
@@ -69,6 +69,7 @@ const fakeEditor = () => {
     return { calls, focus() {}, getSelection: () => null, getLength: () => 21,
         formatText(...args) { calls.push(['formatText', ...args]); },
         insertText(...args) { calls.push(['insertText', ...args]); },
+        updateContents(...args) { calls.push(['updateContents', ...args]); },
         setSelection(...args) { calls.push(['setSelection', ...args]); },
     };
 };
@@ -89,4 +90,33 @@ test('PDF library inserts a document name at the caret and rejects executable UR
     linkDocumentToEditor(editor, { index: 4, length: 0 }, { name: 'Cjenik.pdf', url: '/storage/a.pdf' }, 'https://shop.lavaggio.hr');
     assert.deepEqual(editor.calls[0], ['insertText', 4, 'Cjenik.pdf', 'link', 'https://shop.lavaggio.hr/storage/a.pdf', 'user']);
     assert.throws(() => linkDocumentToEditor(editor, { index: 0, length: 1 }, { url: 'javascript:alert(1)' }, 'https://shop.lavaggio.hr'));
+});
+
+test('image insertion saves a public image with its description and dimensions', () => {
+    const editor = fakeEditor();
+    const image = { url: 'https://shop.lavaggio.hr/storage/content-images/photo.png', width: 320, height: 240 };
+    insertImageToEditor(editor, { index: 4, length: 3 }, image, 'Fotografija', 'https://shop.lavaggio.hr');
+    assert.deepEqual(editor.calls, [
+        ['updateContents', { ops: [
+            { retain: 7 },
+            { insert: { image: '/storage/content-images/photo.png' }, attributes: { alt: 'Fotografija', width: '320', height: '240' } },
+        ] }, 'user'],
+        ['setSelection', 8, 0, 'silent'],
+    ]);
+    assert.throws(() => insertImageToEditor(editor, { index: 0, length: 0 }, { url: 'javascript:alert(1)' }, '', 'https://shop.lavaggio.hr'));
+});
+
+test('saved lists use semantic HTML while other blocks preserve their editor markup', () => {
+    const list = { tagName: 'OL', outerHTML: '<ol><li data-list="bullet">A</li><li data-list="ordered">B</li></ol>' };
+    const iframe = { tagName: 'IFRAME', outerHTML: '<iframe class="ql-video" src="https://www.youtube.com/embed/7nMlEAlj_Qo"></iframe>' };
+    const listBlot = { statics: { blotName: 'list-container' }, length: () => 4 };
+    const editor = {
+        root: { querySelector: () => list, children: [list, iframe] },
+        getIndex: () => 0,
+        getSemanticHTML(index, length) {
+            assert.deepEqual([index, length], [0, 4]);
+            return '<ul><li>A</li></ul><ol><li>B</li></ol>';
+        },
+    };
+    assert.equal(richTextEditorHtml(editor, (node) => node === list ? listBlot : null), '<ul><li>A</li></ul><ol><li>B</li></ol>' + iframe.outerHTML);
 });

@@ -3,7 +3,7 @@ import TomSelect from 'tom-select';
 import 'tom-select/dist/css/tom-select.css';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
-import { registerAdminVideoFormat, setupRichTextMediaTools, initRichTextHtmlModes } from './admin-rich-text-media';
+import { registerAdminVideoFormat, setupRichTextMediaTools, initRichTextHtmlModes, richTextEditorHtml } from './admin-rich-text-media';
 import '../css/admin-rich-text-media.css';
 import Cropper from 'cropperjs';
 import 'cropperjs/dist/cropper.css';
@@ -602,6 +602,10 @@ const initQuillEditors = () => {
         return value === '<p><br></p>' ? '' : value;
     };
 
+    const readEditorHtml = (quill, textarea) => normalizeHtml(
+        textarea.hasAttribute('data-quill-media-tools') ? richTextEditorHtml(quill, Quill.find) : quill.root.innerHTML
+    );
+
     const bypassInlineSanitizeOnce = (textarea) => (
         textarea instanceof HTMLTextAreaElement
         && textarea.dataset.quillBypassInlineSanitizeOnce === '1'
@@ -736,7 +740,7 @@ const initQuillEditors = () => {
                         [{ header: [2, 3, false] }],
                         ['bold', 'italic', 'underline'],
                         [{ list: 'ordered' }, { list: 'bullet' }],
-                        ['blockquote', 'link', 'video'],
+                        ['blockquote', 'link', ...(textarea.dataset.imageUploadUrl ? ['image'] : []), 'video'],
                         ['clean'],
                     ],
                 },
@@ -802,8 +806,7 @@ const initQuillEditors = () => {
                     return;
                 }
 
-                // Keep Quill HTML as-is; inline style stripping is handled on ingestion/paste.
-                const html = normalizeHtml(quill.root.innerHTML);
+                const html = readEditorHtml(quill, activeTextarea);
                 const textareaHtml = normalizeHtml(activeTextarea.value);
 
                 if (textareaHtml !== html) {
@@ -828,7 +831,7 @@ const initQuillEditors = () => {
                 }
 
                 const source = readTextareaHtml(activeTextarea);
-                const current = normalizeHtml(quill.root.innerHTML);
+                const current = readEditorHtml(quill, activeTextarea);
                 if (source === current) {
                     return;
                 }

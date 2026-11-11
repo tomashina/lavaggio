@@ -251,6 +251,9 @@ return [
             'view' => ['content.blog.create', 'content.blog.update', 'content.pages.create', 'content.pages.update'],
             'mutate' => ['content.blog.create', 'content.blog.update', 'content.pages.create', 'content.pages.update'],
         ],
+        'admin.content.images.store' => [
+            'mutate' => ['content.blog.create', 'content.blog.update', 'content.pages.create', 'content.pages.update'],
+        ],
         'admin.content.blog.create' => [
             'view' => ['content.blog.create'],
             'mutate' => ['content.blog.create'],

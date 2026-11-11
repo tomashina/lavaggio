@@ -68,6 +68,33 @@ class ContentDocumentController extends Controller
             ->header('Cache-Control', 'private, no-store');
     }
 
+    public function storeImage(Request $request): JsonResponse
+    {
+        $this->authorizeEditor($request);
+        $request->validate([
+            'file' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'extensions:jpg,jpeg,png,webp,gif', 'max:'.$this->uploadLimitKilobytes()],
+        ], [
+            'file.image' => 'Odaberite valjanu sliku.',
+            'file.mimes' => 'Odaberite JPG, PNG, WebP ili GIF sliku.',
+            'file.extensions' => 'Odaberite JPG, PNG, WebP ili GIF sliku.',
+            'file.max' => 'Slika je prevelika. Odaberite manju datoteku.',
+        ]);
+        $file = $request->file('file');
+        $dimensions = @getimagesize($file->getRealPath());
+        if ($dimensions === false) {
+            throw ValidationException::withMessages(['file' => 'Odaberite valjanu sliku.']);
+        }
+
+        $path = $file->store('content-images', 'public');
+        abort_unless(is_string($path) && $path !== '', 500, 'Sliku nije moguće spremiti.');
+
+        return response()->json(['image' => [
+            'url' => Storage::disk('public')->url($path),
+            'width' => $dimensions[0],
+            'height' => $dimensions[1],
+        ]], 201)->header('Cache-Control', 'private, no-store');
+    }
+
     private function document(string $path): array
     {
         $disk = Storage::disk('public');

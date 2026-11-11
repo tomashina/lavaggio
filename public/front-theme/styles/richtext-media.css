@@ -1,3 +1,21 @@
+.content-richtext ul:not([type]) {
+    list-style-type: disc;
+}
+
+.content-richtext ol:not([type]) {
+    list-style-type: decimal;
+}
+
+.content-richtext li[data-list="bullet"] {
+    list-style-type: disc;
+    counter-increment: list-item 0;
+}
+
+.content-richtext img {
+    max-width: 100%;
+    height: auto;
+}
+
 .content-richtext iframe.ql-video {
     display: block;
     max-width: 100%;

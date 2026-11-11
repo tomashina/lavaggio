@@ -52,6 +52,40 @@ class ContentDocumentsFeatureTest extends TestCase
             ->assertJsonPath('folders.0', 'uvjeti-kupnje');
     }
 
+    public function test_content_editors_can_upload_a_photo_for_insertion(): void
+    {
+        Storage::fake('public');
+        $file = UploadedFile::fake()->image('fotografija.png', 320, 240);
+        $this->postJson(route('admin.content.images.store'), ['file' => $file])->assertUnauthorized();
+        $this->actingAs($this->editor('content.pages.view'))
+            ->postJson(route('admin.content.images.store'), ['file' => $file])->assertForbidden();
+        $this->assertSame([], Storage::disk('public')->allFiles());
+
+        $response = $this->actingAs($this->editor('content.pages.update'))
+            ->postJson(route('admin.content.images.store'), ['file' => $file])
+            ->assertCreated()->assertJsonPath('image.width', 320)->assertJsonPath('image.height', 240);
+        $paths = Storage::disk('public')->allFiles('content-images');
+        $this->assertCount(1, $paths);
+        $this->assertSame(Storage::disk('public')->url($paths[0]), $response->json('image.url'));
+        $this->assertSame(file_get_contents($file->getRealPath()), Storage::disk('public')->get($paths[0]));
+    }
+
+    public function test_photo_upload_rejects_non_images_and_unsupported_formats(): void
+    {
+        Storage::fake('public');
+        $this->actingAs($this->editor('content.blog.create'));
+        foreach ([
+            $this->pdf(),
+            UploadedFile::fake()->createWithContent('fotografija.png', 'Nije slika'),
+            UploadedFile::fake()->createWithContent('fotografija.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>'),
+            UploadedFile::fake()->image('fotografija.png')->size(20481),
+        ] as $file) {
+            $this->postJson(route('admin.content.images.store'), ['file' => $file])
+                ->assertUnprocessable()->assertJsonValidationErrors('file');
+        }
+        $this->assertSame([], Storage::disk('public')->allFiles());
+    }
+
     public function test_non_pdf_files_disguised_extensions_and_oversized_uploads_are_rejected(): void
     {
         Storage::fake('public');

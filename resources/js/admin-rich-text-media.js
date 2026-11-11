@@ -93,6 +93,19 @@ export const editorRange = (quill) => {
     return { index, length: Math.min(Math.max(0, range.length || 0), end - index) };
 };
 
+export const richTextEditorHtml = (quill, findBlot) => {
+    if (!quill.root.querySelector(':scope > ol > li[data-list]')) return quill.root.innerHTML;
+
+    // Quill renders every list as an ordered list in its editor. Export only list
+    // blots semantically so unrelated HTML, such as embedded videos, stays intact.
+    return Array.from(quill.root.children, (node) => {
+        const blot = node.tagName === 'OL' ? findBlot(node) : null;
+        return blot?.statics.blotName === 'list-container'
+            ? quill.getSemanticHTML(quill.getIndex(blot), blot.length())
+            : node.outerHTML;
+    }).join('');
+};
+
 export const linkDocumentToEditor = (quill, range, document, origin) => {
     const url = new URL(document.url, origin);
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Poveznica dokumenta nije valjana.');
@@ -105,6 +118,17 @@ export const linkDocumentToEditor = (quill, range, document, origin) => {
         quill.insertText(range.index, label, 'link', url.href, 'user');
         quill.setSelection(range.index + label.length, 0, 'silent');
     }
+};
+
+export const insertImageToEditor = (quill, range, image, alt, origin) => {
+    const url = new URL(image.url, origin);
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Poveznica slike nije valjana.');
+    const index = range.index + range.length;
+    const source = url.origin === origin ? `${url.pathname}${url.search}` : url.href;
+    const ops = index ? [{ retain: index }] : [];
+    ops.push({ insert: { image: source }, attributes: { alt, width: String(image.width), height: String(image.height) } });
+    quill.updateContents({ ops }, 'user');
+    quill.setSelection(index + 1, 0, 'silent');
 };
 
 const createDialog = (title, content, restoreFocus) => {
@@ -155,6 +179,58 @@ const responseJson = async (response) => {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(Object.values(data.errors || {}).flat()[0] || data.message || 'Zahtjev nije uspio. Pokušajte ponovno.');
     return data;
+};
+
+const showImageDialog = (state) => {
+    const { quill } = state;
+    const range = editorRange(quill);
+    const endpoint = new URL(state.textarea.dataset.imageUploadUrl, window.location.origin);
+    if (endpoint.origin !== window.location.origin) return;
+
+    const dialog = createDialog('Umetni sliku', `
+        <form class="admin-editor-dialog-body">
+            <label>Slika<input type="file" name="file" accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" required autofocus></label>
+            <label>Opis slike (neobvezno)<input type="text" name="alt" maxlength="250"></label>
+            <p class="admin-editor-dialog-status" role="status" aria-live="polite"></p>
+            <div class="admin-editor-dialog-actions"><button type="submit" class="admin-editor-primary">Učitaj i umetni</button></div>
+        </form>`, () => { if (state.wrapper.isConnected) quill.focus(); });
+    const form = dialog.querySelector('form');
+    const status = dialog.querySelector('[role="status"]');
+    const submit = form.querySelector('button');
+    const close = dialog.querySelector('[data-editor-dialog-close]');
+
+    dialog.addEventListener('cancel', (event) => { if (submit.disabled) event.preventDefault(); });
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (submit.disabled) return;
+
+        const body = new FormData(form);
+        const alt = String(body.get('alt') ?? '').trim();
+        body.delete('alt');
+        const token = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        submit.disabled = true;
+        close.disabled = true;
+        submit.textContent = 'Učitavanje…';
+        status.textContent = '';
+        try {
+            const data = await responseJson(await fetch(endpoint, {
+                method: 'POST',
+                body,
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': token },
+            }));
+            if (!state.wrapper.isConnected) return dialog.close();
+            insertImageToEditor(quill, range, data.image, alt, window.location.origin);
+            state.syncTextareaFromQuill(true);
+            dialog.close();
+        } catch (error) {
+            status.textContent = error.message;
+        } finally {
+            submit.disabled = false;
+            close.disabled = false;
+            submit.textContent = 'Učitaj i umetni';
+        }
+    });
 };
 
 const fileSize = (size) => `${(Number(size || 0) / 1024 / 1024).toLocaleString('hr-HR', { maximumFractionDigits: 1 })} MB`;
@@ -298,6 +374,12 @@ export const setupRichTextMediaTools = (state) => {
     const toolbar = state.quill.getModule('toolbar');
     toolbar.addHandler('video', () => showVideoDialog(state));
     toolbar.container.querySelector('.ql-video')?.setAttribute('title', 'Umetni YouTube ili Vimeo video');
+    if (state.textarea.dataset.imageUploadUrl) {
+        toolbar.addHandler('image', () => showImageDialog(state));
+        const imageButton = toolbar.container.querySelector('.ql-image');
+        imageButton?.setAttribute('title', 'Umetni sliku');
+        imageButton?.setAttribute('aria-label', 'Umetni sliku');
+    }
     if (!state.textarea.dataset.documentLibraryUrl) return;
     const group = document.createElement('span');
     group.className = 'ql-formats';
