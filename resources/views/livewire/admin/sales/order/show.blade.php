@@ -27,6 +27,7 @@
         ? $order->totals
         : $order->totals->reject(fn ($total) => $total->code === 'loyalty_redemption');
     $boxNow = is_array($order->payload['shipping']['boxnow'] ?? null) ? $order->payload['shipping']['boxnow'] : null;
+    $boxNowShipment = $order->boxNowShipment;
     $glsPoint = is_array($order->payload['shipping']['gls_dpm'] ?? null) ? $order->payload['shipping']['gls_dpm'] : null;
     $shippingDestination = is_array($order->payload['shipping']['destination'] ?? null) ? $order->payload['shipping']['destination'] : null;
     $glsState = is_array($order->payload['gls'] ?? null) ? $order->payload['gls'] : [];
@@ -172,6 +173,43 @@
                         <p><strong>{{ __('Address') }}:</strong> {{ trim(($boxNow['address_line_1'] ?? '').', '.($boxNow['postal_code'] ?? '').' '.($boxNow['city'] ?? ''), ', ') ?: '-' }}</p>
                     </div>
                 </div>
+            @endif
+
+            @if (in_array($order->shipping_method_code, ['boxnow', 'box_now'], true) || !empty($boxNow['locker_id']))
+                <section class="mt-4 rounded-xl border border-cyan-200 bg-cyan-50 p-4" data-boxnow-shipment>
+                    <h2 class="font-semibold">BOX NOW pošiljka</h2>
+                    @if ($boxNowShipment?->parcel_id)
+                        <p class="mt-2 text-sm font-semibold">{{ \App\Support\BoxNowStatus::label($boxNowShipment->state) }}</p>
+                        <p class="mt-1 text-sm">Broj paketa: <a href="{{ $boxNowShipment->trackingUrl() }}" target="_blank" rel="noopener noreferrer" class="underline">{{ $boxNowShipment->parcel_id }}</a></p>
+                    @else
+                        <p class="mt-2 text-sm">Kreirajte pošiljku za jedan paket. Status i broj pošiljke odmah će biti vidljivi kupcu.</p>
+                    @endif
+                    @if ($boxNowShipment?->last_error)
+                        <p class="mt-2 text-sm text-rose-700" role="alert">{{ $boxNowShipment->last_error }}</p>
+                    @endif
+                    @if ($boxNowShipment?->last_synced_at)
+                        <p class="mt-2 text-xs text-slate-600">Zadnja provjera: {{ $boxNowShipment->last_synced_at->timezone('Europe/Zagreb')->format('d.m.Y. H:i') }}</p>
+                    @endif
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        @can('sales.orders.update')
+                            @if (!$boxNowShipment?->parcel_id && !$boxNowShipment?->attempted_at)
+                                <form method="POST" action="{{ route('admin.orders.boxnow.send', $order) }}">
+                                    @csrf
+                                    <button type="submit" class="rounded-lg bg-cyan-700 px-3 py-2 text-xs font-semibold text-white">Pošalji u BOX NOW</button>
+                                </form>
+                            @endif
+                            @if ($boxNowShipment)
+                                <form method="POST" action="{{ route('admin.orders.boxnow.sync', $order) }}">
+                                    @csrf
+                                    <button type="submit" class="rounded-lg border border-cyan-300 bg-white px-3 py-2 text-xs font-semibold text-cyan-800">Osvježi status</button>
+                                </form>
+                            @endif
+                        @endcan
+                        @if ($boxNowShipment?->parcel_id)
+                            <a href="{{ route('admin.orders.boxnow.label', $order) }}" class="rounded-lg border border-cyan-300 bg-white px-3 py-2 text-xs font-semibold text-cyan-800">Preuzmi PDF naljepnicu</a>
+                        @endif
+                    </div>
+                </section>
             @endif
 
             @if ($isGls)

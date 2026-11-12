@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminAiController;
 use App\Http\Controllers\Admin\ContractWithdrawalController;
 use App\Http\Controllers\Admin\CustomerImpersonationController;
 use App\Http\Controllers\Admin\CustomerStatisticsController;
+use App\Http\Controllers\Admin\OrderBoxNowController;
 use App\Http\Controllers\Admin\OrderGlsController;
 use App\Http\Controllers\Admin\SystemToolsController;
 use App\Http\Controllers\Feed\NabavaNetFeedController;
@@ -393,6 +394,9 @@ Route::middleware(['admin.locale', 'auth', 'verified', 'admin.access', 'admin.ma
             return view('admin.shipping.edit', compact('shippingMethod'));
         })->name('shipping.edit');
         Route::post('orders/{order}/gls/send', [OrderGlsController::class, 'send'])->name('orders.gls.send');
+        Route::post('orders/{order}/boxnow/send', [OrderBoxNowController::class, 'send'])->name('orders.boxnow.send');
+        Route::post('orders/{order}/boxnow/sync', [OrderBoxNowController::class, 'sync'])->name('orders.boxnow.sync');
+        Route::get('orders/{order}/boxnow/label', [OrderBoxNowController::class, 'label'])->name('orders.boxnow.label');
         Route::get('orders/{order}/gls/label', [OrderGlsController::class, 'label'])->name('orders.gls.label');
         Route::get('orders/{order}/show', function (SalesOrder $order) {
             app(\App\Services\Admin\OrderManagerAccess::class)->assertOrder($order);

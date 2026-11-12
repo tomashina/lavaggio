@@ -322,6 +322,15 @@
                             >
                             @error('form.boxnow_oauth_client_secret') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                         </div>
+                        <div class="md:col-span-2">
+                            <label class="mb-1 block text-xs font-semibold text-slate-600" for="boxnow-webhook-token">Webhook token za trenutne statuse (najmanje 32 znaka)</label>
+                            <input id="boxnow-webhook-token" type="password" wire:model="form.boxnow_webhook_token" autocomplete="new-password" placeholder="Ostavite prazno za zadržavanje spremljenog tokena" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                            @error('form.boxnow_webhook_token') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                            @if ($editingId)
+                                <p class="mt-2 break-all text-xs text-slate-600">BOX NOW podršci dostavite URL: {{ route('boxnow.webhook', ['shippingMethod' => $editingId]) }} i zaglavlje Authorization: Bearer [vaš token].</p>
+                            @endif
+                            <p class="mt-1 text-xs text-slate-600">Bez webhooka statusi se provjeravaju svakih 5 minuta dok je raspoređivač servera aktivan.</p>
+                        </div>
                     </div>
                 </div>
             @endif

@@ -183,6 +183,10 @@ return [
             'view' => ['sales.orders.view'],
             'mutate' => ['sales.orders.update'],
         ],
+        'admin.orders.boxnow.*' => [
+            'view' => ['sales.orders.view'],
+            'mutate' => ['sales.orders.update'],
+        ],
         'admin.orders.show' => [
             'view' => ['sales.orders.view'],
             'mutate' => ['sales.orders.update'],

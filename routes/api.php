@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\V1\Wholesale\ProductPriceController;
 use App\Http\Controllers\Api\V1\Wholesale\ProductQuantityController;
 use Illuminate\Support\Facades\Route;
 
+Route::post('integrations/boxnow/{shippingMethod}/webhook', \App\Http\Controllers\Api\BoxNowWebhookController::class)
+    ->middleware('throttle:120,1')->name('boxnow.webhook');
+
 Route::prefix('v1/wholesale')
     ->middleware(['catalog.feature:catalog_use_api', 'api.user.enabled', 'auth:sanctum', 'throttle:wholesale-api'])
     ->group(function (): void {

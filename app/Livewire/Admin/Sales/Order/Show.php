@@ -198,6 +198,7 @@ class Show extends Component
                 'history.toStatus:id,name,color',
                 'history.changedBy:id,name',
                 'transactions',
+                'boxNowShipment',
                 'loyaltyTransactions',
             ])
             ->findOrFail($this->orderId);

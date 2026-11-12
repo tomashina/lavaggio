@@ -134,6 +134,7 @@ class ShippingManager extends Component
             'boxnow_api_url' => (string) ($settings['boxnow_api_url'] ?? ''),
             'boxnow_oauth_client_id' => (string) ($settings['boxnow_oauth_client_id'] ?? ''),
             'boxnow_oauth_client_secret' => '',
+            'boxnow_webhook_token' => '',
             'boxnow_warehouse_id' => (string) ($settings['boxnow_warehouse_id'] ?? ''),
             'is_active' => (bool) $method->is_active,
             'sort_order' => (int) $method->sort_order,
@@ -221,6 +222,11 @@ class ShippingManager extends Component
                     $settings[$key] = trim((string) ($form[$key] ?? ''));
                 }
 
+                $webhookToken = trim((string) ($form['boxnow_webhook_token'] ?? ''));
+                if ($webhookToken !== '') {
+                    $settings['boxnow_webhook_token_encrypted'] = Crypt::encryptString($webhookToken);
+                }
+
                 $clientSecret = trim((string) ($form['boxnow_oauth_client_secret'] ?? ''));
                 if ($clientSecret !== '') {
                     $settings[self::BOX_NOW_OAUTH_CLIENT_SECRET_ENCRYPTED_KEY] = Crypt::encryptString($clientSecret);
@@ -231,6 +237,7 @@ class ShippingManager extends Component
                     'boxnow_api_url',
                     'boxnow_oauth_client_id',
                     self::BOX_NOW_OAUTH_CLIENT_SECRET_ENCRYPTED_KEY,
+                    'boxnow_webhook_token_encrypted',
                     'boxnow_warehouse_id',
                 ] as $key) {
                     unset($settings[$key]);
@@ -429,6 +436,7 @@ class ShippingManager extends Component
             'boxnow_api_url' => '',
             'boxnow_oauth_client_id' => '',
             'boxnow_oauth_client_secret' => '',
+            'boxnow_webhook_token' => '',
             'boxnow_warehouse_id' => '',
             'is_active' => true,
             'sort_order' => 0,
@@ -547,6 +555,7 @@ class ShippingManager extends Component
             'form.boxnow_partner_id' => ['nullable', 'string', 'max:120'],
             'form.boxnow_api_url' => ['nullable', 'string', 'url:http,https', 'max:2048'],
             'form.boxnow_oauth_client_id' => ['nullable', 'string', 'max:255'],
+            'form.boxnow_webhook_token' => ['nullable', 'string', 'min:32', 'max:255'],
             'form.boxnow_oauth_client_secret' => ['nullable', 'string', 'max:2048'],
             'form.boxnow_warehouse_id' => ['nullable', 'string', 'max:120'],
             'form.is_active' => ['boolean'],

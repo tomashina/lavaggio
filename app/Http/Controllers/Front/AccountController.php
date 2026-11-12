@@ -143,6 +143,7 @@ class AccountController extends Controller
                 'items.productOptionValue.parentOptionValue.translations:id,option_value_id,locale,name',
                 'totals',
                 'history.toStatus:id,name,color',
+                'boxNowShipment.events',
             ])
             ->firstOrFail();
 
@@ -150,7 +151,8 @@ class AccountController extends Controller
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->get(['id', 'name', 'sort_order']);
+            ->get(['id', 'name', 'sort_order', 'code'])
+            ->filter(fn ($status) => ! str_starts_with($status->code, 'boxnow_') || (int) $status->id === (int) $order->status_id);
 
         return view($this->frontendView($request, 'account.order-show'), [
             'order' => $order,

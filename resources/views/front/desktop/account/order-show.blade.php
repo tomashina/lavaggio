@@ -11,6 +11,7 @@
 @section('content')
     @php
         $boxNow = is_array($order->payload['shipping']['boxnow'] ?? null) ? $order->payload['shipping']['boxnow'] : null;
+        $boxNowShipment = $order->boxNowShipment;
         $glsPoint = is_array($order->payload['shipping']['gls_dpm'] ?? null) ? $order->payload['shipping']['gls_dpm'] : null;
         $loyaltyAvailable = app(\App\Services\Loyalty\LoyaltyService::class)->availableForUser($order->user_id);
         $visibleTotals = $loyaltyAvailable
@@ -34,6 +35,22 @@
         @include('front.desktop.account.partials.nav', ['current' => 'order_show'])
 
         <div class="min-w-0 space-y-6">
+            @if ($boxNowShipment?->parcel_id)
+                <section class="border border-cyan-200 bg-cyan-50 p-6" data-boxnow-tracking>
+                    <h2 class="text-lg font-semibold text-slate-900">Praćenje BOX NOW dostave</h2>
+                    <p class="mt-3 font-semibold text-slate-900">{{ \App\Support\BoxNowStatus::label($boxNowShipment->state) }}</p>
+                    <p class="mt-2 text-sm text-slate-700">Broj paketa: <strong>{{ $boxNowShipment->parcel_id }}</strong></p>
+                    <a href="{{ $boxNowShipment->trackingUrl() }}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex bg-slate-900 px-4 py-2 text-sm font-semibold text-white">Prati pošiljku na BOX NOW</a>
+                    @if ($boxNowShipment->last_synced_at)
+                        <p class="mt-3 text-xs text-slate-600">Zadnja provjera: {{ $boxNowShipment->last_synced_at->timezone('Europe/Zagreb')->format('d.m.Y. H:i') }}</p>
+                    @endif
+                    <ol class="mt-4 space-y-2 text-sm text-slate-700">
+                        @foreach ($boxNowShipment->events as $event)
+                            <li><time>{{ $event->occurred_at->timezone('Europe/Zagreb')->format('d.m.Y. H:i') }}</time> — {{ \App\Support\BoxNowStatus::label($event->state) }}@if ($event->location) · {{ $event->location }}@endif</li>
+                        @endforeach
+                    </ol>
+                </section>
+            @endif
             <section class="border border-slate-200 bg-white p-6" data-order-billing-address>
                 <h2 class="text-lg font-semibold text-slate-900">{{ __('ui.checkout.sections.billing') }}</h2>
                 <div class="mt-3 space-y-1 text-sm text-slate-700">
@@ -66,7 +83,7 @@
                     }
                 }
             @endphp
-            @if (($statusSteps ?? collect())->isNotEmpty())
+            @if (!$boxNowShipment?->parcel_id && ($statusSteps ?? collect())->isNotEmpty())
                 <section class="border border-slate-200 bg-white p-8">
                     <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('ui.account.order_show.progress.title') }}</h3>
                     <div class="relative mt-7">

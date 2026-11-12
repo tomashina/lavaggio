@@ -12,5 +12,6 @@ final class LavaggioDeployMigrations
         'database/migrations/2026_11_06_090000_add_lavaggio_payment_information.php',
         'database/migrations/2026_11_09_090000_restore_lavaggio_service_pricing_date.php',
         'database/migrations/2026_11_09_110000_create_lavaggio_fira_documents_table.php',
+        'database/migrations/2026_11_12_120000_create_box_now_shipments.php',
     ];
 }
