@@ -1,6 +1,6 @@
 # BOX NOW slanje i praćenje
 
-U **Admin → Narudžbe → detalji narudžbe → BOX NOW pošiljka** kliknite **Pošalji u BOX NOW**, zatim **Preuzmi PDF naljepnicu**. Jedna narudžba kreira jedan paket. Ponovni klik vraća postojeću pošiljku. Greška preuzimanja PDF-a ne kreira novi paket.
+U **Admin → Narudžbe → detalji narudžbe → BOX NOW pošiljka** odaberite veličinu zapakiranog paketa (mali, srednji ili veliki), kliknite **Pošalji u BOX NOW**, zatim **Preuzmi PDF naljepnicu**. Veličina se šalje kao `items[].compartmentSize` (1, 2 ili 3); obvezna je i pri slanju iz paketomata. Jedna narudžba kreira jedan paket. Ponovni klik vraća postojeću pošiljku. Greška preuzimanja PDF-a ne kreira novi paket.
 
 U postavkama dostave potrebni su službeni HTTPS API URL, OAuth Client ID, Client Secret i Warehouse ID. Paketomat i podaci primatelja uzimaju se iz narudžbe. Za pouzeće se šalje iznos narudžbe; već plaćene narudžbe šalju se kao prepaid. Poziv za izradu pošiljke obavlja se isključivo ručnom akcijom administratora.
 

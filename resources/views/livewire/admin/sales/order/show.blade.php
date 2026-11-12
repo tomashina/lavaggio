@@ -195,6 +195,14 @@
                             @if (!$boxNowShipment?->parcel_id && !$boxNowShipment?->attempted_at)
                                 <form method="POST" action="{{ route('admin.orders.boxnow.send', $order) }}">
                                     @csrf
+                                    <label for="boxnow-parcel-size" class="mb-1 block text-sm font-medium">Veličina zapakiranog paketa</label>
+                                    <select id="boxnow-parcel-size" name="parcel_size" required class="mb-2 block rounded-lg border border-cyan-300 bg-white px-3 py-2 text-sm">
+                                        <option value="">Odaberite veličinu</option>
+                                        <option value="1" @selected((string) old('parcel_size') === '1')>Mali — do 8 × 45 × 60 cm</option>
+                                        <option value="2" @selected((string) old('parcel_size') === '2')>Srednji — do 17 × 45 × 60 cm</option>
+                                        <option value="3" @selected((string) old('parcel_size') === '3')>Veliki — do 36 × 45 × 60 cm</option>
+                                    </select>
+                                    @error('parcel_size')<p class="mb-2 text-sm text-rose-700" role="alert">{{ $message }}</p>@enderror
                                     <button type="submit" class="rounded-lg bg-cyan-700 px-3 py-2 text-xs font-semibold text-white">Pošalji u BOX NOW</button>
                                 </form>
                             @endif

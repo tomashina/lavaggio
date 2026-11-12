@@ -19,9 +19,13 @@ class BoxNowShipmentService
 {
     public function __construct(private readonly BoxNowApiService $api) {}
 
-    public function send(Order $order, ?int $actorId = null): BoxNowShipment
+    public function send(Order $order, int $parcelSize, ?int $actorId = null): BoxNowShipment
     {
-        return Cache::lock('boxnow:order:'.$order->id, 300)->block(2, function () use ($order, $actorId): BoxNowShipment {
+        if (! in_array($parcelSize, [1, 2, 3], true)) {
+            throw new RuntimeException('Odaberite veličinu paketa: mali, srednji ili veliki.');
+        }
+
+        return Cache::lock('boxnow:order:'.$order->id, 300)->block(2, function () use ($order, $parcelSize, $actorId): BoxNowShipment {
             $order->refresh();
             $method = ShippingMethod::query()->where('code', $order->shipping_method_code)->first();
             if (! $method || ($method->carrier !== 'boxnow' && ! in_array($method->code, ['boxnow', 'box_now'], true))) {
@@ -36,7 +40,7 @@ class BoxNowShipmentService
             }
             $base = $this->api->baseUrl($method);
             $this->api->assertConfigured($method);
-            $request = $this->buildRequest($order, $method);
+            $request = $this->buildRequest($order, $method, $parcelSize);
             $shipment ??= BoxNowShipment::query()->create([
                 'order_id' => $order->id, 'shipping_method_id' => $method->id,
                 'order_number' => $order->order_number, 'api_url' => $base,
@@ -206,7 +210,7 @@ class BoxNowShipmentService
         return $method;
     }
 
-    private function buildRequest(Order $order, ShippingMethod $method): array
+    private function buildRequest(Order $order, ShippingMethod $method, int $parcelSize): array
     {
         $warehouse = trim((string) data_get($method->settings, 'boxnow_warehouse_id'));
         $locker = trim((string) data_get($order->payload, 'shipping.boxnow.locker_id'));
@@ -240,7 +244,7 @@ class BoxNowShipmentService
             ],
             'destination' => ['contactName' => $name, 'contactEmail' => $order->customer_email, 'contactNumber' => $phone, 'locationId' => $locker],
             // API items represent parcels, NOT the individual products in the basket.
-            'items' => [['id' => $order->order_number.'-1', 'name' => 'Narudžba '.$order->order_number, 'value' => $amount, 'weight' => 0]],
+            'items' => [['id' => $order->order_number.'-1', 'name' => 'Narudžba '.$order->order_number, 'value' => $amount, 'weight' => 0, 'compartmentSize' => $parcelSize]],
         ];
     }
 }

@@ -7,19 +7,25 @@ use App\Models\Sales\Order\Order;
 use App\Services\Admin\OrderManagerAccess;
 use App\Services\Integrations\BoxNow\BoxNowShipmentService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OrderBoxNowController extends Controller
 {
-    public function send(Order $order, BoxNowShipmentService $service): RedirectResponse
+    public function send(Request $request, Order $order, BoxNowShipmentService $service): RedirectResponse
     {
         app(OrderManagerAccess::class)->assertOrder($order);
+        $data = $request->validate(['parcel_size' => ['required', 'integer', 'in:1,2,3']], [
+            'parcel_size.required' => 'Odaberite veličinu paketa.',
+            'parcel_size.integer' => 'Odaberite malu, srednju ili veliku veličinu paketa.',
+            'parcel_size.in' => 'Odaberite malu, srednju ili veliku veličinu paketa.',
+        ]);
         try {
-            $shipment = $service->send($order, auth()->id());
+            $shipment = $service->send($order, (int) $data['parcel_size'], auth()->id());
 
             return back()->with('notify', ['type' => 'success', 'message' => 'BOX NOW pošiljka je spremljena. Broj paketa: '.$shipment->parcel_id.'. Preuzmite PDF naljepnicu.']);
         } catch (\Throwable $e) {
-            return back()->with('notify', ['type' => 'error', 'message' => $e->getMessage()]);
+            return back()->withInput($request->only('parcel_size'))->with('notify', ['type' => 'error', 'message' => $e->getMessage()]);
         }
     }
 
