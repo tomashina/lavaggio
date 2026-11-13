@@ -70,7 +70,12 @@
                         </div>
                     @endif
 
-                    <div class="grid gap-3 lg:grid-cols-[1fr_auto]">
+                    {{-- Loading restores its initial disabled state; keep it separate from button readiness. --}}
+                    <fieldset
+                        class="grid min-w-0 gap-3 lg:grid-cols-[1fr_auto]"
+                        wire:loading.attr="disabled"
+                        wire:target="uploads.{{ $collectionName }}, uploadCollection"
+                    >
                         @if ($isInstagramCuratedBlock && $collectionName === 'block_slides')
                             <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                                 {{ __('Add a new Instagram slide, then paste the Instagram post URL below and click Save Meta to import the preview image and text.') }}
@@ -101,13 +106,14 @@
                                         | {{ implode(', ', $acceptMime) }}
                                     @endif
                                 </p>
+                                <p wire:loading wire:target="uploads.{{ $collectionName }}" class="mt-1 text-xs text-cyan-700" role="status">
+                                    {{ __('Učitavanje datoteke…') }}
+                                </p>
                             </div>
                             <div class="flex items-start">
                                 <button
                                     type="button"
                                     wire:click="uploadCollection('{{ $collectionName }}')"
-                                    wire:loading.attr="disabled"
-                                    wire:target="uploads.{{ $collectionName }}"
                                     @disabled(empty($uploads[$collectionName]))
                                     class="rounded-xl bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
@@ -115,7 +121,7 @@
                                 </button>
                             </div>
                         @endif
-                    </div>
+                    </fieldset>
 
                     <div class="mt-4 overflow-x-auto">
                         <table class="admin-items-table min-w-full">
