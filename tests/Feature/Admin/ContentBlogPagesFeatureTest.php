@@ -86,11 +86,11 @@ class ContentBlogPagesFeatureTest extends TestCase
         Livewire::actingAs($user)->test(BlogForm::class)
             ->set('form.locale', 'hr')->set('form.title', 'Video article')
             ->set('form.body_html', '<iframe class="ql-video" src="https://www.youtube.com/embed/u1jjjxJxWic" width="315" height="560"></iframe><p>Article text.</p>')
-            ->call('setTab', 'media')->assertSee('https://i.ytimg.com/vi/u1jjjxJxWic/oardefault.jpg', false)
+            ->call('setTab', 'media')->assertSee('https://i.ytimg.com/vi/u1jjjxJxWic/oar2.jpg', false)
             ->call('save')->assertHasNoErrors()->assertRedirect();
 
         $post = BlogPost::where('code', 'video-article')->firstOrFail();
-        $this->get('/blog')->assertOk()->assertSee('https://i.ytimg.com/vi/u1jjjxJxWic/oardefault.jpg', false);
+        $this->get('/blog')->assertOk()->assertSee('https://i.ytimg.com/vi/u1jjjxJxWic/oar2.jpg', false);
         $this->get('/blog/video-article')->assertOk()->assertSee('data-lavaggio-video-open', false)
             ->assertSee('data-video-id="u1jjjxJxWic"', false)->assertSee('Article text.')
             ->assertDontSee('<iframe', false);
@@ -99,7 +99,7 @@ class ContentBlogPagesFeatureTest extends TestCase
             ->set('form.body_html', '<iframe src="https://www.youtube-nocookie.com/embed/yOjuuBBVdmc" width="640" height="360"></iframe><p>Updated text.</p>')
             ->call('save')->assertHasNoErrors()->assertRedirect();
 
-        $this->get('/blog')->assertOk()->assertSee('https://i.ytimg.com/vi/yOjuuBBVdmc/oardefault.jpg', false)
+        $this->get('/blog')->assertOk()->assertSee('https://i.ytimg.com/vi/yOjuuBBVdmc/oar2.jpg', false)
             ->assertDontSee('u1jjjxJxWic');
         $this->get('/blog/video-article')->assertOk()->assertSee('data-video-id="yOjuuBBVdmc"', false)
             ->assertSee('https://i.ytimg.com/vi/yOjuuBBVdmc/hqdefault.jpg', false)

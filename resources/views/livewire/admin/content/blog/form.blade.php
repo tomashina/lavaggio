@@ -262,7 +262,7 @@
                 <div class="admin-panel p-6">
                     <p class="text-sm text-slate-600">Naslovna slika automatski se preuzima iz videa. Promjenom videa mijenja se i automatska slika. Ovdje možete dodati vlastitu naslovnu sliku ako želite.</p>
                     <img src="{{ \App\Support\LavaggioArticleVideo::thumbnailUrl($automaticVideo) }}" alt="Pregled slike iz videa" width="240" height="312" class="mt-3 rounded-xl object-cover" style="width: 240px; height: 312px; object-position: center top"
-                        onerror="this.onerror=null;this.src='{{ \App\Support\LavaggioArticleVideo::thumbnailUrl($automaticVideo, true) }}'">
+                        onload="if(this.naturalWidth &lt;= 120){this.onerror()}" onerror="this.onload=null;this.onerror=null;this.src='{{ \App\Support\LavaggioArticleVideo::thumbnailUrl($automaticVideo, true) }}'">
                 </div>
             @endif
             <livewire:admin.media.manager

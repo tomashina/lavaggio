@@ -196,7 +196,7 @@ class LavaggioBlogCategoriesTest extends TestCase
 
         $post->translations()->update(['body_html' => '<iframe class="ql-video" src="https://www.youtube.com/embed/u1jjjxJxWic" width="315" height="560"></iframe><p>Promijenjen video.</p>']);
         foreach (['/blog', '/blog/objava-1'] as $url) {
-            $this->get($url)->assertOk()->assertSee('https://i.ytimg.com/vi/u1jjjxJxWic/oardefault.jpg', false)
+            $this->get($url)->assertOk()->assertSee('https://i.ytimg.com/vi/u1jjjxJxWic/oar2.jpg', false)
                 ->assertDontSee($cover->getUrl(), false);
         }
 

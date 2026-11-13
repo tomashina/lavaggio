@@ -13,7 +13,7 @@
     <a href="{{ $cardUrl }}" class="lavaggio-blog-card-image" aria-label="{{ $cardTitle }}">
         @if ($cardImage)
             <img src="{{ $cardImage }}" alt="{{ $cardTitle }}" width="480" height="624" loading="lazy" decoding="async"
-                @if ($cardImageFallback) onerror="this.onerror=null;this.src='{{ $cardImageFallback }}'" @endif>
+                @if ($cardImageFallback) onload="if(this.naturalWidth &lt;= 120){this.onerror()}" onerror="this.onload=null;this.onerror=null;this.src='{{ $cardImageFallback }}'" @endif>
             @if ($cardVideo)
                 <span class="lavaggio-blog-card-play" aria-hidden="true"><x-fa-icon name="play" :inline="true" /></span>
             @endif

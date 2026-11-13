@@ -9,7 +9,7 @@ class LavaggioArticleVideo
     /** YouTube supplies the video frame; no API key or server-side download is needed. */
     public static function thumbnailUrl(array $video, bool $fallback = false): string
     {
-        return 'https://i.ytimg.com/vi/'.$video['id'].'/'.($fallback ? 'hqdefault' : 'oardefault').'.jpg';
+        return 'https://i.ytimg.com/vi/'.$video['id'].'/'.($fallback ? 'hqdefault' : 'oar2').'.jpg';
     }
 
     /** @return array{id: string, layout: string, body_html: string, watch_url: string}|null */
