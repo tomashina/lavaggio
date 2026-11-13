@@ -3,15 +3,20 @@
         ?? $blogCardPost->translations->firstWhere('locale', $blogCardFallbackLocale);
     $cardTitle = (string) ($cardTranslation?->title ?: $blogCardPost->code);
     $cardUrl = route('blog.show', ['slug' => $cardTranslation?->slug ?: $blogCardPost->id]);
-    $cardImage = \App\Support\Media\HerreraBlogImage::first($blogCardPost);
-    $cardIsPortrait = str_contains((string) $cardTranslation?->body_html, 'lavaggio-content-video-portrait');
+    $cardVideo = \App\Support\LavaggioArticleVideo::extract((string) $cardTranslation?->body_html);
+    $cardImage = \App\Support\Media\LavaggioBlogImage::first($blogCardPost, $cardVideo);
+    $cardImageFallback = $cardVideo && $cardImage === \App\Support\LavaggioArticleVideo::thumbnailUrl($cardVideo)
+        ? \App\Support\LavaggioArticleVideo::thumbnailUrl($cardVideo, true) : null;
     $cardCategories = $blogCardPost->categories->sortBy(fn ($category) => (int) ($category->pivot?->sort_order ?? 0));
 @endphp
 <article class="lavaggio-blog-card" data-lavaggio-blog-card>
-    <a href="{{ $cardUrl }}" class="lavaggio-blog-card-image {{ $cardIsPortrait ? 'is-portrait' : '' }}" aria-label="{{ $cardTitle }}">
+    <a href="{{ $cardUrl }}" class="lavaggio-blog-card-image" aria-label="{{ $cardTitle }}">
         @if ($cardImage)
-            <img src="{{ $cardImage }}" alt="{{ $cardTitle }}" width="480" height="360" loading="lazy" decoding="async">
-            <span class="lavaggio-blog-card-play" aria-hidden="true"><x-fa-icon name="play" :inline="true" /></span>
+            <img src="{{ $cardImage }}" alt="{{ $cardTitle }}" width="480" height="624" loading="lazy" decoding="async"
+                @if ($cardImageFallback) onerror="this.onerror=null;this.src='{{ $cardImageFallback }}'" @endif>
+            @if ($cardVideo)
+                <span class="lavaggio-blog-card-play" aria-hidden="true"><x-fa-icon name="play" :inline="true" /></span>
+            @endif
         @else
             <span>{{ __('ui.product.no_image') }}</span>
         @endif

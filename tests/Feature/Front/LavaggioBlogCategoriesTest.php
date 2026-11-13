@@ -96,7 +96,7 @@ class LavaggioBlogCategoriesTest extends TestCase
         @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
         $xpath = new DOMXPath($document);
         $this->assertSame(12, $xpath->query('//*[@data-lavaggio-blog-card]')->length);
-        $this->assertSame(1, $xpath->query('//*[@data-lavaggio-blog-card]//img')->length);
+        $this->assertSame(12, $xpath->query('//*[@data-lavaggio-blog-card]//img')->length);
         $this->assertSame(3, $xpath->query('//select[@id="lavaggio-blog-category"]/option')->length);
         $this->assertSame(1, $xpath->query('//*[@data-lavaggio-blog-card][1]//a[contains(@class,"lavaggio-blog-category-badge") and contains(text(),"Savjeti za pranje")]')->length);
 
@@ -169,7 +169,7 @@ class LavaggioBlogCategoriesTest extends TestCase
         $relatedSection = '//*[@data-blog-related-articles]';
         $this->assertSame(1, $xpath->query($relatedSection.'//*[@data-lavaggio-blog-grid]')->length);
         $this->assertSame(4, $xpath->query($relatedSection.'//*[@data-lavaggio-blog-card]')->length);
-        $this->assertSame(4, $xpath->query($relatedSection.'//a[contains(concat(" ", normalize-space(@class), " "), " lavaggio-blog-card-image ") and contains(concat(" ", normalize-space(@class), " "), " is-portrait ")]')->length);
+        $this->assertSame(4, $xpath->query($relatedSection.'//a[@class="lavaggio-blog-card-image"]')->length);
         $this->assertSame(1, $xpath->query($relatedSection.'//*[@data-lavaggio-blog-card]//img[@src="'.$cover->getUrl().'"]')->length);
         $this->assertSame(0, $xpath->query($relatedSection.'//article[contains(@class,"herrera-blog-card")]')->length);
         $this->assertSame(0, $xpath->query($relatedSection.'//a[@href="'.route('blog.show', ['slug' => 'objava-1']).'" or @href="'.route('blog.show', ['slug' => 'objava-2']).'"]')->length);
@@ -182,6 +182,37 @@ class LavaggioBlogCategoriesTest extends TestCase
         $xpath = new DOMXPath($document);
         $this->assertSame(3, $xpath->query($relatedSection.'//article[contains(@class,"herrera-blog-card")]')->length);
         $this->assertSame(0, $xpath->query($relatedSection.'//*[@data-lavaggio-blog-grid or @data-lavaggio-blog-card]')->length);
+    }
+
+    public function test_edited_video_replaces_an_imported_cover_but_manual_covers_are_preserved(): void
+    {
+        app(LavaggioContentImportService::class)->import(['resources' => [$this->resource(1, '')]]);
+        $post = BlogPost::where('code', 'lavaggio-modx-1')->firstOrFail();
+        config(['media_profiles.models.'.BlogPost::class.'.collections.blog_cover.conversions' => []]);
+        $cover = $post->addMedia(UploadedFile::fake()->image('old-video-cover.jpg', 480, 640))
+            ->withCustomProperties(['lavaggio_source_url' => 'https://img.youtube.com/vi/Abcdef12345/oardefault.jpg'])
+            ->toMediaCollection('blog_cover');
+        $this->get('/blog/objava-1')->assertOk()->assertSee($cover->getUrl(), false);
+
+        $post->translations()->update(['body_html' => '<iframe class="ql-video" src="https://www.youtube.com/embed/u1jjjxJxWic" width="315" height="560"></iframe><p>Promijenjen video.</p>']);
+        foreach (['/blog', '/blog/objava-1'] as $url) {
+            $this->get($url)->assertOk()->assertSee('https://i.ytimg.com/vi/u1jjjxJxWic/oardefault.jpg', false)
+                ->assertDontSee($cover->getUrl(), false);
+        }
+
+        $cover->forgetCustomProperty('lavaggio_source_url')->save();
+        $this->get('/blog/objava-1')->assertOk()->assertSee($cover->getUrl(), false)
+            ->assertSee('data-video-id="u1jjjxJxWic"', false);
+    }
+
+    public function test_non_video_articles_do_not_show_a_play_button(): void
+    {
+        $post = BlogPost::create(['code' => 'text-only', 'is_active' => true]);
+        $post->translations()->create(['locale' => 'hr', 'title' => 'Tekst', 'slug' => 'tekst', 'body_html' => '<p>Samo tekst.</p>']);
+        config(['media_profiles.models.'.BlogPost::class.'.collections.blog_cover.conversions' => []]);
+        $post->addMedia(UploadedFile::fake()->image('cover.jpg'))->toMediaCollection('blog_cover');
+        $this->get('/blog')->assertOk()->assertDontSee('lavaggio-blog-card-play', false);
+        $this->get('/blog/tekst')->assertOk()->assertDontSee('data-lavaggio-video', false)->assertSee('Samo tekst.');
     }
 
     private function resource(int $id, string $tags): array

@@ -14,6 +14,7 @@
             height="{{ $coverImageHeight }}"
             loading="eager"
             decoding="async"
+            @if ($coverImageFallback ?? null) onerror="this.onerror=null;this.src='{{ $coverImageFallback }}'" @endif
         >
         <span class="lavaggio-article-video-play" aria-hidden="true"><x-fa-icon name="play" :inline="true" /></span>
         <span class="lavaggio-article-video-caption" aria-hidden="true">Pogledaj video <x-fa-icon name="arrow-up-right" :inline="true" /></span>

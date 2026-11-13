@@ -42,13 +42,13 @@ html[data-theme] body.lavaggio-storefront .lavaggio-blog-card-image {
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    aspect-ratio: 16 / 9;
+    flex: 0 0 auto;
+    width: 100%;
+    height: clamp(320px, 34vw, 560px);
     border-radius: 12px;
     background: transparent;
 }
-html[data-theme] body.lavaggio-storefront .lavaggio-blog-card-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
-html[data-theme] body.lavaggio-storefront .lavaggio-blog-card-image.is-portrait { aspect-ratio: auto; height: clamp(320px, 34vw, 560px); }
-html[data-theme] body.lavaggio-storefront .lavaggio-blog-card-image.is-portrait img { width: 100%; max-width: 100%; object-fit: cover; object-position: center top; border-radius: 12px; }
+html[data-theme] body.lavaggio-storefront .lavaggio-blog-card-image img { display: block; width: 100%; max-width: 100%; height: 100%; object-fit: cover; object-position: center top; }
 html[data-theme] body.lavaggio-storefront .lavaggio-blog-card-play {
     position: absolute;
     display: grid;
@@ -89,7 +89,7 @@ html[data-theme] body.lavaggio-storefront .lavaggio-blog-card a:focus-visible { 
 }
 @media (max-width: 639px) {
     html[data-theme] body.lavaggio-storefront .lavaggio-blog-grid { grid-template-columns: minmax(0, 1fr); gap: 32px; }
-    html[data-theme] body.lavaggio-storefront .lavaggio-blog-card-image.is-portrait { height: min(130vw, 520px); }
+    html[data-theme] body.lavaggio-storefront .lavaggio-blog-card-image { height: min(130vw, 520px); }
     html[data-theme] body.lavaggio-storefront .lavaggio-blog-filter select { flex: 1; min-width: 170px; }
     html[data-theme] body.lavaggio-storefront .lavaggio-blog-card h2 { font-size: 23px; }
 }

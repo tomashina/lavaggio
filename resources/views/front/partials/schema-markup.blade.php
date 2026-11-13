@@ -506,7 +506,9 @@
         $blogImage = (string) ($og['blog_image_url'] ?? '');
         $blogImageMedia = null;
         if ($blogImage === '' && method_exists($post, 'getFirstMedia')) {
-            $blogImage = (string) \App\Support\Media\HerreraBlogImage::first($post);
+            $blogImage = (string) (config('storefront.home') === 'lavaggio'
+                ? \App\Support\Media\LavaggioBlogImage::first($post, \App\Support\LavaggioArticleVideo::extract((string) $translation?->body_html))
+                : \App\Support\Media\HerreraBlogImage::first($post));
         }
         if ($blogImage === '' && $defaultImage !== '') {
             $blogImage = $defaultImage;

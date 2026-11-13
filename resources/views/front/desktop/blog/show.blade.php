@@ -12,10 +12,14 @@
         : collect();
     $preferWebp = (bool) ($storeSettings['images']['use_webp'] ?? false);
     $coverImage = $mediaItems->firstWhere('collection_name', 'blog_cover') ?? $post->getFirstMedia('blog_cover');
-    $coverImageUrl = \App\Support\Media\HerreraBlogImage::first($post);
-    $lavaggioVideo = config('storefront.home') === 'lavaggio' && $coverImageUrl
+    $lavaggioVideo = config('storefront.home') === 'lavaggio'
         ? \App\Support\LavaggioArticleVideo::extract((string) $translation?->body_html)
         : null;
+    $coverImageUrl = config('storefront.home') === 'lavaggio'
+        ? \App\Support\Media\LavaggioBlogImage::first($post, $lavaggioVideo)
+        : \App\Support\Media\HerreraBlogImage::first($post);
+    $coverImageFallback = $lavaggioVideo && $coverImageUrl === \App\Support\LavaggioArticleVideo::thumbnailUrl($lavaggioVideo)
+        ? \App\Support\LavaggioArticleVideo::thumbnailUrl($lavaggioVideo, true) : null;
     $articleBodyHtml = $lavaggioVideo['body_html'] ?? (string) $translation?->body_html;
     $editorialCoverPath = \App\Support\Media\HerreraBlogImage::localPath($post);
     $isEditorialCover = $editorialCoverPath && $coverImageUrl === asset('assets/blog/herrera/'.basename($editorialCoverPath));

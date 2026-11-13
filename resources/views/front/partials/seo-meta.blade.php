@@ -151,7 +151,9 @@
             if (trim((string) ($ogSettings['blog_image_url'] ?? '')) !== '') {
                 $ogImage = (string) $ogSettings['blog_image_url'];
             } elseif (method_exists($post, 'getFirstMediaUrl')) {
-                $postImage = (string) \App\Support\Media\HerreraBlogImage::first($post);
+                $postImage = (string) (config('storefront.home') === 'lavaggio'
+                    ? \App\Support\Media\LavaggioBlogImage::first($post, \App\Support\LavaggioArticleVideo::extract((string) $postTranslation?->body_html))
+                    : \App\Support\Media\HerreraBlogImage::first($post));
                 if ($postImage !== '') {
                     $ogImage = $postImage;
                 }
