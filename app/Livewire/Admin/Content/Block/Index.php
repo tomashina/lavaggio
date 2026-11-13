@@ -53,6 +53,18 @@ class Index extends Component
         $this->previewBlockId = null;
     }
 
+    public function widgetTitle(ContentBlock $block): string
+    {
+        foreach (array_unique([$this->locale, config('app.locale')]) as $locale) {
+            $title = trim((string) $block->translations->firstWhere('locale', $locale)?->title);
+            if ($title !== '') {
+                return $title;
+            }
+        }
+
+        return (string) $block->name;
+    }
+
     public function delete(int $id): void
     {
         $block = ContentBlock::query()->findOrFail($id);

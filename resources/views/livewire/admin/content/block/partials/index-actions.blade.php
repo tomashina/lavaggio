@@ -1,5 +1,5 @@
 <details class="relative">
-    <summary class="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2" aria-label="Dodatne akcije: {{ $actionBlock->name }}" title="Dodatne akcije">
+    <summary class="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2" aria-label="Dodatne akcije: {{ $actionLabel ?? $actionBlock->name }}" title="Dodatne akcije">
         <span aria-hidden="true" class="text-base leading-none">•••</span>
     </summary>
     <div class="absolute right-0 z-20 mt-2 w-40 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">

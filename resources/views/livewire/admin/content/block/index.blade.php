@@ -47,20 +47,21 @@
                     @php
                         $homeActive = $homeSlot->is_active && $homeSlot->block->is_active;
                         $homePosition = $lavaggioManager ? $homeWidgetPositions[$homeSlot->id] : $loop->iteration;
+                        $homeTitle = $this->widgetTitle($homeSlot->block);
                     @endphp
                     <li class="flex flex-wrap items-center gap-3 px-4 py-3" wire:key="home-widget-{{ $homeSlot->id }}">
                         <span class="w-6 text-sm font-semibold text-slate-400">{{ $homePosition }}</span>
                         <div class="min-w-0 flex-1">
-                            <p class="font-semibold text-slate-900">{{ $homeSlot->block->name }}</p>
+                            <p class="font-semibold text-slate-900">{{ $homeTitle }}</p>
                             <p class="mt-1 text-xs text-slate-500">{{ config('content_blocks.types.'.$homeSlot->block->type) }}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button type="button" wire:click="moveHomeWidget({{ $homeSlot->id }}, 'up')" @disabled($lavaggioManager ? $homePosition === 1 : $loop->first) aria-label="Pomakni gore: {{ $homeSlot->block->name }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-30">↑</button>
-                            <button type="button" wire:click="moveHomeWidget({{ $homeSlot->id }}, 'down')" @disabled($lavaggioManager ? $homePosition === $homeWidgetTotal : $loop->last) aria-label="Pomakni dolje: {{ $homeSlot->block->name }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-30">↓</button>
-                            <button type="button" wire:click="toggleHomeWidget({{ $homeSlot->id }})" class="rounded-lg border px-3 py-2 text-xs font-semibold {{ $homeActive ? 'border-cyan-200 bg-cyan-50 text-cyan-800' : 'border-slate-300 bg-slate-100 text-slate-500' }}" aria-label="Promijeni vidljivost: {{ $homeSlot->block->name }}">{{ $homeActive ? 'Uključen' : 'Isključen' }}</button>
+                            <button type="button" wire:click="moveHomeWidget({{ $homeSlot->id }}, 'up')" @disabled($lavaggioManager ? $homePosition === 1 : $loop->first) aria-label="Pomakni gore: {{ $homeTitle }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-30">↑</button>
+                            <button type="button" wire:click="moveHomeWidget({{ $homeSlot->id }}, 'down')" @disabled($lavaggioManager ? $homePosition === $homeWidgetTotal : $loop->last) aria-label="Pomakni dolje: {{ $homeTitle }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-30">↓</button>
+                            <button type="button" wire:click="toggleHomeWidget({{ $homeSlot->id }})" class="rounded-lg border px-3 py-2 text-xs font-semibold {{ $homeActive ? 'border-cyan-200 bg-cyan-50 text-cyan-800' : 'border-slate-300 bg-slate-100 text-slate-500' }}" aria-label="Promijeni vidljivost: {{ $homeTitle }}">{{ $homeActive ? 'Uključen' : 'Isključen' }}</button>
                             <a href="{{ route('admin.content.blocks.edit', ['block' => $homeSlot->block->id]) }}" class="rounded-lg bg-cyan-700 px-3 py-2 text-xs font-semibold text-white">Uredi</a>
                             @if ($lavaggioManager)
-                                @include('livewire.admin.content.block.partials.index-actions', ['actionBlock' => $homeSlot->block])
+                                @include('livewire.admin.content.block.partials.index-actions', ['actionBlock' => $homeSlot->block, 'actionLabel' => $homeTitle])
                             @endif
                         </div>
                     </li>
@@ -68,13 +69,16 @@
             </ol>
             @endif
             @foreach ($footerWidgetSlots as $footerSlot)
+                @php
+                    $footerTitle = $this->widgetTitle($footerSlot->block);
+                @endphp
                 <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3" wire:key="footer-widget-{{ $footerSlot->id }}">
-                    <div><p class="font-semibold">{{ $footerSlot->block->name }}</p><p class="mt-1 text-xs text-slate-500">Zajednički widget u podnožju svih stranica.</p></div>
+                    <div><p class="font-semibold">{{ $footerTitle }}</p><p class="mt-1 text-xs text-slate-500">Zajednički widget u podnožju svih stranica.</p></div>
                     <div class="flex items-center gap-2">
                         <button type="button" wire:click="toggleHomeWidget({{ $footerSlot->id }})" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold">{{ $footerSlot->is_active && $footerSlot->block->is_active ? 'Uključen' : 'Isključen' }}</button>
                         <a href="{{ route('admin.content.blocks.edit', ['block' => $footerSlot->block->id]) }}" class="rounded-lg bg-cyan-700 px-3 py-2 text-xs font-semibold text-white">Uredi</a>
                         @if ($lavaggioManager)
-                            @include('livewire.admin.content.block.partials.index-actions', ['actionBlock' => $footerSlot->block])
+                            @include('livewire.admin.content.block.partials.index-actions', ['actionBlock' => $footerSlot->block, 'actionLabel' => $footerTitle])
                         @endif
                     </div>
                 </div>
@@ -197,7 +201,7 @@
                 <div class="flex items-start justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-cyan-50 px-5 py-4">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Block Preview') }}</p>
-                        <h3 class="mt-1 text-lg font-semibold tracking-tight text-slate-900">{{ $previewBlock->name }}</h3>
+                        <h3 class="mt-1 text-lg font-semibold tracking-tight text-slate-900">{{ $this->widgetTitle($previewBlock) }}</h3>
                         <p class="mt-1 text-xs text-slate-500">
                             {{ __('Code:') }} <span class="font-mono">{{ $previewBlock->code }}</span>
                             <span class="mx-1.5">|</span>
