@@ -5,7 +5,7 @@
 @endphp
 <div class="admin-panel space-y-4 p-6">
     <h2 class="admin-section-title">FIRA ponude i računi</h2>
-    <p class="text-sm text-slate-600">{{ $isOffer ? 'Ručna izrada ponude za provjeru, bez fiskalizacije' : 'Ručna izrada fiskalnog računa · slijed 1-web-1' }}</p>
+    <p class="text-sm text-slate-600">{{ $isOffer ? 'Ručna izrada ponude za provjeru, bez fiskalizacije' : 'Ručna izrada fiskalnog računa · slijed WS-1 (F1)' }}</p>
     <p class="text-xs text-slate-500">Pregled podržava potrošačke narudžbe iz naplate trgovine. Popuste na cijelu košaricu, naknade plaćanja, poklon bonove, poslovne i ručno unesene narudžbe obradite u FIRA-i. Ako se zbroj stavki i PDV-a zbog zaokruživanja razlikuje od narudžbe, slanje se zaustavlja radi ručne provjere.</p>
     @if ($document)
         @if ($document->state === 'created')

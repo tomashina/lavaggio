@@ -6,7 +6,8 @@
     <div class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
         Za provjeru odaberite ponudu, koja se ne fiskalizira. Fiskalni račun smije se uključiti tek nakon prijave prodajnog mjesta Poreznoj i dovršene FIRA konfiguracije.
     </div>
-    <p class="text-sm text-slate-700">Web trgovina: <strong>lavaggio.hr</strong> · Slijed fiskalnih računa: <strong>1-web-1</strong></p>
+    <p class="text-sm text-slate-700">Web trgovina: <strong>lavaggio.hr</strong> · Fiskalni računi (F1): <strong>WS-1</strong> · eRačuni (F2): <strong>WS-2</strong></p>
+    <p class="text-xs text-slate-500">Slijedovi se određuju u FIRA postavkama integracije. eRačune (WS-2) zasad izrađujete u FIRA-i; webshop trenutačno podržava ponude i potrošačke fiskalne račune (WS-1).</p>
     <p class="text-sm text-slate-600">Ponuda se sprema u vaš stvarni FIRA račun. Slanje ponude kupcu e-poštom određuju FIRA postavke; za probu isključite slanje e-pošte za ponude. Ponudu po potrebi pretvorite u račun izravno u FIRA-i. Trgovina istu narudžbu ne šalje drugi put.</p>
     <form wire:submit="save" class="space-y-4">
         <div>
@@ -24,15 +25,31 @@
             @error('secret') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
         </div>
         <label class="flex items-start gap-2 text-sm"><input type="checkbox" wire:model="form.point_of_sale_registered" class="mt-1" />Za fiskalne račune: potvrđujem da je prodajno mjesto prijavljeno Poreznoj.</label>
-        <label class="flex items-start gap-2 text-sm"><input type="checkbox" wire:model="form.fira_sequence_confirmed" class="mt-1" />Za fiskalne račune: potvrđujem da je u FIRA-i postavljen slijed 1-web-1 i dovršena fiskalna konfiguracija.</label>
-        <p class="text-xs text-slate-500">Ove dvije potvrde nisu potrebne za ponude. Slijed fiskalnih računa 1-web-1 bira se u FIRA postavkama integracije lavaggioshop za odgovarajuće načine plaćanja.</p>
+        <label class="flex items-start gap-2 text-sm"><input type="checkbox" wire:model="form.fira_sequence_confirmed" class="mt-1" />Za fiskalne račune: potvrđujem da je u FIRA-i postavljen slijed WS-1 i dovršena fiskalna konfiguracija.</label>
+        <p class="text-xs text-slate-500">Ove dvije potvrde nisu potrebne za ponude. Slijed fiskalnih računa WS-1 bira se u FIRA postavkama integracije lavaggioshop za odgovarajuće načine plaćanja.</p>
         <label class="flex items-start gap-2 text-sm font-semibold"><input type="checkbox" wire:model="form.send_enabled" class="mt-1" />Uključi izradu odabrane vrste dokumenta iz narudžbe</label>
         @error('form.send_enabled') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
         <label class="flex items-start gap-2 text-sm font-semibold"><input type="checkbox" wire:model="form.auto_card_invoices_enabled" class="mt-1" />Automatski izradi račun nakon potvrđene kartične uplate</label>
         <p class="text-xs text-slate-500">Vrijedi samo za uključeni fiskalni način nakon potvrđene uspješne kartične uplate. Ponude i bankovne transakcije ostaju ručne. Spremanje ove postavke ne šalje račune za ranije narudžbe.</p>
         @error('form.auto_card_invoices_enabled') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+        <label class="flex items-start gap-2 text-sm font-semibold"><input type="checkbox" wire:model="form.price_sync_enabled" class="mt-1" />Automatski preuzimaj cijene iz FIRA-e dvaput dnevno</label>
+        <p class="text-xs text-slate-500">Povezivanje po SKU-u artikla ili varijante. U FIRA-i mora biti uključeno „Dozvoli dohvat podataka”, a na poslužitelju raspored sinkronizacije. Zalihe se ne dohvaćaju jer ih dokumentirani FIRA API ne vraća.</p>
+        @error('price_sync_enabled') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
         <button class="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white" wire:loading.attr="disabled">Spremi postavke</button>
     </form>
+    <section class="space-y-3 border-t border-slate-200 pt-5">
+        <h2 class="text-lg font-semibold">Cijene iz FIRA-e</h2>
+        <p class="text-sm text-slate-600">Ručni dohvat koristi spremljeni ključ i odmah ažurira cijene postojećih artikala s jednoznačnim SKU-om i odgovarajućim PDV-om. Nove artikle treba prvo dodati u katalog. Spremite novi ključ prije dohvata.</p>
+        <button type="button" wire:click="syncPrices" wire:loading.attr="disabled" class="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white">Preuzmi cijene sada</button>
+        <span wire:loading wire:target="syncPrices" class="text-sm text-slate-600">Dohvaćam cijene…</span>
+        @error('fira_sync') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+        @if ($lastSync)
+            <p class="text-sm text-slate-600">Zadnji dovršeni dohvat: {{ \Carbon\Carbon::parse($lastSync['completed_at'])->timezone('Europe/Zagreb')->format('d.m.Y. H:i') }}.
+                Izmijenjeno: {{ $lastSync['changed'] }}; bez promjene: {{ $lastSync['unchanged'] }};
+                bez podudarnog SKU-a: {{ $lastSync['unmatched'] }}; nejednoznačni SKU: {{ $lastSync['ambiguous'] }};
+                neusklađena cijena, valuta ili PDV: {{ $lastSync['invalid'] }}.</p>
+        @endif
+    </section>
     @if ($blockers)
         <ul class="list-disc space-y-1 pl-5 text-sm text-slate-600">@foreach ($blockers as $blocker)<li>{{ $blocker }}</li>@endforeach</ul>
     @endif

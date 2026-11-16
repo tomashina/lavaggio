@@ -19,6 +19,10 @@ use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('boxnow:sync')->everyFiveMinutes()->withoutOverlapping(10);
 
+Schedule::command('lavaggio:sync-fira-prices --apply')->twiceDaily(8, 20)->withoutOverlapping(60)
+    ->when(fn () => config('storefront.home') === 'lavaggio' && ! app()->environment(['local', 'testing'])
+        && (bool) app(\App\Services\Integrations\Fira\FiraSettingsService::class)->options()['price_sync_enabled']);
+
 Schedule::command('watchline:integrations-run --due --apply')->everyMinute()->withoutOverlapping(10)
     ->when(fn () => config('storefront.home') === 'watchline'
         && app(\App\Services\Integrations\Watchline\WatchlineIntegrationSettings::class)->liveReady());

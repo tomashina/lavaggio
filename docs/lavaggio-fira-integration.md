@@ -14,7 +14,7 @@ Ponudu po potrebi pretvorite u račun **izravno u FIRA-i**, odabirom „Napravi 
 
 ## Fiskalni računi
 
-Fiskalni način dodatno zahtijeva potvrđenu prijavu prodajnog mjesta Poreznoj, dovršene FIRA fiskalne postavke i potvrdu brojevnog slijeda `1-web-1`, te uključenu izradu dokumenata. Ova izmjena ne postavlja te potvrde ni stvarne postavke trgovine. Slijed nije polje dokumentiranog API zahtjeva; mora se odabrati u FIRA integraciji `lavaggioshop` za odgovarajuće načine plaćanja. Slanje maila kupcu određuju FIRA postavke.
+Fiskalni način dodatno zahtijeva potvrđenu prijavu prodajnog mjesta Poreznoj, dovršene FIRA fiskalne postavke i potvrdu brojevnog slijeda `WS-1`, te uključenu izradu dokumenata. Ova izmjena ne postavlja te potvrde ni stvarne postavke trgovine. Slijed nije polje dokumentiranog API zahtjeva; mora se odabrati u FIRA integraciji `lavaggioshop` za odgovarajuće načine plaćanja. Slanje maila kupcu određuju FIRA postavke.
 
 U fiskalnom načinu dokument je `FISKALNI_RAČUN`: njegovo izdavanje u FIRA-i pokreće fiskalizaciju. Poslužitelj prije slanja ponovno sastavlja pregledane podatke i uspoređuje sažetak cijelog zahtjeva, uključujući vrstu dokumenta. Promjena načina s ponude na fiskalni račun zahtijeva novi pregled i ne može iskoristiti prethodnu potvrdu ponude.
 
@@ -38,7 +38,7 @@ Jedinstven zapis po narudžbi u `lavaggio_fira_documents` nastaje prije HTTP zah
 
 Nema automatskog ponavljanja ni praćenja preusmjeravanja. Prekid veze, nepoznat odgovor i greška zadržavaju zapis neizvjesnog ishoda: administrator mora provjeriti narudžbu u FIRA-i. Ne postoji automatsko brisanje tog zapisa niti gumb za ponovno izdavanje. Fiskalizacija računa prikazuje se kao potvrđena samo uz zaprimljeni JIR; fiskalni dokument bez JIR-a može postojati i FIRA ga može naknadno fiskalizirati. Ponude se prikazuju kao ponude, bez statusa JIR-a.
 
-Koristi se isključivo fiksni HTTPS endpoint i zaglavlje `FIRA-Api-Key`. Ne bilježe se proizvoljna tijela odgovora, pristupni ključ ni puna tijela zahtjeva. Čuvaju se identitet narudžbe/operatera, vrsta dokumenta, sažetak podataka, status pokušaja i ograničeni podaci o potvrđenom dokumentu. Nema dohvata drugih FIRA dokumenata ili izmjene FIRA kataloga.
+Koristi se isključivo fiksni HTTPS endpoint i zaglavlje `FIRA-Api-Key`. Ne bilježe se proizvoljna tijela odgovora, pristupni ključ ni puna tijela zahtjeva. Čuvaju se identitet narudžbe/operatera, vrsta dokumenta, sažetak podataka, status pokušaja i ograničeni podaci o potvrđenom dokumentu. Nema dohvata drugih FIRA dokumenata ili izmjene FIRA kataloga. Dohvat cijena opisan je u nastavku.
 
 Ugovor je provjeren 9. studenoga 2026. prema službenoj živoj specifikaciji v1.5.1:
 
@@ -48,3 +48,21 @@ Ugovor je provjeren 9. studenoga 2026. prema službenoj živoj specifikaciji v1.
 - [Službena preporuka testiranja ponudom](https://fira.finance/hr/funkcionalnosti/api/)
 
 Stariji primjer na marketinškoj stranici ima starije podatke o vremenskom formatu i skromniji opis; za implementaciju se koristi živa specifikacija. Provjere ove izmjene koriste isključivo lažne HTTP odgovore. Stvarna provjera ponudom moguća je nakon korisnikova unosa ključa i uključenja izrade ponuda; fiskalizacija i dalje čeka prijavu prodajnog mjesta i zasebnu aktivaciju.
+
+## Cijene iz FIRA-e (16. studenoga 2026.)
+
+`GET /api/v1/webshop/erp/products` dohvaća aktivni šifrarnik uz postojeći šifrirani ključ. Na FIRA integraciji mora biti uključeno **Dozvoli dohvat podataka**. Za ovaj smjer sinkronizacije nije potrebno uključivati izmjenu šifrarnika.
+
+**Postavke → FIRA ponude i računi → Preuzmi cijene sada** ažurira postojeće artikle. Zasebna opcija omogućuje dohvat dvaput dnevno (08:00 i 20:00 po vremenu poslužitelja) kroz Laravel scheduler ili zasebni cron. CLI pregled bez izmjena: `php artisan lavaggio:sync-fira-prices`; primjena: ista naredba uz `--apply`. Lokalni raspored ne pokreće automatski vanjske pozive. Spremanje postavki ne pokreće dohvat. Na cPanelu se koristi zasebni cron s `--apply --scheduled`, koji poštuje spremljenu postavku i ne uključuje druge Laravel zadatke.
+
+Povezivanje je po točnom SKU-u (`productNumber` u FIRA-i), odnosno šifri artikla samo ako nema SKU. Varijante koriste vlastiti SKU. Duplicirane šifre, nepoznati artikli, neusklađeni PDV, neispravne cijene i druge valute se preskaču i broje u rezultatu. Cijena je `grossPrice` kada trgovina sprema cijene s PDV-om, odnosno `netPrice` kada sprema neto cijene. Live odgovor od 16.11.2026. u `taxPercentage` za dio artikala vraća iznos PDV-a umjesto postotka. Taj se oblik prihvaća samo ako iznos odgovara razlici bruto/neto cijene i obje cijene odgovaraju poreznoj stopi trgovine (uz toleranciju jednog centa zbog zaokruživanja). Dohvaćaju se sve stranice prije izmjena; nepotpun dohvat ništa ne mijenja. Najviše 100 stranica po 100 artikala. Promjene ulaze u postojeću povijest cijena. Opisi, slike, atributi, akcije, količine i cijena na dan ulistanja ostaju sačuvani. Nema stvaranja ni brisanja artikala i nema slanja računa.
+
+**Zalihe još nisu spojene.** U javnoj specifikaciji v1.5.1 i stvarnom odgovoru od 16.11.2026. u 10:13 Europe/Zagreb ni popis ni provjereni detalj artikla ne sadrže polje količine. Dohvat popisa vratio je HTTP 200 i 73 artikla; svih 48 SKU-ova webshopa ima podudaranje. Potreban je dokumentiran izvor skladišnog stanja, s definicijom skladišta i raspoložive količine. Izostalo stanje ne pretvara se u nulu.
+
+## Bazne cijene i brojevni slijedovi
+
+Postojeća objavljena stranica sa slugom `bazne-cijene` prikazuje aktualne PDF/CSV poveznice i arhivu s [javnog FIRA cjenika](https://app.fira.finance/api/v1/public/price-list/1-8rfbZo0XHscXF0CEq5_zNcoRSltl7B). FIRA odgovor sadrži `frame-ancestors 'none'`, pa se ne koristi iframe. Aplikacija čita isključivo datume i provjerene poveznice arhivskih CSV datoteka, bez izvršavanja ili prikaza udaljenog HTML-a. Rezultat se predmemorira pet minuta; pri grešci ostaju izravne poveznice na FIRA cjenik i arhivu. FIRA održava arhivu 30 dana.
+
+Migracija `2026_11_16_120000_update_lavaggio_listing_date` samo na Lavaggiu mijenja datum ulistanja 13.11.2026. u 16.11.2026. Cijene i drugi datumi ostaju sačuvani. Postupak deploya prije izmjene snima pogođene datume i bazne cijene.
+
+Oznake su **WS-1 za fiskalne račune F1** i **WS-2 za eRačune F2**. Stvarni slijed određuje FIRA postavka integracije, a ne polje zahtjeva webshopa. Ova promjena usklađuje oznake u administraciji i ne uključuje automatsko izdavanje dokumenata. Postojeća integracija webshopa i dalje izdaje ponude i B2C fiskalne račune; eRačune obrađuje administrator izravno u FIRA-i.

@@ -163,6 +163,8 @@ class LavaggioDeployContentUpgrades extends Command
                 }
             })->orderBy('id')->get(),
             'migrations' => DB::table('migrations')->orderBy('id')->get(),
+            'lavaggio_listing_dates' => DB::table('products')->whereDate('listed_at', '2026-11-13')
+                ->get(['id', 'listed_at', 'listing_price', 'updated_at']),
         ];
         foreach (['content_block_items', 'content_info_pages', 'content_info_page_translations', 'content_faqs', 'content_faq_translations', 'content_blog_post_translations'] as $table) {
             $snapshot[$table] = DB::table($table)->orderBy('id')->get();

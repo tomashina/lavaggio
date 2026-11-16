@@ -16,6 +16,7 @@
     $isReviewPage = $isLavaggio && ($page->code === 'lavaggio-modx-78' || $translation?->slug === 'recenzije-klijenata');
     $isDeliveryPage = $isLavaggio && ($page->code === 'lavaggio-shop-dostava' || $translation?->slug === 'dostava');
     $deliverySections = $isDeliveryPage ? app(\App\Support\Lavaggio\DeliveryPageSections::class)->fromHtml((string) $translation?->body_html) : null;
+    $isBasePricesPage = $isLavaggio && $translation?->slug === 'bazne-cijene';
     $isPricingPage = $isLavaggio && $page->code === 'lavaggio-modx-88';
     $pageBody = (string) $translation?->body_html;
     if ($isPricingPage) {
@@ -63,7 +64,9 @@
         </div>
     </section>
 
-    @if ($pageLinkCards !== [])
+    @if ($isBasePricesPage)
+        @include('front.desktop.pages.partials.lavaggio-base-prices')
+    @elseif ($pageLinkCards !== [])
         <nav class="lavaggio-page-link-cards" aria-label="{{ $translation?->title ?? $page->code }}">
             @foreach ($pageLinkCards as $card)
                 <a class="lavaggio-page-link-card" href="{{ $card['url'] }}">
