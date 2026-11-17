@@ -144,6 +144,8 @@ class CheckoutService
                 }
 
                 $method->setAttribute('resolved_price', (float) $quote['price']);
+                $displayTax = app(B2BAccessService::class)->displaysNet(auth()->user()) ? 0 : $this->resolveShippingTaxTotal($method, (float) $quote['price']);
+                $method->setAttribute('resolved_display_price', round((float) $quote['price'] + $displayTax, 2));
                 $method->setAttribute('shipping_quote', $quote);
 
                 return true;
@@ -414,6 +416,8 @@ class CheckoutService
                     'gift_voucher_total' => $giftVoucherTotal,
                     'original_total' => $originalTotal,
                     'shipping' => [
+                        'fira_product_code' => data_get($shippingMethod->settings, 'fira_product_code'),
+                        'fira_kpd_code' => data_get($shippingMethod->settings, 'fira_kpd_code'),
                         'tax_total' => $shippingTaxTotal,
                         'tax_rate_percent' => (float) data_get($shippingMethod->settings, 'tax_rate_percent', 0),
                         'destination' => $shippingDestination->toArray(),
@@ -648,7 +652,10 @@ class CheckoutService
         $price = (float) $shippingMethod->price;
         $freeOver = is_numeric($shippingMethod->free_over) ? (float) $shippingMethod->free_over : null;
 
-        if ($freeOver !== null && $freeOver >= 0 && $subtotal >= $freeOver) {
+        $basis = $this->shippingSubtotal($shippingMethod, $subtotal, $subtotal);
+        if (! data_get($shippingMethod->settings, 'free_shipping_disabled', false)
+            && $freeOver !== null && $freeOver >= 0
+            && (data_get($shippingMethod->settings, 'free_shipping_strict', false) ? $basis > $freeOver : $basis >= $freeOver)) {
             return 0.0;
         }
 
@@ -657,6 +664,12 @@ class CheckoutService
 
     private function shippingSubtotal(ShippingMethod $method, float $afterDiscount, float $beforeDiscount): float
     {
+        if (data_get($method->settings, 'subtotal_basis') === 'gross_after_discount') {
+            $summary = $this->cart->summary();
+
+            return round($afterDiscount + (float) ($summary['raw_tax_total'] ?? $summary['tax_total'] ?? 0), 2);
+        }
+
         if (data_get($method->settings, 'subtotal_basis') === 'before_cart_discount') {
             $lines = $this->cart->lines();
 

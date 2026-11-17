@@ -300,7 +300,7 @@
                                     <span class="shrink-0 whitespace-nowrap text-slate-600">
                                         {{ (string) $method->pricing_type === 'quote'
                                             ? __('Cijena na upit')
-                                            : \App\Support\Currency::format((float) ($method->resolved_price ?? $method->price)) }}
+                                            : \App\Support\Currency::format((float) ($method->resolved_display_price ?? $method->resolved_price ?? $method->price)) }}
                                     </span>
                                 </label>
                                 </div>

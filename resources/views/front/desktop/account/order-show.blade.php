@@ -130,6 +130,7 @@
                                     'Quick action: marked as paid from order detail.' => __('ui.account.order_show.timeline.notes.quick_paid'),
                                     'Quick action: marked as cancelled from order detail.' => __('ui.account.order_show.timeline.notes.quick_cancelled'),
                                     'CorvusPay checkout: payment abandoned, stock restored.' => __('Plaćanje preko CorvusPaya je prekinuto.'),
+                                    'CorvusPay callback: payment preauthorized, awaiting manual completion.' => __('ui.checkout.corvus.status.preauthorized'),
                                 ];
                                 $entryComment = $entry->comment ? ($noteMap[$entry->comment] ?? $entry->comment) : null;
                             @endphp

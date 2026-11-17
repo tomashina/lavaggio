@@ -35,6 +35,12 @@ class CorvusPayFormService
         return $this->isCorvusCode((string) $order->payment_method_code);
     }
 
+    public function hasPreauthorization(Order $order): bool
+    {
+        return $this->isCorvusOrder($order)
+            && ! empty(data_get($order->payload, self::PAYLOAD_KEY.'.preauthorized_at'));
+    }
+
     /**
      * @param  array<string, mixed>  $settings
      */
@@ -60,7 +66,7 @@ class CorvusPayFormService
      */
     public function buildFormData(Order $order): ?array
     {
-        if (! $this->isCorvusOrder($order)) {
+        if (! $this->isCorvusOrder($order) || $this->hasPreauthorization($order)) {
             return null;
         }
 
@@ -84,7 +90,8 @@ class CorvusPayFormService
             $currency = 'EUR';
         }
 
-        $requireComplete = filter_var((string) ($settings['corvus_require_complete'] ?? 'false'), FILTER_VALIDATE_BOOL)
+        // Keep the chosen mode stable if the buyer reopens an existing checkout.
+        $requireComplete = filter_var(data_get($order->payload, self::PAYLOAD_KEY.'.request.require_complete', $settings['corvus_require_complete'] ?? 'false'), FILTER_VALIDATE_BOOL)
             ? 'true'
             : 'false';
 
@@ -208,14 +215,22 @@ class CorvusPayFormService
             $payload = is_array($locked->payload) ? $locked->payload : [];
             $existing = is_array($payload[self::PAYLOAD_KEY] ?? null) ? $payload[self::PAYLOAD_KEY] : [];
             $wasRestocked = ! empty($existing['cancel_restocked_at']);
-            $isPaid = $normalizedContext === 'success'
+            // Use the mode sent for this order, never today's admin setting or callback input.
+            $requiresComplete = filter_var(data_get($existing, 'request.require_complete', false), FILTER_VALIDATE_BOOL);
+            $wasPreauthorized = ! empty($existing['preauthorized_at']);
+            $isApproved = $normalizedContext === 'success'
                 && $approvalCode !== ''
                 && ! $wasRestocked;
+            $isPreauthorized = $isApproved && $requiresComplete && $locked->paid_at === null;
+            $newlyPreauthorized = $isPreauthorized && ! $wasPreauthorized;
+            $isPaid = $isApproved && ! $requiresComplete;
             $newlyPaid = $isPaid && $locked->paid_at === null;
             $status = match (true) {
                 $normalizedContext === 'success' && $wasRestocked => 'late_success_after_cancel',
+                $isPreauthorized => 'preauthorized',
                 $isPaid => 'approved',
-                $normalizedContext === 'cancel' && $locked->paid_at !== null => 'already_paid',
+                $locked->paid_at !== null => 'already_paid',
+                $wasPreauthorized => 'already_preauthorized',
                 $normalizedContext === 'cancel' => 'cancelled',
                 default => 'declined',
             };
@@ -251,17 +266,29 @@ class CorvusPayFormService
             $callbacks = array_slice($callbacks, -50);
 
             $payload[self::PAYLOAD_KEY] = array_merge($existing, [
-                'status' => in_array($status, ['late_success_after_cancel', 'already_paid'], true)
+                'status' => in_array($status, ['late_success_after_cancel', 'already_paid', 'already_preauthorized'], true)
                     ? (string) ($existing['status'] ?? $status)
                     : $status,
                 'latest_callback_status' => $status,
                 'signature_valid' => $signatureValid,
                 'callback_authorized' => true,
-                'approval_code' => $approvalCode,
+                'approval_code' => in_array($status, ['already_paid', 'already_preauthorized'], true)
+                    ? ($existing['approval_code'] ?? $approvalCode)
+                    : $approvalCode,
                 'callbacks' => $callbacks,
             ]);
 
             $beforeStatusId = (int) $locked->status_id;
+            if ($newlyPreauthorized) {
+                $payload[self::PAYLOAD_KEY]['preauthorized_at'] = now()->toIso8601String();
+                OrderHistory::query()->create([
+                    'order_id' => $locked->id,
+                    'from_status_id' => $beforeStatusId > 0 ? $beforeStatusId : null,
+                    'to_status_id' => $beforeStatusId > 0 ? $beforeStatusId : null,
+                    'changed_by' => $locked->user_id,
+                    'comment' => 'CorvusPay callback: payment preauthorized, awaiting manual completion.',
+                ]);
+            }
             if ($newlyPaid) {
                 $paidStatus = $this->resolvePaidStatus();
                 if ($paidStatus && (int) $locked->status_id !== (int) $paidStatus->id) {
@@ -307,7 +334,11 @@ class CorvusPayFormService
             'signature_valid' => $signatureValid,
             'callback_authorized' => true,
             'cancellation_applied' => (bool) $result['cancellation_applied'],
-            'message' => (bool) $result['paid'] ? 'Payment approved.' : 'Payment was not approved.',
+            'message' => match ($result['status']) {
+                'approved' => 'Payment approved.',
+                'preauthorized', 'already_preauthorized' => 'Payment preauthorized, awaiting manual completion.',
+                default => 'Payment was not approved.',
+            },
         ];
     }
 
@@ -348,6 +379,9 @@ class CorvusPayFormService
             if ($locked->paid_at !== null) {
                 return ['status' => 'already_paid', 'cancellation_applied' => false];
             }
+            if ($this->hasPreauthorization($locked)) {
+                return ['status' => 'already_preauthorized', 'cancellation_applied' => false];
+            }
 
             $payload = is_array($locked->payload) ? $locked->payload : [];
             $existing = is_array($payload[self::PAYLOAD_KEY] ?? null) ? $payload[self::PAYLOAD_KEY] : [];
@@ -372,6 +406,7 @@ class CorvusPayFormService
         $existing = is_array($payload[self::PAYLOAD_KEY] ?? null) ? $payload[self::PAYLOAD_KEY] : [];
         if (
             $locked->paid_at !== null
+            || $this->hasPreauthorization($locked)
             || ($existing['status'] ?? null) !== 'cancelled'
             || ! (($existing['callback_authorized'] ?? false) || ($existing['browser_cancellation_authorized'] ?? false))
             || ! empty($existing['cancel_restocked_at'])

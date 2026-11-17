@@ -186,6 +186,22 @@ class LavaggioFiraCardCallbacksTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_corvus_preauthorization_never_marks_paid_or_automatically_issues_a_fiscal_invoice(): void
+    {
+        $method = PaymentMethod::where('code', 'corvus')->sole();
+        $method->update(['settings' => [...$method->settings, 'corvus_require_complete' => 'true']]);
+        $order = $this->order('corvuspay');
+        $result = $this->signedPaymentCallback($order, 'corvuspay');
+
+        $this->assertSame('preauthorized', $result['status']);
+        $this->assertFalse($result['paid']);
+        $this->assertFalse($result['newly_paid']);
+        $this->assertNull($order->fresh()->paid_at);
+        app(FiraInvoiceService::class)->issueAfterCardPayment($order->id, 'corvuspay');
+        $this->assertDatabaseCount('lavaggio_fira_documents', 0);
+        Http::assertNothingSent();
+    }
+
     public function test_corvus_payment_request_in_another_currency_cannot_trigger_automatic_invoice(): void
     {
         $order = $this->order('corvuspay');

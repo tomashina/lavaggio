@@ -29,7 +29,10 @@ class ShippingCalculator
         $base = 0.0;
         $rateId = null;
 
-        if ($allFree || ($freeOver !== null && $freeOver >= 0 && $subtotal >= $freeOver)) {
+        $freeAllowed = ! (bool) data_get($method->settings, 'free_shipping_disabled', false);
+        $meetsThreshold = $freeOver !== null && $freeOver >= 0
+            && (data_get($method->settings, 'free_shipping_strict', false) ? $subtotal > $freeOver : $subtotal >= $freeOver);
+        if ($freeAllowed && ($allFree || $meetsThreshold)) {
             $pricingType = 'free';
         } elseif ($pricingType === 'weight_tiers') {
             $rate = $this->matchingRate($method, (float) ($profile['chargeable_weight_kg'] ?? 0));
@@ -207,6 +210,11 @@ class ShippingCalculator
             ]) !== []) {
                 return false;
             }
+        }
+
+        if ((bool) data_get($method->settings, 'require_known_weight', false)
+            && (bool) ($profile['has_missing_weight'] ?? false)) {
+            return false;
         }
 
         $policy = (string) ($method->missing_measurements_policy ?: 'allow');

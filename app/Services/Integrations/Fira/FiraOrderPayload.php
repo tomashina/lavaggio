@@ -3,6 +3,7 @@
 namespace App\Services\Integrations\Fira;
 
 use App\Models\Sales\Order\Order;
+use App\Models\Settings\Local\ShippingMethod;
 use App\Support\OrderStatusClassification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
@@ -74,8 +75,19 @@ class FiraOrderPayload
             $errors[] = 'Porez dostave zahtijeva ručnu provjeru u FIRA-i.';
         }
         if ($shipping > 0) {
-            $lines[] = ['name' => 'Dostava – '.($order->shipping_method_name ?: 'Dostava'), 'lineItemId' => 'SHIPPING',
+            // Older orders predate the mapping snapshot; only their identifiers fall back to admin settings.
+            $shippingSettings = ShippingMethod::where('code', $order->shipping_method_code)->value('settings');
+            $shippingSku = trim((string) data_get($order->payload, 'shipping.fira_product_code', data_get($shippingSettings, 'fira_product_code')));
+            $shippingKpd = trim((string) data_get($order->payload, 'shipping.fira_kpd_code', data_get($shippingSettings, 'fira_kpd_code')));
+            $shippingLine = ['name' => $order->shipping_method_name ?: 'Dostava', 'lineItemId' => $shippingSku ?: 'SHIPPING',
                 'price' => $shipping, 'quantity' => 1, 'unit' => 'usluga', 'taxRate' => $shippingRate];
+            if ($shippingSku !== '') {
+                $shippingLine['productCode'] = $shippingSku;
+            }
+            if ($shippingKpd !== '') {
+                $shippingLine['kpdCode'] = $shippingKpd;
+            }
+            $lines[] = $shippingLine;
             $net += $shipping;
             $tax += $shippingTax;
         }

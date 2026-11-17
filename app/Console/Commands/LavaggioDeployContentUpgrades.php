@@ -165,6 +165,21 @@ class LavaggioDeployContentUpgrades extends Command
             'migrations' => DB::table('migrations')->orderBy('id')->get(),
             'lavaggio_listing_dates' => DB::table('products')->whereDate('listed_at', '2026-11-13')
                 ->get(['id', 'listed_at', 'listing_price', 'updated_at']),
+            'shipping_tariffs' => DB::table('shipping_methods')->whereIn('code', ['gls_home', 'gls_locker', 'boxnow', 'gls_heavy', 'pallet'])
+                ->get(['id', 'code', 'name', 'carrier', 'service_type', 'pricing_type', 'price', 'free_over', 'min_weight_kg', 'max_weight_kg', 'min_subtotal', 'max_subtotal', 'fragile_surcharge', 'oversized_surcharge', 'heavy_surcharge', 'missing_measurements_policy', 'settings'])
+                ->map(static function ($method): array {
+                    $row = (array) $method;
+                    $row['settings'] = \Illuminate\Support\Arr::only((array) json_decode((string) $method->settings, true), ['tax_rate_percent', 'fira_product_code', 'fira_kpd_code', 'free_shipping_disabled', 'free_shipping_strict', 'subtotal_basis', 'opencart_xshippingpro']);
+
+                    return $row;
+                }),
+            'corvus_preauthorization_settings' => DB::table('payment_methods')
+                ->whereIn('code', ['corvus', 'corvuspay', 'corvus_pay'])->get(['id', 'code', 'settings'])
+                ->map(static fn ($method): array => [
+                    'id' => $method->id,
+                    'code' => $method->code,
+                    'corvus_require_complete' => data_get(json_decode((string) $method->settings, true), 'corvus_require_complete'),
+                ]),
         ];
         foreach (['content_block_items', 'content_info_pages', 'content_info_page_translations', 'content_faqs', 'content_faq_translations', 'content_blog_post_translations'] as $table) {
             $snapshot[$table] = DB::table($table)->orderBy('id')->get();

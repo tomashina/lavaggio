@@ -30,6 +30,14 @@ Postavka je dio postojećeg zapisa `lavaggio_fira`; nije potrebna nova migracija
 
 ## Iznosi i zaštita
 
+### Dostava i predautorizacija (17. studenoga 2026.)
+
+**Postavke → Lokalno → Dostava** sadrže uređive neto cijene, prikaz MPC-a s PDV-om, stopu PDV-a, FIRA SKU, KPD, granice težine, osnovicu i prag besplatne dostave te opciju **Uvijek naplati dostavu**. Početni unos iz odobrene tablice postavlja 100001 / GLS do 40 kg / 5,90 €; 100002 / GLS paketomat do 20 kg / 4,90 €; 100003 / BOX NOW do 20 kg / 3,90 €; 100004 / GLS preko 40 do 80 kg / 24,90 €; 100005 / paleta preko 80 kg / 99,90 €. Svi iznosi u ovom popisu uključuju 25% PDV-a, KPD je 53.20.09. Prve tri usluge besplatne su tek iznad 70 € vrijednosti robe s PDV-om nakon popusta. Točno 70 € još se naplaćuje. Teške i paletne pošiljke izuzete su iz općeg besplatnog praga i oznaka besplatne dostave na artiklima.
+
+Ovo je jednokratan unos u bazu. Runtime nema fiksnu tablicu cijena ni šifri: koristi administratorske postavke, a narudžba sprema njihov snimak. Dostava u FIRA-i šalje `lineItemId` za prikaz šifre, `productCode` za povezivanje sa šifrarnikom i `kpdCode`, uz neto iznos i stopu iz narudžbe. Ta su polja provjerena prema živoj OpenAPI specifikaciji 17.11.2026. Za stare narudžbe bez snimka šifri uzimaju se identifikatori iz postavki dostave; spremljeni iznosi ne mijenjaju se. Besplatna dostava ne stvara naplatnu stavku.
+
+CorvusPay **Predautorizacija — ručna potvrda naplate** šalje `require_complete=true`. Potpisani uspjeh tada evidentira rezervaciju bez `paid_at` i bez automatskog FIRA računa. Trgovac potvrđuje completion u CorvusPay portalu, zatim označi narudžbu plaćenom i ručno izda račun kroz postojeći FIRA panel. Webshop zasad ne sinkronizira completion iz portala.
+
 Iznosi dolaze iz spremljene narudžbe, bez ponovnog računanja aktualnih cijena proizvoda. Šalju se cijene nakon popusta na stavku, bez PDV-a (`taxesIncluded=false`), porezne stope u decimalnom obliku i zasebna stavka dostave. Neto, PDV i bruto moraju se podudarati sa snimkom narudžbe. Fiskalna narudžba označena plaćenom s odabranom bankovnom transakcijom šalje dokumentirani `prepaidAmount`; ponude ga ne šalju.
 
 Trenutno su podržane B2C narudžbe nastale naplatom trgovine, u eurima, s pozitivnim iznosom i usklađenim poreznim zbrojevima. Popusti na cijelu košaricu, poklon bonovi, naknade plaćanja bez potvrđenog poreznog tretmana, B2B, stare/ručno unesene narudžbe i narudžbe s nepodudarnim zaokruživanjem PDV-a zahtijevaju ručnu obradu u FIRA-i. Ne stvaraju se pretpostavljene porezne korekcije. Košarica zaokružuje porez po jedinici, pa se na nekim višestrukim količinama izvorni snimak može razlikovati od FIRA izračuna po stavci; pregled to prijavljuje prije slanja.

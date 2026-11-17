@@ -21,6 +21,9 @@
         <p class="mt-3 text-slate-600">{{ __('ui.checkout.success.order_number') }}: <span class="font-semibold text-slate-900">{{ $order->order_number }}</span></p>
     </header>
     <section class="checkout-status-card checkout-status-card--success">
+        @if (data_get($order->payload, 'corvuspay.preauthorized_at') && !$order->paid_at && !$order->status?->is_cancelled)
+            <p class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-700" role="status">{{ __('ui.checkout.corvus.status.preauthorized') }}</p>
+        @endif
         @if($giftVoucherSettlementAttention)
             <p class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-700" role="status">Provjeravamo pokriće poklon bonom i javit ćemo vam se.</p>
         @endif

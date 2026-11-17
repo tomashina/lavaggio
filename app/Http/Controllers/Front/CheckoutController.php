@@ -376,10 +376,10 @@ class CheckoutController extends Controller
                 'code' => (string) $method->code,
                 'name' => (string) $method->name,
                 'description' => trim((string) $method->description),
-                'price' => round((float) ($method->resolved_price ?? $method->price), 2),
+                'price' => round((float) ($method->resolved_display_price ?? $method->resolved_price ?? $method->price), 2),
                 'price_formatted' => (string) $method->pricing_type === 'quote'
                     ? __('Cijena na upit')
-                    : Currency::format((float) ($method->resolved_price ?? $method->price)),
+                    : Currency::format((float) ($method->resolved_display_price ?? $method->resolved_price ?? $method->price)),
                 'requires_quote' => (string) $method->pricing_type === 'quote',
                 'is_boxnow' => in_array(strtolower((string) $method->code), ['boxnow', 'box_now'], true),
                 'boxnow_partner_id' => (string) ((is_array($method->settings ?? null) ? ($method->settings['boxnow_partner_id'] ?? '') : '') ?: ''),
@@ -533,7 +533,12 @@ class CheckoutController extends Controller
         $allowedByUser = $request->user() && ((int) $request->user()->id === (int) $order->user_id);
         abort_unless($allowedBySession || $allowedByUser, 404);
 
-        $formData = app(CorvusPayFormService::class)->buildFormData($order);
+        $corvus = app(CorvusPayFormService::class);
+        if ($corvus->hasPreauthorization($order) || $order->paid_at !== null) {
+            return redirect()->route('checkout.success', ['orderNumber' => $order->order_number]);
+        }
+
+        $formData = $corvus->buildFormData($order);
         if (! is_array($formData)) {
             return redirect()
                 ->route('checkout.success', ['orderNumber' => $order->order_number])
@@ -836,7 +841,7 @@ class CheckoutController extends Controller
 
         // The locked notification marker prevents duplicate sends while allowing
         // a callback replay to retry after a transient notification failure.
-        if ((bool) ($result['paid'] ?? false)) {
+        if ((bool) ($result['paid'] ?? false) || ($result['status'] ?? '') === 'preauthorized') {
             $freshOrder = Order::query()->find($order->id);
             if ($freshOrder) {
                 $this->sendCorvusNotificationOnce($freshOrder);
@@ -848,7 +853,8 @@ class CheckoutController extends Controller
         }
 
         $statusKey = match ((string) ($result['status'] ?? '')) {
-            'approved' => 'ui.checkout.corvus.status.approved',
+            'approved', 'already_paid' => 'ui.checkout.corvus.status.approved',
+            'preauthorized', 'already_preauthorized' => 'ui.checkout.corvus.status.preauthorized',
             'cancelled' => 'ui.checkout.corvus.status.cancelled',
             'invalid_signature' => 'ui.checkout.corvus.status.invalid_signature',
             default => 'ui.checkout.corvus.status.declined',
@@ -876,6 +882,13 @@ class CheckoutController extends Controller
             ? $corvus->abandonOrder($order)
             : $corvus->handleCallback($order, $request->all(), 'cancel');
         $cancelled = ($result['status'] ?? '') === 'cancelled';
+
+        if (($result['status'] ?? '') === 'already_preauthorized') {
+            $request->session()->put('front.checkout.last_order_id', (int) $order->id);
+
+            return redirect()->route('checkout.success', ['orderNumber' => $order->order_number])
+                ->with('status', __('ui.checkout.corvus.status.preauthorized'));
+        }
 
         if ($cancelled) {
             $freshOrder = $order->fresh('items');

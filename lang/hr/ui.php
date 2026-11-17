@@ -529,6 +529,7 @@ return [
             'redirect_button' => 'Nastavi na CorvusPay',
             'missing_config' => 'CorvusPay nije ispravno konfiguriran. Obratite se podršci.',
             'status' => [
+                'preauthorized' => 'Iznos je rezerviran na kartici. Naplata će se izvršiti nakon ručne potvrde trgovca.',
                 'approved' => 'Plaćanje je uspješno odobreno.',
                 'declined' => 'Plaćanje nije odobreno.',
                 'cancelled' => 'Plaćanje je otkazano.',

@@ -383,11 +383,12 @@
                                 @error('form.corvus_currency') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Require complete') }}</label>
-                                <select wire:model="form.corvus_require_complete" data-tom-select data-tom-no-search="1" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none ring-cyan-200 focus:ring">
-                                    <option value="false">{{ __('Immediate charge') }}</option>
-                                    <option value="true">{{ __('Preauthorization') }}</option>
+                                <label for="corvus-require-complete" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Način naplate kartice') }}</label>
+                                <select id="corvus-require-complete" wire:model="form.corvus_require_complete" aria-describedby="corvus-require-complete-help" data-tom-select data-tom-no-search="1" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none ring-cyan-200 focus:ring">
+                                    <option value="true">{{ __('Predautorizacija — ručna potvrda naplate') }}</option>
+                                    <option value="false">{{ __('Automatska naplata odmah') }}</option>
                                 </select>
+                                <p id="corvus-require-complete-help" class="mt-2 text-xs text-emerald-900">{{ __('Kod predautorizacije iznos se rezervira na kartici. Svaku naplatu naknadno ručno potvrdite u CorvusPay Merchant portalu. Postavka vrijedi za nove zahtjeve za plaćanje.') }}</p>
                                 @error('form.corvus_require_complete') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                             </div>
                             <div class="md:col-span-2">

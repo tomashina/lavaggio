@@ -322,6 +322,9 @@
             <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
                 <p><strong>{{ __('Placed:') }}</strong> {{ optional($order->placed_at ?: $order->created_at)->format('Y-m-d H:i') }}</p>
                 <p class="mt-1"><strong>{{ __('Paid At:') }}</strong> {{ optional($order->paid_at)->format('Y-m-d H:i') ?: '-' }}</p>
+                @if (data_get($order->payload, 'corvuspay.preauthorized_at') && !$order->paid_at && !$order->status?->is_cancelled)
+                    <p class="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900">{{ __('CorvusPay: predautorizirano — čeka ručnu naplatu. Najprije potvrdite naplatu u CorvusPay Merchant portalu, zatim označite narudžbu plaćenom i izdajte račun. Promjena statusa u webshopu ne naplaćuje karticu. Otkazivanje rezervacije također napravite u CorvusPay portalu.') }}</p>
+                @endif
                 <p class="mt-1"><strong>{{ __('Source:') }}</strong> {{ $order->source }}</p>
                 @if ($delegatedOrder)
                     <p class="mt-1" data-order-salesperson><strong>{{ __('Narudžbu unio:') }}</strong> {{ $order->creator?->name ?: __('Djelatnik').' #'.$order->created_by }}</p>

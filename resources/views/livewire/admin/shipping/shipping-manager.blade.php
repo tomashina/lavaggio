@@ -83,7 +83,7 @@
                                 'free' => __('Besplatno'),
                                 'quote' => __('Na upit'),
                                 'weight_tiers' => trans_choice(':count raspon|:count raspona|:count raspona', $row->rates_count, ['count' => $row->rates_count]),
-                                default => \App\Support\Currency::format((float) $row->price),
+                                default => \App\Support\Currency::format(round((float) $row->price * (1 + (float) data_get($row->settings, 'tax_rate_percent', 0) / 100), 2)),
                             };
                             $hasDimensions = $row->max_length_cm !== null || $row->max_width_cm !== null || $row->max_height_cm !== null;
                         @endphp
@@ -91,11 +91,22 @@
                             <td class="px-3 py-3">
                                 <div class="font-semibold text-slate-900">{{ $row->name }}</div>
                                 <div class="mt-1 font-mono text-xs text-slate-500">{{ $row->code }}</div>
+                                @if (data_get($row->settings, 'fira_product_code'))
+                                    <div class="mt-1 text-xs text-slate-500">FIRA SKU: {{ data_get($row->settings, 'fira_product_code') }} · KPD: {{ data_get($row->settings, 'fira_kpd_code') }}</div>
+                                @endif
                             </td>
                             <td class="px-3 py-3 text-slate-700">{{ $carrierLabel }}</td>
                             <td class="px-3 py-3 text-slate-700">{{ $serviceLabel }}</td>
                             <td class="px-3 py-3 text-slate-700">{{ $row->geoZone?->name ?? __('Sve zone') }}</td>
-                            <td class="px-3 py-3 text-right font-semibold text-slate-900">{{ $priceLabel }}</td>
+                            <td class="px-3 py-3 text-right font-semibold text-slate-900">
+                                {{ $priceLabel }}
+                                @if (data_get($row->settings, 'tax_rate_percent'))<div class="text-xs font-normal text-slate-500">{{ __('s PDV-om') }}</div>@endif
+                                @if (data_get($row->settings, 'free_shipping_disabled'))
+                                    <div class="mt-1 text-xs font-normal text-slate-500">{{ __('Uvijek se naplaćuje') }}</div>
+                                @elseif ($row->free_over !== null)
+                                    <div class="mt-1 text-xs font-normal text-slate-500">{{ __('Besplatno iznad') }} {{ \App\Support\Currency::format((float) $row->free_over) }}</div>
+                                @endif
+                            </td>
                             <td class="px-3 py-3 text-xs text-slate-600">
                                 @if ($row->max_weight_kg !== null)
                                     <div>{{ __('Težina do') }} {{ number_format((float) $row->max_weight_kg, 3) }} kg</div>
@@ -209,12 +220,15 @@
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{{ __('Cijena i vrijednost košarice') }}</p>
                     <div class="mt-3 grid gap-3 sm:grid-cols-2">
                         <div>
-                            <label class="mb-1 block text-xs font-semibold text-slate-600">{{ __('Fiksna cijena (€)') }}</label>
-                            <input type="number" min="0" step="0.01" wire:model="form.price" @disabled(($form['pricing_type'] ?? 'flat') !== 'flat') class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100">
+                            <label class="mb-1 block text-xs font-semibold text-slate-600">{{ config('storefront.home') === 'lavaggio' ? __('Neto cijena bez PDV-a (€)') : __('Fiksna cijena (€)') }}</label>
+                            <input type="number" min="0" step="0.01" wire:model.live="form.price" @disabled(($form['pricing_type'] ?? 'flat') !== 'flat') class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100">
+                            @if (config('storefront.home') === 'lavaggio')
+                                <p class="mt-1 text-xs text-slate-500">{{ __('MPC s PDV-om:') }} {{ \App\Support\Currency::format(round((float) ($form['price'] ?? 0) * (1 + (float) ($form['tax_rate_percent'] ?? 0) / 100), 2)) }}</p>
+                            @endif
                         </div>
                         <div>
                             <label class="mb-1 block text-xs font-semibold text-slate-600">{{ __('Besplatno iznad (€)') }}</label>
-                            <input type="number" min="0" step="0.01" wire:model="form.free_over" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                            <input type="number" min="0" step="0.01" wire:model="form.free_over" @disabled($form['free_shipping_disabled'] ?? false) class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100">
                         </div>
                         <div>
                             <label class="mb-1 block text-xs font-semibold text-slate-600">{{ __('Min. košarica (€)') }}</label>
@@ -224,6 +238,44 @@
                             <label class="mb-1 block text-xs font-semibold text-slate-600">{{ __('Maks. košarica (€)') }}</label>
                             <input type="number" min="0" step="0.01" wire:model="form.max_subtotal" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
                         </div>
+                        @if (config('storefront.home') === 'lavaggio')
+                            <div>
+                                <label class="mb-1 block text-xs font-semibold text-slate-600">{{ __('PDV (%)') }}</label>
+                                <input type="number" min="0" max="100" step="0.01" wire:model.live="form.tax_rate_percent" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                                @error('form.tax_rate_percent') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-xs font-semibold text-slate-600">{{ __('FIRA SKU usluge dostave') }}</label>
+                                <input type="text" wire:model="form.fira_product_code" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                                @error('form.fira_product_code') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-xs font-semibold text-slate-600">{{ __('KPD usluge dostave') }}</label>
+                                <input type="text" wire:model="form.fira_kpd_code" placeholder="53.20.09" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                                @error('form.fira_kpd_code') <p class="text-xs text-rose-600">{{ $message }}</p> @enderror
+                            </div>
+                            <label class="flex items-center gap-2 text-sm text-slate-700">
+                                <input type="checkbox" wire:model.live="form.free_shipping_disabled">
+                                {{ __('Uvijek naplati dostavu (bez besplatnog praga)') }}
+                            </label>
+                            <div>
+                                <label class="mb-1 block text-xs font-semibold text-slate-600">{{ __('Osnovica praga dostave') }}</label>
+                                <select wire:model="form.subtotal_basis" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
+                                    <option value="gross_after_discount">{{ __('S PDV-om, nakon popusta') }}</option>
+                                    <option value="after_discount">{{ __('Bez PDV-a, nakon popusta') }}</option>
+                                    <option value="before_discount">{{ __('Bez PDV-a, prije popusta') }}</option>
+                                    <option value="before_cart_discount">{{ __('S PDV-om, prije popusta na košaricu') }}</option>
+                                </select>
+                            </div>
+                            <label class="flex items-center gap-2 text-sm text-slate-700">
+                                <input type="checkbox" wire:model="form.free_shipping_strict">
+                                {{ __('Besplatno tek iznad praga (ne i na jednakom iznosu)') }}
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-slate-700">
+                                <input type="checkbox" wire:model="form.require_known_weight">
+                                {{ __('Obavezna težina svih artikala za izračun dostave') }}
+                            </label>
+                        @endif
                     </div>
                 </div>
 

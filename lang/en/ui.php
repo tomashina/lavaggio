@@ -528,6 +528,7 @@ return [
             'redirect_button' => 'Continue to CorvusPay',
             'missing_config' => 'CorvusPay is not configured correctly. Please contact support.',
             'status' => [
+                'preauthorized' => 'The amount has been reserved on your card. Payment will be collected after the merchant confirms it manually.',
                 'approved' => 'Payment was approved successfully.',
                 'declined' => 'Payment was not approved.',
                 'cancelled' => 'Payment was cancelled.',

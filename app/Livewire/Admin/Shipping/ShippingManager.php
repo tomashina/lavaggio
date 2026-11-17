@@ -115,6 +115,13 @@ class ShippingManager extends Component
             'geo_zone_id' => $method->geo_zone_id,
             'description' => (string) ($method->description ?? ''),
             'price' => $method->price,
+            'tax_rate_percent' => (float) ($settings['tax_rate_percent'] ?? 0),
+            'fira_product_code' => (string) ($settings['fira_product_code'] ?? ''),
+            'fira_kpd_code' => (string) ($settings['fira_kpd_code'] ?? ''),
+            'free_shipping_disabled' => (bool) ($settings['free_shipping_disabled'] ?? false),
+            'free_shipping_strict' => (bool) ($settings['free_shipping_strict'] ?? false),
+            'require_known_weight' => (bool) ($settings['require_known_weight'] ?? false),
+            'subtotal_basis' => (string) ($settings['subtotal_basis'] ?? 'after_discount'),
             'free_over' => $method->free_over,
             'min_subtotal' => $method->min_subtotal,
             'max_subtotal' => $method->max_subtotal,
@@ -217,6 +224,15 @@ class ShippingManager extends Component
                 : new ShippingMethod;
 
             $settings = is_array($method->settings) ? $method->settings : [];
+            if (config('storefront.home') === 'lavaggio') {
+                $settings['tax_rate_percent'] = (float) ($form['tax_rate_percent'] ?? 0);
+                $settings['fira_product_code'] = trim((string) ($form['fira_product_code'] ?? ''));
+                $settings['fira_kpd_code'] = trim((string) ($form['fira_kpd_code'] ?? ''));
+                $settings['free_shipping_disabled'] = (bool) ($form['free_shipping_disabled'] ?? false);
+                $settings['free_shipping_strict'] = (bool) ($form['free_shipping_strict'] ?? false);
+                $settings['require_known_weight'] = (bool) ($form['require_known_weight'] ?? false);
+                $settings['subtotal_basis'] = (string) ($form['subtotal_basis'] ?? 'after_discount');
+            }
             if ($isBoxNow) {
                 foreach (['boxnow_partner_id', 'boxnow_api_url', 'boxnow_oauth_client_id', 'boxnow_warehouse_id'] as $key) {
                     $settings[$key] = trim((string) ($form[$key] ?? ''));
@@ -253,7 +269,7 @@ class ShippingManager extends Component
                 'geo_zone_id' => $form['geo_zone_id'] ?: null,
                 'description' => trim((string) ($form['description'] ?? '')) ?: null,
                 'price' => $this->numberOrZero($form['price'] ?? 0),
-                'free_over' => $this->nullableNumber($form['free_over'] ?? null),
+                'free_over' => ! empty($settings['free_shipping_disabled']) ? null : $this->nullableNumber($form['free_over'] ?? null),
                 'min_subtotal' => $this->nullableNumber($form['min_subtotal'] ?? null),
                 'max_subtotal' => $this->nullableNumber($form['max_subtotal'] ?? null),
                 'min_weight_kg' => $this->nullableNumber($form['min_weight_kg'] ?? null),
@@ -417,6 +433,13 @@ class ShippingManager extends Component
             'geo_zone_id' => null,
             'description' => '',
             'price' => 0,
+            'tax_rate_percent' => 0,
+            'fira_product_code' => '',
+            'fira_kpd_code' => '',
+            'free_shipping_disabled' => false,
+            'free_shipping_strict' => false,
+            'require_known_weight' => false,
+            'subtotal_basis' => 'after_discount',
             'free_over' => null,
             'min_subtotal' => null,
             'max_subtotal' => null,
@@ -537,6 +560,13 @@ class ShippingManager extends Component
             'form.geo_zone_id' => ['nullable', 'integer', 'exists:geo_zones,id'],
             'form.description' => ['nullable', 'string', 'max:2000'],
             'form.price' => ['nullable', 'numeric', 'min:0'],
+            'form.tax_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'form.fira_product_code' => ['nullable', 'string', 'max:120'],
+            'form.fira_kpd_code' => ['nullable', 'string', 'regex:/^\d{2}\.\d{2}\.\d{2}$/'],
+            'form.free_shipping_disabled' => ['boolean'],
+            'form.free_shipping_strict' => ['boolean'],
+            'form.require_known_weight' => ['boolean'],
+            'form.subtotal_basis' => ['nullable', Rule::in(['after_discount', 'gross_after_discount', 'before_discount', 'before_cart_discount'])],
             'form.free_over' => ['nullable', 'numeric', 'min:0'],
             'form.min_subtotal' => ['nullable', 'numeric', 'min:0'],
             'form.max_subtotal' => ['nullable', 'numeric', 'min:0'],

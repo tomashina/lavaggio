@@ -375,7 +375,11 @@ class StoreSettings extends Component
                     ->where('code', '!=', 'pickup')
                     ->where(fn (Builder $query) => $query->whereNull('carrier')->orWhere('carrier', '!=', 'pickup'))
                     ->where(fn (Builder $query) => $query->whereNull('service_type')->orWhere('service_type', '!=', 'pickup'))
-                    ->update(['free_over' => $payload['lavaggio_free_shipping_threshold']]);
+                    ->get()->each(function (ShippingMethod $method) use ($payload): void {
+                        if (! data_get($method->settings, 'free_shipping_disabled', false)) {
+                            $method->update(['free_over' => $payload['lavaggio_free_shipping_threshold']]);
+                        }
+                    });
             }
         });
         $this->form = array_merge($this->form, Arr::only($payload, array_keys($this->form)));
