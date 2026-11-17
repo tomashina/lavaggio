@@ -434,7 +434,7 @@ class Product extends Model implements HasMedia
         }
 
         return $rows
-            ->filter(static fn (ProductOptionValue $row): bool => (int) $row->stock_qty > 0)
+            ->filter(fn (ProductOptionValue $row): bool => $this->availableStockQuantity($row) > 0)
             ->values();
     }
 
@@ -465,9 +465,20 @@ class Product extends Model implements HasMedia
         return $this->availableStockQuantity() > 0;
     }
 
-    /** Zaliha artikla: vlastito skladište i dobavljač; zalihe varijanti ostaju zasebne. */
-    public function availableStockQuantity(): int
+    /** Purchaseable stock follows the delivery mode selected in the Lavaggio admin. */
+    public function availableStockQuantity(?ProductOptionValue $option = null): int
     {
+        $lavaggio = config('storefront.home') === 'lavaggio';
+        if ($lavaggio && $this->delivery_mode === 'unavailable') {
+            return 0;
+        }
+        if ($option !== null) {
+            return max(0, (int) $option->stock_qty);
+        }
+        if ($lavaggio && ! in_array($this->delivery_mode, ['supplier', 'order'], true)) {
+            return max(0, (int) $this->stock_qty);
+        }
+
         return max(0, (int) $this->stock_qty) + max(0, (int) $this->supplier_stock_qty);
     }
 }

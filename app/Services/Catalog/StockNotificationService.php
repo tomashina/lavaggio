@@ -41,7 +41,7 @@ class StockNotificationService
             $option = $notification->optionValue;
 
             return $option && (int) $option->product_id === (int) $product->id
-                && $option->isVisibleOnStorefront() && (int) $option->stock_qty >= max(1, (int) $product->minimum_order_quantity);
+                && $option->isVisibleOnStorefront() && $product->availableStockQuantity($option) >= max(1, (int) $product->minimum_order_quantity);
         }
 
         return $this->productIsAvailable($product, max(1, (int) $product->minimum_order_quantity), true, $notification->locale);

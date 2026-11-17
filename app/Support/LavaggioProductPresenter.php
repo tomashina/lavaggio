@@ -29,9 +29,8 @@ class LavaggioProductPresenter
     /** @return array{label:string,state:string} */
     public function stock(Product $product): array
     {
-        $quantity = in_array($product->delivery_mode, ['supplier', 'order'], true)
-            ? $product->availableStockQuantity()
-            : max(0, (int) $product->stock_qty);
+        $quantity = $product->availableStockQuantity();
+
         return [
             'label' => $quantity === 0 ? 'NEDOSTUPNO' : ($quantity < 3 ? 'ZADNJI KOMADI' : 'NA STANJU'),
             'state' => $quantity === 0 ? 'unavailable' : ($quantity < 3 ? 'low' : 'available'),
@@ -40,6 +39,10 @@ class LavaggioProductPresenter
 
     public function delivery(Product $product): string
     {
+        if (! $product->storefrontIsPurchasable()) {
+            return 'Trenutno nedostupno';
+        }
+
         return match ($product->delivery_mode) {
             'supplier' => 'Dostava u 4–10 radnih dana',
             'order' => 'Dostava od 10 do 20 dana',

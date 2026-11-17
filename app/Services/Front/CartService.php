@@ -160,7 +160,7 @@ class CartService
                 if (! $option && $product->hasVisibleOptionRows()) {
                     continue;
                 }
-                $stock = $option ? (int) $option->stock_qty : $product->availableStockQuantity();
+                $stock = $product->availableStockQuantity($option);
                 $pricingQuantities[$productId] = ($pricingQuantities[$productId] ?? 0)
                     + $this->normalizeOrderQuantity($product, (int) $item['quantity'], $stock);
             }
@@ -185,7 +185,7 @@ class CartService
                 continue;
             }
 
-            $maxStock = $optionRow ? (int) $optionRow->stock_qty : $product->availableStockQuantity();
+            $maxStock = $product->availableStockQuantity($optionRow);
             if ($maxStock <= 0) {
                 continue;
             }
@@ -421,7 +421,7 @@ class CartService
         $requested = max(1, min($quantity, 999));
         $target = $existing + $requested;
 
-        $stock = $optionRow ? (int) $optionRow->stock_qty : $product->availableStockQuantity();
+        $stock = $product->availableStockQuantity($optionRow);
         if ($stock <= 0) {
             return false;
         }
@@ -465,7 +465,7 @@ class CartService
         if (((int) $productOptionValueId > 0 || $this->requiresOptionSelection($product)) && ! $optionRow) {
             return false;
         }
-        $stock = $optionRow ? (int) $optionRow->stock_qty : $product->availableStockQuantity();
+        $stock = $product->availableStockQuantity($optionRow);
         if ($stock <= 0) {
             unset($items[$lineKey]);
             Session::put(self::SESSION_KEY, $items);

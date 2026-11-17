@@ -57,14 +57,19 @@ class FiraOrderPayload
 
                 continue;
             }
-            $lines[] = [
+            $sku = trim((string) $item->sku) ?: trim((string) $item->code);
+            $line = [
                 'name' => (string) $item->name,
-                'lineItemId' => (string) ($item->code ?: $item->sku ?: 'ITEM-'.$item->id),
+                'lineItemId' => $sku !== '' ? $sku : 'ITEM-'.$item->id,
                 'price' => round($amount / $quantity, 8),
                 'quantity' => $quantity,
                 'unit' => 'kom',
                 'taxRate' => $rate,
             ];
+            if ($sku !== '') {
+                $line['productCode'] = $sku;
+            }
+            $lines[] = $line;
             $net += $amount;
             $tax += (float) $item->tax_amount;
         }

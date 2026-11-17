@@ -49,6 +49,8 @@ class LavaggioFiraCheckoutSnapshotTest extends TestCase
         $this->assertSame('20.00', $order->items()->sole()->line_total);
         $this->assertSame('5.00', $order->items()->sole()->tax_amount);
         $this->assertSame(10.0, $payload['lineItems'][0]['price']);
+        $this->assertSame('200049', $payload['lineItems'][0]['lineItemId']);
+        $this->assertSame('200049', $payload['lineItems'][0]['productCode']);
         $this->assertSame(0.25, $payload['lineItems'][0]['taxRate']);
         $this->assertSame(4.0, $payload['lineItems'][1]['price']);
         $this->assertSame(24.0, $payload['netto']);
@@ -57,6 +59,8 @@ class LavaggioFiraCheckoutSnapshotTest extends TestCase
         $this->assertFalse($payload['taxesIncluded']);
         Http::assertNothingSent();
         $this->assertDatabaseCount('lavaggio_fira_documents', 0);
+        Product::where('code', 'FIRA-CHECKOUT')->update(['sku' => 'CHANGED-LATER']);
+        $this->assertSame('200049', app(FiraOrderPayload::class)->build($order->fresh(), 'GOTOVINA')['lineItems'][0]['productCode']);
     }
 
     public function test_real_checkout_cart_coupon_requires_manual_fira_processing_instead_of_guessing_allocation(): void
@@ -96,7 +100,7 @@ class LavaggioFiraCheckoutSnapshotTest extends TestCase
     private function checkout(float $grossPrice, int $quantity, ?string $coupon = null): Order
     {
         $product = Product::query()->create([
-            'code' => 'FIRA-CHECKOUT', 'sku' => 'FIRA-CHECKOUT', 'base_price' => $grossPrice,
+            'code' => 'FIRA-CHECKOUT', 'sku' => '200049', 'base_price' => $grossPrice,
             'tax_rate_id' => TaxRate::query()->where('code', 'VAT25')->sole()->id,
             'stock_qty' => 1000, 'is_active' => true,
         ]);

@@ -555,7 +555,7 @@
                                                 value="{{ $row->id }}"
                                                 data-parent-id="{{ (int) ($row->parent_option_value_id ?? 0) }}"
                                                 data-option-sku="{{ (string) ($row->sku ?: '') }}"
-                                                data-option-stock="{{ max(0, (int) $row->stock_qty) }}"
+                                                data-option-stock="{{ $product->availableStockQuantity($row) }}"
                                                 data-option-price-current="{{ $rowPriceData['current'] }}"
                                                 data-option-price-current-value="{{ $rowPriceData['current_value'] }}"
                                                 data-option-price-net="{{ $rowPriceData['current_net'] }}"
@@ -588,7 +588,7 @@
                                             class="sr-only product-size-radio"
                                             data-size-label="{{ $label }}"
                                             data-option-sku="{{ (string) ($row->sku ?: '') }}"
-                                            data-option-stock="{{ max(0, (int) $row->stock_qty) }}"
+                                            data-option-stock="{{ $product->availableStockQuantity($row) }}"
                                             data-option-price-current="{{ $rowPriceData['current'] }}"
                                             data-option-price-current-value="{{ $rowPriceData['current_value'] }}"
                                             data-option-price-net="{{ $rowPriceData['current_net'] }}"
@@ -621,7 +621,7 @@
                         <x-fa-icon name="bag-shopping" class="h-5 w-5 shrink-0" />
                         <span class="text-center leading-tight sm:truncate">{{ __('ui.product.add_to_cart') }}</span>
                     </button>
-                    @if ($isLibermediaProductDetail)
+                    @if ($isLibermediaProductDetail || $isLavaggioProductDetail)
                         @include('front.partials.stock-notification-button', ['notifyProductId' => $product->id, 'notifyName' => $translation?->name ?? $product->code, 'notifyClass' => 'stock-notify-button-detail', 'notifyHidden' => $isPurchasable])
                     @elseif (! $isPurchasable)
                         <button type="button" disabled class="product-detail-cart-button product-detail-cart-button-disabled" aria-label="{{ __('ui.product.unavailable') }}">

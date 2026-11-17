@@ -31,7 +31,7 @@ class OrderStockAllocationService
 
         if ($option) {
             $option = ProductOptionValue::query()->where('product_id', $product->id)->lockForUpdate()->findOrFail($option->id);
-            if (! $option->is_active || $quantity < 1 || $quantity > max(0, (int) $option->stock_qty)) {
+            if (! $option->is_active || $quantity < 1 || $quantity > $product->availableStockQuantity($option)) {
                 $this->insufficientStock();
             }
             $option->forceFill(['stock_qty' => (int) $option->stock_qty - $quantity])->save();

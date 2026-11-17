@@ -3,15 +3,25 @@
 namespace Tests\Feature\Front;
 
 use App\Models\Catalog\Bundle\Bundle;
+use App\Models\Catalog\Option\Option;
+use App\Models\Catalog\Option\OptionValue;
 use App\Models\Catalog\Product\Product;
+use App\Models\Catalog\Product\ProductOptionValue;
+use App\Models\Catalog\StockNotification;
 use App\Models\User;
 use App\Models\User\CustomerGroup;
+use App\Services\Catalog\StockNotificationService;
 use App\Services\Front\CartService;
 use App\Services\Front\CartStaffAccess;
+use App\Services\Front\OrderStockAllocationService;
 use App\Services\Settings\SystemSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Silber\Bouncer\BouncerFacade as Bouncer;
 use Tests\TestCase;
 
@@ -109,6 +119,71 @@ class LavaggioStockPresentationTest extends TestCase
             ->assertSee('Komplet je dostupan')->assertSee('2 kom.')
             ->assertSee('name="quantity"', false)
             ->assertDontSee('18473', false)->assertDontSee('92831', false);
+    }
+
+    #[DataProvider('unavailableProducts')]
+    public function test_unavailable_product_blocks_cart_and_offers_an_email_subscription(string $mode, int $local, int $supplier): void
+    {
+        Mail::fake();
+        config(['stock_notifications.enabled' => true, 'storefront.brand' => 'lavaggio']);
+        $product = $this->product();
+        $product->update(['delivery_mode' => $mode, 'stock_qty' => $local, 'supplier_stock_qty' => $supplier]);
+        $this->assertFalse($product->storefrontIsPurchasable());
+        $response = $this->get(route('products.show', 'paket-za-rublje'))->assertOk()
+            ->assertSee('NEDOSTUPNO')->assertSee('Obavijesti me')->assertSee('stock-notifications.css');
+        $this->assertMatchesRegularExpression('/data-product-purchase-submit[^>]*\bhidden\b/', $response->getContent());
+        $this->assertMatchesRegularExpression('/class="stock-notify-button stock-notify-button-detail"(?:(?!hidden)[^>])+>/', $response->getContent());
+        $this->postJson(route('cart.items.store'), ['product_id' => $product->id, 'quantity' => 1])->assertStatus(422)->assertJsonPath('ok', false);
+        $this->assertCount(0, app(CartService::class)->lines());
+        $this->get(route('stock-notifications.create', ['product_id' => $product->id]))->assertOk()->assertSee('email');
+        $this->postJson(route('stock-notifications.store'), ['product_id' => $product->id, 'email' => 'kupac@example.test', 'consent' => true])->assertSuccessful();
+        $notification = StockNotification::sole();
+        $this->assertFalse(app(StockNotificationService::class)->isAvailable($notification));
+        $product->update(['delivery_mode' => 'stock', 'stock_qty' => 3]);
+        $this->assertTrue(app(StockNotificationService::class)->isAvailable($notification->fresh()));
+        Mail::assertNothingSent();
+    }
+
+    public static function unavailableProducts(): array
+    {
+        return [
+            'local delivery cannot use supplier stock' => ['stock', 0, 9],
+            'manual unavailable overrides quantities' => ['unavailable', 5, 9],
+            'supplier delivery without any stock' => ['supplier', 0, 0],
+        ];
+    }
+
+    public function test_supplier_stock_requires_the_corresponding_admin_delivery_mode(): void
+    {
+        $product = $this->product();
+        foreach (['supplier', 'order'] as $mode) {
+            $product->update(['delivery_mode' => $mode, 'stock_qty' => 0, 'supplier_stock_qty' => 9]);
+            $this->assertTrue(app(CartService::class)->add($product, 1));
+            $this->assertSame(9, $product->availableStockQuantity());
+        }
+        $product->update(['delivery_mode' => 'stock']);
+        CartService::forgetRequestSnapshot();
+        $this->assertCount(0, app(CartService::class)->lines());
+        $this->assertFalse(app(CartService::class)->set($product, 1));
+        $this->expectException(ValidationException::class);
+        DB::transaction(fn () => app(OrderStockAllocationService::class)->reserve($product, 1));
+    }
+
+    public function test_manual_unavailable_also_blocks_a_stocked_variant_and_stock_reservation(): void
+    {
+        $product = $this->product();
+        $product->update(['delivery_mode' => 'unavailable']);
+        $option = Option::create(['code' => 'size', 'type' => Option::TYPE_SELECT, 'is_active' => true]);
+        $value = OptionValue::create(['option_id' => $option->id, 'code' => 'large', 'is_active' => true]);
+        $variant = ProductOptionValue::create(['product_id' => $product->id, 'option_value_id' => $value->id,
+            'combination_hash' => 'single:'.$value->id, 'sku' => 'VARIANT-L', 'stock_qty' => 20, 'is_active' => true]);
+        $this->assertFalse($product->storefrontIsPurchasable());
+        $this->assertFalse(app(CartService::class)->add($product, 1, $variant->id));
+        $this->get(route('products.show', 'paket-za-rublje'))->assertOk()->assertSee('data-option-stock="0"', false);
+        $notification = new StockNotification(['product_id' => $product->id, 'product_option_value_id' => $variant->id, 'locale' => 'hr']);
+        $this->assertFalse(app(StockNotificationService::class)->isAvailable($notification));
+        $this->expectException(ValidationException::class);
+        DB::transaction(fn () => app(OrderStockAllocationService::class)->reserve($product, 1, $variant));
     }
 
     private function product(): Product

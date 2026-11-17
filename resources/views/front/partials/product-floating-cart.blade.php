@@ -60,7 +60,7 @@
                 <x-fa-icon name="bag-shopping" class="product-floating-cart-icon" />
                 <span>{{ __('ui.product.add_to_cart') }}</span>
             </button>
-            @if (\App\Support\StorefrontTheme::usesLibermediaBrand())
+            @if (\App\Support\StorefrontTheme::usesLibermediaBrand() || config('storefront.home') === 'lavaggio')
                 @include('front.partials.stock-notification-button', ['notifyProductId' => $product->id, 'notifyName' => $floatingCartName, 'notifyClass' => 'stock-notify-button-floating', 'notifyHidden' => $isPurchasable])
             @elseif (! $isPurchasable)
                 <button type="button" disabled class="product-detail-cart-button product-detail-cart-button-disabled product-floating-cart-action" aria-label="{{ __('ui.product.unavailable') }}"><span>{{ __('ui.product.unavailable') }}</span></button>
