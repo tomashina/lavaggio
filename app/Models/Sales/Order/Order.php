@@ -146,6 +146,11 @@ class Order extends Model
             ->orderByDesc('id');
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(OrderNotification::class)->orderByDesc('id');
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(OrderTransaction::class, 'order_id')

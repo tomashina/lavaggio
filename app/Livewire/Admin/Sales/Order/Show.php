@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Admin\OrderManagerAccess;
 use App\Services\Loyalty\LoyaltyService;
 use App\Services\Payments\BankTransferUpiService;
+use App\Services\Sales\OrderNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
@@ -129,6 +130,16 @@ class Show extends Component
         return redirect()->route('admin.orders');
     }
 
+    public function retryNotification(int $notificationId): void
+    {
+        $this->authorizeAccess('sales.orders.update');
+        $notification = Order::query()->findOrFail($this->orderId)->notifications()->findOrFail($notificationId);
+        app(OrderNotificationService::class)->deliver($notification, auth()->id());
+        $notification->refresh();
+        $this->dispatch('notify', type: $notification->status === 'sent' ? 'success' : 'warning',
+            message: $notification->status === 'sent' ? 'E-mail obavijest je poslana.' : ($notification->last_error ?: $notification->statusLabel()));
+    }
+
     public function applyLoyaltyRedemption(): void
     {
         $this->authorizeAccess('sales.orders.update');
@@ -197,6 +208,7 @@ class Show extends Component
                 'history.fromStatus:id,name,color',
                 'history.toStatus:id,name,color',
                 'history.changedBy:id,name',
+                'notifications',
                 'transactions',
                 'boxNowShipment',
                 'loyaltyTransactions',
@@ -315,7 +327,7 @@ class Show extends Component
             $order->updated_by = auth()->id();
             $order->save();
 
-            $order->history()->create([
+            $history = $order->history()->create([
                 'from_status_id' => $fromStatusId,
                 'to_status_id' => $toStatusId,
                 'changed_by' => auth()->id(),
@@ -325,6 +337,10 @@ class Show extends Component
                     'status_changed' => $changed,
                 ],
             ]);
+
+            if ($changed) {
+                app(OrderNotificationService::class)->statusChanged($history);
+            }
 
             activity('orders')
                 ->performedOn($order)

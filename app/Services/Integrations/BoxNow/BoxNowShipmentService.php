@@ -6,6 +6,7 @@ use App\Models\Sales\Order\BoxNowShipment;
 use App\Models\Sales\Order\Order;
 use App\Models\Settings\Local\OrderStatus;
 use App\Models\Settings\Local\ShippingMethod;
+use App\Services\Sales\OrderNotificationService;
 use App\Services\Settings\SystemSettingsService;
 use App\Support\BoxNowStatus;
 use App\Support\OrderStatusClassification;
@@ -25,7 +26,7 @@ class BoxNowShipmentService
             throw new RuntimeException('Odaberite veličinu paketa: mali, srednji ili veliki.');
         }
 
-        return Cache::lock('boxnow:order:'.$order->id, 300)->block(2, function () use ($order, $parcelSize, $actorId): BoxNowShipment {
+        $shipment = Cache::lock('boxnow:order:'.$order->id, 300)->block(2, function () use ($order, $parcelSize, $actorId): BoxNowShipment {
             $order->refresh();
             $method = ShippingMethod::query()->where('code', $order->shipping_method_code)->first();
             if (! $method || ($method->carrier !== 'boxnow' && ! in_array($method->code, ['boxnow', 'box_now'], true))) {
@@ -78,11 +79,15 @@ class BoxNowShipmentService
                 throw $exception;
             }
         });
+
+        app(OrderNotificationService::class)->shipmentCreated($order->fresh());
+
+        return $shipment;
     }
 
     public function sync(BoxNowShipment $shipment, ?int $actorId = null): BoxNowShipment
     {
-        return Cache::lock('boxnow:order:'.$shipment->order_id, 300)->block(2, function () use ($shipment, $actorId): BoxNowShipment {
+        $shipment = Cache::lock('boxnow:order:'.$shipment->order_id, 300)->block(2, function () use ($shipment, $actorId): BoxNowShipment {
             $shipment->refresh();
             try {
                 if (! $shipment->parcel_id) {
@@ -103,6 +108,10 @@ class BoxNowShipmentService
                 throw $exception;
             }
         });
+
+        app(OrderNotificationService::class)->shipmentCreated($shipment->order()->firstOrFail());
+
+        return $shipment;
     }
 
     private function recover(BoxNowShipment $shipment, ?int $actorId): BoxNowShipment
@@ -120,16 +129,27 @@ class BoxNowShipmentService
 
     private function importEvents(BoxNowShipment $shipment, array $parcel, string $observedAt, ?int $actorId): void
     {
-        $events = collect($parcel['events'] ?? [])->filter(fn ($event) => is_array($event) && ! empty($event['type']) && ! empty($event['createTime']))->sortBy('createTime');
-        foreach ($events as $event) {
-            $this->recordEvent($shipment, (string) $event['type'], (string) $event['createTime'], $event['locationDisplayName'] ?? null, 'poll', $actorId);
-        }
-        if ($events->isEmpty() && ! empty($parcel['state']) && BoxNowStatus::normalize($parcel['state']) !== $shipment->fresh()->state) {
-            $this->recordEvent($shipment, (string) $parcel['state'], $observedAt, null, 'poll', $actorId);
-        }
+        DB::transaction(function () use ($shipment, $parcel, $observedAt, $actorId): void {
+            $order = Order::query()->lockForUpdate()->findOrFail($shipment->order_id);
+            $previousStatus = $order->status_id;
+            $events = collect($parcel['events'] ?? [])->filter(fn ($event) => is_array($event) && ! empty($event['type']) && ! empty($event['createTime']))->sortBy('createTime');
+            foreach ($events as $event) {
+                $this->recordEvent($shipment, (string) $event['type'], (string) $event['createTime'], $event['locationDisplayName'] ?? null, 'poll', $actorId, false);
+            }
+            if ($events->isEmpty() && ! empty($parcel['state']) && BoxNowStatus::normalize($parcel['state']) !== $shipment->fresh()->state) {
+                $this->recordEvent($shipment, (string) $parcel['state'], $observedAt, null, 'poll', $actorId, false);
+            }
+            $order->refresh();
+            if ($previousStatus !== $order->status_id && $order->status?->code !== 'boxnow_waiting') {
+                $history = $order->history()->whereColumn('from_status_id', '!=', 'to_status_id')->first();
+                if ($history) {
+                    app(OrderNotificationService::class)->statusChanged($history);
+                }
+            }
+        });
     }
 
-    public function recordEvent(BoxNowShipment $shipment, string $state, string $time, ?string $location, string $source, ?int $actorId = null): void
+    public function recordEvent(BoxNowShipment $shipment, string $state, string $time, ?string $location, string $source, ?int $actorId = null, bool $notifyCustomer = true): void
     {
         $state = BoxNowStatus::normalize($state);
         $at = CarbonImmutable::parse($time)->utc();
@@ -137,7 +157,7 @@ class BoxNowShipmentService
             throw new RuntimeException('BOX NOW događaj ima neispravno vrijeme.');
         }
         $key = hash('sha256', $state.'|'.$at->format('Y-m-d\TH:i:s.u\Z'));
-        DB::transaction(function () use ($shipment, $state, $at, $key, $location, $source, $actorId): void {
+        DB::transaction(function () use ($shipment, $state, $at, $key, $location, $source, $actorId, $notifyCustomer): void {
             $order = Order::query()->lockForUpdate()->findOrFail($shipment->order_id);
             $locked = BoxNowShipment::query()->lockForUpdate()->findOrFail($shipment->id);
             if ($locked->events()->where('event_key', $key)->exists()) {
@@ -180,6 +200,9 @@ class BoxNowShipmentService
             ]);
             $history->created_at = $at;
             $history->save();
+            if ($notifyCustomer && $current && $state !== 'new' && $from !== $order->status_id) {
+                app(OrderNotificationService::class)->statusChanged($history);
+            }
         });
     }
 

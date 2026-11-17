@@ -2,15 +2,18 @@
 
 namespace Tests\Feature\Shipping;
 
+use App\Mail\OrderUpdateMail;
 use App\Models\Sales\Order\BoxNowShipment;
 use App\Models\Sales\Order\Order;
 use App\Models\Settings\Local\OrderStatus;
 use App\Models\Settings\Local\ShippingMethod;
 use App\Models\User;
 use App\Services\Integrations\BoxNow\BoxNowShipmentService;
+use App\Services\Settings\SystemSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Silber\Bouncer\BouncerFacade as Bouncer;
 use Tests\TestCase;
@@ -28,6 +31,9 @@ class BoxNowShipmentTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Mail::fake();
+        config(['mail.default' => 'array']);
+        app(SystemSettingsService::class)->put('store_email_enabled', true);
         Http::preventStrayRequests();
         Storage::fake('local');
         $this->admin = User::factory()->create();
@@ -72,6 +78,10 @@ class BoxNowShipmentTest extends TestCase
         $this->assertSame('boxnow_waiting', $this->order->fresh()->status->code);
         $this->assertNull($this->order->fresh()->paid_at);
         $this->assertSame(1, $this->order->history()->count());
+        Mail::assertSentCount(1);
+        Mail::assertSent(OrderUpdateMail::class, fn ($mail) => $mail->hasTo($this->order->customer_email)
+            && $mail->details['type'] === 'tracking' && $mail->details['tracking']['number'] === '1234567890'
+            && $mail->details['tracking']['url'] === 'https://track.boxnow.hr/?track=1234567890');
         Http::assertSentCount(2);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/delivery-requests')
             && $request['destination']['locationId'] === '200' && $request['destination']['contactNumber'] === '+385911234567'
@@ -93,6 +103,38 @@ class BoxNowShipmentTest extends TestCase
         Http::assertSentCount(3);
     }
 
+    public function test_mail_failure_does_not_recreate_or_fail_the_boxnow_shipment(): void
+    {
+        $this->fakeApi();
+        Mail::shouldReceive('to')->once()->andThrow(new \RuntimeException('SMTP unavailable'));
+        $service = app(BoxNowShipmentService::class);
+        $shipment = $service->send($this->order, 2);
+        $this->assertNull($shipment->last_error);
+        $this->assertSame('1234567890', $shipment->parcel_id);
+        $this->assertSame('failed', $this->order->notifications()->sole()->status);
+        $this->assertSame($shipment->id, $service->send($this->order, 2)->id);
+        Http::assertSentCount(2);
+    }
+
+    public function test_sync_sends_only_the_latest_status_when_importing_multiple_events(): void
+    {
+        $this->fakeApi([[
+            'id' => '1234567890', 'state' => 'final-destination',
+            'events' => [
+                ['type' => 'in-transit', 'createTime' => now()->addMinutes(3)->toIso8601String()],
+                ['type' => 'final-destination', 'createTime' => now()->addMinutes(4)->toIso8601String()],
+            ],
+        ]]);
+        $service = app(BoxNowShipmentService::class);
+        $shipment = $service->send($this->order, 2);
+        $this->travel(5)->minutes();
+        $service->sync($shipment);
+        $service->sync($shipment);
+        Mail::assertSentCount(2);
+        Mail::assertSent(OrderUpdateMail::class, fn ($mail) => $mail->details['type'] === 'status'
+            && $mail->details['status_name'] === 'Spremno za preuzimanje');
+    }
+
     public function test_timeout_is_reconciled_without_another_create_request(): void
     {
         Http::fake([
@@ -108,8 +150,10 @@ class BoxNowShipmentTest extends TestCase
             $this->assertStringContainsString('veza', $e->getMessage());
         }
         $this->assertNotNull(BoxNowShipment::first()->attempted_at);
+        Mail::assertNothingSent();
         $shipment = $service->send($this->order, 2);
         $this->assertSame('1234567890', $shipment->parcel_id);
+        Mail::assertSentCount(1);
         $this->assertSame(1, Http::recorded(fn ($request) => str_ends_with($request->url(), '/delivery-requests'))->count());
     }
 
@@ -128,6 +172,9 @@ class BoxNowShipmentTest extends TestCase
         $service->recordEvent($shipment, 'in-depot', now()->subSeconds(30)->toIso8601String(), null, 'webhook');
         $this->assertSame('boxnow_ready', $this->order->fresh()->status->code);
         $this->assertSame(4, $shipment->events()->count());
+        Mail::assertSentCount(3);
+        Mail::assertSent(OrderUpdateMail::class, fn ($mail) => $mail->details['type'] === 'status'
+            && $mail->details['status_name'] === 'Spremno za preuzimanje' && $mail->details['tracking']['number'] === '1234567890');
         $this->travel(1)->minutes();
         $service->recordEvent($shipment, 'delivered', now()->toIso8601String(), null, 'webhook');
         $this->assertSame('boxnow_delivered', $this->order->fresh()->status->code);

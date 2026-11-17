@@ -500,9 +500,12 @@
         </div>
     </div>
 
+    @include('livewire.admin.sales.order.partials.notifications')
+
     <div class="grid gap-6 xl:grid-cols-2">
         <div class="admin-panel admin-panel-soft p-5">
             <h2 class="admin-section-title">{{ __('Status Timeline') }}</h2>
+            <p class="mt-1 text-xs text-slate-500">Promjena statusa automatski šalje obavijest kupcu. Interne bilješke ne šalju se e-mailom.</p>
             <div class="mt-4 space-y-2">
                 @forelse ($order->history as $entry)
                     <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">

@@ -4,6 +4,7 @@ namespace Tests\Feature\Shipping;
 
 use App\Livewire\Admin\Settings\Local\ResourceManager;
 use App\Livewire\Admin\Shipping\ShippingManager;
+use App\Mail\OrderUpdateMail;
 use App\Models\Catalog\Category\Category;
 use App\Models\Catalog\Product\Product;
 use App\Models\Sales\Order\Order;
@@ -25,6 +26,7 @@ use Database\Seeders\SystemSettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
@@ -398,6 +400,9 @@ class AdvancedShippingFeatureTest extends TestCase
 
     public function test_gls_connector_hashes_password_stores_label_and_logs_retry_state(): void
     {
+        Mail::fake();
+        config(['mail.default' => 'array']);
+        app(SystemSettingsService::class)->put('store_email_enabled', true);
         Storage::fake('local');
         Http::fake([
             'https://api.test.mygls.hr/ParcelService.svc/json/PrintLabels' => Http::response([
@@ -445,6 +450,10 @@ class AdvancedShippingFeatureTest extends TestCase
         $order->refresh();
         $this->assertNull(data_get($order->payload, 'gls.last_error'));
         $this->assertSame('008880001234', data_get($order->payload, 'gls.shipment.parcel_number'));
+        Mail::assertSentCount(1);
+        Mail::assertSent(OrderUpdateMail::class, fn ($mail) => $mail->hasTo($order->customer_email)
+            && $mail->details['tracking']['carrier'] === 'GLS' && $mail->details['tracking']['number'] === '008880001234');
+        $this->assertSame('sent', $order->notifications()->sole()->status);
 
         $encrypted = (string) SystemSetting::query()
             ->where('key', 'gls_api_password_encrypted')
@@ -461,6 +470,28 @@ class AdvancedShippingFeatureTest extends TestCase
                 && data_get($payload, 'ParcelList.0.ServiceList.0.Code') === 'PSD'
                 && data_get($payload, 'ParcelList.0.ServiceList.0.PSDParameter.StringValue') === 'HR-LOCKER-101';
         });
+    }
+
+    public function test_gls_email_failure_keeps_the_successful_parcel_and_label(): void
+    {
+        Storage::fake('local');
+        config(['mail.default' => 'array']);
+        app(SystemSettingsService::class)->put('store_email_enabled', true);
+        Mail::shouldReceive('to')->once()->andThrow(new \RuntimeException('SMTP unavailable'));
+        $api = $this->mock(GlsApiService::class);
+        $api->shouldReceive('assertEnabled')->once();
+        $api->shouldReceive('getSettings')->andReturn(['gls_api_client_number' => '100001']);
+        $api->shouldReceive('printLabels')->once()->andReturn([
+            'PrintLabelsInfoList' => [['ParcelId' => 123456, 'ParcelNumber' => '008880001234']],
+            'Labels' => array_values(unpack('C*', '%PDF-1.4 GLS test')),
+        ]);
+        $order = $this->glsOrder();
+        $shipment = app(GlsShipmentService::class)->send($order);
+        $this->assertSame('008880001234', $shipment['parcel_number']);
+        Storage::disk('local')->assertExists($shipment['label_path']);
+        $this->assertNull(data_get($order->fresh()->payload, 'gls.last_error'));
+        $this->assertSame('failed', $order->notifications()->sole()->status);
+        $this->assertSame(1, $order->history()->count());
     }
 
     public function test_gls_parcel_shop_requires_a_selection_and_persists_it_on_the_order(): void

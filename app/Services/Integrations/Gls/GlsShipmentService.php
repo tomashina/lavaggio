@@ -3,8 +3,10 @@
 namespace App\Services\Integrations\Gls;
 
 use App\Models\Sales\Order\Order;
+use App\Services\Sales\OrderNotificationService;
 use App\Support\GlsShipping;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use RuntimeException;
@@ -55,7 +57,10 @@ class GlsShipmentService
                 'mode' => $this->api->getSettings()['gls_api_mode'] ?? 'test',
             ]);
 
-            $this->persistState($order, $state, 'gls_shipment_sent', 'GLS pošiljka je kreirana iz administracije.', $userId);
+            DB::transaction(function () use ($order, $state, $userId): void {
+                $this->persistState($order, $state, 'gls_shipment_sent', 'GLS pošiljka je kreirana iz administracije.', $userId);
+                app(OrderNotificationService::class)->shipmentCreated($order);
+            });
 
             return $state['shipment'];
         } catch (\Throwable $exception) {
