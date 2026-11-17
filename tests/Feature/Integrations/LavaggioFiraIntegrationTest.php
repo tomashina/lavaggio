@@ -196,6 +196,99 @@ class LavaggioFiraIntegrationTest extends TestCase
         }
     }
 
+    public function test_business_offer_preview_and_issue_use_the_company_snapshot(): void
+    {
+        $settings = app(FiraSettingsService::class);
+        $settings->save([...$settings->options(), 'send_enabled' => true], 'fixture-secret-key');
+        Http::fake([FiraSettingsService::ENDPOINT => Http::response(['id' => 413, 'invoiceNumber' => 'P-B2B'])]);
+        $order = $this->businessOrder();
+
+        $panel = Livewire::actingAs($this->admin())->test(OrderPanel::class, ['orderId' => $order->id])
+            ->set('paymentType', 'TRANSAKCIJSKI')->call('previewInvoice')->assertHasNoErrors()
+            ->assertSet('preview.b2bClient', true)
+            ->assertSet('preview.billingAddress.company', 'Ogledna tvrtka d.o.o.')
+            ->assertSet('preview.billingAddress.oib', '01234567890')
+            ->assertSee('Ogledna tvrtka d.o.o.')->assertSee('OIB: 01234567890');
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('lavaggio_fira_documents', 0);
+
+        $panel->set('confirmed', true)->call('issueInvoice')->assertHasNoErrors()->assertSee('P-B2B');
+        Http::assertSent(fn ($request) => $request['invoiceType'] === 'PONUDA'
+            && $request['paymentType'] === 'TRANSAKCIJSKI'
+            && $request['b2bClient'] === true
+            && $request['billingAddress']['company'] === 'Ogledna tvrtka d.o.o.'
+            && $request['billingAddress']['oib'] === '01234567890'
+            && $request['billingAddress']['name'] === 'Test kupac'
+            && $request['brutto'] === 205.0);
+        Http::assertSentCount(1);
+    }
+
+    public function test_checkout_company_is_business_even_when_the_account_snapshot_is_b2c(): void
+    {
+        $order = $this->businessOrder();
+        $order->update(['payload' => [...$order->payload, 'customer_type' => 'B2C']]);
+        $this->assertTrue(app(FiraOrderPayload::class)->build($order, 'TRANSAKCIJSKI')['b2bClient']);
+
+        $consumer = $this->order();
+        $consumer->update(['billing_oib' => '01234567890']);
+        $this->assertFalse(app(FiraOrderPayload::class)->build($consumer, 'KARTICA')['b2bClient']);
+        Http::assertNothingSent();
+    }
+
+    public function test_incomplete_business_identity_is_blocked_before_preview_or_send(): void
+    {
+        $admin = $this->admin();
+        foreach ([['billing_company' => ' '], ['billing_oib' => ''], ['billing_oib' => '123']] as $invalid) {
+            $order = $this->businessOrder();
+            $order->update($invalid);
+            Livewire::actingAs($admin)->test(OrderPanel::class, ['orderId' => $order->id])
+                ->set('paymentType', 'TRANSAKCIJSKI')->call('previewInvoice')
+                ->assertHasErrors('fira')->assertSet('preview', null);
+        }
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('lavaggio_fira_documents', 0);
+    }
+
+    public function test_business_fiscal_documents_support_card_and_cash_but_bank_requires_einvoice(): void
+    {
+        $this->enable();
+        $order = $this->businessOrder();
+        $builder = app(FiraOrderPayload::class);
+        foreach (['KARTICA', 'GOTOVINA'] as $payment) {
+            $payload = $builder->build($order, $payment);
+            $this->assertSame('FISKALNI_RAČUN', $payload['invoiceType']);
+            $this->assertTrue($payload['b2bClient']);
+            $this->assertSame('01234567890', $payload['billingAddress']['oib']);
+        }
+        Livewire::actingAs($this->admin())->test(OrderPanel::class, ['orderId' => $order->id])
+            ->set('paymentType', 'TRANSAKCIJSKI')->call('previewInvoice')
+            ->assertHasErrors('fira')->assertSee('eRačun')->assertSet('preview', null);
+        Http::assertNothingSent();
+    }
+
+    public function test_changed_business_identity_requires_a_new_review(): void
+    {
+        $settings = app(FiraSettingsService::class);
+        $settings->save([...$settings->options(), 'send_enabled' => true], 'fixture-secret-key');
+        $order = $this->businessOrder();
+        $panel = Livewire::actingAs($this->admin())->test(OrderPanel::class, ['orderId' => $order->id])
+            ->set('paymentType', 'TRANSAKCIJSKI')->call('previewInvoice')->assertHasNoErrors()
+            ->set('confirmed', true);
+        $order->update(['billing_oib' => '12345678901']);
+        $panel->call('issueInvoice')->assertHasErrors('fira');
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('lavaggio_fira_documents', 0);
+    }
+
+    public function test_business_orders_still_require_a_checkout_snapshot(): void
+    {
+        $order = $this->businessOrder();
+        $order->update(['payload' => [...$order->payload, 'placed_from' => 'admin']]);
+        Livewire::actingAs($this->admin())->test(OrderPanel::class, ['orderId' => $order->id])
+            ->set('paymentType', 'TRANSAKCIJSKI')->call('previewInvoice')->assertHasErrors('fira');
+        Http::assertNothingSent();
+    }
+
     public function test_timeout_and_uncertain_response_are_not_retried_or_exposed(): void
     {
         $this->enable();
@@ -328,6 +421,17 @@ class LavaggioFiraIntegrationTest extends TestCase
         Bouncer::assign('superadmin')->to($user);
 
         return $user;
+    }
+
+    private function businessOrder(): Order
+    {
+        $order = $this->order();
+        $order->update([
+            'billing_company' => ' Ogledna tvrtka d.o.o. ', 'billing_oib' => ' 01234567890 ',
+            'payload' => [...$order->payload, 'customer_type' => 'B2B'],
+        ]);
+
+        return $order;
     }
 
     private function order(): Order

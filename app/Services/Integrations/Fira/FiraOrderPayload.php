@@ -17,6 +17,8 @@ class FiraOrderPayload
     {
         $order->loadMissing('items', 'status');
         $errors = [];
+        $isBusiness = $order->commerceCustomerType() === 'B2B' || trim((string) $order->billing_company) !== '';
+        $documentType = $this->settings->options()['document_type'];
         if (! in_array($paymentType, ['GOTOVINA', 'TRANSAKCIJSKI', 'KARTICA'], true)) {
             $errors[] = 'Odaberite način plaćanja za račun.';
         }
@@ -26,8 +28,20 @@ class FiraOrderPayload
         if ($cancelled || $order->status?->code === 'refunded') {
             $errors[] = 'Otkazana ili vraćena narudžba ne može se poslati.';
         }
-        if ($order->commerceCustomerType() !== 'B2C' || data_get($order->payload, 'placed_from') !== 'frontend_checkout') {
-            $errors[] = 'Ova priprema podržava samo potrošačke narudžbe iz naplate trgovine; ostale račune obradite u FIRA-i.';
+        if (data_get($order->payload, 'placed_from') !== 'frontend_checkout') {
+            $errors[] = 'Ova priprema podržava narudžbe iz naplate trgovine; ručno unesene narudžbe obradite u FIRA-i.';
+        }
+        if ($isBusiness) {
+            if (trim((string) $order->billing_company) === '') {
+                $errors[] = 'Za poslovnog kupca nedostaje naziv tvrtke u adresi naplate.';
+            }
+            $oib = trim((string) $order->billing_oib);
+            if ($oib === '' || (strtoupper(trim((string) $order->billing_country_code)) === 'HR' && ! preg_match('/^[0-9]{11}$/', $oib))) {
+                $errors[] = 'Za poslovnog kupca unesite OIB u adresi naplate; hrvatski OIB mora sadržavati 11 znamenki.';
+            }
+            if ($documentType === 'FISKALNI_RAČUN' && $paymentType === 'TRANSAKCIJSKI') {
+                $errors[] = 'Za poslovnog kupca s bankovnim plaćanjem izradite ponudu, a zatim eRačun obradite u FIRA-i. Fiskalni račun iz webshopa podržan je za karticu i gotovinu.';
+            }
         }
         if ($order->currency_code !== 'EUR' || (float) $order->grand_total <= 0 || $order->items->isEmpty()) {
             $errors[] = 'Potrebna je neprazna narudžba u eurima s pozitivnim iznosom.';
@@ -112,10 +126,10 @@ class FiraOrderPayload
             'webshopOrderNumber' => (string) $order->order_number,
             'webshopType' => 'CUSTOM',
             'webshopEvent' => 'order_created',
-            'invoiceType' => $this->settings->options()['document_type'],
+            'invoiceType' => $documentType,
             'paymentType' => $paymentType,
             'paymentGatewayName' => (string) $order->payment_method_name,
-            'b2bClient' => false,
+            'b2bClient' => $isBusiness,
             'currency' => 'EUR',
             'taxesIncluded' => false,
             'billingAddress' => $this->address($order, 'billing'),
@@ -144,8 +158,8 @@ class FiraOrderPayload
             'zipCode' => (string) $order->{$prefix.'_postal_code'},
             'phone' => (string) $order->customer_phone,
             'email' => (string) $order->customer_email,
-            'company' => (string) $order->{$prefix.'_company'},
-            'oib' => (string) $order->{$prefix.'_oib'},
+            'company' => trim((string) $order->{$prefix.'_company'}),
+            'oib' => trim((string) $order->{$prefix.'_oib'}),
         ];
     }
 }

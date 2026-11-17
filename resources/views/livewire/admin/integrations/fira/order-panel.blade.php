@@ -6,7 +6,7 @@
 <div class="admin-panel space-y-4 p-6">
     <h2 class="admin-section-title">FIRA ponude i računi</h2>
     <p class="text-sm text-slate-600">{{ $isOffer ? 'Ručna izrada ponude za provjeru, bez fiskalizacije' : 'Ručna izrada fiskalnog računa · slijed WS-1 (F1)' }}</p>
-    <p class="text-xs text-slate-500">Pregled podržava potrošačke narudžbe iz naplate trgovine. Popuste na cijelu košaricu, naknade plaćanja, poklon bonove, poslovne i ručno unesene narudžbe obradite u FIRA-i. Ako se zbroj stavki i PDV-a zbog zaokruživanja razlikuje od narudžbe, slanje se zaustavlja radi ručne provjere.</p>
+    <p class="text-xs text-slate-500">Pregled podržava privatne i poslovne kupce iz naplate trgovine. Za poslovne kupce obavezni su naziv tvrtke i OIB. Popuste na cijelu košaricu, naknade plaćanja, poklon bonove i ručno unesene narudžbe obradite u FIRA-i. Ako se zbroj stavki i PDV-a zbog zaokruživanja razlikuje od narudžbe, slanje se zaustavlja radi ručne provjere.</p>
     @if ($document)
         @if ($document->state === 'created')
             <p class="text-sm font-semibold">{{ $isOffer ? 'FIRA ponuda' : 'FIRA račun' }} {{ $document->invoice_number ?: $document->invoice_id }} {{ $isOffer ? 'je izrađena.' : 'je izrađen.' }}</p>
@@ -36,6 +36,13 @@
             <div class="rounded-xl border border-slate-200 p-4 text-sm">
                 <p class="font-semibold">{{ $previewIsOffer ? 'Ponuda — bez fiskalizacije' : 'Fiskalni račun — slanje na fiskalizaciju' }}</p>
                 <p>{{ $preview['webshopOrderNumber'] }} · {{ $preview['billingAddress']['name'] }} · {{ number_format($preview['brutto'], 2, ',', '.') }} €</p>
+                @if ($preview['b2bClient'])
+                    <p class="font-semibold">Poslovni kupac: {{ $preview['billingAddress']['company'] }}</p>
+                    <p>OIB: {{ $preview['billingAddress']['oib'] }}</p>
+                    @if ($previewIsOffer && $paymentType === 'TRANSAKCIJSKI')
+                        <p class="text-slate-600">Nakon uplate eRačun izradite iz ove ponude u FIRA-i.</p>
+                    @endif
+                @endif
                 <p>PDV: {{ number_format($preview['taxValue'], 2, ',', '.') }} € · Plaćanje: {{ $paymentType }}</p>
                 @if (isset($preview['prepaidAmount']))<p>Plaćeno unaprijed: {{ number_format($preview['prepaidAmount'], 2, ',', '.') }} €</p>@endif
                 <ul class="mt-2 list-disc pl-5">@foreach ($preview['lineItems'] as $line)<li>{{ $line['name'] }} × {{ $line['quantity'] }} · {{ number_format($line['price'], 2, ',', '.') }} € bez PDV-a</li>@endforeach</ul>

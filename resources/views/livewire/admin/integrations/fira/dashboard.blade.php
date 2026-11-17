@@ -7,7 +7,7 @@
         Za provjeru odaberite ponudu, koja se ne fiskalizira. Fiskalni račun smije se uključiti tek nakon prijave prodajnog mjesta Poreznoj i dovršene FIRA konfiguracije.
     </div>
     <p class="text-sm text-slate-700">Web trgovina: <strong>lavaggio.hr</strong> · Fiskalni računi (F1): <strong>WS-1</strong> · eRačuni (F2): <strong>WS-2</strong></p>
-    <p class="text-xs text-slate-500">Slijedovi se određuju u FIRA postavkama integracije. eRačune (WS-2) zasad izrađujete u FIRA-i; webshop trenutačno podržava ponude i potrošačke fiskalne račune (WS-1).</p>
+    <p class="text-xs text-slate-500">Slijedovi se određuju u FIRA postavkama integracije. Webshop podržava ponude za privatne i poslovne kupce te fiskalne račune (WS-1) za privatne kupce i poslovne kupce koji plaćaju karticom ili gotovinom. eRačune (WS-2) za poslovne kupce s bankovnim plaćanjem izrađujete u FIRA-i.</p>
     <p class="text-sm text-slate-600">Ponuda se sprema u vaš stvarni FIRA račun. Slanje ponude kupcu e-poštom određuju FIRA postavke; za probu isključite slanje e-pošte za ponude. Ponudu po potrebi pretvorite u račun izravno u FIRA-i. Trgovina istu narudžbu ne šalje drugi put.</p>
     <form wire:submit="save" class="space-y-4">
         <div>
