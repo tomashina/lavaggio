@@ -464,6 +464,7 @@ class AdvancedShippingFeatureTest extends TestCase
             $payload = $request->data();
 
             return $request->url() === 'https://api.test.mygls.hr/ParcelService.svc/json/PrintLabels'
+                && ($payload['WebshopEngine'] ?? null) === 'Laravel'
                 && ($payload['Username'] ?? null) === 'termol-test'
                 && is_array($payload['Password'] ?? null)
                 && count($payload['Password']) === 64

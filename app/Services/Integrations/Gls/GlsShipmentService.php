@@ -149,6 +149,7 @@ class GlsShipmentService
         }
 
         return [
+            'WebshopEngine' => 'Laravel',
             'ParcelList' => [$parcel],
             'PrintPosition' => max(1, min(4, (int) ($settings['gls_api_print_position'] ?? 1))),
             'ShowPrintDialog' => (bool) ($settings['gls_api_show_print_dialog'] ?? false),
