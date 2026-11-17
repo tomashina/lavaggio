@@ -20,6 +20,7 @@ use App\Services\Payments\WSPayFormService;
 use App\Services\Pricing\B2BAccessService;
 use App\Services\User\CustomerImpersonationService;
 use App\Services\User\DefaultCustomerGroupAssigner;
+use App\Support\CartTotalsPresenter;
 use App\Support\Currency;
 use App\Support\GlsShipping;
 use Illuminate\Http\JsonResponse;
@@ -107,6 +108,7 @@ class CheckoutController extends Controller
             'shippingMethods' => $shippingMethods,
             'paymentMethods' => $paymentMethods,
             'checkoutTotals' => $checkoutTotals,
+            'displayTotals' => CartTotalsPresenter::present($checkoutTotals, $this->cart->lines()),
             'giftVoucherCode' => app(GiftVoucherService::class)->currentCode(),
             'countryOptions' => $addressDirectory->countries((string) app()->getLocale()),
             'placesAssetUrl' => $addressDirectory->placesAssetUrl(),
@@ -371,6 +373,8 @@ class CheckoutController extends Controller
             $billingCity,
         );
 
+        $displayTotals = CartTotalsPresenter::present($totals, $this->cart->lines());
+
         return response()->json([
             'shipping_methods' => $shippingMethods->map(fn ($method) => [
                 'code' => (string) $method->code,
@@ -411,6 +415,9 @@ class CheckoutController extends Controller
                 'discount_total_formatted' => Currency::format((float) $totals['discount_total']),
                 'tax_total_formatted' => Currency::format((float) $totals['tax_total']),
                 'shipping_total_formatted' => Currency::format((float) $totals['shipping_total']),
+                'display_subtotal_formatted' => Currency::format($displayTotals['subtotal']),
+                'display_discount_total_formatted' => Currency::format($displayTotals['discount_total']),
+                'display_shipping_total_formatted' => Currency::format($displayTotals['shipping_total']),
                 'payment_fee_total_formatted' => Currency::format((float) $totals['payment_fee_total']),
                 'gift_voucher_total_formatted' => Currency::format((float) ($totals['gift_voucher_total'] ?? 0)),
                 'grand_total_formatted' => Currency::format((float) $totals['grand_total']),

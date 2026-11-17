@@ -11,6 +11,7 @@ use App\Services\Front\CartService;
 use App\Services\Front\CartStaffAccess;
 use App\Services\GiftVoucherService;
 use App\Services\Pricing\B2BAccessService;
+use App\Support\CartTotalsPresenter;
 use App\Support\Currency;
 use App\Support\StorefrontTheme;
 use Illuminate\Http\JsonResponse;
@@ -37,6 +38,7 @@ class CartController extends Controller
         return view($this->frontendView($request, 'cart.index'), [
             'lines' => $lines,
             'summary' => $summary,
+            'displayTotals' => CartTotalsPresenter::present($summary, $lines),
             'giftVoucherCode' => $giftVouchers->currentCode(),
             'giftVoucherQuote' => $giftVouchers->quote((float) ($summary['grand_total'] ?? 0)),
             'isLibermediaB2cCart' => $isLibermediaB2cCart,

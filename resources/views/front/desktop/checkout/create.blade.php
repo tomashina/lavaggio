@@ -501,20 +501,20 @@
                     <span class="font-semibold text-slate-900">{{ $summary['item_qty'] }}</span>
                 </div>
                 <div class="mt-2 flex items-center justify-between">
-                    <span class="text-slate-600">{{ (app(\App\Services\Pricing\B2BAccessService::class)->displaysNet(auth()->user())) ? __('ui.b2b.pricing.net_subtotal') : __('ui.checkout.labels.subtotal') }}</span>
-                    <span class="font-semibold text-slate-900" data-summary-subtotal>{{ \App\Support\Currency::format((float) $summary['subtotal']) }}</span>
+                    <span class="text-slate-600">{{ $displayTotals['includes_tax'] ? __('ui.cart.summary.subtotal_with_tax') : ((app(\App\Services\Pricing\B2BAccessService::class)->displaysNet(auth()->user())) ? __('ui.b2b.pricing.net_subtotal') : __('ui.checkout.labels.subtotal')) }}</span>
+                    <span class="font-semibold text-slate-900" data-summary-subtotal>{{ \App\Support\Currency::format($displayTotals['subtotal']) }}</span>
                 </div>
                     <div class="mt-2 flex items-center justify-between {{ (float) ($summary['discount_total'] ?? 0) <= 0 ? 'hidden' : '' }}" data-summary-discount-row>
                         <span class="text-slate-600">{{ __('ui.checkout.labels.discount') }}</span>
-                        <span class="font-semibold text-emerald-700" data-summary-discount>-{{ \App\Support\Currency::format((float) ($summary['discount_total'] ?? 0)) }}</span>
+                        <span class="font-semibold text-emerald-700" data-summary-discount>-{{ \App\Support\Currency::format($displayTotals['discount_total']) }}</span>
                     </div>
                 <div class="mt-2 flex items-center justify-between">
-                    <span class="text-slate-600">{{ __('ui.checkout.labels.tax') }}</span>
+                    <span class="text-slate-600">{{ $displayTotals['includes_tax'] ? __('ui.cart.summary.tax_included') : __('ui.checkout.labels.tax') }}</span>
                     <span class="font-semibold text-slate-900" data-summary-tax>{{ \App\Support\Currency::format((float) ($checkoutTotals['tax_total'] ?? $summary['tax_total'] ?? 0)) }}</span>
                 </div>
                 <div class="mt-2 flex items-center justify-between" data-summary-shipping-row>
-                    <span class="text-slate-600">{{ __('ui.checkout.labels.shipping') }}</span>
-                    <span class="font-semibold text-slate-900" data-summary-shipping>{{ \App\Support\Currency::format((float) ($checkoutTotals['shipping_total'] ?? 0)) }}</span>
+                    <span class="text-slate-600">{{ $displayTotals['includes_tax'] ? __('ui.cart.summary.shipping_with_tax') : __('ui.checkout.labels.shipping') }}</span>
+                    <span class="font-semibold text-slate-900" data-summary-shipping>{{ \App\Support\Currency::format($displayTotals['shipping_total']) }}</span>
                 </div>
                 <div class="mt-2 flex items-center justify-between {{ (float) ($checkoutTotals['payment_fee_total'] ?? 0) <= 0 ? 'hidden' : '' }}" data-summary-payment-fee-row>
                     <span class="text-slate-600">{{ __('ui.checkout.labels.payment_fee') }}</span>
@@ -759,15 +759,15 @@
                 if (!totals || typeof totals !== 'object') {
                     return;
                 }
-                if (summarySubtotal && totals.subtotal_formatted) summarySubtotal.textContent = String(totals.subtotal_formatted);
-                if (summaryDiscount && totals.discount_total_formatted) summaryDiscount.textContent = '−' + String(totals.discount_total_formatted);
+                if (summarySubtotal && totals.subtotal_formatted) summarySubtotal.textContent = String(totals.display_subtotal_formatted ?? totals.subtotal_formatted);
+                if (summaryDiscount && totals.discount_total_formatted) summaryDiscount.textContent = '−' + String(totals.display_discount_total_formatted ?? totals.discount_total_formatted);
                 summaryDiscountRow?.classList.toggle('hidden', Number(totals.discount_total || 0) <= 0);
 
                 if (summaryTax && totals.tax_total_formatted) {
                     summaryTax.textContent = String(totals.tax_total_formatted);
                 }
                 if (summaryShipping && totals.shipping_total_formatted) {
-                    summaryShipping.textContent = String(totals.shipping_total_formatted);
+                    summaryShipping.textContent = String(totals.display_shipping_total_formatted ?? totals.shipping_total_formatted);
                 }
                 if (summaryPaymentFee && totals.payment_fee_total_formatted) {
                     summaryPaymentFee.textContent = String(totals.payment_fee_total_formatted);
