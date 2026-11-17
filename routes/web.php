@@ -398,6 +398,7 @@ Route::middleware(['admin.locale', 'auth', 'verified', 'admin.access', 'admin.ma
         Route::post('orders/{order}/boxnow/sync', [OrderBoxNowController::class, 'sync'])->name('orders.boxnow.sync');
         Route::get('orders/{order}/boxnow/label', [OrderBoxNowController::class, 'label'])->name('orders.boxnow.label');
         Route::get('orders/{order}/gls/label', [OrderGlsController::class, 'label'])->name('orders.gls.label');
+        Route::get('orders/{order}/gls/address-label', [OrderGlsController::class, 'addressLabel'])->name('orders.gls.address-label');
         Route::get('orders/{order}/show', function (SalesOrder $order) {
             app(\App\Services\Admin\OrderManagerAccess::class)->assertOrder($order);
 

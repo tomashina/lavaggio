@@ -66,6 +66,7 @@
 
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{{ __('Adresa preuzimanja') }}</p>
+                <p class="mt-1 text-xs text-slate-600">Ovi podaci koriste se i za adresne PDF naljepnice 10 × 15 cm, bez uključivanja GLS API-ja. Ako adresa nije unesena, naljepnica koristi podatke trgovine iz postavki.</p>
                 <div class="mt-3 grid gap-3 md:grid-cols-2">
                     <div><label class="mb-1 block text-xs font-semibold text-slate-600">{{ __('Naziv pošiljatelja') }}</label><input type="text" wire:model="form.gls_api_pickup_name" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"></div>
                     <div><label class="mb-1 block text-xs font-semibold text-slate-600">{{ __('Kontakt osoba') }}</label><input type="text" wire:model="form.gls_api_pickup_contact_name" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"></div>

@@ -246,6 +246,9 @@
                         </div>
 
                         <div class="flex flex-wrap gap-2">
+                            <a href="{{ route('admin.orders.gls.address-label', $order) }}" target="_blank" rel="noopener" class="rounded-lg border border-cyan-700 bg-white px-3 py-2 text-xs font-semibold text-cyan-900 hover:bg-cyan-100">
+                                PDF za paket 10 × 15 cm
+                            </a>
                             <form method="POST" action="{{ route('admin.orders.gls.send', $order) }}">
                                 @csrf
                                 <button type="submit" class="rounded-lg bg-cyan-700 px-3 py-2 text-xs font-semibold text-white hover:bg-cyan-800">
@@ -259,6 +262,10 @@
                             @endif
                         </div>
                     </div>
+                    <p class="mt-3 text-xs text-slate-700">PDF za ručnu predaju je adresna naljepnica. Ispis: 100 %, papir 100 × 150 mm. Službenu transportnu naljepnicu izdaje GLS.</p>
+                    @if (auth()->user()->isA('superadmin') || auth()->user()->can('settings.api.manage'))
+                        <a href="{{ route('admin.shipping.index', ['tab' => 'gls']) }}" class="mt-1 inline-block text-xs font-semibold text-cyan-800 underline">Uredi podatke pošiljatelja</a>
+                    @endif
                 </div>
             @endif
 
