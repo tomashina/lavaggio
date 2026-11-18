@@ -27,6 +27,11 @@ return [
         'mail_title' => 'Narudžba :order',
         'heading_admin' => 'Nova narudžba',
         'heading_customer' => 'Potvrda narudžbe',
+        'status_messages' => [
+            'pending' => 'Vaša narudžba se obrađuje i roba prikuplja, javit ćemo Vam čim paket bude spreman za dostavu.',
+            'processed' => 'Vaš paket je spakiran i spreman za preuzimanje od dostavne službe. Javit ćemo Vam kada dostavna služba preuzme paket.',
+            'shipped' => 'Vaš je paket predan dostavnoj službi. Oni će Vam javit informacije o dostavi ili preuzimanju paketa. Hvala Vam na povjerenju. LAVAGGIO TIM',
+        ],
         'intro_admin' => 'Zaprimljena je nova narudžba na webshopu.',
         'intro_customer' => 'Hvala na kupnji. Zaprimili smo vašu narudžbu i obrađujemo je.',
         'customer' => 'Kupac',

@@ -8,6 +8,7 @@ use App\Models\Sales\Order\Order;
 use App\Models\Sales\Order\OrderItem;
 use App\Services\Payments\BankTransferUpiService;
 use App\Support\Mail\StoreMailBrand;
+use App\Support\OrderStatusLabels;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -174,6 +175,9 @@ class StoreNotificationService
                     $subject = __('mail.orders.subject_customer', ['order' => $order->order_number]);
                     Mail::send('emails.orders.notification', array_merge($data, [
                         'variant' => 'customer',
+                        'status_description' => StoreMailBrand::isLavaggio()
+                            ? OrderStatusLabels::customerMessage((string) $order->status?->name)
+                            : null,
                     ]), static function ($mail) use ($customerTo, $adminTo, $subject): void {
                         $mail->to($customerTo)->subject($subject);
                         if (filter_var($adminTo, FILTER_VALIDATE_EMAIL)) {

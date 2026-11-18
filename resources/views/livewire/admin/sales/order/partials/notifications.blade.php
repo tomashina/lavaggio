@@ -25,6 +25,9 @@
                     <summary class="cursor-pointer font-semibold">Sadržaj obavijesti i pokušaji slanja</summary>
                     <p class="mt-2">{{ data_get($notification->content, 'message') }}</p>
                     <p>Status: {{ data_get($notification->content, 'status_name') }}</p>
+                    @if ($description = data_get($notification->content, 'status_description'))
+                        <p>{{ $description }}</p>
+                    @endif
                     <ul class="mt-2 space-y-1">
                         @foreach ($notification->attempts ?? [] as $attempt)
                             <li>

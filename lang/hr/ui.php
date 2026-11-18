@@ -578,6 +578,8 @@ return [
             'eyebrow' => 'Narudžba zaprimljena',
             'title' => 'Hvala na narudžbi',
             'order_number' => 'Broj narudžbe',
+            'confirmation_sent' => 'Potvrdu narudžbe smo poslali na Vašu e-mail adresu. Ako je ne vidite u pristigloj pošti, provjerite mapu neželjene pošte (Spam).',
+            'order_questions' => 'Za sva pitanja o narudžbi slobodno nam se javite na',
             'status' => 'Status',
             'grand_total' => 'Ukupno',
             'status_fallback_new' => 'Nova',

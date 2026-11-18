@@ -37,6 +37,22 @@ class OrderStatusLabels
         return self::CROATIAN_NAMES[mb_strtolower(trim($name))] ?? $name;
     }
 
+    public static function customerMessage(string $name, ?string $locale = null): ?string
+    {
+        if (config('storefront.home') !== 'lavaggio') {
+            return null;
+        }
+
+        $key = match (mb_strtolower(trim($name))) {
+            'pending', 'na čekanju' => 'pending',
+            'processed', 'obrađeno' => 'processed',
+            'sent', 'shipped', 'poslano' => 'shipped',
+            default => null,
+        };
+
+        return $key ? __("mail.orders.status_messages.$key", [], $locale) : null;
+    }
+
     /** @return array<int, string> */
     public static function matchingStoredNames(string $search): array
     {

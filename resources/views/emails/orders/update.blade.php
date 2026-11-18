@@ -9,6 +9,9 @@
     <div class="panel">
         <strong>Narudžba:</strong> {{ $details['order_number'] }}<br>
         <strong>Status:</strong> {{ $details['status_name'] }}
+        @if (!empty($details['status_description']))
+            <p><strong>{{ $details['status_description'] }}</strong></p>
+        @endif
         @if ($details['tracking'])
             <br><strong>Dostavna služba:</strong> {{ $details['tracking']['carrier'] }}
             <br><strong>Broj za praćenje:</strong> {{ $details['tracking']['number'] }}
@@ -23,5 +26,7 @@
     @if ($details['order_url'])
         <p><a href="{{ $details['order_url'] }}">Pregledaj narudžbu u svom računu</a></p>
     @endif
-    <p>Hvala na povjerenju!<br>{{ $details['store_name'] }}</p>
+    @if (empty($details['status_description']))
+        <p>Hvala na povjerenju!<br>{{ $details['store_name'] }}</p>
+    @endif
 @endcomponent
