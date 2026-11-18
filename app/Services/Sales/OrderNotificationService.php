@@ -9,6 +9,7 @@ use App\Models\Sales\Order\OrderNotification;
 use App\Services\Front\StoreSettingsService;
 use App\Support\GlsShipping;
 use App\Support\Mail\StoreMailBrand;
+use App\Support\OrderStatusLabels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -71,6 +72,7 @@ class OrderNotificationService
                 'order_number' => $order->order_number,
                 'customer_name' => $order->customer_name,
                 'status_name' => $statusName,
+                'status_description' => $type === 'status' ? OrderStatusLabels::customerMessage($statusName, 'hr') : null,
                 'message' => $type === 'tracking'
                     ? 'Za Vašu narudžbu dodijeljen je broj za praćenje pošiljke.'
                     : 'Status Vaše narudžbe promijenjen je u: '.$statusName.'.',

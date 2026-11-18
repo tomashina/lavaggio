@@ -6,6 +6,9 @@
                 <p class="muted">
                     {{ $variant === 'admin' ? __('mail.orders.intro_admin') : __('mail.orders.intro_customer') }}
                 </p>
+                @if (!empty($status_description))
+                    <p><strong>{{ $status_description }}</strong></p>
+                @endif
 
                 <table class="meta" width="100%" cellspacing="0" cellpadding="0">
                     <tr><td class="label">{{ __('mail.orders.customer') }}</td><td>{{ $customer_name }}</td></tr>

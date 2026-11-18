@@ -14,6 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Silber\Bouncer\BouncerFacade as Bouncer;
 use Tests\TestCase;
 
@@ -67,6 +68,45 @@ class OrderNotificationsTest extends TestCase
         $this->assertNotNull($notification->sent_at);
         $this->assertNotNull($notification->order_history_id);
         $this->assertCount(1, $notification->attempts);
+    }
+
+    public function test_checkout_shows_confirmation_and_contact_below_the_order_number(): void
+    {
+        $this->withSession(['front.checkout.last_order_id' => $this->order->id])
+            ->get(route('checkout.success', ['orderNumber' => $this->order->order_number]))
+            ->assertOk()
+            ->assertSeeTextInOrder(['Broj narudžbe', 'MAIL-001', 'Potvrdu narudžbe smo poslali', 'neželjene pošte (Spam).', 'Za sva pitanja o narudžbi', 'webshop@lavaggio.hr', 'Status'])
+            ->assertSee('href="mailto:webshop@lavaggio.hr"', false);
+    }
+
+    #[DataProvider('customerStatuses')]
+    public function test_status_explanation_is_saved_and_rendered_below_the_status(string $name, ?string $expected): void
+    {
+        $status = OrderStatus::create(['code' => 'legacy-status', 'name' => $name]);
+        $history = $this->order->history()->create(['from_status_id' => $this->order->status_id, 'to_status_id' => $status->id]);
+        $notification = app(OrderNotificationService::class)->statusChanged($history);
+        $this->assertSame($expected, $notification->content['status_description']);
+        Mail::assertSent(OrderUpdateMail::class, function ($mail) use ($status, $expected): bool {
+            $body = strip_tags($mail->render());
+            $panel = strstr($body, 'Status:');
+            $this->assertIsString($panel);
+            $this->assertStringContainsString($status->name, $panel);
+            if ($expected !== null) {
+                $this->assertStringContainsString($expected, $panel);
+            }
+
+            return true;
+        });
+    }
+
+    public static function customerStatuses(): array
+    {
+        return [
+            ['Pending', 'Vaša narudžba se obrađuje i roba prikuplja, javit ćemo Vam čim paket bude spreman za dostavu.'],
+            ['Obrađeno', 'Vaš paket je spakiran i spreman za preuzimanje od dostavne službe. Javit ćemo Vam kada dostavna služba preuzme paket.'],
+            ['Shipped', 'Vaš je paket predan dostavnoj službi. Oni će Vam javit informacije o dostavi ili preuzimanju paketa. Hvala Vam na povjerenju. LAVAGGIO TIM'],
+            ['Processing', null],
+        ];
     }
 
     public function test_quick_actions_and_retrying_sent_mail_do_not_send_duplicates(): void

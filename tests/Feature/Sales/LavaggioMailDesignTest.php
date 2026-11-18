@@ -6,6 +6,7 @@ use App\Mail\GiftVoucherDelivered;
 use App\Mail\NewsletterCouponMail;
 use App\Models\Sales\GiftVoucher;
 use App\Models\Sales\Order\Order;
+use App\Models\Settings\Local\OrderStatus;
 use App\Models\User;
 use App\Services\Front\StoreNotificationService;
 use App\Services\Front\StoreSettingsService;
@@ -156,6 +157,7 @@ class LavaggioMailDesignTest extends TestCase
             'grand_total' => 25.50, 'currency_code' => 'EUR',
         ]);
         $order->setRelation('items', new Collection);
+        $order->setRelation('status', new OrderStatus(['name' => 'Pending']));
 
         app(StoreNotificationService::class)->sendOrderNotification($order);
 
@@ -164,6 +166,8 @@ class LavaggioMailDesignTest extends TestCase
         $customerMail = $messages->last()->getOriginalMessage();
         $this->assertSame('kupac@example.invalid', $customerMail->getTo()[0]->getAddress());
         $html = $customerMail->getHtmlBody();
+        $this->assertStringContainsString('Vaša narudžba se obrađuje i roba prikuplja', $html);
+        $this->assertStringNotContainsString('Vaša narudžba se obrađuje', $messages->first()->getOriginalMessage()->getHtmlBody());
         $warranty = app(StoreSettingsService::class)->legalWarranty();
         $withdrawalUrl = route('returns.create', ['returnRequestSlug' => __('return_request.slug')]);
         $this->assertStringNotContainsString('Za materijalne nedostatke robe odgovaramo najmanje dvije godine', $html);

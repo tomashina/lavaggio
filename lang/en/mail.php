@@ -27,6 +27,11 @@ return [
         'mail_title' => 'Order :order',
         'heading_admin' => 'New order',
         'heading_customer' => 'Order confirmation',
+        'status_messages' => [
+            'pending' => 'We’re processing your order and gathering your items. We’ll let you know when your parcel is ready for delivery.',
+            'processed' => 'Your parcel is packed and ready for the carrier to collect. We’ll let you know when they pick it up.',
+            'shipped' => 'We’ve handed your parcel to the carrier. They’ll contact you with delivery or pickup details. Thank you for your trust. THE LAVAGGIO TEAM',
+        ],
         'intro_admin' => 'A new order has been received from the webshop.',
         'intro_customer' => 'Thank you for your purchase. We have received your order and started processing it.',
         'customer' => 'Customer',

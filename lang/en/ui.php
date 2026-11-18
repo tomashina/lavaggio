@@ -577,6 +577,8 @@ return [
             'eyebrow' => 'Order placed',
             'title' => 'Thank you for your order',
             'order_number' => 'Order number',
+            'confirmation_sent' => 'We’ve sent your order confirmation by email. If you don’t see it in your inbox, check your spam folder.',
+            'order_questions' => 'If you have any questions about your order, email us at',
             'status' => 'Status',
             'grand_total' => 'Grand total',
             'status_fallback_new' => 'New',
