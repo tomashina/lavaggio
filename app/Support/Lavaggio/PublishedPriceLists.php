@@ -10,7 +10,8 @@ use XMLWriter;
 class PublishedPriceLists
 {
     // Identity and outlet designation from Bareda's public FIRA publication of 19 November 2026.
-    private const OUTLET = '96889385802_LAVAGGIO-CJENIK_Barban-70-52207-Barban_96889385802';
+    private const MERCHANT_OIB = '96889385802';
+    private const OUTLET = 'LAVAGGIO-CJENIK_Barban-70-52207-Barban_96889385802';
 
     private function directory(): string
     {
@@ -42,12 +43,14 @@ class PublishedPriceLists
                     throw new RuntimeException('Prazan izvoz: '.$kind);
                 }
                 $headers = $kind === 'roba' ? RetailPriceLists::GOODS : RetailPriceLists::SERVICES;
-                $hash = hash('sha256', json_encode([$headers, $rows], JSON_THROW_ON_ERROR));
+                $place = $kind === 'roba' ? 'PRODAJA-PUTEM-INTERNETA' : 'PRAONICA';
+                $prefix = self::MERCHANT_OIB.'_'.$place.'-'.self::OUTLET.'_'.strtoupper($kind);
+                $hash = hash('sha256', json_encode([$prefix, $headers, $rows], JSON_THROW_ON_ERROR));
                 $versions = $index[$kind] ?? [];
                 $last = array_key_last($versions);
                 if ($last === null || $versions[$last]['hash'] !== $hash) {
                     $id = (int) $last + 1;
-                    $name = self::OUTLET.'_'.strtoupper($kind).'_'.$id.'_'.$now->format('Ymd_Hi');
+                    $name = $prefix.'_'.$id.'_'.$now->format('Ymd_Hi');
                     File::replace($dir.'/'.$name.'.csv', $this->csv($headers, $rows));
                     File::replace($dir.'/'.$name.'.xml', $this->xml($kind, $headers, $rows));
                     if ($last !== null) {
@@ -129,7 +132,7 @@ class PublishedPriceLists
         $xml->openMemory();
         $xml->startDocument('1.0', 'UTF-8');
         $xml->startElement('cjenik');
-        $xml->writeAttribute('oib', '96889385802');
+        $xml->writeAttribute('oib', self::MERCHANT_OIB);
         $xml->writeAttribute('trgovac', 'Bareda d.o.o.');
         $xml->writeAttribute('valuta', 'EUR');
         foreach ($rows as $row) {
