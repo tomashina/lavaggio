@@ -15,10 +15,14 @@ class RetailBasePrice
             static $register;
             $register ??= json_decode(file_get_contents(database_path('data/lavaggio-retail-base-prices.json')), true, flags: JSON_THROW_ON_ERROR);
             $entry = $register['products'][(string) $product->sku] ?? null;
-            if (! $entry || (string) $product->barcode !== $entry['barcode']) {
+            if (! $entry) {
                 return null;
             }
-            $evidence = $entry + $register;
+            $matches = isset($entry['barcode'])
+                ? (string) $product->barcode === $entry['barcode']
+                : isset($entry['code']) && $product->code === $entry['code'];
+
+            return $matches ? ['date' => $register['reported_base_price_on'], 'price' => (float) $entry['base_price']] : null;
         }
 
         $cutoff = match ($evidence['group'] ?? '') {
