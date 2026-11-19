@@ -1,27 +1,30 @@
-@php($priceListUrl = \App\Services\Integrations\Fira\FiraSettingsService::PRICE_LIST_URL)
-@php($archiveEntries = app(\App\Services\Integrations\Fira\FiraPriceArchiveService::class)->entries())
-<section class="lavaggio-content-article bg-white px-2 py-2" aria-label="Cjenik i arhiva cijena">
+@php
+    $publication = app(\App\Support\Lavaggio\PublishedPriceLists::class);
+    $archive = $publication->archive();
+    $firaUrl = \App\Services\Integrations\Fira\FiraSettingsService::PRICE_LIST_URL;
+@endphp
+<section class="lavaggio-content-article bg-white px-2 py-2" aria-label="Cjenici robe i usluga">
     @if (trim(strip_tags($pageBody)) !== '')
         <div class="content-richtext mb-6">{!! app(\App\Support\WatchlineArticleImages::class)->render($pageBody) !!}</div>
     @endif
-    <p class="mb-5 text-slate-700">Pregledajte aktualni cjenik i prethodno objavljene cijene. Cjenik i arhiva ažuriraju se izravno putem FIRA-e.</p>
-    <nav class="mb-6 flex flex-wrap gap-4" aria-label="Preuzimanje cjenika">
-        <a class="font-semibold underline underline-offset-4" href="{{ $priceListUrl }}" target="_blank" rel="noopener noreferrer">Otvori cjenik i arhivu</a>
-        <a class="font-semibold underline underline-offset-4" href="{{ $priceListUrl }}/cjenik.pdf" target="_blank" rel="noopener noreferrer">Cjenik (PDF)</a>
-        <a class="font-semibold underline underline-offset-4" href="{{ $priceListUrl }}/cjenik.csv">Preuzmi cjenik (CSV)</a>
-    </nav>
-    <h2 class="mb-4 text-xl font-semibold">Arhiva cjenika</h2>
-    @if ($archiveEntries !== [])
-        <ul class="divide-y divide-slate-200 rounded-xl border border-slate-200 px-5">
-            @foreach ($archiveEntries as $entry)
-                <li class="flex flex-wrap items-center justify-between gap-3 py-4">
-                    <span>{{ $entry['date'] }}</span>
-                    <a class="font-semibold underline underline-offset-4" href="{{ $entry['url'] }}" aria-label="Preuzmi CSV cjenik od {{ $entry['date'] }}">Preuzmi CSV</a>
-                </li>
+    <p>Bareda d.o.o. · Barban 70, 52207 Barban · OIB 96889385802. Cijene su iskazane u eurima s PDV-om.</p>
+    <ul class="my-5 space-y-2">
+        @foreach (['roba' => 'Cjenik robe', 'usluge' => 'Cjenik usluga praonice'] as $kind => $label)
+            <li><strong>{{ $label }}</strong>
+                @foreach (['csv', 'xml'] as $format)
+                    <a class="ml-3 underline" href="{{ route('lavaggio.price-list', [$kind, $format]) }}" aria-label="{{ $label }}, {{ strtoupper($format) }}">{{ strtoupper($format) }}</a>
+                @endforeach
+            </li>
+        @endforeach
+    </ul>
+    <h2>Arhiva cjenika</h2>
+    <p>Prethodna verzija dostupna je najmanje 15 dana od zamjene.</p>
+    @foreach ($archive as $entry)
+        <p class="mt-2">{{ $entry['date'] }} · {{ $entry['kind'] === 'roba' ? 'Roba' : 'Usluge' }} · verzija {{ $entry['id'] }}
+            @foreach (['csv', 'xml'] as $format)
+                <a class="ml-3 underline" href="{{ route('lavaggio.price-list.archive', [$entry['kind'], $entry['id'], $format]) }}">{{ strtoupper($format) }}</a>
             @endforeach
-        </ul>
-        <p class="mt-3 text-sm text-slate-500">Arhiva se osvježava iz FIRA-e. Datoteke su dostupne 30 dana od objave.</p>
-    @else
-        <p class="text-slate-600">Za pregled dostupnih datuma <a class="font-semibold underline" href="{{ $priceListUrl }}#arhiva" target="_blank" rel="noopener noreferrer">otvorite arhivu cjenika u FIRA-i</a>.</p>
-    @endif
+        </p>
+    @endforeach
+    <p class="mt-4"><a class="underline" href="{{ $firaUrl }}#arhiva">Ranije objave u FIRA arhivi</a> · <a class="underline" href="{{ $firaUrl }}/cjenik.pdf">FIRA cjenik (PDF)</a></p>
 </section>

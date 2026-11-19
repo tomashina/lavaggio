@@ -1,0 +1,197 @@
+{
+  "source": "Bareda / FIRA public list 10947.csv, published 2026-11-16 17:50, checked against the merchant listing prices and FIRA list 11759.csv on 2026-11-19. Reference date, retail price, base price and non-promotional flag agree for these entries.",
+  "first_offered_on": "2026-11-16",
+  "group": "household",
+  "price_on": "2026-11-16",
+  "on_promotion": false,
+  "products": {
+    "200001": {
+      "barcode": "8700216708517",
+      "retail_price": "5.99"
+    },
+    "200002": {
+      "barcode": "8700216708418",
+      "retail_price": "5.99"
+    },
+    "200003": {
+      "barcode": "8700216708661",
+      "retail_price": "5.99"
+    },
+    "200004": {
+      "barcode": "8700216765183",
+      "retail_price": "19.99"
+    },
+    "200005": {
+      "barcode": "8700216733502",
+      "retail_price": "19.99"
+    },
+    "200006": {
+      "barcode": "8700216759991",
+      "retail_price": "14.99"
+    },
+    "200007": {
+      "barcode": "8700216760171",
+      "retail_price": "14.99"
+    },
+    "200008": {
+      "barcode": "8700216759885",
+      "retail_price": "14.99"
+    },
+    "200010": {
+      "barcode": "8006530061056",
+      "retail_price": "5.99"
+    },
+    "200011": {
+      "barcode": "8006530061094",
+      "retail_price": "5.99"
+    },
+    "200012": {
+      "barcode": "8006530557955",
+      "retail_price": "5.99"
+    },
+    "200013": {
+      "barcode": "8700216732642",
+      "retail_price": "5.99"
+    },
+    "200014": {
+      "barcode": "8015194513221",
+      "retail_price": "6.99"
+    },
+    "200015": {
+      "barcode": "8015194513214",
+      "retail_price": "6.99"
+    },
+    "200016": {
+      "barcode": "8015194532604",
+      "retail_price": "10.99"
+    },
+    "200017": {
+      "barcode": "8007750017779",
+      "retail_price": "4.99"
+    },
+    "200018": {
+      "barcode": "8002910022426",
+      "retail_price": "7.49"
+    },
+    "200019": {
+      "barcode": "8007750017908",
+      "retail_price": "19.99"
+    },
+    "200020": {
+      "barcode": "8004060021083",
+      "retail_price": "2.90"
+    },
+    "200021": {
+      "barcode": "8015194528539",
+      "retail_price": "5.99"
+    },
+    "200022": {
+      "barcode": "8003640004553",
+      "retail_price": "4.20"
+    },
+    "200023": {
+      "barcode": "8002910063955",
+      "retail_price": "14.99"
+    },
+    "200024": {
+      "barcode": "8720181593536",
+      "retail_price": "8.99"
+    },
+    "200025": {
+      "barcode": "8720181758539",
+      "retail_price": "8.99"
+    },
+    "200026": {
+      "barcode": "8720181830723",
+      "retail_price": "12.99"
+    },
+    "200027": {
+      "barcode": "8000630754498",
+      "retail_price": "12.99"
+    },
+    "200028": {
+      "barcode": "8007750010466",
+      "retail_price": "4.99"
+    },
+    "200029": {
+      "barcode": "8015194526269",
+      "retail_price": "5.99"
+    },
+    "200030": {
+      "barcode": "8015194524005",
+      "retail_price": "8.49"
+    },
+    "200031": {
+      "barcode": "8015194524029",
+      "retail_price": "8.49"
+    },
+    "200032": {
+      "barcode": "8015194524036",
+      "retail_price": "8.49"
+    },
+    "200033": {
+      "barcode": "8015194530389",
+      "retail_price": "8.49"
+    },
+    "200034": {
+      "barcode": "8015194530396",
+      "retail_price": "8.49"
+    },
+    "200035": {
+      "barcode": "8720181833731",
+      "retail_price": "11.99"
+    },
+    "200036": {
+      "barcode": "8720181833755",
+      "retail_price": "11.99"
+    },
+    "200037": {
+      "barcode": "8720181496530",
+      "retail_price": "4.99"
+    },
+    "200038": {
+      "barcode": "8720181702662",
+      "retail_price": "4.99"
+    },
+    "200039": {
+      "barcode": "8720181687105",
+      "retail_price": "4.99"
+    },
+    "200040": {
+      "barcode": "4008455006260",
+      "retail_price": "4.99"
+    },
+    "200041": {
+      "barcode": "4008455401614",
+      "retail_price": "3.90"
+    },
+    "200042": {
+      "barcode": "4008455401515",
+      "retail_price": "3.90"
+    },
+    "200043": {
+      "barcode": "8002910062019",
+      "retail_price": "5.99"
+    },
+    "200044": {
+      "barcode": "8003650022110",
+      "retail_price": "5.99"
+    },
+    "200045": {
+      "barcode": "8015194531409",
+      "retail_price": "14.99"
+    },
+    "200046": {
+      "barcode": "8015194531393",
+      "retail_price": "14.99"
+    },
+    "200047": {
+      "barcode": "8015194516093",
+      "retail_price": "4.99"
+    },
+    "200048": {
+      "barcode": "8002910048822",
+      "retail_price": "4.99"
+    }
+  }
+}

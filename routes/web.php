@@ -80,6 +80,13 @@ Route::get('sitemap.xml', [\App\Http\Controllers\Front\SitemapController::class,
 Route::get('sitemap-{kind}-{page}.xml', [\App\Http\Controllers\Front\SitemapController::class, 'part'])
     ->where('kind', 'products|categories|manufacturers|pages|blog')->whereNumber('page')->name('seo.sitemap.part');
 
+Route::middleware(\App\Http\Middleware\RequireLavaggioStorefront::class)->group(function (): void {
+    Route::get('cjenici/{kind}.{format}', [\App\Http\Controllers\Front\LavaggioPriceListController::class, 'current'])
+        ->where(['kind' => 'roba|usluge', 'format' => 'csv|xml'])->name('lavaggio.price-list');
+    Route::get('cjenici/arhiva/{kind}/{version}.{format}', [\App\Http\Controllers\Front\LavaggioPriceListController::class, 'archive'])
+        ->where(['kind' => 'roba|usluge', 'version' => '[0-9]+', 'format' => 'csv|xml'])->name('lavaggio.price-list.archive');
+});
+
 Route::get('feeds/nabava.xml', NabavaNetFeedController::class)
     ->middleware('throttle:10,1')
     ->name('feeds.nabava');

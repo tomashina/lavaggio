@@ -17,10 +17,11 @@
     $isDeliveryPage = $isLavaggio && ($page->code === 'lavaggio-shop-dostava' || $translation?->slug === 'dostava');
     $deliverySections = $isDeliveryPage ? app(\App\Support\Lavaggio\DeliveryPageSections::class)->fromHtml((string) $translation?->body_html) : null;
     $isBasePricesPage = $isLavaggio && $translation?->slug === 'bazne-cijene';
-    $isPricingPage = $isLavaggio && $page->code === 'lavaggio-modx-88';
+    $isSelfService = $isLavaggio && $translation?->slug === 'cjenik-samoposluzna-praonica';
+    $isPricingPage = $isLavaggio && ($isSelfService || $page->code === 'lavaggio-modx-88');
     $pageBody = (string) $translation?->body_html;
     if ($isPricingPage) {
-        $pageBody = app(\App\Support\Lavaggio\ServicePricingAnchorPrices::class)->render($pageBody);
+        $pageBody = app(\App\Support\Lavaggio\ServicePricingAnchorPrices::class)->render($pageBody, $isSelfService);
     }
 @endphp
 

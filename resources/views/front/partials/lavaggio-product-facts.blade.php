@@ -2,8 +2,6 @@
     $lavaggioPresenter = app(\App\Support\LavaggioProductPresenter::class);
     $contentLabel = $lavaggioPresenter->contentLabel($product, (float) ($pricePresentation['current_gross'] ?? 0));
     $promotionEndsAt = $pricePresentation['promotion_ends_at'] ?? null;
-    $listingPrice = $product->listing_price;
-    $listedAt = $product->listed_at;
     $remainingSeconds = $promotionEndsAt ? max(0, (int) ceil(now()->diffInSeconds(\Carbon\Carbon::parse($promotionEndsAt), false))) : 0;
     $countdownParts = [
         'days' => ['value' => intdiv($remainingSeconds, 86400), 'label' => 'DANA'],
@@ -17,9 +15,7 @@
     @if ($contentLabel)
         <p class="lavaggio-product-content" data-product-content-quantity>{{ $contentLabel }}</p>
     @endif
-    @if ($listingPrice !== null && $listedAt)
-        <p class="lavaggio-product-listing-price">Cijena na <time datetime="{{ $listedAt->toDateString() }}">{{ $listedAt->format('d.m.Y.') }}</time>: {{ $lavaggioPresenter->money((float) $listingPrice) }}</p>
-    @endif
+    @include('front.partials.lavaggio-base-price')
     @if ($promotionEndsAt && $oldPrice)
         <div class="lavaggio-sale-countdown" data-lavaggio-countdown data-ends-at="{{ $promotionEndsAt }}" data-refresh-on-expiry>
             <span class="lavaggio-countdown-title">Akcija traje još</span>

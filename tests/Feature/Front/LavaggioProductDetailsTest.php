@@ -36,7 +36,7 @@ class LavaggioProductDetailsTest extends TestCase
 
         $response = $this->get(route('products.show', 'profesionalni-deterdzent'))->assertOk()
             ->assertSee('Profesionalni proizvod')->assertSee('16,00 €')
-            ->assertSee('2,7 l (5,93 € za 1 l)')->assertSee('Cijena na')
+            ->assertSee('2,7 l (5,93 € za 1 l)')->assertSee('Bazna cijena na')
             ->assertSee('10.09.2026.')->assertSee('NC 30 dana: 20,00 €')->assertSee('-20%')
             ->assertSee('data-ends-at="'.$action->ends_at->toIso8601String().'"', false)
             ->assertSee('data-countdown-part="days"', false)->assertSee('DANA')
@@ -172,6 +172,8 @@ class LavaggioProductDetailsTest extends TestCase
             'is_active' => true, 'is_professional' => true, 'base_price' => 20, 'stock_qty' => 2,
             'content_quantity' => 2.7, 'content_unit' => 'l', 'listing_price' => 20,
             'listed_at' => '2026-09-10', 'delivery_mode' => 'stock',
+            'payload' => ['retail_price_evidence' => ['group' => 'household', 'first_offered_on' => '2026-09-10',
+                'price_on' => '2026-09-10', 'on_promotion' => false, 'retail_price' => 20, 'source' => 'Dated merchant price list']],
             'ingredients' => 'Površinski aktivne tvari.', 'hazard_notes' => 'Čuvati izvan dohvata djece.',
             'manufacturer_importer' => 'Primjer proizvođača, Zagreb.', 'country_of_origin' => 'Njemačka',
         ]);

@@ -73,7 +73,11 @@ Povezivanje je po točnom SKU-u (`productNumber` u FIRA-i), odnosno šifri artik
 
 ## Bazne cijene i brojevni slijedovi
 
-Postojeća objavljena stranica sa slugom `bazne-cijene` prikazuje aktualne PDF/CSV poveznice i arhivu s [javnog FIRA cjenika](https://app.fira.finance/api/v1/public/price-list/1-8rfbZo0XHscXF0CEq5_zNcoRSltl7B). FIRA odgovor sadrži `frame-ancestors 'none'`, pa se ne koristi iframe. Aplikacija čita isključivo datume i provjerene poveznice arhivskih CSV datoteka, bez izvršavanja ili prikaza udaljenog HTML-a. Rezultat se predmemorira pet minuta; pri grešci ostaju izravne poveznice na FIRA cjenik i arhivu. FIRA održava arhivu 30 dana.
+Stranica `/stranica/bazne-cijene` povezuje važeće cjenike webshop robe i objavljenih usluga praonice na stalnim adresama `/cjenici/roba.csv`, `/cjenici/roba.xml`, `/cjenici/usluge.csv` i `/cjenici/usluge.xml`. Ranije objave trgovca dostupne su i u FIRA arhivi. Maloprodajna cijena i oznaka akcije dolaze iz javnog B2C obračuna. Količina sadržaja određuje cijenu po litri, kilogramu ili komadu.
+
+Naredba `php artisan lavaggio:publish-price-lists` provjerava promjene i objavljuje novu verziju odmah, uključujući više izmjena istog dana. Na cPanelu se pokreće svake minute. Povijest u `storage/app/private/lavaggio-price-lists` treba uključiti u redovnu sigurnosnu kopiju. Rok čuvanja je najmanje 15 dana od trenutka zamjene.
+
+Potvrđene povijesne cijene od 16. studenoga uspoređene su po šifri s objavama Bareda d.o.o. u FIRA-i. Dokaz za novi artikl ili ispravak može se evidentirati u `products.payload.retail_price_evidence` s izvorom (`source`), skupinom (`household` ili `other`), danom prve ponude (`first_offered_on`), datumom povijesne cijene (`price_on`, datumi ISO), oznakom akcije (`on_promotion`, boolean) i iznosom s PDV-om. Za redovnu cijenu polje je `retail_price`. Za akciju u skupini sredstava za čišćenje, kućanstvo i drugih skupina iz čl. 3. st. 1. podst. 1. i 2. unosi se provjereni minimum u 30 dana prije početka akcije (`lowest_30_before_promotion`). Za ostale skupine na akciji unosi se prethodno primijenjena cijena (`previous_retail_price`). Nepotvrđena cijena ostaje prazna u izvozu, a naredba navodi šifre za provjeru.
 
 Migracija `2026_11_16_120000_update_lavaggio_listing_date` samo na Lavaggiu mijenja datum ulistanja 13.11.2026. u 16.11.2026. Cijene i drugi datumi ostaju sačuvani. Postupak deploya prije izmjene snima pogođene datume i bazne cijene.
 

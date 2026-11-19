@@ -25,7 +25,7 @@ class LavaggioServicePricingAnchorPricesTest extends TestCase
 
         $this->assertSame(24, $xpath->query('//td[@class="lavaggio-service-pricing-anchor"]')->length);
         $this->assertSame(3, $xpath->query('//thead/tr/th')->length);
-        $this->assertStringContainsString('Sidrena cijena', $rendered);
+        $this->assertStringContainsString('Bazna cijena', $rendered);
         $this->assertStringContainsString('na dan 10.09.2026.', $rendered);
         foreach ($xpath->query('//td[@class="lavaggio-service-pricing-anchor"]') as $cell) {
             $this->assertSame(trim($cell->previousSibling->textContent), trim($cell->textContent));

@@ -230,6 +230,9 @@
                 @if ($isLavaggioCard && $lavaggioContentLabel)
                     <p class="lavaggio-card-content">{{ $lavaggioContentLabel }}</p>
                 @endif
+                @if ($isLavaggioCard && ! $isB2BPrice)
+                    @include('front.partials.lavaggio-base-price')
+                @endif
                 @include('front.partials.watchline-reference-price', ['referencePriceText' => $referencePriceText ?? null])
                 @if (! empty($lowest30DaysPrice))
                     <p class="product-card-lowest-price mt-1 text-[9px] leading-tight text-slate-500 sm:text-[10px]" aria-label="{{ __('ui.product.lowest_price_30_days', ['price' => $lowest30DaysPrice]) }}" title="{{ __('ui.product.lowest_price_30_days', ['price' => $lowest30DaysPrice]) }}">{{ \App\Support\StorefrontTheme::usesLibermediaBrand() ? __('Najniža cijena (30 dana): :price', ['price' => $lowest30DaysPrice]) : __('ui.product.lowest_price_30_days', ['price' => $lowest30DaysPrice]) }}</p>
@@ -370,6 +373,9 @@
                 @if ($isLavaggioCard && $lavaggioContentLabel)
                     <p class="lavaggio-card-content">{{ $lavaggioContentLabel }}</p>
                 @endif
+                @if ($isLavaggioCard && ! $isB2BPrice)
+                    @include('front.partials.lavaggio-base-price')
+                @endif
                 @include('front.partials.watchline-reference-price', ['referencePriceText' => $referencePriceText ?? null])
                 @if (! empty($lowest30DaysPrice))
                     <p class="text-[10px] leading-tight text-slate-500 sm:text-[11px]">{{ __('ui.product.lowest_price_30_days', ['price' => $lowest30DaysPrice]) }}</p>
@@ -428,6 +434,9 @@
                 @include('front.partials.b2b-tax-note', ['includesTax' => $displayIncludesTax ?? true])
                 @if ($isLavaggioCard && $lavaggioContentLabel)
                     <p class="lavaggio-card-content">{{ $lavaggioContentLabel }}</p>
+                @endif
+                @if ($isLavaggioCard && ! $isB2BPrice)
+                    @include('front.partials.lavaggio-base-price')
                 @endif
                 @include('front.partials.watchline-reference-price', ['referencePriceText' => $referencePriceText ?? null])
                 @if (! empty($lowest30DaysPrice))
