@@ -473,6 +473,32 @@ class AdvancedShippingFeatureTest extends TestCase
         });
     }
 
+    public function test_special_area_gets_a_gls_label_per_parcel_and_collects_cod_once(): void
+    {
+        Mail::fake();
+        Storage::fake('local');
+        $order = $this->glsOrder();
+        $order->update(['payment_method_code' => 'cod', 'shipping_method_code' => 'gls_special',
+            'payload' => ['shipping' => ['calculation' => ['parcel_count' => 3]]]]);
+        $api = $this->mock(GlsApiService::class);
+        $api->shouldReceive('assertEnabled')->once();
+        $api->shouldReceive('getSettings')->andReturn(['gls_api_client_number' => '100001']);
+        $api->shouldReceive('printLabels')->once()->andReturnUsing(function (array $request) use ($order) {
+            $parcels = $request['ParcelList'];
+            $this->assertSame([1, 1, 1], array_column($parcels, 'Count'));
+            $this->assertCount(3, array_unique(array_column($parcels, 'ClientReference')));
+            $this->assertSame([(float) $order->grand_total], array_column($parcels, 'CODAmount'));
+
+            return ['PrintLabelsInfoList' => [
+                ['ParcelId' => 1, 'ParcelNumber' => '0001'], ['ParcelId' => 2, 'ParcelNumber' => '0002'],
+                ['ParcelId' => 3, 'ParcelNumber' => '0003'],
+            ], 'Labels' => array_values(unpack('C*', '%PDF-1.4 GLS test'))];
+        });
+        $shipment = app(GlsShipmentService::class)->send($order);
+        $this->assertSame(['0001', '0002', '0003'], $shipment['parcel_numbers']);
+        Storage::disk('local')->assertExists($shipment['label_path']);
+    }
+
     public function test_gls_email_failure_keeps_the_successful_parcel_and_label(): void
     {
         Storage::fake('local');

@@ -152,9 +152,13 @@ class CheckoutService
                 }
 
                 $method->setAttribute('resolved_price', (float) $quote['price']);
+                $method->setAttribute('shipping_quote', $quote);
                 $displayTax = app(B2BAccessService::class)->displaysNet(auth()->user()) ? 0 : $this->resolveShippingTaxTotal($method, (float) $quote['price']);
                 $method->setAttribute('resolved_display_price', round((float) $quote['price'] + $displayTax, 2));
-                $method->setAttribute('shipping_quote', $quote);
+                if (isset($quote['parcel_count'])) {
+                    $unitDisplay = (float) $method->resolved_display_price / $quote['parcel_count'];
+                    $method->setAttribute('resolved_name', sprintf('%s (%d × %s €)', $method->name, $quote['parcel_count'], number_format($unitDisplay, 2, ',', '.')));
+                }
 
                 return true;
             })
@@ -413,7 +417,7 @@ class CheckoutService
                 'payment_method_code' => (string) $paymentMethod->code,
                 'payment_method_name' => (string) $paymentMethod->name,
                 'shipping_method_code' => (string) $shippingMethod->code,
-                'shipping_method_name' => (string) $shippingMethod->name,
+                'shipping_method_name' => (string) ($shippingMethod->resolved_name ?? $shippingMethod->name),
 
                 'item_qty' => (int) $lines->sum('quantity'),
                 'subtotal' => $subtotal,
@@ -715,7 +719,15 @@ class CheckoutService
         $taxableShipping->setRelation('taxRate', new TaxRate(['rate' => $rate, 'rate_type' => 'percent', 'is_active' => true]));
         $taxRate = app(TaxPricingService::class)->resolveRateForProduct($taxableShipping, $user);
 
-        return round($amount * max(0, (float) ($taxRate?->rate ?? 0)) / 100, 2);
+        $ratePercent = max(0, (float) ($taxRate?->rate ?? 0));
+        $quote = $method->getAttribute('shipping_quote');
+        if (isset($quote['parcel_unit_net'])) {
+            $gross = round($quote['parcel_unit_net'] * $quote['parcel_count'] * (1 + $ratePercent / 100), 2);
+
+            return round($gross - $amount, 2);
+        }
+
+        return round($amount * $ratePercent / 100, 2);
     }
 
     private function resolvePaymentFeeTotal(PaymentMethod $paymentMethod, float $subtotal): float

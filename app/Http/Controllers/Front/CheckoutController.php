@@ -378,7 +378,7 @@ class CheckoutController extends Controller
         return response()->json([
             'shipping_methods' => $shippingMethods->map(fn ($method) => [
                 'code' => (string) $method->code,
-                'name' => (string) $method->name,
+                'name' => (string) ($method->resolved_name ?? $method->name),
                 'description' => trim((string) $method->description),
                 'price' => round((float) ($method->resolved_display_price ?? $method->resolved_price ?? $method->price), 2),
                 'price_formatted' => (string) $method->pricing_type === 'quote'

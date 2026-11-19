@@ -291,7 +291,7 @@
                                             required
                                         >
                                         <span class="min-w-0">
-                                            <span class="font-semibold text-slate-900">{{ $method->name }}</span>
+                                            <span class="font-semibold text-slate-900">{{ $method->resolved_name ?? $method->name }}</span>
                                             @if (trim((string) $method->description) !== '')
                                                 <span class="mt-1 block whitespace-pre-line text-xs leading-relaxed text-slate-600">{{ trim((string) $method->description) }}</span>
                                             @endif
@@ -308,7 +308,7 @@
                         </div>
 
                         @if (config('storefront.home') === 'lavaggio')
-                            <p class="mt-3 text-sm text-slate-600">Za dostavu više od 10 kg na
+                            <p class="mt-3 text-sm text-slate-600">Za dostavu pojedinačnog artikla težeg od 10 kg na
                                 <a class="underline" href="/stranica/dostava">posebna dostavna područja</a>
                                 zatražite ponudu na <a class="underline" href="mailto:webshop@lavaggio.hr">webshop@lavaggio.hr</a>.
                             </p>

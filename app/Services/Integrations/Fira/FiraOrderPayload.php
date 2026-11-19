@@ -90,7 +90,12 @@ class FiraOrderPayload
         $shipping = (float) $order->shipping_total;
         $shippingRate = (float) data_get($order->payload, 'shipping.tax_rate_percent', 0) / 100;
         $shippingTax = (float) data_get($order->payload, 'shipping.tax_total', 0);
-        if ($shipping < 0 || $shippingRate < 0 || $shippingRate > 1 || abs(round($shipping * $shippingRate, 2) - $shippingTax) > 0.001) {
+        $parcelCount = (int) data_get($order->payload, 'shipping.calculation.parcel_count', 1);
+        $unitNet = (float) data_get($order->payload, 'shipping.calculation.parcel_unit_net', $shipping);
+        $expectedGross = round($unitNet * $parcelCount * (1 + $shippingRate), 2);
+        if ($parcelCount < 1 || $shipping < 0 || $shippingRate < 0 || $shippingRate > 1
+            || abs(round($unitNet * $parcelCount, 2) - $shipping) > 0.001
+            || abs($expectedGross - $shipping - $shippingTax) > 0.001) {
             $errors[] = 'Porez dostave zahtijeva ručnu provjeru u FIRA-i.';
         }
         if ($shipping > 0) {
@@ -99,7 +104,7 @@ class FiraOrderPayload
             $shippingSku = trim((string) data_get($order->payload, 'shipping.fira_product_code', data_get($shippingSettings, 'fira_product_code')));
             $shippingKpd = trim((string) data_get($order->payload, 'shipping.fira_kpd_code', data_get($shippingSettings, 'fira_kpd_code')));
             $shippingLine = ['name' => $order->shipping_method_name ?: 'Dostava', 'lineItemId' => $shippingSku ?: 'SHIPPING',
-                'price' => $shipping, 'quantity' => 1, 'unit' => 'usluga', 'taxRate' => $shippingRate];
+                'price' => $unitNet, 'quantity' => $parcelCount, 'unit' => 'usluga', 'taxRate' => $shippingRate];
             if ($shippingSku !== '') {
                 $shippingLine['productCode'] = $shippingSku;
             }

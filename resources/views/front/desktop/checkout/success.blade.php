@@ -43,6 +43,12 @@
             </div>
         </dl>
 
+        @if (data_get($order->payload, 'shipping.calculation.parcel_count'))
+            <p class="mt-3 text-sm"><strong>{{ $order->shipping_method_name }}</strong> · Dostava ukupno
+                {{ number_format((float) $order->shipping_total + (float) data_get($order->payload, 'shipping.tax_total'), 2, ',', '.') }} €
+            </p>
+        @endif
+
         @if (!empty($bankTransfer) && (!empty($bankTransfer['receiver_iban']) || $bankInstructions !== ''))
             <section class="mt-6 border border-slate-200 bg-slate-50 p-4">
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-700">{{ __('ui.checkout.success.bank_transfer_title') }}</h2>

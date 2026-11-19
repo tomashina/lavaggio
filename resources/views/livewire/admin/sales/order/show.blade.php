@@ -102,6 +102,20 @@
                     <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Shipping') }}</p>
                     <p class="mt-1 text-sm text-slate-800">{{ $order->shipping_method_name ?: '-' }}</p>
                     <p class="text-xs text-slate-600">{{ $order->shipping_method_code ?: '-' }}</p>
+                    @if (data_get($order->payload, 'shipping.calculation.parcel_count', 0) > 1)
+                        @php
+                            $packingItems = $order->items->keyBy('product_id');
+                        @endphp
+                        <details class="mt-2 text-xs text-slate-700">
+                            <summary>Raspored artikala po paketima</summary>
+                            @foreach (data_get($order->payload, 'shipping.calculation.parcels', []) as $contents)
+                                <p class="mt-1"><strong>Paket {{ $loop->iteration }}</strong></p>
+                                @foreach ($contents as $productId => $qty)
+                                    <p>{{ $qty }} × {{ $packingItems->get($productId)?->name ?? '#'.$productId }}</p>
+                                @endforeach
+                            @endforeach
+                        </details>
+                    @endif
                     @if (!empty($boxNow['locker_id']))
                         <p class="mt-1 text-xs text-slate-700"><strong>BOX NOW Locker:</strong> {{ $boxNow['locker_name'] ?: '-' }} ({{ $boxNow['locker_id'] }})</p>
                         @if (!empty($boxNow['address_line_1']) || !empty($boxNow['postal_code']) || !empty($boxNow['city']))
@@ -230,7 +244,7 @@
                                 <p class="text-xs text-slate-600">{{ trim(($glsPoint['address_line_1'] ?? '').', '.($glsPoint['postal_code'] ?? '').' '.($glsPoint['city'] ?? ''), ', ') }}</p>
                             @endif
                             @if (!empty($glsShipment['parcel_number']))
-                                <p class="mt-2 text-sm text-slate-800"><strong>Broj paketa:</strong> {{ $glsShipment['parcel_number'] }}</p>
+                                <p class="mt-2 text-sm text-slate-800"><strong>{{ count($glsShipment['parcel_numbers'] ?? []) > 1 ? 'Brojevi paketa:' : 'Broj paketa:' }}</strong> {{ implode(', ', $glsShipment['parcel_numbers'] ?? [$glsShipment['parcel_number']]) }}</p>
                                 <p class="text-xs text-slate-600">
                                     {{ strtoupper((string) ($glsShipment['mode'] ?? 'test')) }}
                                     @if (!empty($glsShipment['sent_at']))

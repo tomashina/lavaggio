@@ -83,8 +83,26 @@ class ShippingCalculator
             }
         }
 
+        $parcelQuote = [];
+        $parcelLimit = (int) round((float) data_get($method->settings, 'parcel_weight_limit_kg') * 1000);
+        if ($parcelLimit > 0) {
+            $parcels = $this->packParcels($profile['items'], $parcelLimit);
+            if ($parcels === []) {
+                return null;
+            }
+            // Recover the unrounded unit net from the advertised gross before multiplying.
+            $factor = 1 + (float) data_get($method->settings, 'tax_rate_percent', 0) / 100;
+            $unitGross = round(($base + array_sum($surcharges)) * $factor, 2);
+            $unitNet = round($unitGross / $factor, 8);
+            $parcelQuote = ['parcel_count' => count($parcels), 'parcel_unit_net' => $unitNet, 'parcels' => $parcels];
+            $price = round($unitNet * count($parcels), 2);
+        } else {
+            $price = round($base + array_sum($surcharges), 2);
+        }
+
         return [
-            'price' => round($base + array_sum($surcharges), 2),
+            ...$parcelQuote,
+            'price' => $price,
             'base_price' => round($base, 2),
             'surcharges' => array_map(static fn (float $value): float => round($value, 2), $surcharges),
             'pricing_type' => $pricingType,
@@ -309,6 +327,47 @@ class ShippingCalculator
         }
 
         return true;
+    }
+
+    /** Pack whole units, heaviest first. Integer grams keep exact 10 kg boundaries stable. */
+    private function packParcels(array $items, int $limit): array
+    {
+        usort($items, static fn ($a, $b) => $b['weight_kg'] <=> $a['weight_kg']);
+        $parcels = [];
+        $space = [];
+        foreach ($items as $item) {
+            $grams = (int) round((float) $item['weight_kg'] * 1000);
+            if ($grams <= 0 || $grams > $limit) {
+                return [];
+            }
+            $productId = $item['product_id'];
+            $remaining = $item['quantity'];
+            $separate = in_array('ships_separately', $item['labels'], true);
+            if (! $separate) {
+                foreach ($space as $index => $free) {
+                    $units = min($remaining, intdiv($free, $grams));
+                    if ($units === 0) {
+                        continue;
+                    }
+                    $parcels[$index][$productId] = ($parcels[$index][$productId] ?? 0) + $units;
+                    $space[$index] -= $units * $grams;
+                    $remaining -= $units;
+                    if ($remaining === 0) {
+                        break;
+                    }
+                }
+            }
+            while ($remaining > 0) {
+                $units = $separate ? 1 : min($remaining, intdiv($limit, $grams));
+                $parcels[] = [$productId => $units];
+                if (! $separate) {
+                    $space[array_key_last($parcels)] = $limit - $units * $grams;
+                }
+                $remaining -= $units;
+            }
+        }
+
+        return $parcels;
     }
 
     private function matchingRate(ShippingMethod $method, float $weight): ?ShippingMethodRate

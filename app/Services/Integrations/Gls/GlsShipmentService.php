@@ -144,13 +144,18 @@ class GlsShipmentService
             'ServiceList' => $this->buildServiceList($order),
         ];
 
+        $parcels = [$parcel];
+        $parcelCount = (int) data_get($order->payload, 'shipping.calculation.parcel_count', 1);
+        for ($number = 2; $number <= $parcelCount; $number++) {
+            $parcels[] = array_replace($parcel, ['ClientReference' => $order->order_number.'-'.$number]);
+        }
         if ($this->isCashOnDelivery($order)) {
-            $parcel['CODAmount'] = round((float) $order->grand_total, 2);
+            $parcels[0]['CODAmount'] = round((float) $order->grand_total, 2);
         }
 
         return [
             'WebshopEngine' => 'Laravel',
-            'ParcelList' => [$parcel],
+            'ParcelList' => $parcels,
             'PrintPosition' => max(1, min(4, (int) ($settings['gls_api_print_position'] ?? 1))),
             'ShowPrintDialog' => (bool) ($settings['gls_api_show_print_dialog'] ?? false),
             'TypeOfPrinter' => trim((string) ($settings['gls_api_printer_type'] ?? 'A4_2x2')),
@@ -227,6 +232,8 @@ class GlsShipmentService
             'client_reference' => (string) ($info['ClientReference'] ?? ''),
             'parcel_id' => $parcelId,
             'parcel_number' => $parcelNumber,
+            'parcel_numbers' => collect($response['PrintLabelsInfoList'])->pluck('ParcelNumber')
+                ->map(static fn ($number) => trim((string) $number))->filter()->unique()->values()->all(),
         ];
     }
 

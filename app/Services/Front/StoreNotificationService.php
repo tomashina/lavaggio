@@ -244,6 +244,11 @@ class StoreNotificationService
         $boxNow = is_array($order->payload['shipping']['boxnow'] ?? null)
             ? $order->payload['shipping']['boxnow']
             : null;
+        $shippingName = (string) $order->shipping_method_name;
+        if (data_get($order->payload, 'shipping.calculation.parcel_count')) {
+            $grossShipping = (float) $order->shipping_total + (float) data_get($order->payload, 'shipping.tax_total');
+            $shippingName .= ' = '.$this->formatMoney($grossShipping, $currency);
+        }
 
         return [
             'store_name' => $storeName,
@@ -252,7 +257,7 @@ class StoreNotificationService
             'order_number' => (string) $order->order_number,
             'placed_at' => optional($order->placed_at)->format('d.m.Y H:i') ?: '',
             'payment_method' => (string) ($order->payment_method_name ?? ''),
-            'shipping_method' => (string) ($order->shipping_method_name ?? ''),
+            'shipping_method' => $shippingName,
             'customer_name' => $order->customerDisplayName(),
             'customer_contact' => $order->customerDisplayName() !== $order->customer_name ? (string) $order->customer_name : '',
             'customer_email' => (string) ($order->customer_email ?? ''),

@@ -42,7 +42,8 @@ class OrderNotificationService
     private function tracking(Order $order): ?array
     {
         if (GlsShipping::isGlsShippingMethod($order->shipping_method_code)) {
-            $number = trim((string) data_get($order->payload, 'gls.shipment.parcel_number'));
+            $shipment = data_get($order->payload, 'gls.shipment', []);
+            $number = implode(', ', $shipment['parcel_numbers'] ?? array_filter([$shipment['parcel_number'] ?? null]));
 
             return $number !== '' ? ['carrier' => 'GLS', 'number' => $number, 'url' => 'https://gls-group.com/HR/hr/pracenje-paketa/'] : null;
         }
