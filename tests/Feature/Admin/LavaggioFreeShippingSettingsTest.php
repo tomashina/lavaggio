@@ -37,7 +37,7 @@ class LavaggioFreeShippingSettingsTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertSame(75.5, $settings->get('lavaggio_free_shipping_threshold'));
-        $this->assertSame('Besplatna dostava za narudžbe iznad 75,5 €', $settings->get('store_announcement_text'));
+        $this->assertSame('Besplatna dostava za narudžbe iznad 75,5 € do 20 kg, osim za posebna dostavna područja', $settings->get('store_announcement_text'));
         $this->assertSame('Lavaggio', $settings->get('store_brand_name'));
         $this->assertSame('75.50', $delivery->fresh()->free_over);
         $this->assertSame('75.50', $locker->fresh()->free_over);

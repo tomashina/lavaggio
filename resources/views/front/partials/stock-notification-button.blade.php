@@ -1,3 +1,4 @@
+@if (config('stock_notifications.enabled', true))
 @include('front.partials.stock-notification-assets')
 @php
     $notificationParameters = !empty($notifyBundleId)
@@ -24,3 +25,4 @@
         @include('front.partials.stock-notification-modal')
     @endpush
 @endonce
+@endif

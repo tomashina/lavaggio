@@ -32,10 +32,13 @@ class ShippingCalculator
         $freeAllowed = ! (bool) data_get($method->settings, 'free_shipping_disabled', false);
         $meetsThreshold = $freeOver !== null && $freeOver >= 0
             && (data_get($method->settings, 'free_shipping_strict', false) ? $subtotal > $freeOver : $subtotal >= $freeOver);
-        if ($freeAllowed && ($allFree || $meetsThreshold)) {
+        $promoUntil = data_get($method->settings, 'free_shipping_until');
+        $promotionActive = $promoUntil && now('Europe/Zagreb')->toDateString() <= $promoUntil;
+        $useTotalWeight = (bool) data_get($method->settings, 'price_by_total_weight', false);
+        if ($freeAllowed && (($allFree && ! $useTotalWeight) || $meetsThreshold || $promotionActive)) {
             $pricingType = 'free';
         } elseif ($pricingType === 'weight_tiers') {
-            $rate = $this->matchingRate($method, (float) ($profile['chargeable_weight_kg'] ?? 0));
+            $rate = $this->matchingRate($method, (float) $profile[$useTotalWeight ? 'total_weight_kg' : 'chargeable_weight_kg']);
             if (! $rate) {
                 return null;
             }
@@ -243,6 +246,13 @@ class ShippingCalculator
         }
 
         foreach ($profile['items'] ?? [] as $item) {
+            if (($settings['lavaggio_delivery_area'] ?? null) === 'special') {
+                $edges = array_map('floatval', $item['dimensions_cm']);
+                rsort($edges, SORT_NUMERIC);
+                if ($edges[0] > 150 || $edges[0] + 2 * ($edges[1] + $edges[2]) > 300) {
+                    return false;
+                }
+            }
             if (! $this->dimensionsFit($method, $item['dimensions_cm'] ?? [])) {
                 return false;
             }

@@ -67,7 +67,7 @@ $required = ['APP_ENV'=>'staging', 'APP_URL'=>'https://shop.lavaggio.hr', 'APP_D
     'HERRERA_LOCAL_SAFE_MODE'=>'true', 'MAIL_MAILER'=>'log', 'QUEUE_CONNECTION'=>'sync',
     'SESSION_DRIVER'=>'file', 'SESSION_COOKIE'=>'lavaggio_shop_session', 'SESSION_SECURE_COOKIE'=>'true',
     'CACHE_STORE'=>'file', 'STOREFRONT_HOME'=>'lavaggio', 'STORE_B2C_ONLY'=>'true', 'STORE_B2B_ONLY'=>'false',
-    'GIFT_VOUCHER_EMAILS_ENABLED'=>'false', 'STOCK_NOTIFICATIONS_EMAILS_ENABLED'=>'false'];
+    'GIFT_VOUCHER_EMAILS_ENABLED'=>'false'];
 $watched = array_fill_keys([...array_keys($required), ...$bootstrapKeys, 'APP_KEY', 'DB_CONNECTION', 'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'DB_SOCKET', 'DB_CHARSET', 'DB_COLLATION', 'DB_URL', 'SESSION_DOMAIN', 'SESSION_CONNECTION', 'DB_CACHE_CONNECTION', 'LAVAGGIO_INHERITED_WEB_PHP84_VERIFIED'], true);
 $values = [];
 foreach (file($root.'/.env', FILE_IGNORE_NEW_LINES) as $line) {

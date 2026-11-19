@@ -26,7 +26,5 @@
     @if ($details['order_url'])
         <p><a href="{{ $details['order_url'] }}">Pregledaj narudžbu u svom računu</a></p>
     @endif
-    @if (empty($details['status_description']))
-        <p>Hvala na povjerenju!<br>{{ $details['store_name'] }}</p>
-    @endif
+    <p>Hvala na povjerenju!<br>{{ $details['store_name'] }}</p>
 @endcomponent

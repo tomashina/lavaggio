@@ -80,6 +80,7 @@ class LavaggioProductDetailsTest extends TestCase
             $this->assertSame($label, $presenter->stock($product)['label']);
         }
         $product->stock_qty = 0;
+        $product->supplier_stock_qty = 2;
         foreach (['stock' => 'Trenutno nedostupno', 'supplier' => 'Dostava u 4–10 radnih dana', 'order' => 'Dostava od 10 do 20 dana', 'unavailable' => 'Trenutno nedostupno'] as $mode => $label) {
             $product->delivery_mode = $mode;
             $this->assertSame($label, $presenter->delivery($product));

@@ -165,11 +165,12 @@ class LavaggioDeployContentUpgrades extends Command
             'migrations' => DB::table('migrations')->orderBy('id')->get(),
             'lavaggio_listing_dates' => DB::table('products')->whereDate('listed_at', '2026-11-13')
                 ->get(['id', 'listed_at', 'listing_price', 'updated_at']),
-            'shipping_tariffs' => DB::table('shipping_methods')->whereIn('code', ['gls_home', 'gls_locker', 'boxnow', 'gls_heavy', 'pallet'])
-                ->get(['id', 'code', 'name', 'carrier', 'service_type', 'pricing_type', 'price', 'free_over', 'min_weight_kg', 'max_weight_kg', 'min_subtotal', 'max_subtotal', 'fragile_surcharge', 'oversized_surcharge', 'heavy_surcharge', 'missing_measurements_policy', 'settings'])
+            'shipping_method_rates' => DB::table('shipping_method_rates')->whereIn('shipping_method_id', DB::table('shipping_methods')->select('id')->where('code', 'gls_heavy'))->get(),
+            'shipping_tariffs' => DB::table('shipping_methods')->whereIn('code', ['gls_home', 'gls_locker', 'boxnow', 'gls_heavy', 'pallet', 'gls_special'])->orWhere('service_type', 'pickup')
+                ->get(['id', 'code', 'name', 'carrier', 'service_type', 'pricing_type', 'price', 'free_over', 'min_weight_kg', 'max_weight_kg', 'is_active', 'max_length_cm', 'max_width_cm', 'max_height_cm', 'min_subtotal', 'max_subtotal', 'fragile_surcharge', 'oversized_surcharge', 'heavy_surcharge', 'missing_measurements_policy', 'settings'])
                 ->map(static function ($method): array {
                     $row = (array) $method;
-                    $row['settings'] = \Illuminate\Support\Arr::only((array) json_decode((string) $method->settings, true), ['tax_rate_percent', 'fira_product_code', 'fira_kpd_code', 'free_shipping_disabled', 'free_shipping_strict', 'subtotal_basis', 'opencart_xshippingpro']);
+                    $row['settings'] = \Illuminate\Support\Arr::only((array) json_decode((string) $method->settings, true), ['tax_rate_percent', 'fira_product_code', 'fira_kpd_code', 'free_shipping_disabled', 'free_shipping_strict', 'free_shipping_until', 'lavaggio_delivery_area', 'price_by_total_weight', 'subtotal_basis', 'opencart_xshippingpro']);
 
                     return $row;
                 }),

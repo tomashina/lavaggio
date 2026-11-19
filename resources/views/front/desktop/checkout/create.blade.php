@@ -307,6 +307,12 @@
                             @endforeach
                         </div>
 
+                        @if (config('storefront.home') === 'lavaggio')
+                            <p class="mt-3 text-sm text-slate-600">Za dostavu više od 10 kg na
+                                <a class="underline" href="/stranica/dostava">posebna dostavna područja</a>
+                                zatražite ponudu na <a class="underline" href="mailto:webshop@lavaggio.hr">webshop@lavaggio.hr</a>.
+                            </p>
+                        @endif
                         <div class="hidden" data-shipping-panels>
                         <div class="checkout-inline-panel mt-3 hidden p-3" data-boxnow-panel>
                             <input type="hidden" name="shipping_boxnow_locker_id" value="{{ $selectedBoxNowLockerId }}" data-boxnow-locker-id>

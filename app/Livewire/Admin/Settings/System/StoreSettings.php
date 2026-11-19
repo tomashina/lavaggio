@@ -365,7 +365,7 @@ class StoreSettings extends Component
             $threshold = round((float) $payload['lavaggio_free_shipping_threshold'], 2);
             $payload['lavaggio_free_shipping_threshold'] = $threshold;
             $displayThreshold = rtrim(rtrim(number_format($threshold, 2, ',', '.'), '0'), ',');
-            $payload['store_announcement_text'] = 'Besplatna dostava za narudžbe iznad '.$displayThreshold.' €';
+            $payload['store_announcement_text'] = 'Besplatna dostava za narudžbe iznad '.$displayThreshold.' € do 20 kg, osim za posebna dostavna područja';
         }
 
         DB::transaction(function () use ($payload): void {

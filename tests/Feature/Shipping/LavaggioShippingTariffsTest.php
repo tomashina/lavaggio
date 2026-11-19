@@ -45,28 +45,30 @@ class LavaggioShippingTariffsTest extends TestCase
             'allows_fragile' => false, 'allows_oversized' => false, 'allows_heavy' => false,
             'settings' => ['configured_from' => 'lavaggio-checkout', 'boxnow_public_widget' => true, 'boxnow_partner_id' => 'keep-partner']]);
         (require database_path('migrations/2026_11_17_130000_align_lavaggio_shipping_tariffs.php'))->up();
+        (require database_path('migrations/2026_11_19_090000_update_lavaggio_delivery.php'))->up();
     }
 
     #[DataProvider('tariffs')]
     public function test_checkout_and_fira_use_admin_shipping_identifiers_and_correct_net_vat_and_gross(string $code, string $sku, float $weight, float $net, float $vat, float $gross): void
     {
-        $product = $this->cartProduct(50, $weight);
+        $this->travel(15)->days();
+        $this->cartProduct(50, $weight);
         $checkout = app(CheckoutService::class);
-        $method = $checkout->availableShippingMethods(40, 'HR')->firstWhere('code', $code);
+        $method = $checkout->availableShippingMethods(40, 'HR', null, $code === 'gls_special' ? '20226' : '52207')->firstWhere('code', $code);
         $this->assertNotNull($method);
         $this->assertSame($net, (float) $method->resolved_price);
         $this->assertSame($gross, (float) $method->resolved_display_price);
         $order = $checkout->placeOrder([
             'customer_first_name' => 'Test', 'customer_last_name' => 'Kupac', 'customer_email' => 'test@example.test',
             'billing_address_line_1' => 'Barban 70', 'billing_city' => 'Barban', 'billing_postal_code' => '52207', 'billing_country_code' => 'HR',
-            'shipping_address_line_1' => 'Barban 70', 'shipping_city' => 'Barban', 'shipping_postal_code' => '52207', 'shipping_country_code' => 'HR',
+            'shipping_address_line_1' => 'Barban 70', 'shipping_city' => 'Barban', 'shipping_postal_code' => $code === 'gls_special' ? '20226' : '52207', 'shipping_country_code' => 'HR',
             'shipping_method_code' => $code, 'payment_method_code' => 'cod',
             'shipping_boxnow_locker_id' => '123', 'shipping_boxnow_locker_name' => 'Paketomat', 'shipping_boxnow_address_line_1' => 'Adresa 1',
             'shipping_boxnow_postal_code' => '52207', 'shipping_boxnow_city' => 'Barban',
             'shipping_gls_dpm_id' => 'HR123',
         ]);
         $this->assertSame($net, (float) $order->shipping_total);
-        $this->assertSame($vat, data_get($order->payload, 'shipping.tax_total'));
+        $this->assertSame($vat, (float) data_get($order->payload, 'shipping.tax_total'));
         $this->assertSame(round(50 + $gross, 2), (float) $order->grand_total);
         // Changes in admin after checkout must not change a stored order's FIRA mapping or amounts.
         $method->fresh()->update(['price' => 100, 'settings' => [...$method->settings, 'fira_product_code' => 'CHANGED', 'fira_kpd_code' => '01.01.01']]);
@@ -87,8 +89,13 @@ class LavaggioShippingTariffsTest extends TestCase
             ['gls_home', '100001', 1, 4.72, 1.18, 5.90],
             ['gls_locker', '100002', 1, 3.92, 0.98, 4.90],
             ['boxnow', '100003', 1, 3.12, 0.78, 3.90],
-            ['gls_heavy', '100004', 60, 19.92, 4.98, 24.90],
-            ['pallet', '100005', 100, 79.92, 19.98, 99.90],
+            ['gls_heavy', '100004', 20.001, 8.80, 2.20, 11.00],
+            ['gls_heavy', '100004', 24.999, 8.80, 2.20, 11.00],
+            ['gls_heavy', '100004', 25, 10.40, 2.60, 13.00],
+            ['gls_heavy', '100004', 30, 12.80, 3.20, 16.00],
+            ['gls_heavy', '100004', 40, 25.60, 6.40, 32.00],
+            ['gls_special', '100001', 10, 19.99, 5.00, 24.99],
+            ['pallet', '100005', 60, 79.20, 19.80, 99.00],
         ];
     }
 
@@ -101,8 +108,9 @@ class LavaggioShippingTariffsTest extends TestCase
 
     public static function weights(): array
     {
-        return [[20, ['gls_home', 'gls_locker', 'boxnow']], [20.001, ['gls_home']], [40, ['gls_home']],
-            [40.001, ['gls_heavy']], [80, ['gls_heavy']], [80.001, ['pallet']]];
+        return [[20, ['gls_home', 'gls_locker', 'boxnow', 'pup']], [20.001, ['gls_heavy', 'pup']],
+            [29.999, ['gls_heavy', 'pup']], [39.999, ['gls_heavy', 'pup']], [59.999, ['gls_heavy', 'pup']],
+            [60, ['pallet', 'pup']], [100, ['pallet', 'pup']]];
     }
 
     public function test_known_weight_allows_delivery_without_dimensions_but_unknown_weight_does_not(): void
@@ -110,18 +118,20 @@ class LavaggioShippingTariffsTest extends TestCase
         $product = $this->cartProduct(50, 1);
         $product->update(['length_cm' => null, 'width_cm' => null, 'height_cm' => null]);
         CartService::forgetRequestSnapshot();
-        $this->assertEqualsCanonicalizing(['gls_home', 'gls_locker', 'boxnow'], app(CheckoutService::class)->availableShippingMethods(40, 'HR')->pluck('code')->all());
+        $this->assertEqualsCanonicalizing(['gls_home', 'gls_locker', 'boxnow', 'pup'], app(CheckoutService::class)->availableShippingMethods(40, 'HR')->pluck('code')->all());
         $product->update(['weight_kg' => null]);
         CartService::forgetRequestSnapshot();
-        $this->assertCount(0, app(CheckoutService::class)->availableShippingMethods(40, 'HR'));
+        $this->assertSame(['pup'], app(CheckoutService::class)->availableShippingMethods(40, 'HR')->pluck('code')->all());
     }
 
     public function test_free_shipping_uses_gross_cart_value_and_strict_seventy_euro_threshold(): void
     {
         $product = $this->cartProduct(70, 1);
-        foreach (app(CheckoutService::class)->availableShippingMethods(56, 'HR') as $method) {
-            $this->assertGreaterThan(0, $method->resolved_price);
-        }
+        $this->travel(15)->days();
+        $methods = app(CheckoutService::class)->availableShippingMethods(56, 'HR')->keyBy('code');
+        $this->assertSame(5.90, $methods['gls_home']->resolved_display_price);
+        $this->assertSame(0.0, $methods['gls_locker']->resolved_price);
+        $this->assertSame(0.0, $methods['boxnow']->resolved_price);
         $product->update(['base_price' => 70.01]);
         CartService::forgetRequestSnapshot();
         foreach (app(CheckoutService::class)->availableShippingMethods(56.01, 'HR') as $method) {
@@ -136,7 +146,7 @@ class LavaggioShippingTariffsTest extends TestCase
         Bouncer::assign('admin')->to($admin);
         Livewire::actingAs($admin)->test(StoreSettings::class)->set('tab', 'pricing')
             ->set('form.lavaggio_free_shipping_threshold', 80)->call('save')->assertHasNoErrors();
-        foreach (['gls_heavy' => [60, 19.92], 'pallet' => [100, 79.92]] as $code => [$weight, $net]) {
+        foreach (['gls_heavy' => [59.999, 25.60], 'pallet' => [100, 79.20], 'gls_special' => [10, 19.99]] as $code => [$weight, $net]) {
             $method = ShippingMethod::where('code', $code)->sole();
             $this->assertNull($method->free_over);
             $product = new Product(['weight_kg' => $weight, 'length_cm' => 10, 'width_cm' => 10, 'height_cm' => 10, 'shipping_labels' => ['free_shipping']]);
@@ -144,6 +154,22 @@ class LavaggioShippingTariffsTest extends TestCase
             $this->assertSame($net, $quote['price']);
         }
         $this->assertSame('80.00', ShippingMethod::where('code', 'gls_home')->sole()->free_over);
+    }
+
+    public function test_promotion_expires_and_special_postcodes_restrict_delivery(): void
+    {
+        $product = $this->cartProduct(30, 10);
+        $checkout = app(CheckoutService::class);
+        $rates = fn ($postal) => $checkout->availableShippingMethods(24, 'HR', null, $postal)->pluck('resolved_display_price', 'code')->all();
+        $this->assertSame(0.0, $rates('52207')['boxnow']);
+        $this->assertSame(4.90, $rates('52207')['gls_locker']);
+        $this->travel(14)->days();
+        $this->assertSame(3.90, $rates('52207')['boxnow']);
+        $this->assertEqualsCanonicalizing(['pup', 'gls_special'], array_keys($rates('HR-20226')));
+        $this->assertSame(24.99, $rates('20226')['gls_special']);
+        $product->update(['weight_kg' => 10.001]);
+        CartService::forgetRequestSnapshot();
+        $this->assertSame(['pup' => 0.0], $rates('20226'));
     }
 
     public function test_shipping_admin_can_edit_all_tariff_and_fira_settings(): void

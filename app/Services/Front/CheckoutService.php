@@ -28,6 +28,7 @@ use App\Services\User\CustomerImpersonationService;
 use App\Services\User\StaffImpersonationService;
 use App\Support\BoxNowShipping;
 use App\Support\GlsShipping;
+use App\Support\Lavaggio\DeliveryArea;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -118,7 +119,14 @@ class CheckoutService
             ? $this->cart->summary() : [];
         $beforeDiscountSubtotal = (float) ($beforeDiscount['raw_subtotal'] ?? $beforeDiscount['subtotal'] ?? $subtotal);
 
+        $specialArea = DeliveryArea::isSpecial($countryCode, $postalCode);
+
         return $methods
+            ->filter(fn (ShippingMethod $method) => match (data_get($method->settings, 'lavaggio_delivery_area')) {
+                'special' => $specialArea,
+                'standard' => ! $specialArea,
+                default => true,
+            })
             ->filter(fn (ShippingMethod $method) => $this->shippingMethodIsConfigured($method))
             ->filter(fn (ShippingMethod $method) => $this->methodMatchesGeoZones($method->geo_zone_id, $zoneIds))
             ->filter(fn (ShippingMethod $method) => $this->methodMatchesDestinationScope(
@@ -194,6 +202,10 @@ class CheckoutService
         $shippingRegionCode = (string) ($payload['shipping_state'] ?? $payload['billing_state'] ?? '');
         $shippingPostalCode = (string) ($payload['shipping_postal_code'] ?? $payload['billing_postal_code'] ?? '');
         $shippingCity = (string) ($payload['shipping_city'] ?? $payload['billing_city'] ?? '');
+        if (config('storefront.home') === 'lavaggio' && strtoupper($shippingCountryCode) === 'HR'
+            && ! preg_match('/^[0-9]{5}$/D', DeliveryArea::postcode($shippingPostalCode))) {
+            throw ValidationException::withMessages(['shipping_postal_code' => 'Unesite peteroznamenkasti poštanski broj dostave.']);
+        }
         $shippingDestination = $this->islandDestinationClassifier->classify(
             $shippingCountryCode,
             $shippingPostalCode,
@@ -254,6 +266,13 @@ class CheckoutService
                 throw ValidationException::withMessages([
                     'shipping_gls_dpm_id' => __('Odaberite GLS paketomat ili ParcelShop lokaciju.'),
                 ]);
+            }
+        }
+
+        if (data_get($shippingMethod->settings, 'lavaggio_delivery_area') === 'standard' && $shippingMethod->service_type === 'parcel_locker') {
+            $lockerPostal = $this->isBoxNowCode($shippingMethod->code) ? 'shipping_boxnow_postal_code' : 'shipping_gls_dpm_postal_code';
+            if (DeliveryArea::isSpecial($shippingCountryCode, $payload[$lockerPostal] ?? null)) {
+                throw ValidationException::withMessages(['shipping_method_code' => 'Za odabrani poštanski broj odaberite dostavu na posebno dostavno područje.']);
             }
         }
 
