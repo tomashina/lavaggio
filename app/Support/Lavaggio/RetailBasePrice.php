@@ -32,13 +32,15 @@ class RetailBasePrice
             return null;
         }
         $reference = max($cutoff, $first);
-        if (($evidence['price_on'] ?? null) !== $reference || ! is_bool($evidence['on_promotion'] ?? null)) {
+        if (($evidence['price_on'] ?? null) !== $reference) {
             return null;
         }
-        $field = 'retail_price';
-        if ($evidence['on_promotion']) {
-            $field = $evidence['group'] === 'household' ? 'lowest_30_before_promotion' : 'previous_retail_price';
-        }
+
+        $field = match ($evidence['on_promotion'] ?? null) {
+            true => $evidence['group'] === 'household' ? 'lowest_30_before_promotion' : 'previous_retail_price',
+            false => 'retail_price',
+            default => 'confirmed_base_price',
+        };
         $amount = $evidence[$field] ?? null;
 
         return is_numeric($amount) && $amount >= 0 ? ['date' => $reference, 'price' => (float) $amount] : null;

@@ -47,6 +47,18 @@ class LavaggioBasePricesTest extends TestCase
         $this->assertNull(\App\Support\Lavaggio\RetailBasePrice::forProduct($unconfirmed));
     }
 
+    public function test_merchant_correction_applies_only_to_the_matching_sku_and_barcode(): void
+    {
+        foreach ([
+            ['200047', '8015194516093', ['date' => '2026-09-10', 'price' => 4.99]],
+            ['200046', '8015194531393', ['date' => '2026-11-16', 'price' => 14.99]],
+            ['200047', '8015194531393', null],
+        ] as [$sku, $barcode, $expected]) {
+            $product = new Product(['sku' => $sku, 'barcode' => $barcode]);
+            $this->assertSame($expected, \App\Support\Lavaggio\RetailBasePrice::forProduct($product));
+        }
+    }
+
     public function test_same_day_publication_and_retention_from_replacement(): void
     {
         config(['storefront.home' => 'lavaggio']);

@@ -187,7 +187,11 @@
     },
     "200047": {
       "barcode": "8015194516093",
-      "retail_price": "4.99"
+      "source": "Ispravak trgovca 19.11.2026. za CHANTE CLAIR 750 ml, šifra 200047: bazna cijena na 10.09.2026. iznosi 4,99 EUR. Projektni zahtjevi navode 10.09.2026. kao datum ulistanja.",
+      "first_offered_on": "2026-09-10",
+      "price_on": "2026-09-10",
+      "confirmed_base_price": "4.99",
+      "on_promotion": null
     },
     "200048": {
       "barcode": "8002910048822",
