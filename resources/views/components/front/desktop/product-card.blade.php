@@ -226,12 +226,12 @@
                         <x-front.energy-information-sheet-link :declaration="$energyDeclaration ?? null" />
                     </span>
                 </div>
+                @if ($isLavaggioCard && ! $isB2BPrice)
+                    @include('front.partials.lavaggio-base-price')
+                @endif
                 @include('front.partials.b2b-tax-note', ['includesTax' => $displayIncludesTax ?? true])
                 @if ($isLavaggioCard && $lavaggioContentLabel)
                     <p class="lavaggio-card-content">{{ $lavaggioContentLabel }}</p>
-                @endif
-                @if ($isLavaggioCard && ! $isB2BPrice)
-                    @include('front.partials.lavaggio-base-price')
                 @endif
                 @include('front.partials.watchline-reference-price', ['referencePriceText' => $referencePriceText ?? null])
                 @if (! empty($lowest30DaysPrice))
@@ -369,12 +369,12 @@
                         <x-front.energy-information-sheet-link :declaration="$energyDeclaration ?? null" />
                     </span>
                 </div>
+                @if ($isLavaggioCard && ! $isB2BPrice)
+                    @include('front.partials.lavaggio-base-price')
+                @endif
                 @include('front.partials.b2b-tax-note', ['includesTax' => $displayIncludesTax ?? true])
                 @if ($isLavaggioCard && $lavaggioContentLabel)
                     <p class="lavaggio-card-content">{{ $lavaggioContentLabel }}</p>
-                @endif
-                @if ($isLavaggioCard && ! $isB2BPrice)
-                    @include('front.partials.lavaggio-base-price')
                 @endif
                 @include('front.partials.watchline-reference-price', ['referencePriceText' => $referencePriceText ?? null])
                 @if (! empty($lowest30DaysPrice))
@@ -431,12 +431,12 @@
                         <x-front.energy-information-sheet-link :declaration="$energyDeclaration ?? null" />
                     </span>
                 </div>
+                @if ($isLavaggioCard && ! $isB2BPrice)
+                    @include('front.partials.lavaggio-base-price')
+                @endif
                 @include('front.partials.b2b-tax-note', ['includesTax' => $displayIncludesTax ?? true])
                 @if ($isLavaggioCard && $lavaggioContentLabel)
                     <p class="lavaggio-card-content">{{ $lavaggioContentLabel }}</p>
-                @endif
-                @if ($isLavaggioCard && ! $isB2BPrice)
-                    @include('front.partials.lavaggio-base-price')
                 @endif
                 @include('front.partials.watchline-reference-price', ['referencePriceText' => $referencePriceText ?? null])
                 @if (! empty($lowest30DaysPrice))

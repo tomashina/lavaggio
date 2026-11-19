@@ -81,6 +81,8 @@ html[data-theme] body.lavaggio-storefront .product-detail-pricing :is([data-pric
 html[data-theme] body.lavaggio-storefront .lavaggio-product-facts { gap: .5rem; }
 html[data-theme] body.lavaggio-storefront .lavaggio-product-content { font-size: 16px; line-height: 1.6; }
 html[data-theme] body.lavaggio-storefront :is(.lavaggio-product-listing-price, .lavaggio-product-vat) { font-size: 14px; line-height: 1.6; }
+body.lavaggio-storefront .product-card-lined-price > :is(.lavaggio-product-listing-price, .lavaggio-card-content) { grid-column: 1 / -1; }
+html[data-theme] body.lavaggio-storefront [data-product-card] .lavaggio-product-listing-price { margin: 0; font-size: 12px; line-height: 1.4; }
 html[data-theme] body.lavaggio-storefront .product-detail-card .lavaggio-stock { font-size: 14px; line-height: 1.6; }
 html[data-theme] body.lavaggio-storefront .product-detail-card .lavaggio-stock-quantity { font-size: 13px; }
 html[data-theme] body.lavaggio-storefront .lavaggio-product-notices p { font-size: 16px; line-height: 1.6; }
