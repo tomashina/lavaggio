@@ -127,29 +127,15 @@
             && trim((string) ($analytics['ga4_measurement_id'] ?? '')) !== '';
         $metaPixelId = $analytics['meta_pixel_id'] ?? '';
         $metaPurchaseEnabled = $metaPixelId !== '';
-        $shouldTrackPurchase = $ga4PurchaseEnabled || $metaPurchaseEnabled;
+        $placedInSession = (int) session('front.checkout.last_order_id') === (int) $order->id;
+        $purchasePayload = $placedInSession && ($ga4PurchaseEnabled || $metaPurchaseEnabled)
+            && \App\Services\Analytics\StorefrontEcommerce::enabled()
+            ? \App\Services\Analytics\StorefrontEcommerce::purchase($order) : null;
         $eventName = trim((string) ($analytics['purchase_event_name'] ?? 'purchase')) ?: 'purchase';
-        $eventItems = $order->items->map(static function ($item): array {
-            return [
-                'item_id' => (string) ($item->sku ?: $item->code ?: $item->id),
-                'item_name' => (string) $item->name,
-                'quantity' => (int) $item->quantity,
-                'price' => (float) $item->unit_price,
-            ];
-        })->values()->all();
-        $purchasePayload = [
-            'transaction_id' => (string) $order->order_number,
-            'currency' => (string) ($order->currency_code ?: 'EUR'),
-            'value' => (float) $order->grand_total,
-            'tax' => (float) $order->tax_total,
-            'shipping' => (float) $order->shipping_total,
-            'coupon' => (string) ($order->payload['coupon_code'] ?? ''),
-            'items' => $eventItems,
-        ];
         $purchaseOnceKey = 'purchase:'.(string) $order->order_number;
     @endphp
 
-    @if ($shouldTrackPurchase)
+    @if ($purchasePayload)
         @push('scripts')
             <script>
                 (function () {

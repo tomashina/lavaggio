@@ -18,6 +18,15 @@
         $routeName = (string) (request()->route()?->getName() ?? '');
     @endphp
 
+    @if (session('cart_ecommerce'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const change = @js(session('cart_ecommerce'));
+                window.ShopAnalytics?.trackPage(change.name, change.params);
+            });
+        </script>
+    @endif
+
     @if (request()->routeIs('products.show') && isset($product))
         @php
             $productTranslation = $product->translations->firstWhere('locale', $locale)
@@ -30,17 +39,16 @@
             $analyticsProductPrice = $analyticsPricing->forProduct($product, $analyticsViewer);
             $viewItemPayload = [
                 'currency' => $currency,
-                'value' => round((float) ($analyticsProductPrice['display_current'] ?? $analyticsProductPrice['current_gross']), 2),
+                'value' => round((float) ($analyticsProductPrice['current_net'] ?? 0), 2),
                 'items' => [[
                     'item_id' => (string) ($product->sku ?: $product->id),
                     'item_name' => (string) ($productTranslation?->name ?: $product->code),
                     'item_brand' => (string) ($manufacturerTranslation?->name ?? ''),
                     'item_category' => (string) ($firstCategoryTranslation?->name ?? ''),
-                    'price' => round((float) ($analyticsProductPrice['display_current'] ?? $analyticsProductPrice['current_gross']), 2),
+                    'price' => round((float) ($analyticsProductPrice['current_net'] ?? 0), 2),
                     'quantity' => 1,
                 ]],
             ];
-            $viewItemOnceKey = 'view-item:'.$routeName.':'.(string) $product->id;
         @endphp
         <script>
             document.addEventListener('DOMContentLoaded', function () {
@@ -48,44 +56,28 @@
                     return;
                 }
 
-                window.ShopAnalytics.trackOnce(@js($viewItemOnceKey), 'view_item', @js($viewItemPayload));
+                window.ShopAnalytics.trackPage('view_item', @js($viewItemPayload));
             });
         </script>
     @elseif (request()->routeIs('cart.index') && isset($lines) && isset($summary))
         @php
-            $cartItems = collect($lines)->map(function (array $line) {
-                $product = $line['product'];
-                $translation = $line['translation'];
-
-                return [
-                    'item_id' => (string) ($line['sku'] ?: $product->sku ?: $product->id),
-                    'item_name' => (string) ($translation?->name ?? $product->code),
-                    'price' => round((float) ($line['display_unit_price'] ?? $line['unit_price'] ?? 0), 2),
-                    'quantity' => (int) ($line['quantity'] ?? 1),
-                ];
-            })->values()->all();
-            $viewCartPayload = [
-                'currency' => $currency,
-                'value' => round((float) ($summary['grand_total'] ?? 0), 2),
-                'items' => $cartItems,
-            ];
-            $viewCartOnceKey = 'view-cart:'.md5((string) request()->fullUrl());
+            $viewCartPayload = \App\Services\Analytics\StorefrontEcommerce::cart($lines, $summary);
         @endphp
-        @if ($cartItems !== [])
+        @if ($viewCartPayload['items'] !== [])
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
                     if (!window.ShopAnalytics) {
                         return;
                     }
 
-                    window.ShopAnalytics.trackOnce(@js($viewCartOnceKey), 'view_cart', @js($viewCartPayload));
+                    window.ShopAnalytics.trackPage('view_cart', @js($viewCartPayload));
                 });
             </script>
         @endif
     @elseif ((request()->routeIs('shop.index') || request()->routeIs('categories.show') || request()->routeIs('manufacturers.show')) && isset($products))
         @php
-            $viewListItems = collect($products instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator ? $products->items() : (array) $products)
-                ->take(30)
+            $viewListItems = collect($products instanceof \Illuminate\Contracts\Pagination\Paginator ? $products->items() : $products)
+                ->take(200)
                 ->values()
                 ->map(function ($row, $index) use ($locale, $fallbackLocale, $analyticsPricing, $analyticsViewer) {
                     $translation = $row->translations?->firstWhere('locale', $locale)
@@ -96,8 +88,8 @@
                     return [
                         'item_id' => (string) ($row->sku ?: $row->id),
                         'item_name' => (string) ($translation?->name ?: $row->code),
-                        'price' => round((float) ($analyticsProductPrice['display_current'] ?? $analyticsProductPrice['current_gross']), 2),
-                        'index' => $index + 1,
+                        'price' => round((float) ($analyticsProductPrice['current_net'] ?? 0), 2),
+                        'index' => $index,
                     ];
                 })
                 ->all();
@@ -111,8 +103,6 @@
                 'item_list_name' => $listName,
                 'items' => $viewListItems,
             ];
-            $pageNumber = $products instanceof \Illuminate\Contracts\Pagination\LengthAwarePaginator ? (int) $products->currentPage() : 1;
-            $viewListOnceKey = 'view-item-list:'.$routeName.':'.$pageNumber.':'.md5((string) request()->fullUrl());
         @endphp
         @if ($viewListItems !== [])
             <script>
@@ -121,7 +111,7 @@
                         return;
                     }
 
-                    window.ShopAnalytics.trackOnce(@js($viewListOnceKey), 'view_item_list', @js($viewListPayload));
+                    window.ShopAnalytics.trackList(@js($viewListPayload));
                 });
             </script>
         @endif

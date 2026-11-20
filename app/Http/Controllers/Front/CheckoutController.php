@@ -7,6 +7,7 @@ use App\Http\Controllers\Front\Concerns\ResolvesFrontendView;
 use App\Models\Sales\Order\Order;
 use App\Models\User;
 use App\Models\User\UserAddress;
+use App\Services\Analytics\StorefrontEcommerce;
 use App\Models\User\UserProfile;
 use App\Services\Front\AddressDirectoryService;
 use App\Services\Front\CartService;
@@ -391,6 +392,7 @@ class CheckoutController extends Controller
                 'is_gls_dpm' => GlsShipping::isGlsDpmShippingMethod($method),
                 'gls_dpm_filter_type' => GlsShipping::glsDpmFilterType($method),
             ])->all(),
+            'ecommerce' => StorefrontEcommerce::enabled() ? StorefrontEcommerce::cart($this->cart->lines(), $summary) : null,
             'payment_methods' => $paymentMethods->map(fn ($method) => [
                 'code' => (string) $method->code,
                 'name' => (string) $method->name,

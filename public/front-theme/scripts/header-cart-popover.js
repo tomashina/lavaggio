@@ -207,7 +207,7 @@
                 }
 
                 document.dispatchEvent(new CustomEvent('cart:updated', {
-                    detail: { summary: payload.summary || null },
+                    detail: { summary: payload.summary || null, ecommerce: payload.ecommerce },
                 }));
             } catch (error) {
                 return;

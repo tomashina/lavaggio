@@ -795,7 +795,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         if (priceData.currentValue !== '') {
-            form.dataset.ga4ItemPrice = priceData.currentValue;
         }
     };
 
@@ -974,12 +973,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 document.dispatchEvent(new CustomEvent('cart:updated', {
-                    detail: { summary: payload.summary || null },
+                    detail: { summary: payload.summary || null, ecommerce: payload.ecommerce },
                 }));
-
-                if (window.ShopAnalytics && typeof window.ShopAnalytics.trackAddToCartFromForm === 'function') {
-                    window.ShopAnalytics.trackAddToCartFromForm(form, quantity, optionLabel);
-                }
 
                 confirmAdded(form, payload, optionLabel, quantity);
             } catch (error) {

@@ -115,12 +115,8 @@
                 }
 
                 document.dispatchEvent(new CustomEvent('cart:updated', {
-                    detail: { summary: payload.summary || null },
+                    detail: { summary: payload.summary || null, ecommerce: payload.ecommerce },
                 }));
-
-                if (window.ShopAnalytics?.trackAddToCartFromForm) {
-                    window.ShopAnalytics.trackAddToCartFromForm(form, quantity, optionLabel);
-                }
 
                 document.dispatchEvent(new CustomEvent('product-card-overlay:close-all'));
                 window.TermolCartModal?.confirm(form, optionLabel, quantity, payload);
@@ -233,7 +229,6 @@
 
             optionError?.classList.add('hidden');
             if (form.closest('[data-cart-native-submits]')) {
-                window.ShopAnalytics?.trackAddToCartFromForm?.(form, currentQty(form), selectedOptionLabel(form));
                 return;
             }
             event.preventDefault();

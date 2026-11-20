@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Front\Concerns\ResolvesFrontendView;
 use App\Models\Catalog\Product\Product;
 use App\Models\Catalog\Product\ProductOptionValue;
+use App\Services\Analytics\StorefrontEcommerce;
 use App\Services\Front\CartRecommendationService;
 use App\Services\Front\CartService;
 use App\Services\Front\CartStaffAccess;
@@ -17,6 +18,7 @@ use App\Support\StorefrontTheme;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -128,7 +130,9 @@ class CartController extends Controller
             }
         }
 
+        $before = $this->analyticsLines($product);
         $ok = $this->cart->add($product, (int) ($validated['quantity'] ?? 1), $optionValueId);
+        $change = $ok && $before !== null ? StorefrontEcommerce::cartChange($before, $this->analyticsLines($product)) : null;
 
         $message = $ok ? __('ui.cart.status.added') : __('ui.cart.status.unavailable');
         if ($request->expectsJson() || $request->ajax()) {
@@ -141,11 +145,12 @@ class CartController extends Controller
                 'message' => $message,
                 'summary' => $this->cart->summary(),
                 'confirmation' => $showModal ? 'modal' : 'notice',
+                'ecommerce' => $change,
             ], $ok ? 200 : 422);
         }
 
         return $ok
-            ? back()->with('status', $message)
+            ? back()->with('status', $message)->with('cart_ecommerce', $change)
             : back()->with('warning', $message);
     }
 
@@ -168,6 +173,7 @@ class CartController extends Controller
                 ->value('stock_qty') ?? 0);
         }
 
+        $before = $this->analyticsLines($product);
         $ok = $this->cart->set(
             $product,
             (int) $validated['quantity'],
@@ -184,9 +190,9 @@ class CartController extends Controller
                 ? $stockAdjustmentMessage
                 : __('ui.cart.status.adjusted'));
 
-        return $ok
-            ? back()->with('status', $message)
-            : back()->with('warning', $message);
+        $change = $before !== null ? StorefrontEcommerce::cartChange($before, $this->analyticsLines($product)) : null;
+
+        return back()->with($ok ? 'status' : 'warning', $message)->with('cart_ecommerce', $change);
     }
 
     public function destroy(Request $request, Product $product): JsonResponse|RedirectResponse
@@ -195,28 +201,44 @@ class CartController extends Controller
             'product_option_value_id' => ['nullable', 'integer', Rule::exists('catalog_product_option_values', 'id')],
         ]);
 
+        $before = $this->analyticsLines($product);
         $this->cart->remove(
             (int) $product->id,
             isset($validated['product_option_value_id']) ? (int) $validated['product_option_value_id'] : null
         );
 
+        $change = $before !== null ? StorefrontEcommerce::cartChange($before, $this->analyticsLines($product)) : null;
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'ok' => true,
                 'message' => __('ui.cart.status.removed'),
                 'summary' => $this->cart->summary(),
+                'ecommerce' => $change,
             ]);
         }
 
-        return back()->with('status', __('ui.cart.status.removed'));
+        return back()->with('status', __('ui.cart.status.removed'))->with('cart_ecommerce', $change);
     }
 
     public function clear(): RedirectResponse
     {
+        $before = $this->analyticsLines();
         $this->cart->clear();
         app(GiftVoucherService::class)->clearCode();
 
-        return redirect()->route('cart.index')->with('status', __('ui.cart.status.cleared'));
+        return redirect()->route('cart.index')->with('status', __('ui.cart.status.cleared'))
+            ->with('cart_ecommerce', $before !== null ? StorefrontEcommerce::cartChange($before, collect()) : null);
+    }
+
+    private function analyticsLines(?Product $product = null): ?Collection
+    {
+        if (! StorefrontEcommerce::enabled()) {
+            return null;
+        }
+
+        $lines = $this->cart->lines();
+
+        return $product ? $lines->where('product.id', $product->id) : $lines;
     }
 
     public function applyCoupon(Request $request): JsonResponse|RedirectResponse

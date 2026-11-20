@@ -534,6 +534,9 @@ class CheckoutService
                             'final' => (bool) ($line['price_is_final'] ?? false),
                             'monetary_precision' => $linePrecision,
                             'unit_net' => $unitPrice,
+                            ...(($summary['cart_discount_total'] ?? 0) > 0 ? [
+                                'cart_discount_eligible' => in_array($line['key'], $summary['cart_discount_eligible_keys'], true),
+                            ] : []),
                             'unit_tax' => $line['unit_tax_amount'] ?? null,
                             'line_net' => $lineTotal,
                             'line_tax' => $lineTaxAmount,

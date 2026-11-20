@@ -29,12 +29,13 @@ function page({ native = true, options = false, selected = false } = {}) {
     const form = new Form();
     const document = {
         readyState: 'complete', querySelectorAll: () => [], querySelector: () => null,
-        addEventListener: (name, handler) => handlers.set(name, handler), dispatchEvent() {},
+        addEventListener: (name, handler) => handlers.set(name, handler),
+        dispatchEvent(event) { if (event.type === 'cart:updated' && event.detail.ecommerce?.name === 'add_to_cart') tracked++; },
     };
-    const window = { ShopAnalytics: { trackAddToCartFromForm: () => tracked++ } };
+    const window = {};
     vm.runInNewContext(source, {
-        document, window, HTMLFormElement: Form, FormData: class {}, CustomEvent: class {},
-        fetch: async () => { requests++; return { ok: true, json: async () => ({ ok: true, summary: { item_qty: 3 } }) }; },
+        document, window, HTMLFormElement: Form, FormData: class {}, CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } },
+        fetch: async () => { requests++; return { ok: true, json: async () => ({ ok: true, summary: { item_qty: 3 }, ecommerce: { name: 'add_to_cart' } }) }; },
     });
     let prevented = false;
     handlers.get('submit')({ target: form, preventDefault: () => { prevented = true; } });
@@ -45,7 +46,7 @@ test('cart recommendations use native POST so the full cart refreshes', () => {
     const result = page();
     assert.equal(result.prevented, false);
     assert.equal(result.requests(), 0);
-    assert.equal(result.tracked(), 1);
+    assert.equal(result.tracked(), 0);
 });
 
 test('a recommendation cannot submit before its required variant is selected', () => {

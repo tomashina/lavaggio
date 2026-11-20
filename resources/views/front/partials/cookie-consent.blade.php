@@ -53,6 +53,9 @@
             if (typeof window.updateMetaPixelConsentFromCookie === 'function') {
                 window.updateMetaPixelConsentFromCookie(marketingGranted);
             }
+            if (window.ShopAnalytics) {
+                document.dispatchEvent(new Event('shop:consent'));
+            }
         };
 
         const cookieConsentConfig = {

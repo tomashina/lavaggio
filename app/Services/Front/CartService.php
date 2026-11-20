@@ -365,6 +365,9 @@ class CartService
             'discount_total' => $discountTotal,
             'line_discount_total' => $lineDiscountTotal,
             'cart_discount_total' => $cartDiscountTotal,
+            'cart_discount_eligible_keys' => $cartDiscount['action']
+                ? $this->eligibleCartDiscountLines($cartDiscount['action'], $lines)->pluck('key')->all()
+                : [],
             'cart_discount_action_code' => $cartDiscount['action']?->code,
             'subtotal_after_discount' => $subtotalAfterDiscount,
             'tax_rate' => $taxRateValue,

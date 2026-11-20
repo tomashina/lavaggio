@@ -22,7 +22,7 @@
     @endonce
 @endif
 
-<article class="group w-full min-w-0 overflow-hidden {{ $lined ? 'product-card-lined flex h-full flex-col bg-white p-0' : ($flat ? 'bg-white p-0' : 'rounded-2xl bg-white p-5 shadow-sm') }}" data-product-card data-product-id="{{ $productId }}" @if ($lined) data-product-card-lined @endif>
+<article class="group w-full min-w-0 overflow-hidden {{ $lined ? 'product-card-lined flex h-full flex-col bg-white p-0' : ($flat ? 'bg-white p-0' : 'rounded-2xl bg-white p-5 shadow-sm') }}" data-product-card data-product-id="{{ $productId }}" data-ga4-item-id="{{ $productSku }}" @if ($lined) data-product-card-lined @endif>
     <div class="relative {{ $flat ? 'overflow-hidden' : '-mt-5 overflow-hidden rounded-t-2xl' }}">
         <a href="{{ $productUrl }}" class="group block">
             @if ($imageUrl)
