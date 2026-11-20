@@ -47,6 +47,17 @@ class StorefrontAnalyticsSafetyTest extends TestCase
         return ['staging' => ['staging', false], 'local' => ['local', false], 'testing' => ['testing', false], 'production safe mode' => ['production', true]];
     }
 
+    public function test_lavaggio_production_uses_the_configured_google_stream_and_consent(): void
+    {
+        $this->app['env'] = 'production';
+        config(['storefront.home' => 'lavaggio', 'commerce.local_safe_mode' => false]);
+        app(SystemSettingsService::class)->put('store_analytics_ga4_measurement_id', 'G-RB5XFZB5HG');
+        $this->get('https://shop.lavaggio.hr/_analytics-safety-probe')->assertOk()
+            ->assertSee('googletagmanager.com/gtag/js?id=G-RB5XFZB5HG', false)
+            ->assertSee("analytics_storage: 'denied'", false)->assertSee('view_cart', false)
+            ->assertDontSee('connect.facebook.net', false);
+    }
+
     #[DataProvider('productionFlags')]
     public function test_production_keeps_google_flags_meta_consent_and_real_ecommerce_payloads(bool $googleEnabled, bool $consentEnabled): void
     {

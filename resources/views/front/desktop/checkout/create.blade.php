@@ -308,10 +308,7 @@
                         </div>
 
                         @if (config('storefront.home') === 'lavaggio')
-                            <p class="mt-3 text-sm text-slate-600">Za dostavu pojedinačnog artikla težeg od 10 kg na
-                                <a class="underline" href="/stranica/dostava">posebna dostavna područja</a>
-                                zatražite ponudu na <a class="underline" href="mailto:webshop@lavaggio.hr">webshop@lavaggio.hr</a>.
-                            </p>
+                            <p class="mt-3 text-sm text-slate-600">Dostava na pojedine otoke i u posebna dostavna područja podliježe <a class="underline" href="{{ route('pages.show', 'dostava') }}">posebnim uvjetima</a>, ograničenjima težine i dimenzija te duljim rokovima isporuke.</p>
                         @endif
                         <div class="hidden" data-shipping-panels>
                         <div class="checkout-inline-panel mt-3 hidden p-3" data-boxnow-panel>

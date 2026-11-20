@@ -50,7 +50,7 @@ class LavaggioContactTest extends TestCase
         $this->assertSame(1, $xpath->query('.//input[@name="name"]', $form)->length);
         $this->assertSame(1, $xpath->query('.//input[@name="email"]', $form)->length);
         $this->assertSame(1, $xpath->query('.//textarea[@name="message"]', $form)->length);
-        $this->assertSame(1, $xpath->query('.//input[@name="accept_terms"]', $form)->length);
+        $this->assertSame(0, $xpath->query('.//input[@name="accept_terms"]', $form)->length);
         $this->assertSame(0, $xpath->query('.//input[@name="phone" or @name="subject"]', $form)->length);
     }
 
@@ -65,7 +65,6 @@ class LavaggioContactTest extends TestCase
             'name' => 'Lokalni test',
             'email' => 'kontakt@example.test',
             'message' => 'Upit o pranju kućnog rublja.',
-            'accept_terms' => '1',
         ])->assertSessionHasNoErrors()
             ->assertRedirect(route('contact.create'))
             ->assertSessionHas('status');

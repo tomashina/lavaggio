@@ -125,7 +125,7 @@
         $ga4PurchaseEnabled = (bool) ($analytics['enabled'] ?? false)
             && (bool) ($analytics['purchase_event_enabled'] ?? true)
             && trim((string) ($analytics['ga4_measurement_id'] ?? '')) !== '';
-        $metaPixelId = '2376960792811713';
+        $metaPixelId = $analytics['meta_pixel_id'] ?? '';
         $metaPurchaseEnabled = $metaPixelId !== '';
         $shouldTrackPurchase = $ga4PurchaseEnabled || $metaPurchaseEnabled;
         $eventName = trim((string) ($analytics['purchase_event_name'] ?? 'purchase')) ?: 'purchase';

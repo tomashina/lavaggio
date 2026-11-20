@@ -46,8 +46,11 @@
         @if ($lastSync)
             <p class="text-sm text-slate-600">Zadnji dovršeni dohvat: {{ \Carbon\Carbon::parse($lastSync['completed_at'])->timezone('Europe/Zagreb')->format('d.m.Y. H:i') }}.
                 Izmijenjeno: {{ $lastSync['changed'] }}; bez promjene: {{ $lastSync['unchanged'] }};
-                bez podudarnog SKU-a: {{ $lastSync['unmatched'] }}; nejednoznačni SKU: {{ $lastSync['ambiguous'] }};
+                FIRA stavke bez artikla s istom šifrom u webshopu: {{ $lastSync['unmatched'] }}; nejednoznačni SKU: {{ $lastSync['ambiguous'] }};
                 neusklađena cijena, valuta ili PDV: {{ $lastSync['invalid'] }}.</p>
+            @if ($lastSync['unmatched'] > 0)
+                <p class="text-sm text-slate-600">U ovaj broj ulaze i usluge pranja i dostave koje postoje samo u FIRA-i. Te se stavke preskaču pri ažuriranju cijena.</p>
+            @endif
         @endif
     </section>
     @if ($blockers)

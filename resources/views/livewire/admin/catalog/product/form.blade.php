@@ -232,6 +232,24 @@
                     <input type="date" wire:model="form.listed_at" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
                     @error('form.listed_at') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                 </div>
+                <fieldset class="col-span-full rounded-xl border border-slate-200 p-4">
+                    <legend class="px-1 font-semibold">Bazna cijena</legend>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <label class="text-sm">Bazna cijena s PDV-om (€)
+                            <input type="number" min="0" step="0.01" wire:model="form.retail_base_price" class="mt-1 w-full rounded-xl border-slate-300 text-sm">
+                            @error('form.retail_base_price') <span class="text-xs text-rose-600">{{ $message }}</span> @enderror
+                        </label>
+                        <label class="text-sm">Datum bazne cijene
+                            <input type="date" wire:model="form.retail_base_date" class="mt-1 w-full rounded-xl border-slate-300 text-sm">
+                            @error('form.retail_base_date') <span class="text-xs text-rose-600">{{ $message }}</span> @enderror
+                        </label>
+                    </div>
+                    @if (! $initialRetailBase)
+                        <label class="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" wire:model="form.regular_first_offer">Prva ponuda bila je po redovnoj cijeni.</label>
+                        <p class="mt-1 text-xs text-slate-600">Za redovnu prvu ponudu od 10. 9. 2026. možete ostaviti oba polja prazna i upisati cijenu s PDV-om i datum ulistanja iznad.</p>
+                    @endif
+                    <p class="mt-2 text-xs text-slate-600">Ako je na referentni datum vrijedila akcija, za sredstva za čišćenje i kućanstvo upišite najnižu cijenu u 30 dana prije početka akcije. Za ostalu robu upišite prethodno primijenjenu maloprodajnu cijenu.</p>
+                </fieldset>
                 <div>
                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Rok isporuke') }}</label>
                     <select wire:model="form.delivery_mode" class="admin-select w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">

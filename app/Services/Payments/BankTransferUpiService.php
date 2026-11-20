@@ -144,8 +144,14 @@ class BankTransferUpiService
         $shippingPlace = trim((string) (($order->shipping_postal_code ?: $order->billing_postal_code).' '.($order->shipping_city ?: $order->billing_city)));
 
         $reference = trim((string) ($current['reference'] ?? ''));
+        $description = trim((string) ($current['description'] ?? $settings['upi_description'] ?? 'Web narudzba'));
         if ($reference === '') {
-            $reference = (string) $order->id.now()->format('y');
+            if (config('storefront.home') === 'lavaggio' && preg_match('/^LAV-(\d{8})-(\d{4,})$/D', (string) $order->order_number, $number)) {
+                $reference = $number[1].$number[2];
+                $description = trim($order->order_number.' '.$description);
+            } else {
+                $reference = (string) $order->id.now()->format('y');
+            }
         }
 
         $receiverName = trim((string) ($current['receiver_name'] ?? $settings['upi_receiver_name'] ?? ''));
@@ -161,7 +167,7 @@ class BankTransferUpiService
             'reference' => $reference,
             'model' => trim((string) ($current['model'] ?? $settings['upi_model'] ?? '00')),
             'purpose_code' => trim((string) ($current['purpose_code'] ?? $settings['upi_purpose_code'] ?? 'SUPP')),
-            'description' => trim((string) ($current['description'] ?? $settings['upi_description'] ?? 'Web narudzba')),
+            'description' => $description,
             'instructions' => trim((string) ($current['instructions'] ?? $settings['bank_instructions'] ?? '')),
 
             'sender_name' => trim((string) ($order->customer_name ?: trim($order->billing_first_name.' '.$order->billing_last_name))),

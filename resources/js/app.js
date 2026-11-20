@@ -11,6 +11,18 @@ import Chart from 'chart.js/auto';
 
 registerAdminVideoFormat(Quill);
 
+if (document.documentElement.hasAttribute('data-lavaggio-admin')) {
+    const Link = Quill.import('formats/link');
+    class LavaggioLink extends Link {
+        static create(value) {
+            const node = super.create(value);
+            node.removeAttribute('target');
+            return node;
+        }
+    }
+    Quill.register('formats/link', LavaggioLink, true);
+}
+
 let aceLoaderPromise = null;
 let aceInlineFailureNotified = false;
 
@@ -788,9 +800,9 @@ const initQuillEditors = () => {
 
         const initial = readTextareaHtml(textarea);
         if (initial) {
-            quill.clipboard.dangerouslyPasteHTML(initial);
+            quill.setContents(quill.clipboard.convert({ html: initial }), 'silent');
         } else {
-            quill.setText('');
+            quill.setText('', 'silent');
         }
 
         const state = {
@@ -837,13 +849,13 @@ const initQuillEditors = () => {
                 }
 
                 const hadFocus = wrapper.contains(document.activeElement);
-                const previousRange = quill.getSelection() || quill.__lastRange || null;
+                const previousRange = hadFocus ? quill.getSelection() : null;
 
                 state.syncingFromTextarea = true;
                 if (source) {
-                    quill.clipboard.dangerouslyPasteHTML(source);
+                    quill.setContents(quill.clipboard.convert({ html: source }), 'silent');
                 } else {
-                    quill.setText('');
+                    quill.setText('', 'silent');
                 }
                 if (activeTextarea.dataset.quillBypassInlineSanitizeOnce === '1') {
                     delete activeTextarea.dataset.quillBypassInlineSanitizeOnce;

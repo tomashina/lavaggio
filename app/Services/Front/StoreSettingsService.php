@@ -397,6 +397,7 @@ class StoreSettingsService
         return [
             'enabled' => (bool) $this->settings->get('store_analytics_enabled', false),
             'ga4_measurement_id' => trim((string) $this->settings->get('store_analytics_ga4_measurement_id', '')),
+            'meta_pixel_id' => config('storefront.home') === 'lavaggio' ? '' : '2376960792811713',
             'purchase_event_enabled' => (bool) $this->settings->get('store_analytics_purchase_event_enabled', true),
             'purchase_event_name' => trim((string) $this->settings->get('store_analytics_purchase_event_name', 'purchase')) ?: 'purchase',
         ];

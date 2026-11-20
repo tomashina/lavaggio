@@ -3,7 +3,7 @@
     $analyticsRuntimeAllowed = app()->environment('production') && ! (bool) config('commerce.local_safe_mode', false);
     $analyticsEnabled = $analyticsRuntimeAllowed && (bool) ($analytics['enabled'] ?? false);
     $ga4Id = trim((string) ($analytics['ga4_measurement_id'] ?? ''));
-    $metaPixelId = $analyticsRuntimeAllowed ? '2376960792811713' : '';
+    $metaPixelId = $analyticsRuntimeAllowed ? ($analytics['meta_pixel_id'] ?? '') : '';
     $hasGa4 = $analyticsEnabled && $ga4Id !== '';
     $hasMetaPixel = $metaPixelId !== '';
 @endphp

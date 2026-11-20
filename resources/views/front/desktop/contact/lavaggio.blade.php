@@ -1,5 +1,4 @@
 @php
-    $contactPrivacyUrl = route('pages.show', 'zastita-podataka-i-prigovor');
     $contactCards = app(\App\Services\Content\LavaggioContactCards::class)->forStorefront($storeSettings['footer'] ?? []);
     $contactSocials = \App\Support\StorefrontSocialLinks::resolve($storeSettings['branding']['social'] ?? [], [], true);
 @endphp
@@ -37,7 +36,6 @@
         data-msg-email-invalid="{{ __('contact.validation.inline.email_invalid') }}"
         data-msg-message-required="{{ __('contact.validation.inline.message_required') }}"
         data-msg-message-min="{{ __('contact.validation.inline.message_min') }}"
-        data-msg-accept-terms="{{ __('contact.validation.inline.accept_terms') }}"
         @if($captchaEnabled) data-recaptcha-form data-recaptcha-site-key="{{ $captchaSiteKey }}" data-recaptcha-action="contact_form" @endif
     >
         <h2>Kako vam možemo pomoći?</h2>
@@ -66,15 +64,8 @@
             <p class="lavaggio-contact-error {{ $errors->has('message') ? '' : 'hidden' }}" data-field-error="message">@error('message'){{ $message }}@enderror</p>
         </div>
 
-        <div class="lavaggio-contact-field">
-            <label class="lavaggio-contact-consent" for="contact-terms">
-                <input type="checkbox" id="contact-terms" name="accept_terms" value="1" required @checked((bool) old('accept_terms'))>
-                <span>Slažem se sa <a href="{{ $contactPrivacyUrl }}">uvjetima korištenja</a> <x-front.required-mark /></span>
-            </label>
-            <p class="lavaggio-contact-error {{ $errors->has('accept_terms') ? '' : 'hidden' }}" data-field-error="accept_terms">@error('accept_terms'){{ $message }}@enderror</p>
-        </div>
-
         <button type="submit" class="lavaggio-contact-submit">Pošaljite upit</button>
+        <a class="text-sm underline" href="{{ route('pages.show', 'zastita-podataka-i-prigovor') }}">Zaštita osobnih podataka</a>
         <p class="lavaggio-contact-error {{ $errors->has('recaptcha_token') ? '' : 'hidden' }}" data-field-error="recaptcha_token">@error('recaptcha_token'){{ $message }}@enderror</p>
     </form>
 </section>

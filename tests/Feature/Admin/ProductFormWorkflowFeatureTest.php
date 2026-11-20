@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Livewire\Admin\Catalog\Product\Form as ProductForm;
+use App\Livewire\Admin\Catalog\Product\Manager as ProductManager;
 use App\Models\Catalog\Category\Category;
 use App\Models\Catalog\Product\Product;
 use App\Models\Catalog\Product\ProductGroupPrice;
@@ -10,6 +11,8 @@ use App\Models\Catalog\Product\ProductPackage;
 use App\Models\Settings\Local\TaxRate;
 use App\Models\User;
 use App\Models\User\CustomerGroup;
+use App\Support\Lavaggio\RetailBasePrice;
+use App\Support\Lavaggio\RetailPriceLists;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
@@ -361,6 +364,57 @@ class ProductFormWorkflowFeatureTest extends TestCase
         $this->assertDatabaseCount('products', 0);
         $this->assertDatabaseCount('catalog_product_packages', 0);
         $this->assertDatabaseCount('catalog_product_group_prices', 0);
+    }
+
+    public function test_lavaggio_base_price_can_be_edited_and_restored_without_changing_current_price(): void
+    {
+        config(['storefront.home' => 'lavaggio', 'commerce.b2c_only' => true]);
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-20 12:00', 'Europe/Zagreb'));
+        $product = $this->makeProduct(['code' => 'lavaggio-200051', 'sku' => '200051', 'base_price' => 4.49]);
+        $product->translations()->create(['locale' => 'hr', 'name' => 'Sprej za štirkanje', 'slug' => 'sprej-za-stirkanje']);
+        $admin = $this->makeAdmin();
+        $form = fn () => Livewire::withQueryParams(['locale' => 'hr'])->actingAs($admin)->test(ProductForm::class, ['productId' => $product->id]);
+        $form()->assertSet('form.retail_base_price', 3.59)->assertSet('form.retail_base_date', '2026-11-19')
+            ->set('form.retail_base_price', '3.79')->set('form.retail_base_date', '2026-11-18')
+            ->call('save')->assertHasNoErrors();
+        $this->assertSame(['date' => '2026-11-18', 'price' => 3.79], RetailBasePrice::forProduct($product->refresh()));
+        $this->assertEquals(4.49, $product->base_price);
+        $this->assertEquals($admin->id, data_get($product->payload, 'retail_base_price_override.confirmed_by'));
+        $this->assertSame('3.79', app(RetailPriceLists::class)->goods()[0][10]);
+        $form()->set('form.retail_base_price', '')->call('save')->assertHasErrors('form.retail_base_price')
+            ->set('form.retail_base_date', '')->call('save')->assertHasNoErrors();
+        $this->assertSame(['date' => '2026-11-19', 'price' => 3.59], RetailBasePrice::forProduct($product->refresh()));
+    }
+
+    public function test_lavaggio_regular_first_offer_records_listing_price_and_date(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-20 12:00', 'Europe/Zagreb'));
+        $this->newProductComponent()->set('form.listed_at', '2026-11-19')->set('form.listing_price', '50.25')
+            ->call('save')->assertHasNoErrors();
+        $product = Product::where('code', 'NEW-PRODUCT')->sole();
+        $this->assertSame(['date' => '2026-11-19', 'price' => 50.25], RetailBasePrice::forProduct($product));
+        $this->assertEquals(55.50, $product->base_price);
+    }
+
+    public function test_lavaggio_list_updates_weight_and_stock_independently_and_rejects_stale_or_unauthorised_changes(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+        $product = $this->makeProduct(['weight_kg' => null, 'stock_qty' => 6, 'delivery_mode' => 'stock']);
+        $admin = $this->makeAdmin();
+        $list = Livewire::actingAs($admin)->test(ProductManager::class)->assertSee('Težina (kg)')->assertSee('Zaliha za ORIGINAL-SKU');
+        $list->call('saveInventoryField', $product->id, 'weight_kg', '1,275', '')->assertHasNoErrors()
+            ->call('saveInventoryField', $product->id, 'stock_qty', '12', '6')->assertHasNoErrors()
+            ->call('saveInventoryField', $product->id, 'stock_qty', '0', '6')->assertHasErrors("inventory.$product->id.stock_qty");
+        $this->assertEquals(1.275, $product->refresh()->weight_kg);
+        $this->assertSame(12, $product->stock_qty);
+        $this->assertEquals($admin->id, $product->updated_by);
+        $list->call('saveInventoryField', $product->id, 'weight_kg', '-1', (string) $product->weight_kg)->assertHasErrors("inventory.$product->id.weight_kg");
+        $viewer = User::factory()->create();
+        Bouncer::allow($viewer)->to(['admin.access', 'catalog.products.view']);
+        Livewire::actingAs($viewer)->test(ProductManager::class)->assertDontSee('Zaliha za ORIGINAL-SKU')
+            ->call('saveInventoryField', $product->id, 'stock_qty', '4', '12')->assertForbidden();
+        $this->assertSame(12, $product->refresh()->stock_qty);
     }
 
     private function newProductComponent()

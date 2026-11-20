@@ -19,5 +19,6 @@ final class LavaggioDeployMigrations
         'database/migrations/2026_11_17_140000_create_order_notifications.php',
         'database/migrations/2026_11_19_090000_update_lavaggio_delivery.php',
         'database/migrations/2026_11_19_100000_charge_special_delivery_per_parcel.php',
+        'database/migrations/2026_11_20_070000_correct_lavaggio_renova_volume.php',
     ];
 }

@@ -974,6 +974,18 @@ class CheckoutService
 
     private function nextOrderNumber(): string
     {
+        if (config('storefront.home') === 'lavaggio') {
+            // Checkout owns the transaction. The unique key serializes even the first two orders.
+            $key = 'lavaggio_order_sequence';
+            DB::table('system_settings')->upsert([
+                ['key' => $key, 'value' => '0', 'created_at' => now(), 'updated_at' => now()],
+            ], ['key'], ['key']);
+            $sequence = DB::table('system_settings')->where('key', $key);
+            $sequence->increment('value', 1, ['updated_at' => now()]);
+
+            return sprintf('LAV-%s-%04d', now('Europe/Zagreb')->format('Ymd'), (int) $sequence->value('value'));
+        }
+
         $datePrefix = now()->format('Ymd');
 
         for ($attempt = 0; $attempt < 15; $attempt++) {

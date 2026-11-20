@@ -20,6 +20,7 @@ use App\Services\Integrations\Eprel\EprelSettingsService;
 use App\Services\Integrations\Msan\EprelClient;
 use App\Services\Integrations\Msan\EprelException;
 use App\Services\Integrations\Msan\EprelProductLookupService;
+use App\Support\Lavaggio\RetailBasePrice;
 use App\Support\ProductNewLabel;
 use App\Support\ProductPopularityLabel;
 use Illuminate\Support\Collection;
@@ -34,6 +35,9 @@ class Form extends Component
 {
     #[Locked]
     public ?int $productId = null;
+
+    #[Locked]
+    public ?array $initialRetailBase = null;
 
     public string $activeTab = 'content';
 
@@ -82,6 +86,9 @@ class Form extends Component
         'content_quantity' => null,
         'content_unit' => '',
         'listing_price' => null,
+        'retail_base_price' => null,
+        'retail_base_date' => '',
+        'regular_first_offer' => true,
         'listed_at' => '',
         'delivery_mode' => 'stock',
         'ingredients' => '',
@@ -287,9 +294,41 @@ class Form extends Component
             return null;
         }
 
-        $existingPayload = $this->productId ? Product::query()->findOrFail($this->productId)->payload : null;
+        $existingProduct = $this->productId ? Product::query()->findOrFail($this->productId) : null;
+        $existingPayload = $existingProduct?->payload;
         if (is_array($existingPayload)) {
             $payload = array_replace_recursive($existingPayload, $payload ?? []);
+        }
+        if ($this->isLavaggioEditor()) {
+            $form = $validated['form'];
+            $date = $form['retail_base_date'] ?: null;
+            $price = $form['retail_base_price'];
+            $reference = $date ? ['date' => $date, 'price' => (float) $price] : null;
+            $listingChanged = ! $existingProduct || $existingProduct->listed_at?->format('Y-m-d') !== $form['listed_at']
+                || (string) $existingProduct->listing_price !== (string) $form['listing_price'];
+
+            // After both statutory reference dates a regular first offer uses its own date and gross price.
+            if (! $reference && ! $this->initialRetailBase && $listingChanged && $form['regular_first_offer']
+                && $form['listed_at'] >= '2026-09-10' && $form['listed_at'] <= now('Europe/Zagreb')->toDateString()
+                && is_numeric($form['listing_price'])) {
+                $reference = ['date' => $form['listed_at'], 'price' => (float) $form['listing_price']];
+            }
+            if ($reference != $this->initialRetailBase) {
+                if ($existingProduct && RetailBasePrice::forProduct($existingProduct) != $this->initialRetailBase) {
+                    $this->addError('form.retail_base_price', 'Bazna cijena se u međuvremenu promijenila. Osvježite artikl i provjerite novi iznos i datum.');
+
+                    return null;
+                }
+                if ($reference) {
+                    $payload['retail_base_price_override'] = $reference + ['confirmed_by' => auth()->id(), 'confirmed_at' => now()->toIso8601String()];
+                } else {
+                    unset($payload['retail_base_price_override']);
+                }
+            } elseif (isset($existingPayload['retail_base_price_override'])) {
+                $payload['retail_base_price_override'] = $existingPayload['retail_base_price_override'];
+            } else {
+                unset($payload['retail_base_price_override']);
+            }
         }
         foreach (['is_new', 'is_popular'] as $flag) {
             $enabled = (bool) ($validated['form'][$flag] ?? false);
@@ -893,6 +932,8 @@ class Form extends Component
             'form.content_unit' => __('Jedinica sadržaja'),
             'form.listing_price' => __('Cijena na dan ulistanja'),
             'form.listed_at' => __('Datum ulistanja'),
+            'form.retail_base_date' => __('Datum bazne cijene'),
+            'form.retail_base_price' => __('Bazna cijena s PDV-om'),
             'form.delivery_mode' => __('Rok isporuke'),
             'form.ingredients' => __('Sastojci'),
             'form.hazard_notes' => __('Napomene o opasnosti'),
@@ -968,6 +1009,9 @@ class Form extends Component
             'form.content_unit' => ['nullable', Rule::in(array_keys(Product::contentUnitOptions())), 'required_with:form.content_quantity'],
             'form.listing_price' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
             'form.listed_at' => ['nullable', 'date'],
+            'form.retail_base_date' => ['nullable', 'required_with:form.retail_base_price', 'date_format:Y-m-d', 'before_or_equal:'.now('Europe/Zagreb')->toDateString()],
+            'form.retail_base_price' => ['nullable', 'required_with:form.retail_base_date', 'numeric', 'decimal:0,2', 'min:0', 'max:9999999999.99'],
+            'form.regular_first_offer' => ['boolean'],
             'form.delivery_mode' => [
                 'required', Rule::in(array_keys(Product::deliveryModeOptions())),
                 function (string $attribute, mixed $value, \Closure $fail): void {
@@ -1143,6 +1187,11 @@ class Form extends Component
         $this->form['is_professional'] = (bool) $product->is_professional;
         $this->form['content_quantity'] = $product->content_quantity;
         $this->form['content_unit'] = $product->content_unit ?? '';
+        if ($this->isLavaggioEditor()) {
+            $this->initialRetailBase = RetailBasePrice::forProduct($product);
+            $this->form['retail_base_date'] = $this->initialRetailBase['date'] ?? '';
+            $this->form['retail_base_price'] = $this->initialRetailBase['price'] ?? null;
+        }
         $this->form['listing_price'] = $product->listing_price;
         $this->form['listed_at'] = $product->listed_at?->format('Y-m-d') ?? '';
         $this->form['delivery_mode'] = $product->delivery_mode ?: 'stock';

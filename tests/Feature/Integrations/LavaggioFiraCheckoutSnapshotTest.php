@@ -13,8 +13,11 @@ use App\Models\Settings\Local\TaxRate;
 use App\Services\Front\CartService;
 use App\Services\Front\CheckoutService;
 use App\Services\Integrations\Fira\FiraOrderPayload;
+use App\Services\Payments\BankTransferUpiService;
+use App\Services\Payments\CorvusPayFormService;
 use App\Services\Settings\SystemSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -97,14 +100,41 @@ class LavaggioFiraCheckoutSnapshotTest extends TestCase
         return ['one-cent difference' => [3, '0.87'], 'three-cent difference' => [10, '2.90']];
     }
 
+    public function test_checkout_assigns_a_continuous_number_and_uses_it_in_payment_and_fira(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-11-17 22:50', 'UTC'));
+        DB::beginTransaction();
+        $this->assertSame('LAV-20261117-0001', $this->checkout(12.50, 1)->order_number);
+        DB::rollBack();
+        app(CartService::class)->clear();
+        $order = $this->checkout(12.50, 1);
+        $this->assertSame('LAV-20261117-0001', $order->order_number);
+        $this->assertSame($order->order_number, app(FiraOrderPayload::class)->build($order, 'GOTOVINA')['webshopOrderNumber']);
+
+        $order->update(['payment_method_code' => 'bank_transfer']);
+        $bank = app(BankTransferUpiService::class)->ensureForOrder($order);
+        $this->assertStringContainsString($order->order_number, $bank['description']);
+        $this->assertSame('202611170001', $bank['reference']);
+        $this->assertSame($bank, app(BankTransferUpiService::class)->ensureForOrder($order->fresh()));
+
+        PaymentMethod::create(['code' => 'corvus', 'name' => 'Kartica', 'provider' => 'corvus',
+            'settings' => ['corvus_store_id' => 'test', 'corvus_secret_key' => 'test-key']]);
+        $order->update(['payment_method_code' => 'corvus']);
+        $this->assertSame($order->order_number, app(CorvusPayFormService::class)->buildFormData($order)['payload']['order_number']);
+        app(CartService::class)->clear();
+        $this->travel(20)->minutes();
+        $this->assertSame('LAV-20261118-0002', $this->checkout(12.50, 1)->order_number);
+        Http::assertNothingSent();
+    }
+
     private function checkout(float $grossPrice, int $quantity, ?string $coupon = null): Order
     {
-        $product = Product::query()->create([
-            'code' => 'FIRA-CHECKOUT', 'sku' => '200049', 'base_price' => $grossPrice,
+        $product = Product::query()->firstOrCreate(['code' => 'FIRA-CHECKOUT'], [
+            'sku' => '200049', 'base_price' => $grossPrice,
             'tax_rate_id' => TaxRate::query()->where('code', 'VAT25')->sole()->id,
             'stock_qty' => 1000, 'is_active' => true,
         ]);
-        $product->translations()->create(['locale' => 'hr', 'name' => 'Deterdžent', 'slug' => 'fira-checkout']);
+        $product->translations()->firstOrCreate(['locale' => 'hr'], ['name' => 'Deterdžent', 'slug' => 'fira-checkout']);
         $cart = app(CartService::class);
         $this->assertTrue($cart->add($product, $quantity));
         if ($coupon !== null) {

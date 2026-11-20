@@ -10,6 +10,16 @@ class RetailBasePrice
     /** Resolve dated merchant evidence independently of the current selling price. */
     public static function forProduct(Product $product): ?array
     {
+        $confirmed = data_get($product->payload, 'retail_base_price_override');
+        if (is_array($confirmed)) {
+            $date = (string) ($confirmed['date'] ?? '');
+            $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+            $price = $confirmed['price'] ?? null;
+
+            return $parsed && $parsed->format('Y-m-d') === $date && is_numeric($price) && $price >= 0
+                ? ['date' => $date, 'price' => (float) $price] : null;
+        }
+
         $evidence = data_get($product->payload, 'retail_price_evidence');
         if (! is_array($evidence)) {
             static $register;
@@ -22,7 +32,7 @@ class RetailBasePrice
                 ? (string) $product->barcode === $entry['barcode']
                 : isset($entry['code']) && $product->code === $entry['code'];
 
-            return $matches ? ['date' => $register['reported_base_price_on'], 'price' => (float) $entry['base_price']] : null;
+            return $matches ? ['date' => $entry['base_price_on'] ?? $register['reported_base_price_on'], 'price' => (float) $entry['base_price']] : null;
         }
 
         $cutoff = match ($evidence['group'] ?? '') {

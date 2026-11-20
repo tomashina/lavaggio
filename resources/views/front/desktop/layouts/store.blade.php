@@ -1272,6 +1272,11 @@
             });
         }
 
+        @if ($lavaggioStorefront)
+        // Older versions of the CMS editor added this target and rel to every saved link.
+        document.querySelectorAll(':is(.content-richtext, .product-detail-description-content, [data-richtext-content]) a[target="_blank"][rel~="noopener"][rel~="noreferrer"]').forEach(link => link.removeAttribute('target'));
+        @endif
+
         const onLoadScripts = [];
 
         onLoadScripts.push(@json(asset('front-theme/scripts/store-benefits-rotator.js').'?v='.filemtime(public_path('front-theme/scripts/store-benefits-rotator.js'))));

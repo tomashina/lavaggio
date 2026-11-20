@@ -41,6 +41,7 @@ class ContentBlogPagesFeatureTest extends TestCase
             ->set('form.is_featured', true)
             ->set('form.locale', 'en')
             ->set('form.title', 'First Blog Post')
+            ->set('form.excerpt', 'Kratki sažetak članka.')
             ->set('form.slug', 'first-blog-post')
             ->call('save')
             ->assertRedirect(route('admin.content.blog.index', ['locale' => 'en']));
@@ -50,6 +51,7 @@ class ContentBlogPagesFeatureTest extends TestCase
         $this->assertNotNull($post);
         $this->assertTrue((bool) $post->is_featured);
         $this->assertSame('First Blog Post', (string) $post->translation('en')->first()?->title);
+        $this->assertSame('Kratki sažetak članka.', $post->translation('en')->first()?->excerpt);
     }
 
     public function test_admin_can_create_info_page(): void

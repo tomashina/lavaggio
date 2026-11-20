@@ -5,7 +5,7 @@
     $analyticsEnabled = $analyticsRuntimeAllowed && (bool) ($analytics['enabled'] ?? false);
     $ga4Id = trim((string) ($analytics['ga4_measurement_id'] ?? ''));
     $cookieConsentEnabled = (bool) ($cookies['enabled'] ?? true);
-    $metaPixelId = $analyticsRuntimeAllowed ? '2376960792811713' : '';
+    $metaPixelId = $analyticsRuntimeAllowed ? ($analytics['meta_pixel_id'] ?? '') : '';
 @endphp
 
 @if ($analyticsEnabled && $ga4Id !== '')

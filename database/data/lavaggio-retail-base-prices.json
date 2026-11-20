@@ -1,5 +1,5 @@
 {
-  "source": "Bareda d.o.o. / FIRA, arhivski cjenici 10947.csv (16.11.), 11053.csv (17.11.), 11444.csv (18.11.) i 11759.csv (19.11.2026.). Polja Datum bazne cijene i Bazna cijena. Šifra 200049 pojavljuje se od objave 17.11. Datum je preuzet iz cjenika; datum prve stvarne ponude nije neovisno provjeren.",
+  "source": "Bareda d.o.o., FIRA arhivski cjenici 10947, 11053, 11444, 11759 i 12107. Za 200049 datum prve ponude i redovna MPC potvrđeni su zapisom webshopa i cjenikom od 17.11.2026. Za 200050 i 200051 trgovac je potvrdio ulistanje 19.11.2026. i iznos iz webshop evidencije. Za 200051 webshop evidencija odstupa od FIRA-e.",
   "reported_base_price_on": "2026-11-16",
   "products": {
     "200001": {
@@ -196,7 +196,18 @@
     },
     "200049": {
       "code": "lavaggio-200049",
-      "base_price": "45.99"
+      "base_price_on": "2026-11-17",
+      "base_price": "44.99"
+    },
+    "200050": {
+      "code": "lavaggio-200050",
+      "base_price_on": "2026-11-19",
+      "base_price": "11.49"
+    },
+    "200051": {
+      "code": "lavaggio-200051",
+      "base_price_on": "2026-11-19",
+      "base_price": "3.59"
     }
   }
 }

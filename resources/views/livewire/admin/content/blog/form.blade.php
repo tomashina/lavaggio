@@ -103,8 +103,8 @@
                 </div>
 
                 <div class="mt-4">
-                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Excerpt') }}</label>
-                    <textarea rows="3" wire:model="form.excerpt" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"></textarea>
+                    <label for="blog-post-excerpt" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Excerpt') }}</label>
+                    <textarea id="blog-post-excerpt" rows="3" wire:model="form.excerpt" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"></textarea>
                 </div>
 
                 <div class="mt-4" data-rich-text-html-mode wire:key="blog-post-body-{{ $postId ?? 'new' }}-{{ $form['locale'] }}">

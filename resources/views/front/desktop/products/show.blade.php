@@ -383,7 +383,9 @@
                         <x-front.energy-label-arrow :declaration="$primaryEnergyDocuments" :compact="false" />
                         <x-front.energy-information-sheet-link :declaration="$primaryEnergyDocuments" :compact="$isHerreraProductDetail" />
                     </div>
-                    @include('front.partials.b2b-tax-note', ['includesTax' => $displayIncludesTax])
+                    @unless ($isLavaggioProductDetail && $displayIncludesTax && $vatRate !== null)
+                        @include('front.partials.b2b-tax-note', ['includesTax' => $displayIncludesTax])
+                    @endunless
                     <span class="{{ $discountPercent > 0 ? 'inline-flex' : 'hidden' }} mt-1 h-7 items-center border border-rose-600 bg-rose-600 px-2 text-xs font-bold text-white" data-product-price-discount>
                         @if ($discountPercent > 0)
                             -{{ $discountPercent }}%

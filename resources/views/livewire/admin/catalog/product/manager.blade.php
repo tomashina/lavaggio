@@ -122,6 +122,10 @@
         </div>
 
         <div class="overflow-x-auto">
+            @php
+                $showWeight = config('storefront.home') === 'lavaggio';
+                $editInventory = $this->canEditInventory;
+            @endphp
             <table class="admin-items-table min-w-[64rem] border-0 text-sm">
                 <thead class="text-slate-600">
                     <tr>
@@ -130,6 +134,9 @@
                         <th class="min-w-[16rem] px-4 py-3 text-left font-semibold">{{ __('Kategorije') }}</th>
                         <th class="w-32 px-4 py-3 text-right font-semibold">{{ __('Cijena') }}</th>
                         <th class="w-24 px-4 py-3 text-center font-semibold">{{ __('Zaliha') }}</th>
+                        @if ($showWeight)
+                            <th class="w-28 px-4 py-3 text-center font-semibold">{{ __('Težina (kg)') }}</th>
+                        @endif
                         <th class="w-28 px-4 py-3 text-center font-semibold">{{ __('Status') }}</th>
                         <th class="w-40 px-4 py-3 text-right font-semibold">{{ __('Akcije') }}</th>
                     </tr>
@@ -146,7 +153,7 @@
                                     : null);
                             $categoryRows = $row->categories->values();
                         @endphp
-                        <tr class="align-top">
+                        <tr class="align-top" wire:key="catalog-product-{{ $row->id }}">
                             <td class="px-4 py-3 text-center">
                                 @if ($mainThumb)
                                     <img
@@ -214,10 +221,33 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">
-                                <span class="inline-flex min-w-9 justify-center rounded-full px-2 py-1 text-xs font-semibold tabular-nums {{ $row->stock_qty <= 0 ? 'bg-rose-100 text-rose-700' : ($row->stock_qty <= 5 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800') }}">
-                                    {{ $row->stock_qty }}
-                                </span>
+                                @if ($editInventory)
+                                    <input type="number" min="0" max="2147483647" step="1" value="{{ $row->stock_qty }}" aria-label="Zaliha za {{ $row->sku ?: $row->code }}"
+                                        class="w-20 rounded-lg border-slate-300 px-2 py-1 text-center text-sm"
+                                        wire:key="stock-{{ $row->id }}-{{ $row->stock_qty }}"
+                                        wire:change="saveInventoryField({{ $row->id }}, 'stock_qty', $event.target.value, '{{ $row->stock_qty }}')"
+                                        x-on:keydown.enter.prevent="$el.blur()">
+                                    @error('inventory.'.$row->id.'.stock_qty') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
+                                @else
+                                    <span class="inline-flex min-w-9 justify-center rounded-full px-2 py-1 text-xs font-semibold tabular-nums {{ $row->stock_qty <= 0 ? 'bg-rose-100 text-rose-700' : ($row->stock_qty <= 5 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800') }}">
+                                        {{ $row->stock_qty }}
+                                    </span>
+                                @endif
                             </td>
+                            @if ($showWeight)
+                                <td class="px-4 py-3 text-center">
+                                    @if ($editInventory)
+                                        <input type="text" inputmode="decimal" value="{{ str_replace('.', ',', (string) $row->weight_kg) }}" placeholder="—"
+                                            aria-label="Težina u kilogramima za {{ $row->sku ?: $row->code }}" class="w-20 rounded-lg border-slate-300 px-2 py-1 text-center text-sm"
+                                            wire:key="weight-{{ $row->id }}-{{ $row->weight_kg }}"
+                                            wire:change="saveInventoryField({{ $row->id }}, 'weight_kg', $event.target.value, '{{ $row->weight_kg }}')"
+                                            x-on:keydown.enter.prevent="$el.blur()">
+                                        @error('inventory.'.$row->id.'.weight_kg') <p class="mt-1 text-xs text-rose-700" role="alert">{{ $message }}</p> @enderror
+                                    @else
+                                        {{ $row->weight_kg === null ? '—' : str_replace('.', ',', $row->weight_kg) }}
+                                    @endif
+                                </td>
+                            @endif
                             <td class="px-4 py-3 text-center">
                                 <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $row->is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700' }}">
                                     {{ $row->is_active ? __('admin.common.active') : __('admin.common.inactive') }}
@@ -265,7 +295,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-12 text-center text-sm text-slate-500">{{ __('Nema artikala za odabrane filtre.') }}</td>
+                            <td colspan="{{ $showWeight ? 8 : 7 }}" class="px-4 py-12 text-center text-sm text-slate-500">{{ __('Nema artikala za odabrane filtre.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>

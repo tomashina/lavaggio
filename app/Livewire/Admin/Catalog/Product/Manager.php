@@ -13,6 +13,8 @@ use App\Services\Pricing\ProductPricePresentationService;
 use App\Services\Settings\SystemSettingsService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -83,6 +85,46 @@ class Manager extends Component
         $this->categoryFilter = 'all';
         $this->sortBy = 'newest';
         $this->resetPage();
+    }
+
+    public function getCanEditInventoryProperty(): bool
+    {
+        $user = auth()->user();
+
+        return config('storefront.home') === 'lavaggio' && $user
+            && ($user->isA('superadmin') || ($user->can('admin.access') && $user->can('catalog.products.update')));
+    }
+
+    public function saveInventoryField(int $productId, string $field, ?string $value, ?string $previous): void
+    {
+        abort_unless($this->canEditInventory, 403);
+        abort_unless(in_array($field, ['weight_kg', 'stock_qty'], true), 422);
+        $key = "inventory.$productId.$field";
+        $this->resetValidation($key);
+        $value = trim((string) $value);
+        $isWeight = $field === 'weight_kg';
+        $value = $isWeight ? ($value === '' ? null : str_replace(',', '.', $value)) : $value;
+        $rules = $isWeight ? ['nullable', 'decimal:0,3', 'min:0', 'max:9999999.999'] : ['required', 'integer', 'min:0', 'max:2147483647'];
+        $input = ['inventory' => [$productId => [$field => $value]]];
+        Validator::make($input, [$key => $rules], [], [$key => $isWeight ? 'težina' : 'zaliha'])->validate();
+
+        DB::transaction(function () use ($productId, $field, $value, $previous, $key): void {
+            $product = Product::query()->lockForUpdate()->findOrFail($productId);
+            if ((string) $product->$field !== (string) $previous) {
+                throw ValidationException::withMessages([$key => 'Vrijednost se u međuvremenu promijenila. Osvježite popis i provjerite novi iznos.']);
+            }
+            if ($field === 'stock_qty' && (int) $value > 0 && $product->delivery_mode === 'unavailable') {
+                throw ValidationException::withMessages([$key => 'Najprije promijenite rok isporuke „Trenutno nedostupno” u artiklu.']);
+            }
+            $product->fill([$field => $value]);
+            if ($product->isDirty($field)) {
+                $product->updated_by = auth()->id();
+                $product->save();
+                activity('catalog_products')->performedOn($product)->causedBy(auth()->user())->event('updated')
+                    ->withProperties(['field' => $field, 'before' => $previous, 'after' => $product->$field])->log('Product inventory updated');
+            }
+        });
+        $this->dispatch('notify', type: 'success', message: $isWeight ? 'Težina je spremljena.' : 'Zaliha je spremljena.');
     }
 
     public function delete(int $productId): void
