@@ -21,6 +21,9 @@
             ->whereIn('locale', $reviewsWidgetLocales)->whereRaw("TRIM(COALESCE(slug, '')) <> ''")])
         ->orderByDesc('reviewed_at')->orderByDesc('id')->limit($reviewsWidgetLimit)->get();
     $reviewsWidgetCount = $reviewsWidgetRows->count();
+    $usesSlideGroups = $block->type === 'lavaggio_reviews' && $reviewsWidgetCount > 1;
+    $listTag = $usesSlideGroups ? 'div' : 'ul';
+    $slideTag = $usesSlideGroups ? 'div' : 'li';
     $reviewsWidgetOptions = [
         'type' => 'slide', 'perPage' => 3, 'perMove' => 1, 'gap' => '24px',
         'arrows' => $reviewsWidgetCount > 3, 'destroy' => $reviewsWidgetCount <= 3,
@@ -63,11 +66,11 @@
                 @endif
             </div>
         </header>
-        <div class="splide__track"><ul class="splide__list lm-home-reviews-grid">
+        <div class="splide__track"><{{ $listTag }} class="splide__list lm-home-reviews-grid">
             @foreach ($reviewsWidgetRows as $featuredReview)
-                <li class="splide__slide">@include('front.partials.libermedia-review-card', ['featuredReview' => $featuredReview])</li>
+                <{{ $slideTag }} class="splide__slide">@include('front.partials.libermedia-review-card', ['featuredReview' => $featuredReview])</{{ $slideTag }}>
             @endforeach
-        </ul></div>
+        </{{ $listTag }}></div>
     </section>
     @include('front.partials.herrera-home-carousel-script')
 @endif

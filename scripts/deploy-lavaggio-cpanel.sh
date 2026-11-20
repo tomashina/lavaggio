@@ -63,12 +63,12 @@ function stopDeploy(string $message): never { fwrite(STDERR, "Lavaggio prerequis
 [$script, $root, $public] = $argv;
 if (PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500) stopDeploy('PHP 8.4 is required.');
 $bootstrapKeys = ['APP_CONFIG_CACHE', 'APP_BASE_PATH', 'APP_ENV_PATH', 'APP_SERVICES_CACHE', 'APP_PACKAGES_CACHE', 'APP_ROUTES_CACHE', 'APP_EVENTS_CACHE', 'VIEW_COMPILED_PATH'];
-$required = ['APP_URL'=>'https://shop.lavaggio.hr', 'APP_DEBUG'=>'false',
+$required = ['APP_DEBUG'=>'false',
     'MAIL_MAILER'=>'log', 'QUEUE_CONNECTION'=>'sync',
     'SESSION_DRIVER'=>'file', 'SESSION_COOKIE'=>'lavaggio_shop_session', 'SESSION_SECURE_COOKIE'=>'true',
     'CACHE_STORE'=>'file', 'STOREFRONT_HOME'=>'lavaggio', 'STORE_B2C_ONLY'=>'true', 'STORE_B2B_ONLY'=>'false',
     'GIFT_VOUCHER_EMAILS_ENABLED'=>'false'];
-$watched = array_fill_keys([...array_keys($required), ...$bootstrapKeys, 'APP_ENV', 'HERRERA_LOCAL_SAFE_MODE', 'APP_KEY', 'DB_CONNECTION', 'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'DB_SOCKET', 'DB_CHARSET', 'DB_COLLATION', 'DB_URL', 'SESSION_DOMAIN', 'SESSION_CONNECTION', 'DB_CACHE_CONNECTION', 'LAVAGGIO_INHERITED_WEB_PHP84_VERIFIED'], true);
+$watched = array_fill_keys([...array_keys($required), ...$bootstrapKeys, 'APP_ENV', 'APP_URL', 'HERRERA_LOCAL_SAFE_MODE', 'APP_KEY', 'DB_CONNECTION', 'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'DB_SOCKET', 'DB_CHARSET', 'DB_COLLATION', 'DB_URL', 'SESSION_DOMAIN', 'SESSION_CONNECTION', 'DB_CACHE_CONNECTION', 'LAVAGGIO_INHERITED_WEB_PHP84_VERIFIED'], true);
 $values = [];
 foreach (file($root.'/.env', FILE_IGNORE_NEW_LINES) as $line) {
     if (! preg_match('/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/', $line, $match) || ! isset($watched[$match[1]])) continue;
@@ -108,6 +108,7 @@ if (! in_array($profile, ['staging', 'production'], true)
     stopDeploy('Use the staging preview profile or the production launch profile.');
 }
 if ($profile === 'production' && ($values['DB_CONNECTION'] ?? '') !== 'mysql') stopDeploy('The public shop requires the dedicated MySQL database.');
+if (($values['APP_URL'] ?? '') !== ($profile === 'production' ? 'https://www.lavaggio.hr' : 'https://shop.lavaggio.hr')) stopDeploy('APP_URL must match the Lavaggio deployment profile.');
 foreach ($bootstrapKeys as $key) if (($values[$key] ?? '') !== '') stopDeploy('Custom bootstrap/cache paths are not allowed: '.$key);
 foreach (['DB_URL', 'DB_SOCKET', 'SESSION_DOMAIN', 'SESSION_CONNECTION', 'DB_CACHE_CONNECTION'] as $key) {
     if (! in_array(strtolower($values[$key] ?? ''), ['', 'null', '(null)'], true)) stopDeploy('Shared connection/domain overrides are not allowed: '.$key);

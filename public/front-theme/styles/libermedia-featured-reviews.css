@@ -92,7 +92,7 @@ body.libermedia-storefront .lm-home-reviews-grid {
     list-style: none;
 }
 
-body.libermedia-storefront .lm-home-reviews-grid > li {
+body.libermedia-storefront .lm-home-reviews-grid > .splide__slide {
     display: flex;
     min-width: 0;
     height: auto;

@@ -101,6 +101,7 @@ class LavaggioHomepageWidgetPersistenceTest extends TestCase
         $this->assertStringContainsString('href="/trgovina?izbor=rucni"', $html);
         $this->assertStringContainsString('data-desktop-cols="2"', $html);
         $this->assertStringContainsString('data-mobile-cols="1"', $html);
+        $this->assertStringContainsString('<div class="splide__slide">', $html);
         $this->assertLessThan(strpos($html, 'saved-first'), strpos($html, 'saved-second'));
         $this->assertStringNotContainsString('saved-outside', $html);
 
@@ -111,6 +112,7 @@ class LavaggioHomepageWidgetPersistenceTest extends TestCase
             ->set('form.items_limit', 1)->call('save')->assertHasNoErrors();
         $html = $this->widgetHtml($block);
         $this->assertStringContainsString('saved-first', $html);
+        $this->assertStringContainsString('<li class="splide__slide">', $html);
         $this->assertStringNotContainsString('saved-second', $html);
         $this->assertStringNotContainsString($outside->code, $html);
         $this->editor($block)->assertSet('form.watchline.source', 'filtered')
@@ -188,6 +190,7 @@ class LavaggioHomepageWidgetPersistenceTest extends TestCase
 
         $html = $this->widgetHtml($block);
         $this->assertSame([$older->id, $newer->id], $this->ids($html, 'data-watchline-blog-id'));
+        $this->assertStringContainsString('<div class="splide__slide" data-watchline-blog-id=', $html);
         foreach (['Naše vijesti', 'Savjeti iz naše praonice', 'Čitajte danas', 'Sve nove objave', 'href="/blog?izbor=novi"'] as $text) {
             $this->assertStringContainsString($text, $html);
         }
@@ -221,12 +224,15 @@ class LavaggioHomepageWidgetPersistenceTest extends TestCase
         $this->review($product, 'Neizdvojena recenzija', false);
         $html = $this->widgetHtml($block);
         $this->assertStringContainsString('Novija izdvojena recenzija', $html);
+        $this->assertStringContainsString('<li class="splide__slide">', $html);
         $this->assertStringNotContainsString('Starija izdvojena recenzija', $html);
         $this->assertStringNotContainsString('Neizdvojena recenzija', $html);
         $this->assertStringNotContainsString('Čekamo vaše prve dojmove.', $html);
-        $this->editor($block)->set('form.reviews_featured_only', false)
+        $this->editor($block)->set('form.reviews_featured_only', false)->set('form.items_limit', 3)
             ->call('save')->assertHasNoErrors();
-        $this->assertStringContainsString('Neizdvojena recenzija', $this->widgetHtml($block));
+        $html = $this->widgetHtml($block);
+        $this->assertStringContainsString('Neizdvojena recenzija', $html);
+        $this->assertStringContainsString('<div class="splide__slide">', $html);
     }
 
     public function test_clearing_a_link_does_not_restore_default_ctas_on_any_homepage_widget(): void

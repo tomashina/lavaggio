@@ -123,6 +123,8 @@ class LavaggioPromoProblemsTest extends TestCase
             ->assertDontSeeHtml('wire:model="form.title"');
         $this->get('/')->assertOk()->assertSeeInOrder(['Promocija za osjetljivo rublje', 'Njega rublja s potpisom Lavaggio.'])
             ->assertSee('data-herrera-home-carousel', false)->assertSee($slides[0]['image'], false)
+            ->assertSee('<div class="lavaggio-promo-slide splide__slide', false)
+            ->assertDontSee('<article class="lavaggio-promo-slide', false)
             ->assertSee('Prethodna promocija')->assertSee('promo=osjetljivo');
     }
 
@@ -190,11 +192,11 @@ class LavaggioPromoProblemsTest extends TestCase
         $document = new \DOMDocument;
         @$document->loadHTML('<?xml encoding="UTF-8">'.$this->get('/')->assertOk()->getContent());
         $xpath = new \DOMXPath($document);
-        $articles = $xpath->query('//*[@data-lavaggio-promotions]//article');
-        $this->assertSame(2, $articles->length);
-        $this->assertSame(1, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-widget-shipping ")]', $articles->item(0))->length);
-        $this->assertStringContainsString('73 €', $articles->item(0)->textContent);
-        $this->assertSame(0, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-widget-shipping ")]', $articles->item(1))->length);
+        $slideElements = $xpath->query('//*[@data-lavaggio-promotions]//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-promo-slide ")]');
+        $this->assertSame(2, $slideElements->length);
+        $this->assertSame(1, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-widget-shipping ")]', $slideElements->item(0))->length);
+        $this->assertStringContainsString('73 €', $slideElements->item(0)->textContent);
+        $this->assertSame(0, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-widget-shipping ")]', $slideElements->item(1))->length);
     }
 
     public function test_legacy_banner_and_slides_without_a_notice_flag_keep_the_global_false_default(): void
@@ -239,11 +241,11 @@ class LavaggioPromoProblemsTest extends TestCase
         $document = new \DOMDocument;
         @$document->loadHTML('<?xml encoding="UTF-8">'.$this->get('/')->assertOk()->getContent());
         $xpath = new \DOMXPath($document);
-        $articles = $xpath->query('//*[@data-lavaggio-promotions]//article');
-        $this->assertSame(2, $articles->length);
-        $this->assertSame(1, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-promo-shipping-overlay ")]', $articles->item(0))->length);
-        $this->assertStringContainsString('83 €', $articles->item(0)->textContent);
-        $this->assertSame(0, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-promo-shipping-overlay ")]', $articles->item(1))->length);
+        $slideElements = $xpath->query('//*[@data-lavaggio-promotions]//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-promo-slide ")]');
+        $this->assertSame(2, $slideElements->length);
+        $this->assertSame(1, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-promo-shipping-overlay ")]', $slideElements->item(0))->length);
+        $this->assertStringContainsString('83 €', $slideElements->item(0)->textContent);
+        $this->assertSame(0, $xpath->query('.//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-promo-shipping-overlay ")]', $slideElements->item(1))->length);
         $this->assertSame(0, $xpath->query('//*[@data-lavaggio-promotions]//*[contains(concat(" ",normalize-space(@class)," ")," lavaggio-promo-copy ")]')->length);
     }
 

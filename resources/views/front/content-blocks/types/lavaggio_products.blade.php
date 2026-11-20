@@ -6,6 +6,9 @@
     $desktopColumns = min(max(1, $widgetCount), max(1, min(6, (int) ($settings['desktop_columns'] ?? 6))));
     $tabletColumns = min($desktopColumns, max(1, min(4, (int) ($settings['tablet_columns'] ?? 4))));
     $mobileColumns = min($tabletColumns, max(1, min(2, (int) ($settings['mobile_columns'] ?? 2))));
+    $usesSlideGroups = $widgetCount > $mobileColumns;
+    $listTag = $usesSlideGroups ? 'div' : 'ul';
+    $slideTag = $usesSlideGroups ? 'div' : 'li';
     $previousLabel = trim(str_replace(['&laquo;', '&raquo;'], '', __('pagination.previous')));
     $nextLabel = trim(str_replace(['&laquo;', '&raquo;'], '', __('pagination.next')));
     $options = [
@@ -50,11 +53,11 @@
                     @endif
                 </div>
             </header>
-            <div class="splide__track"><ul class="splide__list">
+            <div class="splide__track"><{{ $listTag }} class="splide__list">
                 @foreach ($widgetProducts as $widgetProduct)
-                    <li class="splide__slide"><x-front.desktop.product-card :product="$widgetProduct" :locale="$locale" :fallback-locale="$fallbackLocale" :lined="true" :flat="true" image-sizes="(min-width: 1280px) calc((100vw - 80px) / 6), (min-width: 768px) 24vw, 48vw" /></li>
+                    <{{ $slideTag }} class="splide__slide"><x-front.desktop.product-card :product="$widgetProduct" :locale="$locale" :fallback-locale="$fallbackLocale" :lined="true" :flat="true" image-sizes="(min-width: 1280px) calc((100vw - 80px) / 6), (min-width: 768px) 24vw, 48vw" /></{{ $slideTag }}>
                 @endforeach
-            </ul></div>
+            </{{ $listTag }}></div>
         </div>
     </section>
     @include('front.partials.herrera-home-carousel-script')

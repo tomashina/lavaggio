@@ -29,6 +29,9 @@
             ->orderByDesc('published_at')->orderByDesc('id')->limit($blogWidgetLimit)->get();
     }
     $blogWidgetCount = $blogWidgetPosts->count();
+    $usesSlideGroups = $blogWidgetCount > 1;
+    $listTag = $usesSlideGroups ? 'div' : 'ul';
+    $slideTag = $usesSlideGroups ? 'div' : 'li';
     $blogWidgetOptions = [
         'type' => 'slide', 'perPage' => 4, 'perMove' => 1, 'gap' => '24px',
         'arrows' => $blogWidgetCount > 4, 'destroy' => $blogWidgetCount <= 4,
@@ -76,13 +79,13 @@
                 @endif
             </div>
         </div>
-        <div class="splide__track"><ul class="splide__list lavaggio-home-blog__list">
+        <div class="splide__track"><{{ $listTag }} class="splide__list lavaggio-home-blog__list">
             @foreach ($blogWidgetPosts as $blogWidgetPost)
-                <li class="splide__slide" data-watchline-blog-id="{{ $blogWidgetPost->id }}">
+                <{{ $slideTag }} class="splide__slide" data-watchline-blog-id="{{ $blogWidgetPost->id }}">
                     @include('front.partials.lavaggio-blog-card', ['blogCardPost' => $blogWidgetPost, 'blogCardLocale' => $blogWidgetLocale, 'blogCardFallbackLocale' => $blogWidgetFallbackLocale])
-                </li>
+                </{{ $slideTag }}>
             @endforeach
-        </ul></div>
+        </{{ $listTag }}></div>
     </section>
     @include('front.partials.herrera-home-carousel-script')
 @endif

@@ -59,7 +59,7 @@ class LibermediaHomeReviewsTest extends TestCase
             ->assertSee('data-libermedia-home-reviews', false)
             ->assertSee('Odabrano iskustvo s četiri zvjezdice')
             ->assertSee('Ana Kupac')
-            ->assertSee('Ocjena 4 od 5')
+            ->assertSee('role="img" aria-label="Ocjena 4 od 5"', false)
             ->assertSee('data-home-review-rating="4"', false)
             ->assertSee('href="'.route('products.show', ['slug' => 'featured-toy']).'#product-comments"', false)
             ->assertDontSee('private@example.test');

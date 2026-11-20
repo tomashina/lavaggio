@@ -13,6 +13,11 @@
         'speed' => 450, 'gap' => '20px', 'i18n' => ['prev' => 'Prethodna promocija', 'next' => 'Sljedeća promocija',
             'slideX' => 'Promocija %s', 'pageX' => 'Prikaži promociju %s', 'slideLabel' => '%s od %s']];
 @endphp
+@if (($homeBlockIndex ?? null) === 0 && filled($slides[0]['image'] ?? ''))
+    @push('head')
+        <link rel="preload" as="image" href="{{ $slides[0]['image'] }}" fetchpriority="high">
+    @endpush
+@endif
 @if ($slides !== [])
     @if ($hasMultipleSlides) @include('front.partials.splide-assets') @endif
     <section id="{{ $promoId }}" class="lavaggio-promo{{ $hasMultipleSlides ? ' splide' : '' }}" aria-label="Lavaggio promocije"
@@ -20,7 +25,7 @@
         <div @class(['splide__track' => $hasMultipleSlides])>
             <div @class(['splide__list' => $hasMultipleSlides])>
                 @foreach ($slides as $slide)
-                    <article @class(['lavaggio-promo-slide', 'splide__slide' => $hasMultipleSlides,
+                    <div @class(['lavaggio-promo-slide', 'splide__slide' => $hasMultipleSlides,
                         'lavaggio-promo-slide--image' => $slide['display'] === 'image', 'lavaggio-promo-slide--no-image' => $slide['image'] === ''])>
                         @if ($slide['display'] === 'image')
                             @if ($loop->first)<h1 class="sr-only">{{ $slide['title'] ?: 'Lavaggio webshop' }}</h1>@endif
@@ -44,7 +49,7 @@
                                 <div class="lavaggio-promo-image"><img class="lavaggio-widget-hero__product lavaggio-widget-hero__product--main" src="{{ $slide['image'] }}" alt="{{ $slide['image_alt'] }}" width="1000" height="930" @if($loop->first) fetchpriority="high" @else loading="lazy" @endif decoding="async"></div>
                             @endif
                         @endif
-                    </article>
+                    </div>
                 @endforeach
             </div>
         </div>

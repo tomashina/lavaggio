@@ -7,6 +7,21 @@
 
     RewriteEngine On
 
+    # Resolve both the MODX address and the public hostname in one redirect.
+    RewriteCond %{HTTP_HOST} ^(?:(?:www|shop)\.)?lavaggio\.hr(?::[0-9]+)?$ [NC]
+    RewriteCond %{REQUEST_METHOD} ^(?:GET|HEAD)$
+    RewriteRule ^(?:blog|usluge|o-praonici|cjenik|index)(?:/.*)?$ index.php [END]
+
+    # Preserve the original host for existing signed links and provider callbacks.
+    RewriteCond %{HTTP_HOST} ^(?:shop\.)?lavaggio\.hr(?::[0-9]+)?$ [NC]
+    RewriteCond %{REQUEST_METHOD} ^(?:GET|HEAD)$
+    RewriteCond %{QUERY_STRING} !(^|&)signature= [NC]
+    RewriteCond %{REQUEST_URI} !^/(?:api(?:/|$)|checkout/(?:corvus|keks|wspay)(?:/|$)|account/impersonation/) [NC]
+    RewriteRule ^ https://www.lavaggio.hr%{REQUEST_URI} [R=301,L,NE]
+
+    RewriteCond %{HTTP_HOST} ^lavaggio\.hr(?::[0-9]+)?$ [NC]
+    RewriteRule ^ https://www.lavaggio.hr%{REQUEST_URI} [R=308,L,NE]
+
     # Force HTTPS outside local development while preserving the requested host.
     RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:[0-9]+)?$ [NC]
     RewriteCond %{HTTPS} !=on

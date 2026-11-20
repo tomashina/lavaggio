@@ -9,7 +9,7 @@
     $reviewProductImage = \App\Support\Media\LegacyCatalogImage::first($reviewProduct, ['thumb_100x100', 'card_320w'], width: 160);
 @endphp
     <article class="lm-home-review" data-home-review-rating="{{ $reviewRating }}">
-        <div class="lm-home-review-rating" aria-label="{{ __('Ocjena :rating od 5', ['rating' => $reviewRating]) }}">
+        <div class="lm-home-review-rating" role="img" aria-label="{{ __('Ocjena :rating od 5', ['rating' => $reviewRating]) }}">
             <span class="lm-home-review-stars" aria-hidden="true">
                 @for ($star = 1; $star <= 5; $star++)
                     <x-fa-icon name="star" class="{{ $star <= $reviewRating ? 'is-filled' : '' }}" />

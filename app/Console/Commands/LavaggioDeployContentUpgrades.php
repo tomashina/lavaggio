@@ -93,7 +93,7 @@ class LavaggioDeployContentUpgrades extends Command
         }
         $connection = DB::connection();
         $driver = $connection->getDriverName();
-        if (app()->environment('production') && ($driver !== 'mysql' || config('app.url') !== 'https://shop.lavaggio.hr')) {
+        if (app()->environment('production') && ($driver !== 'mysql' || config('app.url') !== 'https://www.lavaggio.hr')) {
             throw new RuntimeException('Production upgrades require the public Lavaggio shop and its dedicated MySQL database.');
         }
         if ($driver === 'mysql') {

@@ -51,6 +51,26 @@ class LavaggioPublicUrlsTest extends TestCase
         $this->get('/sitemap-pages-1.xml')->assertOk()->assertSee('/stranica/o-nama', false)->assertDontSee('/page/o-nama', false);
     }
 
+    public function test_modx_links_reach_the_public_www_address_with_the_original_query(): void
+    {
+        config(['app.url' => 'https://www.lavaggio.hr']);
+        foreach (['http://lavaggio.hr', 'https://shop.lavaggio.hr', 'https://www.lavaggio.hr'] as $origin) {
+            $this->get($origin.'/blog/zato-omekiva-unitava-runike/?tag=a&tag=b%2Bc')
+                ->assertStatus(301)
+                ->assertHeader('Location', 'https://www.lavaggio.hr/blog/zasto-omeksivac-unistava-rucnike?tag=a&tag=b%2Bc');
+            $this->head($origin.'/usluge/prikup-i-dostava-rublja/')
+                ->assertStatus(301)
+                ->assertHeader('Location', 'https://www.lavaggio.hr/stranica/usluzna-praonica-rublja');
+        }
+        $this->get('https://www.lavaggio.hr/blog/nakon-2-godine-koritenja-jastuka-bez-pranja-do-10%25-teine-jastuka-su-uglavnom-grinje-i-njihov-izmet')
+            ->assertStatus(301)
+            ->assertHeader('Location', 'https://www.lavaggio.hr/blog/nakon-2-godine-koritenja-jastuka-bez-pranja-do-10-teine-jastuka-su-uglavnom-grinje-i-njihov-izmet');
+        $this->get('https://www.lavaggio.hr/usluge/samoposluzna-praonica-rublja/')->assertGone();
+        $this->get('https://www.lavaggio.hr/blog/nepostojeci-clanak')->assertNotFound();
+        $this->get('https://shop.lavaggio.hr/api/this-route-does-not-exist')->assertNotFound();
+        $this->get('https://shop.lavaggio.hr/poklon-bon/narudzba/TEST?signature=invalid')->assertForbidden();
+    }
+
     public function test_retired_service_pages_return_410_and_payment_callbacks_keep_their_routes(): void
     {
         foreach (['samoposluzna-praonica-rublja', 'kako-prati-rublje-kod-nas', 'kako-pripremiti-rublje-za-pranje', 'koji-program-za-pranje-odabrati', 'cjenik-samoposluzna-praonica', 'poklon-bon-lavaggio'] as $slug) {
