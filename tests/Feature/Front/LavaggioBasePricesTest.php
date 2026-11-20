@@ -55,6 +55,7 @@ class LavaggioBasePricesTest extends TestCase
             ['200049', null, ['date' => '2026-11-17', 'price' => 44.99]],
             ['200050', null, ['date' => '2026-11-19', 'price' => 11.49]],
             ['200051', null, ['date' => '2026-11-19', 'price' => 3.59]],
+            ['200052', null, ['date' => '2026-11-20', 'price' => 12.99]],
             ['200046', '8015194531393', ['date' => '2026-11-16', 'price' => 14.99]],
             ['200047', '8015194531393', null],
         ] as [$sku, $barcode, $expected]) {

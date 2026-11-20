@@ -88,11 +88,14 @@ class LavaggioDeployContentUpgrades extends Command
 
     private function guardDestination(): void
     {
-        if (config('storefront.home') !== 'lavaggio' || ! app()->environment(['local', 'testing', 'staging'])) {
+        if (config('storefront.home') !== 'lavaggio' || ! app()->environment(['local', 'testing', 'staging', 'production'])) {
             throw new RuntimeException('Content upgrades require the Lavaggio storefront.');
         }
         $connection = DB::connection();
         $driver = $connection->getDriverName();
+        if (app()->environment('production') && ($driver !== 'mysql' || config('app.url') !== 'https://shop.lavaggio.hr')) {
+            throw new RuntimeException('Production upgrades require the public Lavaggio shop and its dedicated MySQL database.');
+        }
         if ($driver === 'mysql') {
             if ($connection->getConfig('host') !== 'localhost' || (string) $connection->getConfig('port') !== '3306'
                 || $connection->getDatabaseName() !== 'baredahr_lavaggioshop'
