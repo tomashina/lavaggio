@@ -42,7 +42,7 @@ class ContactController extends Controller
                 'phone' => ['nullable', 'string', 'max:80'],
                 'subject' => ['nullable', 'string', 'max:191'],
                 'message' => ['required', 'string', 'min:10', 'max:8000'],
-                'accept_terms' => ['accepted'],
+                'accept_terms' => config('storefront.home') === 'lavaggio' ? ['exclude'] : ['accepted'],
                 'recaptcha_token' => [$captchaEnabled ? 'required' : 'nullable', 'string', 'max:4096'],
             ],
             [

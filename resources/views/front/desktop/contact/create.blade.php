@@ -185,7 +185,7 @@
                             valid = false;
                         }
 
-                        if (!acceptTerms || !acceptTerms.checked) {
+                        if (acceptTerms && !acceptTerms.checked) {
                             setError('accept_terms', form.dataset.msgAcceptTerms || '');
                             valid = false;
                         }

@@ -97,7 +97,7 @@ body.lavaggio-storefront .lavaggio-contact-consent a {
 }
 
 html[data-theme] body.lavaggio-storefront .lavaggio-contact-submit {
-    margin-top: 4px;
+    margin-top: 16px;
     padding: 12px 22px;
     border: 1px solid var(--lavaggio-primary);
     border-radius: 7px;
