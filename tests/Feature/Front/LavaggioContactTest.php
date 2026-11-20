@@ -24,7 +24,7 @@ class LavaggioContactTest extends TestCase
         $this->seed(LavaggioStorefrontSeeder::class);
     }
 
-    public function test_contact_uses_four_cards_without_map_and_keeps_local_form_and_privacy_links(): void
+    public function test_contact_shows_four_cards_and_an_enquiry_form_without_the_privacy_link(): void
     {
         $response = $this->get(route('contact.create'))->assertOk()
             ->assertSee('Barban 70, 52207 Barban')
@@ -37,7 +37,6 @@ class LavaggioContactTest extends TestCase
             ->assertDontSee('maps/embed?pb=', false)
             ->assertDontSee('Samoposlužna')
             ->assertSee(route('pages.show', 'povrati-i-reklamacije'))
-            ->assertSee(route('pages.show', 'zastita-podataka-i-prigovor'))
             ->assertDontSee(__('contact.subheading'))
             ->assertDontSee(__('contact.help.body'));
 
@@ -50,6 +49,8 @@ class LavaggioContactTest extends TestCase
         $this->assertSame(1, $xpath->query('.//input[@name="name"]', $form)->length);
         $this->assertSame(1, $xpath->query('.//input[@name="email"]', $form)->length);
         $this->assertSame(1, $xpath->query('.//textarea[@name="message"]', $form)->length);
+        $this->assertSame(1, $xpath->query('.//button[@type="submit"]', $form)->length);
+        $this->assertSame(0, $xpath->query('.//a[contains(@href, "zastita-podataka-i-prigovor")]', $form)->length);
         $this->assertSame(0, $xpath->query('.//input[@name="accept_terms"]', $form)->length);
         $this->assertSame(0, $xpath->query('.//input[@name="phone" or @name="subject"]', $form)->length);
     }

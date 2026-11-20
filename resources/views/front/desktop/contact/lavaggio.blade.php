@@ -65,7 +65,6 @@
         </div>
 
         <button type="submit" class="lavaggio-contact-submit">Pošaljite upit</button>
-        <a class="text-sm underline" href="{{ route('pages.show', 'zastita-podataka-i-prigovor') }}">Zaštita osobnih podataka</a>
         <p class="lavaggio-contact-error {{ $errors->has('recaptcha_token') ? '' : 'hidden' }}" data-field-error="recaptcha_token">@error('recaptcha_token'){{ $message }}@enderror</p>
     </form>
 </section>
