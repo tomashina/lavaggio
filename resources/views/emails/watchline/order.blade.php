@@ -47,7 +47,7 @@
                             <th width="72">{{ __('mail.orders.image') }}</th>
                             <th>{{ __('mail.orders.product') }}</th>
                             <th class="num">{{ __('mail.orders.qty') }}</th>
-                            <th class="num">{{ __('mail.orders.price') }}</th>
+                            <th class="num">{{ !empty($includes_tax) ? __('mail.orders.price_incl_vat') : __('mail.orders.price') }}</th>
                             <th class="num">{{ __('mail.orders.total') }}</th>
                         </tr>
                     </thead>
@@ -77,7 +77,7 @@
                                     @endif
                                 </td>
                                 <td class="num"><span class="mobile-label">{{ __('mail.orders.qty') }}: </span>{{ $item['quantity'] }}</td>
-                                <td class="num"><span class="mobile-label">{{ __('mail.orders.price') }}: </span>{{ $item['unit_price'] }}</td>
+                                <td class="num"><span class="mobile-label">{{ __(!empty($includes_tax) ? 'mail.orders.price_incl_vat' : 'mail.orders.price') }}: </span>{{ $item['unit_price'] }}</td>
                                 <td class="num"><span class="mobile-label">{{ __('mail.orders.total') }}: </span>{{ $item['line_total'] }}</td>
                             </tr>
                         @endforeach
@@ -85,13 +85,16 @@
                 </table>
 
                 <table class="totals" cellspacing="0" cellpadding="0">
-                    <tr><td class="k">{{ __('mail.orders.subtotal') }}</td><td class="num">{{ $totals['subtotal'] }}</td></tr>
+                    <tr><td class="k">{{ !empty($includes_tax) ? __('ui.cart.summary.subtotal_with_tax') : __('mail.orders.subtotal') }}</td><td class="num">{{ $totals['subtotal'] }}</td></tr>
                     @if (($totals_raw['discount'] ?? 0) > 0)
                         <tr><td class="k">{{ __('mail.orders.discount') }}</td><td class="num">-{{ $totals['discount'] }}</td></tr>
                     @endif
                     <tr><td class="k">{{ __('mail.orders.shipping') }}</td><td class="num">{{ $totals['shipping'] }}</td></tr>
                     <tr><td class="k">{{ __('mail.orders.payment_fee') }}</td><td class="num">{{ $totals['payment_fee'] }}</td></tr>
-                    <tr><td class="k">{{ __('mail.orders.tax') }}</td><td class="num">{{ $totals['tax'] }}</td></tr>
+                    <tr><td class="k">{{ !empty($includes_tax) ? __('mail.orders.includes_vat') : __('mail.orders.tax') }}</td><td class="num">{{ $totals['tax'] }}</td></tr>
+                    @if (($totals_raw['gift_voucher'] ?? 0) > 0)
+                        <tr><td class="k">{{ __('mail.orders.gift_voucher') }}</td><td class="num">-{{ $totals['gift_voucher'] }}</td></tr>
+                    @endif
                     <tr><td>{{ __('mail.orders.total') }}</td><td class="num">{{ $totals['grand_total'] }}</td></tr>
                 </table>
 

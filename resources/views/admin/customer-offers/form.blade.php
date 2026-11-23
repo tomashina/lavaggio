@@ -3,6 +3,7 @@
     @livewireStyles
 @endpush
 @php
+    $includesVat = config('storefront.home') === 'lavaggio';
     $editable = (! $offer->exists || $offer->status === 'draft') && ! data_get($offer->customer_snapshot, 'demo', false) && app(\App\Services\Sales\CustomerOfferAccess::class)->can(auth()->user(), 'manage');
     $initialItems = old('items', $offer->exists ? $offer->items->map(fn ($item) => ['product_id' => $item->product_id, 'product_option_value_id' => $item->product_option_value_id, 'name' => $item->name, 'sku' => $item->sku, 'option_label' => $item->option_label, 'description' => $item->description, 'image_url' => $item->image_url, 'quantity' => $item->quantity])->values()->all() : []);
 @endphp
@@ -77,7 +78,7 @@
 @if($editable)<button type="submit" class="rounded-lg bg-cyan-700 px-5 py-3 text-sm font-semibold text-white">{{ __('customer_offers.save') }}</button>@endif
 </fieldset></form>
 @if($offer->exists)
-<section class="rounded-xl border border-slate-200 bg-white p-5"><div class="flex flex-wrap justify-between gap-4"><div><h2 class="font-semibold">{{ __('customer_offers.summary') }}</h2><p class="mt-1 text-sm text-slate-500">{{ __('customer_offers.net_total') }} {{ number_format((float) $offer->net_total, 2, ',', '.') }} € · {{ __('customer_offers.vat') }} {{ number_format((float) $offer->tax_total, 2, ',', '.') }} €</p></div><p class="text-xl font-bold text-cyan-700">{{ __('customer_offers.total') }} {{ number_format((float) $offer->gross_total, 2, ',', '.') }} €</p></div>
+<section class="rounded-xl border border-slate-200 bg-white p-5"><div class="flex flex-wrap justify-between gap-4"><div><h2 class="font-semibold">{{ __('customer_offers.summary') }}</h2><p class="mt-1 text-sm text-slate-500">@unless ($includesVat){{ __('customer_offers.net_total') }} {{ number_format((float) $offer->net_total, 2, ',', '.') }} € · @endunless{{ __($includesVat ? 'mail.orders.includes_vat' : 'customer_offers.vat') }} {{ number_format((float) $offer->tax_total, 2, ',', '.') }} €</p></div><p class="text-xl font-bold text-cyan-700">{{ __('customer_offers.total') }} {{ number_format((float) $offer->gross_total, 2, ',', '.') }} €</p></div>
 @if($offer->status === 'draft' && ! data_get($offer->customer_snapshot, 'demo', false) && app(\App\Services\Sales\CustomerOfferAccess::class)->can(auth()->user(), 'send'))<form method="POST" action="{{ route('admin.customer-offers.send', $offer) }}" class="mt-5 border-t border-slate-200 pt-5">@csrf<label class="flex items-center gap-2 text-sm"><input type="checkbox" name="confirm_send" value="1" required class="rounded border-slate-300 text-cyan-700">{{ __('customer_offers.confirm_send', ['email' => data_get($offer->customer_snapshot, 'email')]) }}</label><button class="mt-3 rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white">{{ __('customer_offers.send') }}</button><p class="mt-2 text-xs text-slate-500">{{ __('customer_offers.send_hint') }}</p></form>@endif
 @if($offer->deliveries->isNotEmpty())<div class="mt-5 border-t border-slate-200 pt-4"><h3 class="text-sm font-semibold">{{ __('customer_offers.delivery_history') }}</h3>@foreach($offer->deliveries as $delivery)<p class="mt-2 text-xs text-slate-500">{{ $delivery->created_at->format('d.m.Y. H:i') }} · {{ $delivery->recipient }} · {{ __('customer_offers.delivery.'.$delivery->status) }}</p>@endforeach</div>@endif
 </section>@endif

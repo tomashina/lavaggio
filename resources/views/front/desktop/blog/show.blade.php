@@ -179,7 +179,7 @@
                         <line x1="16" y1="2.5" x2="16" y2="6"></line>
                         <line x1="3" y1="9" x2="21" y2="9"></line>
                     </svg>
-                    <span>{{ $post->published_at->format('d.m.Y.') }}</span>
+                    <span>{{ $post->published_at->tz($post::publicationTimezone())->format('d.m.Y.') }}</span>
                 </p>
             @endif
 

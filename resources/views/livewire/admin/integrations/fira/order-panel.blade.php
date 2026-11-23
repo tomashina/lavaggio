@@ -1,7 +1,7 @@
 @php
     $isOffer = ($document->document_type ?? $documentType) === 'PONUDA';
     $previewIsOffer = ($preview['invoiceType'] ?? $documentType) === 'PONUDA';
-    $previewStale = $preview && $preview['invoiceType'] !== $documentType;
+    $previewStale = $preview && ($preview['invoiceType'] !== $documentType || empty($preview['taxesIncluded']));
 @endphp
 <div class="admin-panel space-y-4 p-6">
     <h2 class="admin-section-title">FIRA ponude i računi</h2>
@@ -32,7 +32,9 @@
             </select>
         </div>
         <button type="button" wire:click="previewInvoice" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">{{ $isOffer ? 'Pregledaj ponudu bez slanja' : 'Pregledaj račun bez slanja' }}</button>
-        @if ($preview)
+        @if ($previewStale)
+            <p class="text-sm text-amber-800">Ponovno otvorite pregled da biste provjerili aktualne podatke prije izrade dokumenta.</p>
+        @elseif ($preview)
             <div class="rounded-xl border border-slate-200 p-4 text-sm">
                 <p class="font-semibold">{{ $previewIsOffer ? 'Ponuda — bez fiskalizacije' : 'Fiskalni račun — slanje na fiskalizaciju' }}</p>
                 <p>{{ $preview['webshopOrderNumber'] }} · {{ $preview['billingAddress']['name'] }} · {{ number_format($preview['brutto'], 2, ',', '.') }} €</p>
@@ -43,13 +45,11 @@
                         <p class="text-slate-600">Nakon uplate eRačun izradite iz ove ponude u FIRA-i.</p>
                     @endif
                 @endif
-                <p>PDV: {{ number_format($preview['taxValue'], 2, ',', '.') }} € · Plaćanje: {{ $paymentType }}</p>
+                <p>Uključuje PDV {{ number_format($preview['taxValue'], 2, ',', '.') }} € · Plaćanje: {{ $paymentType }}</p>
                 @if (isset($preview['prepaidAmount']))<p>Plaćeno unaprijed: {{ number_format($preview['prepaidAmount'], 2, ',', '.') }} €</p>@endif
-                <ul class="mt-2 list-disc pl-5">@foreach ($preview['lineItems'] as $line)<li>{{ $line['name'] }} × {{ $line['quantity'] }} · {{ number_format($line['price'], 2, ',', '.') }} € bez PDV-a</li>@endforeach</ul>
+                <ul class="mt-2 list-disc pl-5">@foreach ($preview['lineItems'] as $line)<li>{{ $line['name'] }} · {{ $line['quantity'] }} × {{ number_format($line['price'], 2, ',', '.') }} € s PDV-om</li>@endforeach</ul>
             </div>
-            @if ($previewStale)
-                <p class="text-sm text-amber-800">Vrsta dokumenta je promijenjena. Ponovno otvorite pregled prije izrade.</p>
-            @elseif (! $blockers)
+            @if (! $blockers)
                 <label class="flex items-start gap-2 text-sm"><input type="checkbox" wire:model="confirmed" class="mt-1" />{{ $isOffer ? 'Potvrđujem podatke i želim izraditi ponudu u FIRA-i, bez fiskalizacije.' : 'Potvrđujem podatke i želim izraditi fiskalni račun. FIRA ga šalje na fiskalizaciju.' }}</label>
                 <button type="button" wire:click="issueInvoice" wire:confirm="{{ $isOffer ? 'Izraditi ponudu u FIRA-i, bez fiskalizacije?' : 'Izraditi fiskalni račun u FIRA-i i poslati ga na fiskalizaciju?' }}" wire:loading.attr="disabled" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">{{ $isOffer ? 'Izradi ponudu u FIRA-i' : 'Izradi fiskalni račun u FIRA-i' }}</button>
             @endif

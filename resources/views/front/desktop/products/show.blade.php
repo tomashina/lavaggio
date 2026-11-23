@@ -396,7 +396,7 @@
                             {{ __('ui.product.vat_included', ['rate' => rtrim(rtrim(number_format($vatRate, 2, $locale === 'hr' ? ',' : '.', ''), '0'), $locale === 'hr' ? ',' : '.')]) }}
                         </p>
                     @endif
-                    @if ($displayIncludesTax)
+                    @if ($displayIncludesTax && ! $isLavaggioProductDetail)
                     <p class="product-detail-net-price">
                         {{ __('ui.product.price_excluding_vat') }}: <span data-product-price-net>{{ $productPriceData['current_net'] }}</span>
                     </p>
@@ -497,7 +497,7 @@
                 data-option-error-unavailable="{{ __('ui.cart.status.unavailable') }}"
                 data-product-default-price-current="{{ $productPriceData['current'] }}"
                 data-product-default-price-current-value="{{ $productPriceData['current_value'] }}"
-                data-product-default-price-net="{{ $productPriceData['current_net'] }}"
+                @unless ($isLavaggioProductDetail) data-product-default-price-net="{{ $productPriceData['current_net'] }}" @endunless
                 data-product-default-price-old="{{ $productPriceData['old'] }}"
                 data-product-default-price-discount="{{ $productPriceData['discount_percent'] }}"
                 data-product-default-price-lowest="{{ $productPriceData['lowest_30_days'] }}"
@@ -560,7 +560,7 @@
                                                 data-option-stock="{{ $product->availableStockQuantity($row) }}"
                                                 data-option-price-current="{{ $rowPriceData['current'] }}"
                                                 data-option-price-current-value="{{ $rowPriceData['current_value'] }}"
-                                                data-option-price-net="{{ $rowPriceData['current_net'] }}"
+                                                @unless ($isLavaggioProductDetail) data-option-price-net="{{ $rowPriceData['current_net'] }}" @endunless
                                                 data-option-price-old="{{ $rowPriceData['old'] }}"
                                                 data-option-price-discount="{{ $rowPriceData['discount_percent'] }}"
                                                 data-option-price-lowest="{{ $rowPriceData['lowest_30_days'] }}"
@@ -593,7 +593,7 @@
                                             data-option-stock="{{ $product->availableStockQuantity($row) }}"
                                             data-option-price-current="{{ $rowPriceData['current'] }}"
                                             data-option-price-current-value="{{ $rowPriceData['current_value'] }}"
-                                            data-option-price-net="{{ $rowPriceData['current_net'] }}"
+                                            @unless ($isLavaggioProductDetail) data-option-price-net="{{ $rowPriceData['current_net'] }}" @endunless
                                             data-option-price-old="{{ $rowPriceData['old'] }}"
                                             data-option-price-discount="{{ $rowPriceData['discount_percent'] }}"
                                             data-option-price-lowest="{{ $rowPriceData['lowest_30_days'] }}"

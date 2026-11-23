@@ -439,6 +439,7 @@ class CheckoutService
                     'gift_voucher_total' => $giftVoucherTotal,
                     'original_total' => $originalTotal,
                     'shipping' => [
+                        'service_type' => $shippingMethod->service_type,
                         'fira_product_code' => data_get($shippingMethod->settings, 'fira_product_code'),
                         'fira_kpd_code' => data_get($shippingMethod->settings, 'fira_kpd_code'),
                         'tax_total' => $shippingTaxTotal,
@@ -534,6 +535,7 @@ class CheckoutService
                             'final' => (bool) ($line['price_is_final'] ?? false),
                             'monetary_precision' => $linePrecision,
                             'unit_net' => $unitPrice,
+                            ...(($line['display_includes_tax'] ?? false) ? ['base_unit_gross' => $line['display_base_unit_price']] : []),
                             ...(($summary['cart_discount_total'] ?? 0) > 0 ? [
                                 'cart_discount_eligible' => in_array($line['key'], $summary['cart_discount_eligible_keys'], true),
                             ] : []),

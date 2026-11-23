@@ -38,10 +38,12 @@ class BundlePricingService
     {
         $originalLines = clone $lines;
         $remaining = [];
+        $lineKeys = [];
         foreach ($lines as $i => $line) {
             // Contract prices and selected variants keep their existing pricing rules.
             if (! ($line['price_is_final'] ?? false) && empty($line['product_option_value_id'])) {
                 $remaining[$line['product']->id] = $line['quantity'];
+                $lineKeys[$line['product']->id] = $i;
             }
         }
         foreach ($bundles as $bundle) {
@@ -59,22 +61,32 @@ class BundlePricingService
             if ($sets < 1) {
                 continue;
             }
-            $gross = 0.0;
-            foreach ($bundle->products as $p) {
-                $line = $originalLines->first(fn ($l) => $l['product']->id === $p->id && empty($l['product_option_value_id']));
-                $gross += ((float) $line['unit_price'] + (float) $line['unit_tax_amount']) * $p->pivot->quantity * $sets;
+            $netCents = $taxCents = [];
+            foreach ($bundle->products->sortBy('id') as $p) {
+                $i = $lineKeys[$p->id];
+                $used = $p->pivot->quantity * $sets;
+                $netCents[$i] = (int) round($originalLines[$i]['unit_price'] * $used * 100);
+                $taxCents[$i] = (int) round($originalLines[$i]['unit_tax_amount'] * $used * 100);
             }
-            if ($gross <= 0) {
+            $net = array_sum($netCents);
+            $tax = array_sum($taxCents);
+            $gross = $net + $tax;
+            if ($gross === 0) {
                 continue;
             }
-            $ratio = $discount->type === 'percent' ? min(1, (float) $discount->value / 100) : min(1, (float) $discount->value * $sets / $gross);
+            $saving = min($gross, (int) round($discount->type === 'percent'
+                ? $gross * $discount->value / 100
+                : $discount->value * $sets * 100));
+            [$netSaving, $taxSaving] = $this->allocateCents($saving, [$net, $tax]);
+            $netDiscounts = $this->allocateCents($netSaving, $netCents);
+            $taxDiscounts = $this->allocateCents($taxSaving, $taxCents);
             foreach ($bundle->products as $p) {
                 $used = $p->pivot->quantity * $sets;
                 $remaining[$p->id] -= $used;
-                $i = $lines->search(fn ($l) => $l['product']->id === $p->id && empty($l['product_option_value_id']));
+                $i = $lineKeys[$p->id];
                 $line = $lines[$i];
-                $netDiscount = min($line['line_total'], round($originalLines[$i]['unit_price'] * $used * $ratio, 2));
-                $taxDiscount = min($line['line_tax_total'], round($originalLines[$i]['unit_tax_amount'] * $used * $ratio, 2));
+                $netDiscount = $netDiscounts[$i] / 100;
+                $taxDiscount = $taxDiscounts[$i] / 100;
                 $line['line_total'] = round($line['line_total'] - $netDiscount, 2);
                 $line['line_tax_total'] = round($line['line_tax_total'] - $taxDiscount, 2);
                 $line['line_discount_total'] = round($line['line_discount_total'] + $netDiscount, 2);
@@ -91,6 +103,22 @@ class BundlePricingService
         }
 
         return $lines;
+    }
+
+    /** Round cumulative shares so all line allocations add up to the exact saving. */
+    private function allocateCents(int $amount, array $weights): array
+    {
+        $total = array_sum($weights);
+        $cumulative = $allocated = 0;
+        $shares = [];
+        foreach ($weights as $key => $weight) {
+            $cumulative += $weight;
+            $target = $total > 0 ? (int) round($amount * ($cumulative / $total)) : 0;
+            $shares[$key] = $target - $allocated;
+            $allocated = $target;
+        }
+
+        return $shares;
     }
 
     public function groupIds(?User $user): array

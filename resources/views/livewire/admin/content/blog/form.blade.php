@@ -64,8 +64,9 @@
 
                 <div class="mt-3 grid gap-3" style="grid-template-columns: repeat(12, minmax(0, 1fr));">
                     <div class="sm:col-span-3" style="grid-column: span 3;">
-                        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Published At') }}</label>
-                        <input type="date" wire:model="form.published_at" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                        <label for="blog-publication-time" class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Publication date and time') }}</label>
+                        <input id="blog-publication-time" type="datetime-local" wire:model="form.published_at" aria-describedby="blog-publication-hint" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                        <p id="blog-publication-hint" class="mt-1 text-xs text-slate-600">{{ __('An active post appears at the selected time (:zone). Leave blank to publish immediately.', ['zone' => \App\Models\Content\Blog\BlogPost::publicationTimezone()]) }}</p>
                         @error('form.published_at') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                     </div>
                     <div class="sm:col-span-2" style="grid-column: span 2;">

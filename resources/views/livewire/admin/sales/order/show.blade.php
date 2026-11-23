@@ -1,4 +1,5 @@
 @php
+    $grossRows = \App\Support\Lavaggio\OrderPrices::displayRows($order);
     $statusClasses = [
         'blue' => 'bg-blue-100 text-blue-800',
         'emerald' => 'bg-emerald-100 text-emerald-800',
@@ -47,6 +48,11 @@
             <div class="flex flex-wrap items-center gap-2">
                 <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $statusClass }}">{{ $order->status?->name ?? __('Unknown') }}</span>
                 <span class="admin-chip">{{ \App\Support\Currency::format((float) $order->grand_total, $order->currency_code) }}</span>
+                @if (config('storefront.home') === 'lavaggio' && $order->isStorePickup())
+                    <a href="{{ route('admin.orders.pickup-label', $order) }}" target="_blank" rel="noopener" class="rounded-xl border border-cyan-700 bg-white px-4 py-2 text-sm font-semibold text-cyan-900 hover:bg-cyan-50">
+                        Etiketa za preuzimanje 10 × 15 cm
+                    </a>
+                @endif
                 <a
                     href="{{ route('admin.orders.invoice', ['order' => $order->id]) }}"
                     target="_blank"
@@ -443,9 +449,9 @@
                         <tr>
                             <th class="px-3 py-2 text-left font-semibold">{{ __('Item') }}</th>
                             <th class="px-3 py-2 text-center font-semibold">{{ __('Qty') }}</th>
-                            <th class="px-3 py-2 text-center font-semibold">{{ __('Unit') }}</th>
+                            <th class="px-3 py-2 text-center font-semibold">{{ __($grossRows ? 'mail.orders.price_incl_vat' : 'Unit') }}</th>
                             <th class="px-3 py-2 text-center font-semibold">{{ __('Discount') }}</th>
-                            <th class="px-3 py-2 text-center font-semibold">{{ __('Tax') }}</th>
+                            <th class="px-3 py-2 text-center font-semibold">{{ $grossRows ? __('mail.orders.includes_vat') : __('Tax') }}</th>
                             <th class="px-3 py-2 text-center font-semibold">{{ __('Line Total') }}</th>
                         </tr>
                     </thead>
@@ -459,10 +465,10 @@
                                     </div>
                                 </td>
                                 <td class="px-3 py-2 text-center text-slate-700">{{ $item->quantity }}</td>
-                                <td class="px-3 py-2 text-center text-slate-700">{{ \App\Support\Currency::format((float) $item->unit_price, $order->currency_code) }}</td>
-                                <td class="px-3 py-2 text-center text-slate-700">{{ \App\Support\Currency::format((float) $item->discount_amount, $order->currency_code) }}</td>
+                                <td class="px-3 py-2 text-center text-slate-700">{{ \App\Support\Currency::format($grossRows ? $item->grossUnitPrice() : (float) $item->unit_price, $order->currency_code) }}</td>
+                                <td class="px-3 py-2 text-center text-slate-700">{{ \App\Support\Currency::format($grossRows ? $item->grossBaseTotal() - $item->grossLineTotal() : (float) $item->discount_amount, $order->currency_code) }}</td>
                                 <td class="px-3 py-2 text-center text-slate-700">{{ \App\Support\Currency::format((float) $item->tax_amount, $order->currency_code) }}</td>
-                                <td class="px-3 py-2 text-center font-semibold text-slate-800">{{ \App\Support\Currency::format((float) $item->line_total, $order->currency_code) }}</td>
+                                <td class="px-3 py-2 text-center font-semibold text-slate-800">{{ \App\Support\Currency::format($grossRows ? $item->grossLineTotal() : (float) $item->line_total, $order->currency_code) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -504,8 +510,8 @@
                             : ($totalLabelMap[(string) ($total->code ?? '')] ?? $totalLabelRaw);
                     @endphp
                     <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
-                        <span class="text-slate-700">{{ $totalLabel }}</span>
-                        <span class="font-semibold text-slate-900">{{ \App\Support\Currency::format((float) $total->value, $order->currency_code) }}</span>
+                        <span class="text-slate-700">{{ $grossRows[$total->code]['label'] ?? $totalLabel }}</span>
+                        <span class="font-semibold text-slate-900">{{ \App\Support\Currency::format($grossRows[$total->code]['value'] ?? (float) $total->value, $order->currency_code) }}</span>
                     </div>
                 @empty
                     <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500">{{ __('No total rows saved.') }}</div>

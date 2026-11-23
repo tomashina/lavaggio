@@ -87,6 +87,33 @@ class GlsAddressLabelTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_store_pickup_label_identifies_the_customer_without_shipping_or_billing_addresses(): void
+    {
+        config(['storefront.home' => 'lavaggio']);
+        $order = $this->order('pup');
+        $order->update(['shipping_method_name' => 'Preuzimanje u Barbanu']);
+        $url = route('admin.orders.pickup-label', $order);
+        $this->get($url)->assertRedirect();
+        $this->actingAs(User::factory()->create())->get($url)->assertForbidden();
+        $this->actingAs($this->admin)->get(route('admin.orders.show', $order))->assertOk()
+            ->assertSee('Etiketa za preuzimanje')->assertSee($url, false);
+        $before = $order->fresh()->getAttributes();
+        $response = $this->get($url)->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->assertSame(1, preg_match_all('/\/Type\s*\/Page\b/', $response->getContent()));
+        $this->assertMatchesRegularExpression('/\/MediaBox\s*\[\s*0(?:\.0+)?\s+0(?:\.0+)?\s+283\.46\d*\s+425\.19\d*/', $response->getContent());
+        $html = view('admin.orders.pickup-label', ['order' => $order, 'fontSize' => 10])->render();
+        foreach (['Ana Šimić', 'LABEL-001', 'Preuzimanje u Barbanu'] as $value) {
+            $this->assertStringContainsString($value, $html);
+        }
+        $this->assertStringNotContainsString('Kućna 15', $html);
+        $this->assertSame($before, $order->fresh()->getAttributes());
+        $order->update(['shipping_method_code' => 'gls_home']);
+        $this->get($url)->assertNotFound();
+        $order->update(['shipping_method_code' => 'custom-pickup', 'payload' => ['shipping' => ['service_type' => 'pickup']]]);
+        $this->get($url)->assertOk();
+        Http::assertNothingSent();
+    }
+
     public function test_sender_comes_from_admin_and_incomplete_pickup_address_is_not_mixed_with_store_address(): void
     {
         $settings = app(SystemSettingsService::class);

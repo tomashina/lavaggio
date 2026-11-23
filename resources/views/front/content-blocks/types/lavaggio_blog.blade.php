@@ -17,7 +17,7 @@
         $blogWidgetSelectedIds = $blogs->pluck('id')->map(fn ($id) => (int) $id)->unique()->values();
     }
     $blogWidgetQuery = \App\Models\Content\Blog\BlogPost::query()
-        ->where('is_active', true)->where('published_at', '<=', now())
+        ->visibleOnBlog($blogWidgetLocales)
         ->whereHas('translations', fn ($query) => $query->whereIn('locale', $blogWidgetLocales)->whereRaw("TRIM(COALESCE(slug, '')) <> ''"))
         ->with(['translations' => fn ($query) => $query->whereIn('locale', $blogWidgetLocales)->whereRaw("TRIM(COALESCE(slug, '')) <> ''"), 'media', 'categories.translations']);
     if ($blogWidgetSelectedIds->isNotEmpty()) {

@@ -199,10 +199,11 @@ class WatchlineMailPreviewService
     private function orderData(string $key): array
     {
         $totals = StoreMailBrand::isLavaggio()
-            ? ['subtotal' => 20.88, 'discount' => 2.09, 'shipping' => 4.50, 'payment_fee' => 0, 'tax' => 0, 'grand_total' => 23.29]
+            ? ['subtotal' => 20.88, 'discount' => 2.09, 'shipping' => 4.50, 'payment_fee' => 0, 'tax' => 4.66, 'grand_total' => 23.29]
             : ['subtotal' => 208.80, 'discount' => 20.88, 'shipping' => 4.50, 'payment_fee' => 0, 'tax' => 0, 'grand_total' => 192.42];
 
         return [
+            'includes_tax' => StoreMailBrand::isLavaggio(),
             'store_name' => StoreMailBrand::name(), 'logo_url' => StoreMailBrand::details()['logo'],
             'legal_warranty' => StoreMailBrand::isLavaggio()
                 ? app(StoreSettingsService::class)->legalWarranty()

@@ -10,6 +10,7 @@
 
 @section('content')
     @php
+        $grossRows = \App\Support\Lavaggio\OrderPrices::displayRows($order);
         $boxNow = is_array($order->payload['shipping']['boxnow'] ?? null) ? $order->payload['shipping']['boxnow'] : null;
         $boxNowShipment = $order->boxNowShipment;
         $glsPoint = is_array($order->payload['shipping']['gls_dpm'] ?? null) ? $order->payload['shipping']['gls_dpm'] : null;
@@ -165,8 +166,8 @@
                                 $totalLabel = $labelMap[$labelKey] ?? $labelRaw;
                             @endphp
                             <div class="flex items-center justify-between">
-                                <dt class="text-slate-600">{{ $totalLabel }}</dt>
-                                <dd class="font-semibold text-slate-900">{{ \App\Support\Currency::format((float) $total->value, $order->currency_code) }}</dd>
+                                <dt class="text-slate-600">{{ $grossRows[$total->code]['label'] ?? $totalLabel }}</dt>
+                                <dd class="font-semibold text-slate-900">{{ \App\Support\Currency::format($grossRows[$total->code]['value'] ?? (float) $total->value, $order->currency_code) }}</dd>
                             </div>
                         @endforeach
                     </div>
@@ -198,7 +199,7 @@
                         <thead class="bg-slate-100/70 text-left text-xs uppercase tracking-wide text-slate-500">
                         <tr>
                             <th class="px-4 py-3">{{ __('ui.account.order_show.table.item') }}</th>
-                            <th class="px-4 py-3">{{ __('ui.account.order_show.table.price') }}</th>
+                            <th class="px-4 py-3">{{ __($grossRows ? 'mail.orders.price_incl_vat' : 'ui.account.order_show.table.price') }}</th>
                             <th class="px-4 py-3">{{ __('ui.account.order_show.table.qty') }}</th>
                             <th class="px-4 py-3">{{ __('ui.account.order_show.table.total') }}</th>
                             <th class="px-4 py-3">{{ __('ui.account.orders.table.actions') }}</th>
@@ -279,9 +280,9 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-4">{{ \App\Support\Currency::format((float) $item->unit_price, $order->currency_code) }}</td>
+                                <td class="px-4 py-4">{{ \App\Support\Currency::format($grossRows ? $item->grossUnitPrice() : (float) $item->unit_price, $order->currency_code) }}</td>
                                 <td class="px-4 py-4">{{ $item->quantity }}</td>
-                                <td class="px-4 py-4 font-semibold">{{ \App\Support\Currency::format((float) $item->line_total, $order->currency_code) }}</td>
+                                <td class="px-4 py-4 font-semibold">{{ \App\Support\Currency::format($grossRows ? $item->grossLineTotal() : (float) $item->line_total, $order->currency_code) }}</td>
                                 <td class="px-4 py-4">
                                     @if ($product && $product->is_active)
                                         <form method="POST" action="{{ route('cart.items.store') }}" class="inline-flex">

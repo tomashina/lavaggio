@@ -214,7 +214,8 @@ class StoreNotificationService
 
         $currency = strtoupper((string) ($order->currency_code ?: 'EUR'));
 
-        $items = $order->items->map(function (OrderItem $item) use ($currency): array {
+        $includesTax = StoreMailBrand::isLavaggio();
+        $items = $order->items->map(function (OrderItem $item) use ($currency, $includesTax): array {
             $slug = trim((string) ($item->payload['product_slug'] ?? ''));
             $productUrl = $slug !== '' ? route('products.show', ['slug' => $slug]) : '';
 
@@ -232,8 +233,8 @@ class StoreNotificationService
                 'sku' => (string) $item->sku,
                 'option_label' => $optionLabel,
                 'quantity' => (int) $item->quantity,
-                'unit_price' => $this->formatMoney((float) $item->unit_price, $currency),
-                'line_total' => $this->formatMoney((float) $item->line_total, $currency),
+                'unit_price' => $this->formatMoney($includesTax ? $item->grossUnitPrice() : (float) $item->unit_price, $currency),
+                'line_total' => $this->formatMoney($includesTax ? $item->grossLineTotal() : (float) $item->line_total, $currency),
                 'product_url' => $productUrl,
                 'image_url' => $this->absoluteUrl($imageUrl),
             ];
@@ -250,7 +251,17 @@ class StoreNotificationService
             $shippingName .= ' = '.$this->formatMoney($grossShipping, $currency);
         }
 
+        $totals = $includesTax ? \App\Support\Lavaggio\OrderPrices::totals($order) : [
+            'subtotal' => (float) $order->subtotal,
+            'discount' => (float) $order->discount_total,
+            'shipping' => (float) $order->shipping_total,
+            'payment_fee' => (float) $order->payment_fee_total,
+            'tax' => (float) $order->tax_total,
+            'grand_total' => (float) $order->grand_total,
+        ];
+
         return [
+            'includes_tax' => $includesTax,
             'store_name' => $storeName,
             'logo_url' => $this->absoluteUrl((string) ($brand['logo_url'] ?? '')),
             'legal_warranty' => $settings['legal_warranty'] ?? [],
@@ -277,22 +288,8 @@ class StoreNotificationService
             'customer_note' => trim((string) ($order->customer_note ?? '')),
             'currency' => $currency,
             'items' => $items,
-            'totals' => [
-                'subtotal' => $this->formatMoney((float) $order->subtotal, $currency),
-                'discount' => $this->formatMoney((float) $order->discount_total, $currency),
-                'shipping' => $this->formatMoney((float) $order->shipping_total, $currency),
-                'payment_fee' => $this->formatMoney((float) $order->payment_fee_total, $currency),
-                'tax' => $this->formatMoney((float) $order->tax_total, $currency),
-                'grand_total' => $this->formatMoney((float) $order->grand_total, $currency),
-            ],
-            'totals_raw' => [
-                'subtotal' => (float) $order->subtotal,
-                'discount' => (float) $order->discount_total,
-                'shipping' => (float) $order->shipping_total,
-                'payment_fee' => (float) $order->payment_fee_total,
-                'tax' => (float) $order->tax_total,
-                'grand_total' => (float) $order->grand_total,
-            ],
+            'totals' => array_map(fn (float $value) => $this->formatMoney($value, $currency), $totals),
+            'totals_raw' => $totals,
             'bank_transfer' => is_array($bankTransfer) ? $bankTransfer : null,
             'gls_locker' => is_array($glsLocker) ? [
                 'id' => trim((string) ($glsLocker['id'] ?? '')),

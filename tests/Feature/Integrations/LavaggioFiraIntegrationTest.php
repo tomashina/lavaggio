@@ -155,16 +155,16 @@ class LavaggioFiraIntegrationTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_preview_uses_discounted_snapshot_net_prices_and_taxable_shipping_without_sending(): void
+    public function test_preview_uses_discounted_snapshot_gross_prices_and_taxable_shipping_without_sending(): void
     {
         $order = $this->order();
         $payload = app(FiraOrderPayload::class)->build($order, 'KARTICA');
         $this->assertSame('PONUDA', $payload['invoiceType']);
         $this->assertFalse($payload['b2bClient']);
-        $this->assertFalse($payload['taxesIncluded']);
-        $this->assertSame(80.0, $payload['lineItems'][0]['price']);
+        $this->assertTrue($payload['taxesIncluded']);
+        $this->assertSame(100.0, $payload['lineItems'][0]['price']);
         $this->assertSame(0.25, $payload['lineItems'][0]['taxRate']);
-        $this->assertSame(4.0, $payload['lineItems'][1]['price']);
+        $this->assertSame(5.0, $payload['lineItems'][1]['price']);
         $this->assertSame(164.0, $payload['netto']);
         $this->assertSame(41.0, $payload['taxValue']);
         $this->assertSame(205.0, $payload['brutto']);
@@ -185,7 +185,9 @@ class LavaggioFiraIntegrationTest extends TestCase
         app(FiraInvoiceService::class)->issue($order->id, 'KARTICA', $this->admin()->id, $this->hash($order));
         Http::assertSent(fn ($request) => $request->url() === FiraSettingsService::ENDPOINT
             && $request->hasHeader('FIRA-Api-Key', 'fixture-secret-key')
-            && $request['webshopOrderId'] === $order->id && $request['brutto'] === 205.0);
+            && $request['webshopOrderId'] === $order->id && $request['brutto'] === 205.0
+            && $request['taxesIncluded'] === true
+            && collect($request['lineItems'])->sum(fn ($line) => (int) round(100 * $line['price']) * $line['quantity']) === 20500);
         Http::assertSentCount(1);
         $this->assertDatabaseHas('lavaggio_fira_documents', ['order_id' => $order->id, 'state' => 'created', 'invoice_id' => '321', 'has_jir' => false]);
         try {

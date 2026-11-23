@@ -36,6 +36,7 @@ class LavaggioProductDetailsTest extends TestCase
 
         $response = $this->get(route('products.show', 'profesionalni-deterdzent'))->assertOk()
             ->assertSee('Profesionalni proizvod')->assertSee('16,00 €')
+            ->assertDontSeeText('Cijena bez PDV-a')->assertDontSee('data-product-default-price-net', false)
             ->assertSee('2,7 l (5,93 € za 1 l)')->assertSee('Bazna cijena na')
             ->assertSee('10.09.2026.')->assertSee('NC 30 dana: 20,00 €')->assertSee('-20%')
             ->assertSee('data-ends-at="'.$action->ends_at->toIso8601String().'"', false)

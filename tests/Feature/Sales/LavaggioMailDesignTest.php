@@ -139,6 +139,32 @@ class LavaggioMailDesignTest extends TestCase
         $this->get('/preview/lavaggio-mail/order-customer')->assertNotFound();
     }
 
+    public function test_both_order_emails_show_saved_gross_prices_and_shipping_after_product_and_cart_discounts(): void
+    {
+        app(SystemSettingsService::class)->putMany(['store_email_enabled' => true, 'store_email_orders_to' => 'narudzbe@example.invalid']);
+        config(['mail.default' => 'array', 'mail.from.address' => 'shop@example.invalid']);
+        Mail::swap(new MailManager($this->app));
+        $this->mock(BankTransferUpiService::class)->shouldReceive('ensureForOrder')->once()->andReturn(null);
+        $order = Order::create(['order_number' => 'LAV-VAT', 'locale' => 'hr', 'currency_code' => 'EUR',
+            'customer_email' => 'kupac@example.invalid', 'customer_name' => 'Ana', 'subtotal' => 20, 'discount_total' => 4,
+            'shipping_total' => 4.72, 'tax_total' => 5.18, 'grand_total' => 23.90,
+            'payload' => ['shipping' => ['tax_total' => 1.18], 'gift_voucher_total' => 2]]);
+        $order->items()->create(['name' => 'Parfem', 'unit_price' => 10, 'quantity' => 2, 'discount_amount' => 2,
+            'line_total' => 18, 'tax_rate' => 25, 'tax_amount' => 4.50]);
+        app(StoreNotificationService::class)->sendOrderNotification($order);
+        $messages = Mail::mailer()->getSymfonyTransport()->messages();
+        $this->assertCount(2, $messages);
+        foreach ($messages as $message) {
+            $html = $message->getOriginalMessage()->getHtmlBody();
+            foreach (['Cijena s PDV-om', '11,25 €', '22,50 €', '25,00 €', '-5,00 €', '5,90 €', 'Uključuje PDV', '5,18 €', '-2,00 €', '23,90 €'] as $value) {
+                $this->assertStringContainsString($value, $html);
+            }
+            foreach (['10,00 €', '18,00 €', '4,72 €', '20,00 €'] as $net) {
+                $this->assertStringNotContainsString($net, $html);
+            }
+        }
+    }
+
     public function test_customer_order_mail_replaces_old_warranty_with_discreet_consumer_footer(): void
     {
         app(SystemSettingsService::class)->putMany([

@@ -418,6 +418,7 @@ class CheckoutController extends Controller
                 'tax_total_formatted' => Currency::format((float) $totals['tax_total']),
                 'shipping_total_formatted' => Currency::format((float) $totals['shipping_total']),
                 'display_subtotal_formatted' => Currency::format($displayTotals['subtotal']),
+                'display_discount_total' => $displayTotals['discount_total'],
                 'display_discount_total_formatted' => Currency::format($displayTotals['discount_total']),
                 'display_shipping_total_formatted' => Currency::format($displayTotals['shipping_total']),
                 'payment_fee_total_formatted' => Currency::format((float) $totals['payment_fee_total']),

@@ -277,8 +277,8 @@ class Manager extends Component
         $features = app(CatalogFeatureService::class)->all();
         $useAttributes = (bool) ($features['catalog_use_attributes'] ?? false);
         $useManufacturers = (bool) ($features['catalog_use_manufacturers'] ?? false);
-        $showPublicPromotions = config('storefront.home') === 'watchline'
-            && config('commerce.b2c_only');
+        $showPublicPromotions = config('storefront.home') === 'lavaggio'
+            || (config('storefront.home') === 'watchline' && config('commerce.b2c_only'));
 
         $perPage = app(SystemSettingsService::class)->getInt(
             'admin_items_per_page',

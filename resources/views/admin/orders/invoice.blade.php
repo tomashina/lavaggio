@@ -13,6 +13,9 @@
         }
     </style>
 </head>
+@php
+    $grossRows = \App\Support\Lavaggio\OrderPrices::displayRows($order);
+@endphp
 <body class="bg-slate-100 text-slate-900 antialiased">
     <main class="mx-auto max-w-5xl p-4 md:p-8">
         <div class="print-hide mb-4 flex items-center justify-between">
@@ -67,7 +70,7 @@
                         <tr class="border-b border-slate-200 text-slate-600">
                             <th class="px-2 py-2 text-left font-semibold">{{ __('Item') }}</th>
                             <th class="px-2 py-2 text-center font-semibold">{{ __('Qty') }}</th>
-                            <th class="px-2 py-2 text-right font-semibold">{{ __('Unit') }}</th>
+                            <th class="px-2 py-2 text-right font-semibold">{{ __($grossRows ? 'mail.orders.price_incl_vat' : 'Unit') }}</th>
                             <th class="px-2 py-2 text-right font-semibold">{{ __('Line') }}</th>
                         </tr>
                     </thead>
@@ -79,8 +82,8 @@
                                     <div class="text-xs text-slate-500">{{ $item->sku ?: $item->code ?: '-' }}</div>
                                 </td>
                                 <td class="px-2 py-2 text-center">{{ $item->quantity }}</td>
-                                <td class="px-2 py-2 text-right">{{ \App\Support\Currency::format((float) $item->unit_price, $order->currency_code) }}</td>
-                                <td class="px-2 py-2 text-right font-semibold">{{ \App\Support\Currency::format((float) $item->line_total, $order->currency_code) }}</td>
+                                <td class="px-2 py-2 text-right">{{ \App\Support\Currency::format($grossRows ? $item->grossUnitPrice() : (float) $item->unit_price, $order->currency_code) }}</td>
+                                <td class="px-2 py-2 text-right font-semibold">{{ \App\Support\Currency::format($grossRows ? $item->grossLineTotal() : (float) $item->line_total, $order->currency_code) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -112,8 +115,8 @@
                             : ($totalLabelMap[(string) ($total->code ?? '')] ?? $totalLabelRaw);
                     @endphp
                     <div class="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                        <span class="text-slate-700">{{ $totalLabel }}</span>
-                        <span class="font-semibold text-slate-900">{{ \App\Support\Currency::format((float) $total->value, $order->currency_code) }}</span>
+                        <span class="text-slate-700">{{ $grossRows[$total->code]['label'] ?? $totalLabel }}</span>
+                        <span class="font-semibold text-slate-900">{{ \App\Support\Currency::format($grossRows[$total->code]['value'] ?? (float) $total->value, $order->currency_code) }}</span>
                     </div>
                 @empty
                     <div class="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm">

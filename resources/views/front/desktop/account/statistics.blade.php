@@ -35,7 +35,10 @@
         <a href="{{ route('account.statistics', ['dateFrom' => '', 'dateTo' => '', 'currency' => $filters['currency'], 'product_search' => $filters['product_search']]) }}" class="commerce-secondary-action statistics-action">{{ __('Sve vrijeme') }}</a>
         </div>
     </form>
-    @php($money = fn ($value) => \App\Support\Currency::format($value, $filters['currency']))
+    @php
+        $includesVat = config('storefront.home') === 'lavaggio';
+        $money = fn ($value) => \App\Support\Currency::format($value, $filters['currency']);
+    @endphp
     <dl class="grid gap-4 sm:grid-cols-3">
         <div class="border bg-white p-5"><dt>{{ __('Ukupna vrijednost narudžbi') }}</dt><dd class="mt-2 text-2xl font-bold">{{ $money($summary['order_value']) }}</dd></div>
         <div class="border bg-white p-5"><dt>{{ __('Broj narudžbi') }}</dt><dd class="mt-2 text-2xl font-bold">{{ $summary['orders'] }}</dd></div>
@@ -46,8 +49,8 @@
         @forelse($trend as $month)<div class="flex justify-between gap-4 border-b py-3"><span>{{ \Carbon\CarbonImmutable::parse($month->month.'-01')->format('m.Y.') }}</span><span>{{ $month->orders }} {{ __('narudžbi') }} · <strong>{{ $money($month->order_value) }}</strong></span></div>@empty<p class="py-4">{{ __('Nema narudžbi u odabranom razdoblju.') }}</p>@endforelse
         <p class="mt-3 text-xs text-slate-500">{{ __('Posljednjih 12 mjeseci s narudžbama u odabranom razdoblju.') }}</p>
     </section>
-    <section class="overflow-hidden border bg-white"><h2 class="p-5 text-lg font-bold">{{ __('Kupljeni artikli') }}</h2><div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-slate-100"><tr><th class="p-3">{{ __('Artikl') }}</th><th class="p-3">{{ __('Šifra') }}</th><th class="p-3">{{ __('Komadi') }}</th><th class="p-3">{{ __('Narudžbe') }}</th><th class="p-3">{{ __('Vrijednost bez PDV-a') }}</th></tr></thead><tbody>
-    @forelse($products as $product)<tr class="border-t"><td class="p-3">{{ $product->name }}</td><td class="p-3">{{ $product->sku ?: $product->code ?: '—' }}</td><td class="p-3">{{ $product->quantity }}</td><td class="p-3">{{ $product->order_count }}</td><td class="p-3">{{ $money($product->net_value) }}</td></tr>@empty<tr><td colspan="5" class="p-5">{{ __('Nema artikala za odabrane filtre.') }}</td></tr>@endforelse
+    <section class="overflow-hidden border bg-white"><h2 class="p-5 text-lg font-bold">{{ __('Kupljeni artikli') }}</h2><div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-slate-100"><tr><th class="p-3">{{ __('Artikl') }}</th><th class="p-3">{{ __('Šifra') }}</th><th class="p-3">{{ __('Komadi') }}</th><th class="p-3">{{ __('Narudžbe') }}</th><th class="p-3">{{ __($includesVat ? 'Vrijednost s PDV-om' : 'Vrijednost bez PDV-a') }}</th></tr></thead><tbody>
+    @forelse($products as $product)<tr class="border-t"><td class="p-3">{{ $product->name }}</td><td class="p-3">{{ $product->sku ?: $product->code ?: '—' }}</td><td class="p-3">{{ $product->quantity }}</td><td class="p-3">{{ $product->order_count }}</td><td class="p-3">{{ $money($includesVat ? $product->gross_value : $product->net_value) }}</td></tr>@empty<tr><td colspan="5" class="p-5">{{ __('Nema artikala za odabrane filtre.') }}</td></tr>@endforelse
     </tbody></table></div><p class="p-5 text-xs text-slate-500">{{ __('Vrijednost artikala je prije popusta na cijelu košaricu.') }}</p><div class="p-5">{{ $products->links() }}</div></section>
 </div></div>
 @endsection

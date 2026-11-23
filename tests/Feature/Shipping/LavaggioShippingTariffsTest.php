@@ -85,7 +85,7 @@ class LavaggioShippingTariffsTest extends TestCase
         $this->assertSame($sku, $line['productCode']);
         $this->assertSame($sku, $line['lineItemId']);
         $this->assertSame('53.20.09', $line['kpdCode']);
-        $this->assertSame($code === 'gls_special' ? 19.992 : $net, $line['price']);
+        $this->assertEquals($gross / $parcelCount, $line['price']);
         $this->assertSame($parcelCount, $line['quantity']);
         $this->assertSame(0.25, $line['taxRate']);
         $this->assertSame(round(50 * $quantity + $gross, 2), $payload['brutto']);

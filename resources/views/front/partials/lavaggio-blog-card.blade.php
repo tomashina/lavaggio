@@ -37,7 +37,7 @@
             <p>{{ $cardTranslation->excerpt }}</p>
         @endif
         @if ($blogCardPost->published_at)
-            <time datetime="{{ $blogCardPost->published_at->toDateString() }}">{{ $blogCardPost->published_at->format('d. m. Y.') }}</time>
+            <time datetime="{{ $blogCardPost->published_at->toAtomString() }}">{{ $blogCardPost->published_at->tz($blogCardPost::publicationTimezone())->format('d. m. Y.') }}</time>
         @endif
     </div>
 </article>

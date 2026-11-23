@@ -305,7 +305,7 @@
                         <dt class="text-slate-600">{{ $displayTotals['includes_tax'] ? __('ui.cart.summary.subtotal_with_tax') : ((app(\App\Services\Pricing\B2BAccessService::class)->displaysNet(auth()->user())) ? __('ui.b2b.pricing.net_subtotal') : __('ui.cart.summary.subtotal')) }}</dt>
                         <dd class="font-semibold text-slate-900" data-cart-subtotal>{{ number_format($displayTotals['subtotal'], 2) }} €</dd>
                     </div>
-                    @if ((float) ($summary['discount_total'] ?? 0) > 0)
+                    @if ($displayTotals['discount_total'] > 0)
                         <div class="flex items-center justify-between">
                             <dt class="text-slate-600">{{ __('ui.cart.summary.discount') }}</dt>
                             <dd class="font-semibold text-emerald-700" data-cart-discount>-{{ number_format($displayTotals['discount_total'], 2) }} €</dd>

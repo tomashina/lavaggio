@@ -8,7 +8,7 @@ return [
     'intro' => 'Uvod za kupca', 'products' => 'Artikli u ponudi', 'description' => 'Opis za kupca',
     'notes' => 'Napomene i uvjeti', 'quantity' => 'Količina', 'code' => 'Šifra', 'unit' => 'Jedinica',
     'line_total' => 'Ukupno', 'net_total' => 'Ukupno bez PDV-a', 'vat' => 'PDV', 'total' => 'Sveukupno',
-    'excluding_vat' => 'bez PDV-a', 'no_image' => 'Fotografija nije dostupna', 'page' => 'Stranica',
+    'including_vat' => 's PDV-om', 'excluding_vat' => 'bez PDV-a', 'no_image' => 'Fotografija nije dostupna', 'page' => 'Stranica',
     'payment_terms' => 'Rok plaćanja: :days dana.', 'terms' => 'Cijene su iskazane u eurima. Dostava se ugovara zasebno. Raspoloživost artikala potvrđuje se pri narudžbi.',
     'save' => 'Spremi i izračunaj cijene', 'saved' => 'Ponuda je spremljena. Cijene su izračunate prema odabranom kupcu i količinama.',
     'preview' => 'Pregled', 'open_pdf' => 'Otvori PDF', 'download_pdf' => 'Preuzmi PDF', 'remove' => 'Ukloni',

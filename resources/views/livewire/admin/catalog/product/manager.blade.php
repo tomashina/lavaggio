@@ -11,9 +11,14 @@
                     {{ __('Po stranici') }}: <span class="font-semibold text-slate-700">{{ $perPage }}</span>
                 </p>
             </div>
-            <a href="{{ route('admin.products.create', ['locale' => $locale]) }}" class="inline-flex shrink-0 items-center justify-center rounded-lg bg-cyan-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-800">
-                {{ __('Kreiraj artikl') }}
-            </a>
+            <div class="flex flex-wrap items-center gap-2">
+                @if (config('storefront.home') === 'lavaggio')
+                    <a href="{{ url(\Illuminate\Support\Facades\URL::signedRoute('lavaggio.stock-feed', absolute: false)) }}" target="_blank" rel="noopener noreferrer" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold">XML za analizu cijena</a>
+                @endif
+                <a href="{{ route('admin.products.create', ['locale' => $locale]) }}" class="inline-flex shrink-0 items-center justify-center rounded-lg bg-cyan-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-800">
+                    {{ __('Kreiraj artikl') }}
+                </a>
+            </div>
         </div>
 
         <div class="mt-5 grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-12">
@@ -217,7 +222,7 @@
                                         <del class="mt-0.5 block text-xs font-normal text-slate-500" aria-label="{{ __('Redovna cijena') }}" data-admin-public-regular-price>{{ \App\Support\Currency::format((float) $publicPrice['old_gross'], $row->currency_code ?? 'EUR') }}</del>
                                     </div>
                                 @else
-                                    {{ \App\Support\Currency::format((float) $row->base_price, $row->currency_code ?? null) }}
+                                    {{ \App\Support\Currency::format((float) ($publicPrice['current_gross'] ?? $row->base_price), $row->currency_code ?? null) }}
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">

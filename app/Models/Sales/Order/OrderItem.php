@@ -50,6 +50,30 @@ class OrderItem extends Model
         return $this->belongsTo(Order::class, 'order_id');
     }
 
+    public function grossLineTotal(): float
+    {
+        return round((float) $this->line_total + (float) $this->tax_amount, 2);
+    }
+
+    public function grossUnitPrice(): float
+    {
+        return $this->grossLineTotal() / max(1, (int) $this->quantity);
+    }
+
+    public function grossBaseTotal(): float
+    {
+        $unit = data_get($this->payload, 'pricing.base_unit_gross');
+        if (is_numeric($unit)) {
+            return round($unit * $this->quantity, 2);
+        }
+        if ((float) $this->discount_amount === 0.0) {
+            return $this->grossLineTotal();
+        }
+
+        // Older checkout snapshots contain the base unit net and the historical VAT rate.
+        return round((float) $this->unit_price * (1 + (float) $this->tax_rate / 100), 2) * $this->quantity;
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');

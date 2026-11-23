@@ -171,7 +171,11 @@
                             </td>
                             <td class="px-3 py-2 text-center text-slate-700">
                                 <div class="font-semibold">{{ \App\Support\Currency::format((float) $row->grand_total, $row->currency_code) }}</div>
-                                <div class="text-xs text-slate-500">{{ \App\Support\Currency::format((float) $row->subtotal, $row->currency_code) }} {{ __('subtotal') }}</div>
+                                @if (config('storefront.home') === 'lavaggio')
+                                    <div class="text-xs text-slate-500">{{ __('mail.orders.includes_vat') }} {{ \App\Support\Currency::format((float) $row->tax_total, $row->currency_code) }}</div>
+                                @else
+                                    <div class="text-xs text-slate-500">{{ \App\Support\Currency::format((float) $row->subtotal, $row->currency_code) }} {{ __('subtotal') }}</div>
+                                @endif
                             </td>
                             <td class="px-3 py-2 text-center">
                                 <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClass }}">

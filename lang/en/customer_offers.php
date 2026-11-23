@@ -8,7 +8,7 @@ return [
     'intro' => 'Introduction for the customer', 'products' => 'Offer products', 'description' => 'Customer description',
     'notes' => 'Notes and terms', 'quantity' => 'Quantity', 'code' => 'Code', 'unit' => 'Unit',
     'line_total' => 'Line total', 'net_total' => 'Total excluding VAT', 'vat' => 'VAT', 'total' => 'Grand total',
-    'excluding_vat' => 'excl. VAT', 'no_image' => 'Photo unavailable', 'page' => 'Page',
+    'including_vat' => 'incl. VAT', 'excluding_vat' => 'excl. VAT', 'no_image' => 'Photo unavailable', 'page' => 'Page',
     'payment_terms' => 'Payment term: :days days.', 'terms' => 'Prices are in euros. Delivery is agreed separately. Product availability is confirmed when ordering.',
     'save' => 'Save and calculate prices', 'saved' => 'Offer saved. Prices were calculated for the selected customer and quantities.',
     'preview' => 'Preview', 'open_pdf' => 'Open PDF', 'download_pdf' => 'Download PDF', 'remove' => 'Remove',

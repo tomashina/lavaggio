@@ -187,6 +187,9 @@ return [
             'view' => ['sales.orders.view'],
             'mutate' => ['sales.orders.update'],
         ],
+        'admin.orders.pickup-label' => [
+            'view' => ['sales.orders.view'],
+        ],
         'admin.orders.show' => [
             'view' => ['sales.orders.view'],
             'mutate' => ['sales.orders.update'],

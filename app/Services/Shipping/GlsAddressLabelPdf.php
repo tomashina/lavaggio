@@ -5,8 +5,6 @@ namespace App\Services\Shipping;
 use App\Models\Sales\Order\Order;
 use App\Services\Settings\SystemSettingsService;
 use App\Support\GlsShipping;
-use Dompdf\Dompdf;
-use Dompdf\Options;
 use InvalidArgumentException;
 
 class GlsAddressLabelPdf
@@ -78,25 +76,7 @@ class GlsAddressLabelPdf
 
     public function render(Order $order): string
     {
-        $data = $this->data($order);
-        $options = new Options;
-        $options->set('isRemoteEnabled', false);
-        $options->set('isPhpEnabled', false);
-        $options->set('isJavascriptEnabled', false);
-        $options->set('defaultFont', 'DejaVu Sans');
-        $options->set('chroot', [resource_path('views/admin/orders')]);
-
-        foreach ([10, 9, 8] as $fontSize) {
-            $pdf = new Dompdf($options);
-            $pdf->setPaper([0, 0, 100 * 72 / 25.4, 150 * 72 / 25.4]);
-            $pdf->loadHtml(view('admin.orders.address-label', $data + compact('fontSize'))->render(), 'UTF-8');
-            $pdf->render();
-            if ($pdf->getCanvas()->get_page_count() === 1) {
-                return $pdf->output();
-            }
-        }
-
-        throw new InvalidArgumentException('Podaci su predugi za naljepnicu 10 × 15 cm. Provjerite duljinu naziva i adresa prije ispisa.');
+        return app(PackageLabelPdf::class)->render('admin.orders.address-label', $this->data($order));
     }
 
     private function requireFields(array $values, array $fields, string $message): void

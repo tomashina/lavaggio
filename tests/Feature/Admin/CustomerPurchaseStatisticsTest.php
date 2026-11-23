@@ -18,6 +18,31 @@ class CustomerPurchaseStatisticsTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_lavaggio_customer_and_admin_see_the_same_gross_prices_for_an_existing_order(): void
+    {
+        config(['storefront.home' => 'lavaggio', 'commerce.b2c_only' => true, 'app.locale' => 'hr']);
+        app()->setLocale('hr');
+        $buyer = User::factory()->create();
+        $order = $this->order($buyer, ['subtotal' => 16, 'grand_total' => 20, 'tax_total' => 4]);
+        $this->item($order, 'PARFEM', 2, 16, 4);
+        foreach (['sub_total' => 16, 'tax' => 4, 'grand_total' => 20] as $code => $value) {
+            $order->totals()->create(['code' => $code, 'title' => $code, 'value' => $value]);
+        }
+        $dates = ['dateFrom' => '', 'dateTo' => ''];
+        $this->actingAs($buyer)->get(route('account.statistics', $dates))->assertOk()
+            ->assertSeeText('Vrijednost s PDV-om')->assertSeeText('20.00 €')->assertDontSeeText('16.00 €');
+        $this->get(route('account.orders.show', $order->order_number))->assertOk()
+            ->assertSeeText('Cijena s PDV-om')->assertSeeText('10.00 €')->assertSeeText('Uključuje PDV')
+            ->assertDontSeeText('8.00 €')->assertDontSeeText('16.00 €');
+        $this->actingAs($this->admin())->get(route('admin.users.statistics', $dates))->assertOk()
+            ->assertSeeText('Vrijednost s PDV-om')->assertSeeText('20,00 €')->assertDontSeeText('16,00 €');
+        $this->get(route('admin.orders'))->assertOk()->assertSeeText('Uključuje PDV')->assertDontSeeText('16.00 €');
+        foreach (['admin.orders.show', 'admin.orders.invoice'] as $route) {
+            $this->get(route($route, $order))->assertOk()->assertSeeText('Cijena s PDV-om')->assertSeeText('10.00 €')
+                ->assertSeeText('Uključuje PDV')->assertDontSeeText('8.00 €')->assertDontSeeText('16.00 €');
+        }
+    }
+
     public function test_customer_statistics_cannot_be_switched_to_another_customer(): void
     {
         $buyer = User::factory()->create();

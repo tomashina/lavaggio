@@ -38,6 +38,11 @@ class BlogPost extends Model implements HasMedia
         'payload' => 'array',
     ];
 
+    public static function publicationTimezone(): string
+    {
+        return config('storefront.home') === 'lavaggio' ? 'Europe/Zagreb' : (string) config('app.timezone');
+    }
+
     public function scopeVisibleOnBlog(Builder $query, array $locales): Builder
     {
         return $query->where('is_active', true)

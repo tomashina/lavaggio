@@ -6,6 +6,7 @@ use App\Models\Catalog\Category\Category;
 use App\Models\Catalog\Product\Product;
 use App\Models\Content\Blog\BlogPost;
 use App\Models\Content\Blog\BlogPostTranslation;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -225,7 +226,9 @@ class Form extends Component
                 'code' => trim((string) $validated['form']['code']),
                 'is_active' => (bool) $validated['form']['is_active'],
                 'is_featured' => (bool) $validated['form']['is_featured'],
-                'published_at' => $validated['form']['published_at'] ?: null,
+                'published_at' => filled($validated['form']['published_at'])
+                    ? Carbon::parse($validated['form']['published_at'], BlogPost::publicationTimezone())->setTimezone(config('app.timezone'))
+                    : null,
                 'sort_order' => (int) $validated['form']['sort_order'],
                 'payload' => $payload,
                 'updated_by' => $userId,
@@ -233,6 +236,9 @@ class Form extends Component
 
             if ($this->postId) {
                 $post = BlogPost::query()->findOrFail($this->postId);
+                if ($post->published_at?->tz(BlogPost::publicationTimezone())->format('Y-m-d\TH:i') === $validated['form']['published_at']) {
+                    unset($postData['published_at']);
+                }
                 $post->fill($postData)->save();
             } else {
                 $post = BlogPost::query()->create($postData + ['created_by' => $userId]);
@@ -549,7 +555,7 @@ class Form extends Component
             'form.code' => ['required', 'string', 'max:120', Rule::unique('content_blog_posts', 'code')->ignore($this->postId)],
             'form.is_active' => ['boolean'],
             'form.is_featured' => ['boolean'],
-            'form.published_at' => ['nullable', 'date'],
+            'form.published_at' => ['nullable', 'date_format:Y-m-d\TH:i,Y-m-d'],
             'form.sort_order' => ['nullable', 'integer', 'min:0'],
             'form.payload_text' => ['nullable', 'string'],
 
@@ -598,7 +604,7 @@ class Form extends Component
         $this->form['code'] = $post->code;
         $this->form['is_active'] = (bool) $post->is_active;
         $this->form['is_featured'] = (bool) $post->is_featured;
-        $this->form['published_at'] = $post->published_at?->format('Y-m-d') ?? '';
+        $this->form['published_at'] = $post->published_at?->tz(BlogPost::publicationTimezone())->format('Y-m-d\TH:i') ?? '';
         $this->form['sort_order'] = (int) $post->sort_order;
         $this->form['payload_text'] = $post->payload
             ? json_encode($post->payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)

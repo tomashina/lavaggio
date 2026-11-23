@@ -1,6 +1,7 @@
 <x-admin-layout :title="__('Statistika kupaca i artikala')">
     @php
         $currency = $filters['currency'];
+        $includesVat = config('storefront.home') === 'lavaggio';
         $amount = fn ($value) => number_format((float) $value, 2, ',', '.').' '.\App\Support\Currency::symbol($currency);
         $customerName = $selectedCustomer?->customerDisplayName() ?: ($filters['guest_email'] ?: null);
         $trendMax = max(1, (float) $trend->max('order_value'));
@@ -50,7 +51,7 @@
                     <a href="{{ route('admin.users.statistics', array_diff_key($customerParameters, array_flip(['user_id', 'guest_email']))) }}" class="px-2 py-1.5 font-semibold text-cyan-700 hover:underline">{{ __('Svi kupci') }}</a>
                 @endif
             </div>
-            <p class="mt-4 text-xs leading-relaxed text-slate-500">{{ __('Otkazane narudžbe su isključene. Iznosi narudžbi uključuju PDV i dostavu; vrijednost artikala je bez PDV-a. Valute se prikazuju zasebno, bez preračunavanja.') }}</p>
+            <p class="mt-4 text-xs leading-relaxed text-slate-500">{{ __($includesVat ? 'Iznosi uključuju PDV. Ukupna vrijednost narudžbe uključuje i dostavu. Promet se prikazuje zasebno za svaku valutu i izostavlja otkazane narudžbe.' : 'Otkazane narudžbe su isključene. Iznosi narudžbi uključuju PDV i dostavu; vrijednost artikala je bez PDV-a. Valute se prikazuju zasebno, bez preračunavanja.') }}</p>
         </section>
 
         <dl class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -99,13 +100,13 @@
         </section>
 
         <section class="admin-panel overflow-hidden" aria-labelledby="statistics-products-title">
-            <div class="border-b border-slate-200 p-5 sm:p-6"><h2 id="statistics-products-title" class="text-lg font-semibold text-slate-900">{{ $customerName ? __('Najčešće naručeni artikli kupca') : __('Najčešće naručeni artikli') }}</h2><p class="mt-1 text-sm text-slate-500">{{ __('Poredak prema broju komada. Varijante se prate zasebno; podaci uključuju stavke povijesnih narudžbi.') }}</p><p class="mt-2 text-xs text-slate-500">{{ __('Vrijednost stavki je bez PDV-a i prije popusta koji se primjenjuju na cijelu košaricu.') }}</p></div>
+            <div class="border-b border-slate-200 p-5 sm:p-6"><h2 id="statistics-products-title" class="text-lg font-semibold text-slate-900">{{ $customerName ? __('Najčešće naručeni artikli kupca') : __('Najčešće naručeni artikli') }}</h2><p class="mt-1 text-sm text-slate-500">{{ __('Poredak prema broju komada. Varijante se prate zasebno; podaci uključuju stavke povijesnih narudžbi.') }}</p><p class="mt-2 text-xs text-slate-500">{{ __($includesVat ? 'Vrijednost artikala je prije popusta na cijelu košaricu.' : 'Vrijednost stavki je bez PDV-a i prije popusta koji se primjenjuju na cijelu košaricu.') }}</p></div>
             <div class="overflow-x-auto">
                 <table class="admin-items-table w-full text-sm">
-                    <thead><tr><th class="px-5 py-3 text-left">{{ __('Artikl') }}</th><th class="px-4 py-3 text-left">{{ __('SKU / šifra') }}</th><th class="px-4 py-3 text-right">{{ __('Komadi') }}</th><th class="px-4 py-3 text-right">{{ __('Narudžbe') }}</th><th class="px-5 py-3 text-right">{{ __('Vrijednost bez PDV-a') }}</th></tr></thead>
+                    <thead><tr><th class="px-5 py-3 text-left">{{ __('Artikl') }}</th><th class="px-4 py-3 text-left">{{ __('SKU / šifra') }}</th><th class="px-4 py-3 text-right">{{ __('Komadi') }}</th><th class="px-4 py-3 text-right">{{ __('Narudžbe') }}</th><th class="px-5 py-3 text-right">{{ __($includesVat ? 'Vrijednost s PDV-om' : 'Vrijednost bez PDV-a') }}</th></tr></thead>
                     <tbody>
                         @forelse ($products as $product)
-                            <tr><td class="px-5 py-4 font-semibold text-slate-900">@if ($product->product_id && (auth()->user()->isA('superadmin') || auth()->user()->can('catalog.products.update')))<a href="{{ route('admin.products.edit', $product->product_id) }}" class="hover:text-cyan-700 hover:underline">{{ $product->name }}</a>@else{{ $product->name }}@endif</td><td class="px-4 py-4 font-mono text-xs text-slate-500">{{ $product->sku ?: $product->code ?: '—' }}</td><td class="px-4 py-4 text-right font-semibold tabular-nums">{{ $product->quantity }}</td><td class="px-4 py-4 text-right tabular-nums">{{ $product->order_count }}</td><td class="whitespace-nowrap px-5 py-4 text-right tabular-nums">{{ $amount($product->net_value) }}</td></tr>
+                            <tr><td class="px-5 py-4 font-semibold text-slate-900">@if ($product->product_id && (auth()->user()->isA('superadmin') || auth()->user()->can('catalog.products.update')))<a href="{{ route('admin.products.edit', $product->product_id) }}" class="hover:text-cyan-700 hover:underline">{{ $product->name }}</a>@else{{ $product->name }}@endif</td><td class="px-4 py-4 font-mono text-xs text-slate-500">{{ $product->sku ?: $product->code ?: '—' }}</td><td class="px-4 py-4 text-right font-semibold tabular-nums">{{ $product->quantity }}</td><td class="px-4 py-4 text-right tabular-nums">{{ $product->order_count }}</td><td class="whitespace-nowrap px-5 py-4 text-right tabular-nums">{{ $amount($includesVat ? $product->gross_value : $product->net_value) }}</td></tr>
                         @empty
                             <tr><td colspan="5" class="px-5 py-12 text-center text-slate-500">{{ __('Nema naručenih artikala za odabrane filtre.') }}</td></tr>
                         @endforelse

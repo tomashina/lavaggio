@@ -25,7 +25,8 @@ class B2BAccessService
 
     public function displaysNet(?User $user = null): bool
     {
-        return $this->requiresApprovedAccount()
+        return config('storefront.home') !== 'lavaggio'
+            && $this->requiresApprovedAccount()
             && (! $this->b2cEnabled() || $this->approvedAccount($user) !== null)
             && (bool) config('commerce.b2b_display_net', true);
     }

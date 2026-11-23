@@ -1,4 +1,5 @@
 <!doctype html>
+@php($includesVat = config('storefront.home') === 'lavaggio')
 <html lang="{{ $offer->locale }}">
 <head><meta charset="utf-8"><title>{{ $offer->number }} — {{ $offer->title }}</title>
 <style>
@@ -62,8 +63,8 @@ body { background:#edf3f5; padding:25px; }
 <div class="sku">{{ __('customer_offers.code') }}: {{ $item->sku ?: $item->code }}</div>
 @if($item->option_label)<div class="option">{{ \Illuminate\Support\Str::limit($item->option_label, 100, '…') }}</div>@endif
 <p class="description">{{ \Illuminate\Support\Str::limit($item->description, 220, '…') }}</p>
-<div class="item-price"><span class="price">{{ number_format((float) $item->unit_net, 4, ',', '.') }} €</span> / {{ $item->unit }} {{ __('customer_offers.excluding_vat') }}<br>
-{{ __('customer_offers.quantity') }}: {{ $item->quantity }} {{ $item->unit }} · {{ __('customer_offers.line_total') }}: <strong>{{ number_format((float) $item->line_net, 2, ',', '.') }} €</strong></div>
+<div class="item-price"><span class="price">{{ number_format((float) ($includesVat ? $item->unit_gross : $item->unit_net), $includesVat ? 2 : 4, ',', '.') }} €</span> / {{ $item->unit }} {{ $includesVat ? __('customer_offers.including_vat') : __('customer_offers.excluding_vat') }}<br>
+{{ __('customer_offers.quantity') }}: {{ $item->quantity }} {{ $item->unit }} · {{ __('customer_offers.line_total') }}: <strong>{{ number_format((float) ($includesVat ? $item->line_gross : $item->line_net), 2, ',', '.') }} €</strong></div>
 </div></td>@endforeach
 @if($pair->count() === 1)<td></td>@endif
 </tr>@endforeach</table>
@@ -71,8 +72,8 @@ body { background:#edf3f5; padding:25px; }
 @if($offer->notes){{ $offer->notes }}<br>@endif
 @if(data_get($offer->customer_snapshot, 'payment_terms_days') !== null){{ __('customer_offers.payment_terms', ['days' => data_get($offer->customer_snapshot, 'payment_terms_days')]) }}<br>@endif
 {{ __('customer_offers.terms') }}
-</td><td class="totals">{{ __('customer_offers.net_total') }}: {{ number_format((float) $offer->net_total, 2, ',', '.') }} €<br>
-{{ __('customer_offers.vat') }}: {{ number_format((float) $offer->tax_total, 2, ',', '.') }} €<br>
+</td><td class="totals">@unless($includesVat){{ __('customer_offers.net_total') }}: {{ number_format((float) $offer->net_total, 2, ',', '.') }} €<br>@endunless
+{{ $includesVat ? __('mail.orders.includes_vat') : __('customer_offers.vat') }}: {{ number_format((float) $offer->tax_total, 2, ',', '.') }} €<br>
 <span class="total">{{ __('customer_offers.total') }}: {{ number_format((float) $offer->gross_total, 2, ',', '.') }} €</span></td></tr></table></div>@endif
 @if($preview)<div class="footer">{{ $offer->number }} · {{ __('customer_offers.page') }} {{ $pageIndex + 1 }} / {{ $pages->count() }}@if($offer->status === 'draft') · {{ __('customer_offers.status.draft') }}@endif</div>@endif
 </section>

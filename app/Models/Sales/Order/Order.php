@@ -4,6 +4,7 @@ namespace App\Models\Sales\Order;
 
 use App\Models\Concerns\HasB2BMonetaryPrecision;
 use App\Models\Settings\Local\OrderStatus;
+use App\Models\Settings\Local\ShippingMethod;
 use App\Models\User;
 use App\Models\User\LoyaltyTransaction;
 use App\Support\OrderStatusClassification;
@@ -109,6 +110,18 @@ class Order extends Model
         return trim((string) $this->billing_company) ?: ($this->commerceCustomerType() === 'B2B'
             ? __('Tvrtka bez naziva')
             : (string) $this->customer_name);
+    }
+
+    public function isStorePickup(): bool
+    {
+        $type = data_get($this->payload, 'shipping.service_type');
+        if ($type !== null) {
+            return $type === 'pickup';
+        }
+        $code = (string) $this->shipping_method_code;
+        $type = ShippingMethod::where('code', $code)->value('service_type');
+
+        return $type === 'pickup' || ($type === null && in_array($code, ['pup', 'pickup', 'store_pickup', 'local_pickup'], true));
     }
 
     public function status(): BelongsTo

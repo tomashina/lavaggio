@@ -1,4 +1,6 @@
 {
+    "Vrijednost s PDV-om": "Value including VAT",
+    "Iznosi uključuju PDV. Ukupna vrijednost narudžbe uključuje i dostavu. Promet se prikazuje zasebno za svaku valutu i izostavlja otkazane narudžbe.": "Amounts include VAT. Order totals also include delivery. Sales are shown separately by currency and exclude cancelled orders.",
     "Pagination Navigation": "Pagination Navigation",
     "Showing": "Showing",
     "to": "to",

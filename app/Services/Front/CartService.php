@@ -10,6 +10,7 @@ use App\Services\Catalog\ActionResolverService;
 use App\Services\Pricing\B2BAccessService;
 use App\Services\Pricing\ProductGroupPriceResolver;
 use App\Services\Pricing\TaxPricingService;
+use App\Services\Pricing\VatInclusiveLine;
 use App\Support\ProductEnergyLabelPresenter;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
@@ -225,8 +226,14 @@ class CartService
             $unitDiscount = round(max(0, $baseUnitPrice - $unitPrice), $precision);
             $lineDiscountTotal = round($unitDiscount * $qty, $precision);
             $lineTotal = round($unitPrice * $qty, $precision);
-            $unitTaxAmount = $preciseSnapshot ? $this->rawTaxAmount($unitPrice, $resolvedTaxRate) : $this->taxPricing->taxFromNet($unitPrice, $product);
-            $baseUnitTaxAmount = $preciseSnapshot ? $this->rawTaxAmount($baseUnitPrice, $resolvedTaxRate) : $this->taxPricing->taxFromNet($baseUnitPrice, $product);
+            if (! $preciseSnapshot && config('storefront.home') === 'lavaggio') {
+                // The customer pays the stored MPC even when rounding net × tax back to gross would lose a cent.
+                $unitTaxAmount = $this->taxPricing->taxFromStored($storedDiscountedUnitPrice, $product, $resolvedTaxRate);
+                $baseUnitTaxAmount = $this->taxPricing->taxFromStored($storedAudienceUnitPrice, $product, $resolvedTaxRate);
+            } else {
+                $unitTaxAmount = $preciseSnapshot ? $this->rawTaxAmount($unitPrice, $resolvedTaxRate) : $this->taxPricing->taxFromNet($unitPrice, $product);
+                $baseUnitTaxAmount = $preciseSnapshot ? $this->rawTaxAmount($baseUnitPrice, $resolvedTaxRate) : $this->taxPricing->taxFromNet($baseUnitPrice, $product);
+            }
             $lineTaxTotal = round($unitTaxAmount * $qty, $precision);
             $displayUnitPrice = round($unitPrice + $unitTaxAmount, 2);
             $displayBaseUnitPrice = round($baseUnitPrice + $baseUnitTaxAmount, 2);
@@ -269,6 +276,7 @@ class CartService
                 'monetary_precision' => $precision,
                 'display_includes_tax' => ! $displayNet,
                 'tax_rate' => $taxRateValue,
+                'tax_rate_type' => $resolvedTaxRate?->rate_type ?? 'percent',
                 'action_code' => $resolvedAction?->code,
                 'price_source' => match (true) {
                     $groupPrice !== null && $resolvedAction !== null => 'b2b_action',
@@ -289,10 +297,36 @@ class CartService
         }
 
         $lines = app(\App\Services\Catalog\BundlePricingService::class)->apply($lines->values(), $user);
+        if (config('storefront.home') === 'lavaggio') {
+            $lines = $lines->map($this->reconcileGrossLine(...));
+        }
         $snapshots[$snapshotKey] = $lines;
         $request->attributes->set(self::RESOLVED_LINES_ATTRIBUTE, $snapshots);
 
         return clone $lines;
+    }
+
+    private function reconcileGrossLine(array $line): array
+    {
+        if (! $line['display_includes_tax'] || $line['monetary_precision'] !== 2 || $line['tax_rate_type'] !== 'percent') {
+            return $line;
+        }
+        $quantity = $line['quantity'];
+        $rate = $line['tax_rate'] / 100;
+        $baseGross = (int) round($line['display_base_unit_price'] * 100) * $quantity;
+        $gross = (int) round($line['display_line_total'] * 100);
+        $net = array_sum(array_column(VatInclusiveLine::portions($gross, $quantity, $rate), 'net_cents'));
+        $baseNet = $baseGross === $gross ? $net
+            : array_sum(array_column(VatInclusiveLine::portions($baseGross, $quantity, $rate), 'net_cents'));
+        $line['base_line_total'] = $baseNet / 100;
+        $line['line_total'] = $net / 100;
+        $line['line_tax_total'] = ($gross - $net) / 100;
+        $line['line_discount_total'] = ($baseNet - $net) / 100;
+        $line['unit_price'] = $line['line_total'] / $quantity;
+        $line['unit_tax_amount'] = $line['line_tax_total'] / $quantity;
+        $line['unit_discount'] = $line['line_discount_total'] / $quantity;
+
+        return $line;
     }
 
     /** Clear only the current request's product/pricing snapshot after a write. */
@@ -343,7 +377,8 @@ class CartService
                 'monetary_precision' => 4,
             ];
         }
-        $subtotal = round((float) $lines->sum(static fn (array $line): float => (float) ($line['base_unit_price'] ?? 0) * (int) ($line['quantity'] ?? 0)), 2);
+        $subtotal = round((float) $lines->sum(static fn (array $line): float => $line['base_line_total']
+            ?? (float) ($line['base_unit_price'] ?? 0) * (int) ($line['quantity'] ?? 0)), 2);
         $lineDiscountTotal = round((float) $lines->sum('line_discount_total'), 2);
         $subtotalAfterLineDiscount = round(max(0.0, $subtotal - $lineDiscountTotal), 2);
         $cartDiscount = $this->resolveCartDiscount($lines, $subtotalAfterLineDiscount, $couponCode);

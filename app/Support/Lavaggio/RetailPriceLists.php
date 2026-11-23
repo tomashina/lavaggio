@@ -43,16 +43,12 @@ class RetailPriceLists
                 $unit = ['kg' => 'kg', 'l' => 'l', 'pcs' => 'kom'][$product->content_unit] ?? '';
                 $quantity = (float) $product->content_quantity;
                 $barcode = trim((string) ($variant ? data_get($variant->payload, 'barcode') : $product->barcode));
-                $ean = trim((string) data_get($variant ? $variant->payload : $product->payload, 'ean', ''));
-                if ($ean === '' && self::isEan($barcode)) {
-                    $ean = $barcode;
-                }
                 $baseline = $variant ? null : RetailBasePrice::forProduct($product);
                 $variantName = $variant?->optionValue?->translations->firstWhere('locale', 'hr')?->name;
                 $rows[] = [$name.($variant ? ' – '.($variantName ?: $variant->sku ?: $variant->id) : ''), (string) ($variant?->sku ?: $product->sku ?: $product->code),
                     $brand, $quantity > 0 && $unit !== '' ? rtrim(rtrim(number_format($quantity, 3, '.', ''), '0'), '.') : '',
                     $unit, self::amount($gross), $quote['has_promotional_discount'] ? 'DA' : 'NE',
-                    $quantity > 0 && $unit !== '' ? self::amount($gross / $quantity) : '', $barcode, self::isEan($ean) ? $ean : '',
+                    $quantity > 0 && $unit !== '' ? self::amount($gross / $quantity) : '', $barcode, ProductBarcode::ean($product, $variant),
                     $baseline ? self::amount($baseline['price']) : ''];
             }
         }
@@ -103,18 +99,5 @@ class RetailPriceLists
     private static function amount(float $amount): string
     {
         return number_format($amount, 2, '.', '');
-    }
-
-    private static function isEan(string $value): bool
-    {
-        if (! preg_match('/^(?:\d{8}|\d{13})$/D', $value)) {
-            return false;
-        }
-        $sum = 0;
-        foreach (str_split(strrev(substr($value, 0, -1))) as $i => $digit) {
-            $sum += (int) $digit * ($i % 2 === 0 ? 3 : 1);
-        }
-
-        return (10 - $sum % 10) % 10 === (int) substr($value, -1);
     }
 }

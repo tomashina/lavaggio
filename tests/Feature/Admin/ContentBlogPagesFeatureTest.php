@@ -77,6 +77,33 @@ class ContentBlogPagesFeatureTest extends TestCase
         $this->assertSame('Shipping Info', (string) $page->translation('en')->first()?->title);
     }
 
+    public function test_scheduled_blog_publishes_at_the_saved_zagreb_minute(): void
+    {
+        config(['storefront.home' => 'lavaggio', 'app.locale' => 'hr', 'app.fallback_locale' => 'hr', 'app.timezone' => 'UTC']);
+        app()->setLocale('hr');
+        app(SystemSettingsService::class)->put('catalog_use_blog', true);
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-07-06 09:29:59', 'UTC'));
+        $user = $this->makeAdminUser();
+        Livewire::actingAs($user)->test(BlogForm::class)->assertSee('datetime-local', false)
+            ->set('form.locale', 'hr')->set('form.title', 'Ljetni savjeti')
+            ->set('form.published_at', '2026-07-06T11:30')->call('save')->assertHasNoErrors();
+        $post = BlogPost::where('code', 'ljetni-savjeti')->sole();
+        $this->assertSame('09:30', $post->published_at->format('H:i'));
+        Livewire::actingAs($user)->test(BlogForm::class, ['postId' => $post->id])
+            ->assertSet('form.published_at', '2026-07-06T11:30')->call('save')->assertHasNoErrors();
+
+        $this->app['auth']->guard()->logout();
+        $this->get('/blog')->assertOk()->assertDontSee('Ljetni savjeti');
+        $this->get('/blog/ljetni-savjeti')->assertNotFound();
+        $this->get('/sitemap-blog-1.xml')->assertOk()->assertDontSee('ljetni-savjeti');
+        $this->travel(1)->second();
+        $this->get('/blog')->assertOk()->assertSee('Ljetni savjeti');
+        $this->get('/blog/ljetni-savjeti')->assertOk()->assertSee('Ljetni savjeti');
+        $this->get('/sitemap-blog-1.xml')->assertOk()->assertSee('ljetni-savjeti');
+        $post->update(['is_active' => false]);
+        $this->get('/blog/ljetni-savjeti')->assertNotFound();
+    }
+
     public function test_lavaggio_video_cover_and_article_player_follow_admin_creation_and_video_changes(): void
     {
         config(['storefront.home' => 'lavaggio', 'storefront_cache.enabled' => false, 'app.locale' => 'hr', 'app.fallback_locale' => 'hr']);

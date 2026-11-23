@@ -81,6 +81,8 @@ Route::get('sitemap-{kind}-{page}.xml', [\App\Http\Controllers\Front\SitemapCont
     ->where('kind', 'products|categories|manufacturers|pages|blog')->whereNumber('page')->name('seo.sitemap.part');
 
 Route::middleware(\App\Http\Middleware\RequireLavaggioStorefront::class)->group(function (): void {
+    Route::get('feeds/artikli.xml', \App\Http\Controllers\Feed\LavaggioStockFeedController::class)
+        ->middleware('signed:relative')->name('lavaggio.stock-feed');
     Route::get('cjenici/{kind}.{format}', [\App\Http\Controllers\Front\LavaggioPriceListController::class, 'current'])
         ->where(['kind' => 'roba|usluge', 'format' => 'csv|xml'])->name('lavaggio.price-list');
     Route::get('cjenici/arhiva/{kind}/{version}.{format}', [\App\Http\Controllers\Front\LavaggioPriceListController::class, 'archive'])
@@ -405,7 +407,8 @@ Route::middleware(['admin.locale', 'auth', 'verified', 'admin.access', 'admin.ma
         Route::post('orders/{order}/boxnow/sync', [OrderBoxNowController::class, 'sync'])->name('orders.boxnow.sync');
         Route::get('orders/{order}/boxnow/label', [OrderBoxNowController::class, 'label'])->name('orders.boxnow.label');
         Route::get('orders/{order}/gls/label', [OrderGlsController::class, 'label'])->name('orders.gls.label');
-        Route::get('orders/{order}/gls/address-label', [OrderGlsController::class, 'addressLabel'])->name('orders.gls.address-label');
+        Route::get('orders/{order}/gls/address-label', \App\Http\Controllers\Admin\OrderPackageLabelController::class)->name('orders.gls.address-label');
+        Route::get('orders/{order}/pickup-label', \App\Http\Controllers\Admin\OrderPackageLabelController::class)->name('orders.pickup-label');
         Route::get('orders/{order}/show', function (SalesOrder $order) {
             app(\App\Services\Admin\OrderManagerAccess::class)->assertOrder($order);
 

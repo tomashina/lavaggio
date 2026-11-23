@@ -84,10 +84,11 @@ class CustomerPurchaseStatistics
             ->selectRaw('SUM(order_items.quantity) AS quantity, COUNT(DISTINCT orders.id) AS order_count')
             // Both checkout and the legacy importer store line totals before tax.
             ->selectRaw('SUM(order_items.line_total) AS net_value')
+            ->selectRaw('SUM(order_items.line_total + COALESCE(order_items.tax_amount, 0)) AS gross_value')
             ->groupBy('order_items.product_id', 'order_items.product_option_value_id')
             ->groupByRaw($identity)
             ->orderByDesc('quantity')
-            ->orderByDesc('net_value');
+            ->orderByDesc(config('storefront.home') === 'lavaggio' ? 'gross_value' : 'net_value');
     }
 
     /** @param array<string, mixed> $filters */

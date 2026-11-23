@@ -486,7 +486,7 @@
                     <span class="text-slate-600">{{ $displayTotals['includes_tax'] ? __('ui.cart.summary.subtotal_with_tax') : ((app(\App\Services\Pricing\B2BAccessService::class)->displaysNet(auth()->user())) ? __('ui.b2b.pricing.net_subtotal') : __('ui.checkout.labels.subtotal')) }}</span>
                     <span class="font-semibold text-slate-900" data-summary-subtotal>{{ \App\Support\Currency::format($displayTotals['subtotal']) }}</span>
                 </div>
-                    <div class="mt-2 flex items-center justify-between {{ (float) ($summary['discount_total'] ?? 0) <= 0 ? 'hidden' : '' }}" data-summary-discount-row>
+                    <div class="mt-2 flex items-center justify-between {{ $displayTotals['discount_total'] <= 0 ? 'hidden' : '' }}" data-summary-discount-row>
                         <span class="text-slate-600">{{ __('ui.checkout.labels.discount') }}</span>
                         <span class="font-semibold text-emerald-700" data-summary-discount>-{{ \App\Support\Currency::format($displayTotals['discount_total']) }}</span>
                     </div>
@@ -743,7 +743,7 @@
                 }
                 if (summarySubtotal && totals.subtotal_formatted) summarySubtotal.textContent = String(totals.display_subtotal_formatted ?? totals.subtotal_formatted);
                 if (summaryDiscount && totals.discount_total_formatted) summaryDiscount.textContent = '−' + String(totals.display_discount_total_formatted ?? totals.discount_total_formatted);
-                summaryDiscountRow?.classList.toggle('hidden', Number(totals.discount_total || 0) <= 0);
+                summaryDiscountRow?.classList.toggle('hidden', Number(totals.display_discount_total ?? totals.discount_total ?? 0) <= 0);
 
                 if (summaryTax && totals.tax_total_formatted) {
                     summaryTax.textContent = String(totals.tax_total_formatted);

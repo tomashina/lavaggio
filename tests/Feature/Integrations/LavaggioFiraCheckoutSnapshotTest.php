@@ -3,6 +3,7 @@
 namespace Tests\Feature\Integrations;
 
 use App\Models\Catalog\Action\CatalogAction;
+use App\Models\Catalog\Bundle\Bundle;
 use App\Models\Catalog\Product\Product;
 use App\Models\Sales\Order\Order;
 use App\Models\Settings\Local\Currency;
@@ -10,6 +11,7 @@ use App\Models\Settings\Local\OrderStatus;
 use App\Models\Settings\Local\PaymentMethod;
 use App\Models\Settings\Local\ShippingMethod;
 use App\Models\Settings\Local\TaxRate;
+use App\Models\User\CustomerGroup;
 use App\Services\Front\CartService;
 use App\Services\Front\CheckoutService;
 use App\Services\Integrations\Fira\FiraOrderPayload;
@@ -51,15 +53,15 @@ class LavaggioFiraCheckoutSnapshotTest extends TestCase
 
         $this->assertSame('20.00', $order->items()->sole()->line_total);
         $this->assertSame('5.00', $order->items()->sole()->tax_amount);
-        $this->assertSame(10.0, $payload['lineItems'][0]['price']);
+        $this->assertSame(12.5, $payload['lineItems'][0]['price']);
         $this->assertSame('200049', $payload['lineItems'][0]['lineItemId']);
         $this->assertSame('200049', $payload['lineItems'][0]['productCode']);
         $this->assertSame(0.25, $payload['lineItems'][0]['taxRate']);
-        $this->assertSame(4.0, $payload['lineItems'][1]['price']);
+        $this->assertSame(5.0, $payload['lineItems'][1]['price']);
         $this->assertSame(24.0, $payload['netto']);
         $this->assertSame(6.0, $payload['taxValue']);
         $this->assertSame(30.0, $payload['brutto']);
-        $this->assertFalse($payload['taxesIncluded']);
+        $this->assertTrue($payload['taxesIncluded']);
         Http::assertNothingSent();
         $this->assertDatabaseCount('lavaggio_fira_documents', 0);
         Product::where('code', 'FIRA-CHECKOUT')->update(['sku' => 'CHANGED-LATER']);
@@ -85,19 +87,71 @@ class LavaggioFiraCheckoutSnapshotTest extends TestCase
     }
 
     #[DataProvider('roundedTaxQuantities')]
-    public function test_real_checkout_per_unit_tax_rounding_cannot_send_inconsistent_fira_header_totals(int $quantity, string $lineTax): void
+    public function test_euro_cent_rounding_matches_the_amount_paid_for_new_and_older_orders(int $quantity, string $lineTax, string $legacyTax): void
     {
         $order = $this->checkout(1.46, $quantity);
         $item = $order->items()->sole();
-
         $this->assertSame($lineTax, $item->tax_amount);
-        $this->assertNotSame((float) $item->tax_amount, round((float) $item->line_total * 0.25, 2));
-        $this->assertPayloadBlockedWithoutSending($order);
+        $payload = app(FiraOrderPayload::class)->build($order, 'GOTOVINA');
+        $this->assertSame(1.46, $payload['lineItems'][0]['price']);
+        $this->assertSame($quantity, $payload['lineItems'][0]['quantity']);
+        $this->assertInvoiceAmounts($order, $payload);
+
+        $legacyNet = round(1.46 * $quantity - (float) $legacyTax, 2);
+        $item->update(['line_total' => $legacyNet, 'tax_amount' => $legacyTax, 'payload' => null]);
+        $order->update(['subtotal' => $legacyNet, 'tax_total' => (float) $legacyTax + 1]);
+        $legacy = app(FiraOrderPayload::class)->build($order->fresh(), 'GOTOVINA');
+        $this->assertSame($quantity, collect($legacy['lineItems'])->where('productCode', '200049')->sum('quantity'));
+        $this->assertInvoiceAmounts($order, $legacy);
+        $order->update(['grand_total' => (float) $order->grand_total + 0.01]);
+        $this->assertPayloadBlockedWithoutSending($order->fresh());
     }
 
     public static function roundedTaxQuantities(): array
     {
-        return ['one-cent difference' => [3, '0.87'], 'three-cent difference' => [10, '2.90']];
+        return ['one-cent difference' => [3, '0.88', '0.87'], 'two-cent difference' => [10, '2.92', '2.90']];
+    }
+
+    public function test_three_pieces_at_the_reported_retail_price_and_multiple_reduced_rate_units_match_the_fira_recalculation(): void
+    {
+        $order = $this->checkout(8.49, 3);
+        $item = $order->items()->sole();
+        $this->assertSame('20.38', $item->line_total);
+        $this->assertSame('5.09', $item->tax_amount);
+        $this->assertSame(25.47, $item->grossLineTotal());
+        $this->assertInvoiceAmounts($order, app(FiraOrderPayload::class)->build($order, 'KARTICA'));
+
+        app(CartService::class)->clear();
+        TaxRate::where('code', 'VAT25')->sole()->update(['rate' => 13]);
+        $order = $this->checkout(8.49, 20);
+        $this->assertSame(169.8, $order->items()->sole()->grossLineTotal());
+        $payload = app(FiraOrderPayload::class)->build($order, 'KARTICA');
+        $productLines = collect($payload['lineItems'])->where('productCode', '200049');
+        $this->assertSame(0.13, $productLines->first()['taxRate']);
+        $this->assertGreaterThan(1, $productLines->count());
+        $this->assertSame(20, $productLines->sum('quantity'));
+        $this->assertInvoiceAmounts($order, $payload);
+        Http::assertNothingSent();
+    }
+
+    private function assertInvoiceAmounts(Order $order, array $payload): void
+    {
+        $gross = $net = 0;
+        foreach ($payload['lineItems'] as $line) {
+            $unitCents = (int) round($line['price'] * 100);
+            $this->assertEquals($unitCents / 100, $line['price']);
+            $lineCents = $unitCents * $line['quantity'];
+            $gross += $lineCents;
+            $unitNet = round($line['price'] / (1 + $line['taxRate']), 3);
+            $this->assertSame($lineCents, (int) round($unitNet * $line['quantity'] * (1 + $line['taxRate']) * 100));
+            $net += (int) round($unitNet * $line['quantity'] * 100);
+        }
+        $this->assertTrue($payload['taxesIncluded']);
+        $this->assertEquals($gross / 100, $payload['brutto']);
+        $this->assertEquals((float) $order->grand_total, $payload['brutto']);
+        $this->assertEquals($net / 100, $payload['netto']);
+        $this->assertEquals(($gross - $net) / 100, $payload['taxValue']);
+        $this->assertEquals((float) $order->tax_total, $payload['taxValue']);
     }
 
     public function test_checkout_assigns_a_continuous_number_and_uses_it_in_payment_and_fira(): void
@@ -141,6 +195,45 @@ class LavaggioFiraCheckoutSnapshotTest extends TestCase
             $this->assertTrue($cart->applyCoupon($coupon));
         }
 
+        return $this->placeOrder();
+    }
+
+    public function test_three_perfumes_cost_exactly_twenty_euros_on_the_card_in_the_cart_and_on_the_order(): void
+    {
+        $group = CustomerGroup::create(['code' => 'b2c', 'name' => 'Kupci', 'is_default' => true, 'is_active' => true]);
+        $bundle = Bundle::create(['title' => 'Tri parfema', 'is_active' => true]);
+        foreach (['200032', '200033', '200034'] as $sku) {
+            $product = Product::create(['code' => $sku, 'sku' => $sku, 'base_price' => 8.49, 'tax_rate_id' => TaxRate::where('code', 'VAT25')->value('id'),
+                'stock_qty' => 20, 'is_active' => true]);
+            $product->translations()->create(['locale' => 'hr', 'slug' => 'parfem-'.$sku, 'name' => 'Parfem '.$sku]);
+            $bundle->products()->attach($product, ['quantity' => 1]);
+        }
+        $bundle->discounts()->create(['customer_group_id' => $group->id, 'type' => 'fixed', 'value' => 5.47]);
+        ShippingMethod::where('code', 'standard')->update(['price' => 0]);
+
+        $this->get(route('bundles.index'))->assertOk()->assertSeeText('25,47 €')->assertSeeText('20,00 €')->assertSeeText('5,47 €');
+        $this->post(route('bundles.store', $bundle))->assertSessionHasNoErrors();
+        $this->get(route('cart.index'))->assertOk()->assertSee('data-cart-discount>-5.47 €', false);
+        $this->getJson(route('checkout.options'))->assertOk()
+            ->assertJsonPath('totals.grand_total_formatted', '20.00 €')
+            ->assertJsonPath('totals.tax_total_formatted', '4.00 €');
+        $order = $this->placeOrder();
+        $this->assertSame('20.00', $order->grand_total);
+        $this->assertEquals(20, $order->items->sum(fn ($item) => $item->grossLineTotal()));
+        $this->assertInvoiceAmounts($order, app(FiraOrderPayload::class)->build($order, 'GOTOVINA'));
+
+        app(CartService::class)->clear();
+        $this->post(route('bundles.store', $bundle), ['quantity' => 2])->assertSessionHasNoErrors();
+        $this->assertSame(40.0, app(CartService::class)->summary()['grand_total']);
+        app(CartService::class)->add($product, 1);
+        $this->assertSame(48.49, app(CartService::class)->summary()['grand_total']);
+        $order = $this->placeOrder();
+        $this->assertInvoiceAmounts($order, app(FiraOrderPayload::class)->build($order, 'GOTOVINA'));
+        Http::assertNothingSent();
+    }
+
+    private function placeOrder(): Order
+    {
         return app(CheckoutService::class)->placeOrder([
             'customer_first_name' => 'Ogledni', 'customer_last_name' => 'Kupac',
             'customer_email' => 'fixture@example.test', 'customer_phone' => '+38500123456',
