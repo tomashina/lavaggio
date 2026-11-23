@@ -102,15 +102,16 @@ class GlsAddressLabelTest extends TestCase
         $this->assertSame(1, preg_match_all('/\/Type\s*\/Page\b/', $response->getContent()));
         $this->assertMatchesRegularExpression('/\/MediaBox\s*\[\s*0(?:\.0+)?\s+0(?:\.0+)?\s+283\.46\d*\s+425\.19\d*/', $response->getContent());
         $html = view('admin.orders.pickup-label', ['order' => $order, 'fontSize' => 10])->render();
-        foreach (['Ana Šimić', 'LABEL-001', 'Preuzimanje u Barbanu'] as $value) {
+        foreach (['Ana Šimić', 'Telefon kupca', '+385 91 000 0000', 'LABEL-001', 'Preuzimanje u Barbanu'] as $value) {
             $this->assertStringContainsString($value, $html);
         }
         $this->assertStringNotContainsString('Kućna 15', $html);
         $this->assertSame($before, $order->fresh()->getAttributes());
         $order->update(['shipping_method_code' => 'gls_home']);
         $this->get($url)->assertNotFound();
-        $order->update(['shipping_method_code' => 'custom-pickup', 'payload' => ['shipping' => ['service_type' => 'pickup']]]);
+        $order->update(['shipping_method_code' => 'custom-pickup', 'customer_phone' => null, 'payload' => ['shipping' => ['service_type' => 'pickup']]]);
         $this->get($url)->assertOk();
+        $this->view('admin.orders.pickup-label', ['order' => $order, 'fontSize' => 10])->assertDontSee('Telefon kupca');
         Http::assertNothingSent();
     }
 

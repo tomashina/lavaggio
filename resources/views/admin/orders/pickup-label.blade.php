@@ -18,6 +18,10 @@
     <div class="label">Paket preuzima</div>
     <div class="name">{{ trim($order->shipping_first_name.' '.$order->shipping_last_name) ?: ($order->customer_name ?: trim($order->billing_first_name.' '.$order->billing_last_name)) }}</div>
     @if ($order->shipping_company ?: $order->billing_company)<div>{{ $order->shipping_company ?: $order->billing_company }}</div>@endif
+    @if (filled($order->customer_phone))
+        <div class="label">Telefon kupca</div>
+        <div class="number">{{ trim($order->customer_phone) }}</div>
+    @endif
     <div class="label">Broj narudžbe</div>
     <div class="number">{{ $order->order_number }}</div>
 </body>
