@@ -137,9 +137,12 @@ class LavaggioHomepageWidgetPersistenceTest extends TestCase
         $this->editor($block)->set('form.title', 'Posebno odabrane akcije')
             ->set('form.watchline.source', 'promotions')
             ->set('form.watchline.product_sort', 'largest_discount')->set('form.items_limit', 1)
+            ->set('form.watchline.desktop_columns', 6)->set('form.watchline.tablet_columns', 3)
+            ->set('form.watchline.mobile_columns', 2)
             ->call('save')->assertHasNoErrors();
 
         $html = $this->widgetHtml($block);
+        $this->assertStringContainsString('--lavaggio-product-columns:6;--lavaggio-product-tablet-columns:3;--lavaggio-product-mobile-columns:2', $html);
         $this->assertStringContainsString('Posebno odabrane akcije', $html);
         $this->assertStringContainsString('promotion-second', $html);
         $this->assertStringNotContainsString('promotion-first', $html);

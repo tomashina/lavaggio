@@ -3,7 +3,7 @@
     $widgetProducts = app(\App\Services\Content\WatchlineWidgetProducts::class)->forBlock($block, $translation, $products);
     $widgetCount = $widgetProducts->count();
     $headingId = 'lavaggio-products-'.$block->id;
-    $desktopColumns = min(max(1, $widgetCount), max(1, min(6, (int) ($settings['desktop_columns'] ?? 6))));
+    $desktopColumns = max(1, min(6, (int) ($settings['desktop_columns'] ?? 6)));
     $tabletColumns = min($desktopColumns, max(1, min(4, (int) ($settings['tablet_columns'] ?? 4))));
     $mobileColumns = min($tabletColumns, max(1, min(2, (int) ($settings['mobile_columns'] ?? 2))));
     $usesSlideGroups = $widgetCount > $mobileColumns;
