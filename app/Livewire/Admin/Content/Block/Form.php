@@ -15,6 +15,7 @@ use App\Support\WatchlineWidgetSettings;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
@@ -600,6 +601,7 @@ class Form extends Component
         try {
             $validated = $this->validate($this->rules(), [
                 'form.slot_ends_at.after_or_equal' => __('End date must be after or equal to start date.'),
+                'form.name.required_without' => __('Unesite naslov bloka ili naziv za administraciju.'),
             ]);
         } catch (ValidationException $exception) {
             foreach (array_keys($exception->errors()) as $field) {
@@ -613,6 +615,15 @@ class Form extends Component
         }
         $userId = auth()->id();
         $isEdit = $this->blockId !== null;
+        if (! $isEdit && config('storefront.home') === 'lavaggio') {
+            if (blank($validated['form']['name'] ?? null)) {
+                $validated['form']['name'] = Str::substr(trim($validated['form']['title']), 0, 180);
+            }
+            if (blank($validated['form']['code'] ?? null)) {
+                $prefix = Str::substr(Str::slug($validated['form']['name']), 0, 90) ?: 'blok';
+                $validated['form']['code'] = $prefix.'-'.Str::lower((string) Str::ulid());
+            }
+        }
         $isWatchlineWidget = $this->isWatchlineWidgetType((string) $validated['form']['type']);
         $wasWatchlineWidget = false;
         $existingBlockPayload = null;
@@ -906,9 +917,10 @@ class Form extends Component
      */
     private function rules(): array
     {
+        $newLavaggioBlock = $this->blockId === null && config('storefront.home') === 'lavaggio';
         $rules = [
-            'form.code' => ['required', 'string', 'max:120', 'alpha_dash', Rule::unique('content_blocks', 'code')->ignore($this->blockId)],
-            'form.name' => ['required', 'string', 'max:180'],
+            'form.code' => [$newLavaggioBlock ? 'nullable' : 'required', 'string', 'max:120', 'alpha_dash', Rule::unique('content_blocks', 'code')->ignore($this->blockId)],
+            'form.name' => [$newLavaggioBlock ? 'required_without:form.title' : 'required', 'nullable', 'string', 'max:180'],
             'form.type' => ['required', Rule::in(array_keys($this->typeOptions))],
             'form.is_active' => ['boolean'],
 

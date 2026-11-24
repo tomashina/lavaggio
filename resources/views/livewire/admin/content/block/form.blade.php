@@ -14,8 +14,11 @@
     </div>
 
     <form wire:submit="save" class="space-y-6">
+        @php
+            $newLavaggioBlock = ! $blockId && config('storefront.home') === 'lavaggio';
+        @endphp
         @if ($this->isWatchlineWidget)
-            <details class="admin-panel p-4">
+            <details class="admin-panel p-4" @if ($newLavaggioBlock || $errors->hasAny(['form.code', 'form.name', 'form.type', 'form.locale', 'form.slot_*'])) open @endif>
                 <summary class="cursor-pointer text-sm font-semibold text-slate-600">Napredne postavke widgeta</summary>
                 <div class="mt-4 space-y-6">
         @endif
@@ -25,13 +28,13 @@
             <div class="mt-4 grid gap-3 md:grid-cols-4">
                 <div>
                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Code') }}</label>
-                    <input type="text" wire:model="form.code" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-mono" />
+                    <input type="text" wire:model="form.code" @if ($newLavaggioBlock) placeholder="Dodjeljuje se automatski" @endif class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-mono" />
                     @error('form.code') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div class="md:col-span-2">
                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Name') }}</label>
-                    <input type="text" wire:model="form.name" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                    <input type="text" wire:model="form.name" @if ($newLavaggioBlock) placeholder="Preuzima se iz naslova bloka" @endif class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
                     @error('form.name') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                 </div>
 
@@ -608,6 +611,13 @@
             />
         @endif
 
+        @if ($errors->any())
+            <div role="alert" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                @foreach ($errors->all() as $message)
+                    <p>{{ $message }}</p>
+                @endforeach
+            </div>
+        @endif
         <div class="admin-form-actions flex items-center gap-2 pt-2">
             <button type="submit" class="rounded-xl bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800">
                 {{ $this->isEdit ? __('Update Block') : __('Create Block') }}

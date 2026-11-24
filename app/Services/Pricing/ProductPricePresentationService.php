@@ -43,6 +43,7 @@ class ProductPricePresentationService
         ?User $user = null,
         int $quantity = 1,
         ?ProductPackage $package = null,
+        bool $withReferencePrice = true,
     ): array {
         return $this->forStoredBase(
             $product,
@@ -50,6 +51,7 @@ class ProductPricePresentationService
             $user,
             $quantity,
             $package,
+            $withReferencePrice,
         );
     }
 
@@ -78,6 +80,7 @@ class ProductPricePresentationService
         ?User $user = null,
         int $quantity = 1,
         ?ProductPackage $package = null,
+        bool $withReferencePrice = true,
     ): array {
         if (! app(B2BAccessService::class)->canViewPrices($user)) {
             return [
@@ -132,7 +135,7 @@ class ProductPricePresentationService
         $lowest30DaysGross = null;
         // Watchline's dated source baseline is displayed separately; the snapshot
         // does not establish a complete previous-30-day price history.
-        if ($hasPromotionalDiscount && ! $snapshotSpecial && config('storefront.home') !== 'watchline') {
+        if ($withReferencePrice && $hasPromotionalDiscount && ! $snapshotSpecial && config('storefront.home') !== 'watchline') {
             $lowest30DaysStored = $this->lowestStoredPriceInLast30Days(
                 $product,
                 $audienceStoredBase,

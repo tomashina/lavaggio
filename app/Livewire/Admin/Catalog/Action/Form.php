@@ -9,6 +9,7 @@ use App\Models\Catalog\Manufacturer\Manufacturer;
 use App\Models\Catalog\Product\Product;
 use App\Models\User;
 use App\Models\User\CustomerGroup;
+use App\Support\StorefrontDateTime;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -124,8 +125,8 @@ class Form extends Component
                 'buy_qty' => $this->nullableInt($data['buy_qty'] ?? null),
                 'get_qty' => $this->nullableInt($data['get_qty'] ?? null),
                 'gift_product_id' => $this->nullableInt($data['gift_product_id'] ?? null),
-                'starts_at' => $this->nullableDateTime($data['starts_at'] ?? null),
-                'ends_at' => $this->nullableDateTime($data['ends_at'] ?? null),
+                'starts_at' => StorefrontDateTime::fromInput($data['starts_at'] ?? null),
+                'ends_at' => StorefrontDateTime::fromInput($data['ends_at'] ?? null),
                 'priority' => max(0, (int) ($data['priority'] ?? 0)),
                 'is_exclusive' => (bool) ($data['is_exclusive'] ?? false),
                 'is_active' => (bool) ($data['is_active'] ?? false),
@@ -343,7 +344,7 @@ class Form extends Component
             'form.get_qty' => ['nullable', 'integer', 'min:1'],
             'form.gift_product_id' => ['nullable', 'integer', Rule::exists('products', 'id')],
             'form.starts_at' => ['nullable', 'date'],
-            'form.ends_at' => ['nullable', 'date', 'after_or_equal:form.starts_at'],
+            'form.ends_at' => ['nullable', 'date', Rule::when(filled($this->form['starts_at'] ?? null), 'after_or_equal:form.starts_at')],
             'form.priority' => ['nullable', 'integer', 'min:0'],
             'form.usage_limit' => ['nullable', 'integer', 'min:1'],
             'form.usage_limit_per_user' => ['nullable', 'integer', 'min:1'],
@@ -429,8 +430,8 @@ class Form extends Component
         $this->form['buy_qty'] = $action->buy_qty !== null ? (string) $action->buy_qty : '';
         $this->form['get_qty'] = $action->get_qty !== null ? (string) $action->get_qty : '';
         $this->form['gift_product_id'] = $action->gift_product_id ? (int) $action->gift_product_id : null;
-        $this->form['starts_at'] = $action->starts_at?->format('Y-m-d\TH:i') ?? '';
-        $this->form['ends_at'] = $action->ends_at?->format('Y-m-d\TH:i') ?? '';
+        $this->form['starts_at'] = StorefrontDateTime::format($action->starts_at, 'Y-m-d\TH:i:s') ?? '';
+        $this->form['ends_at'] = StorefrontDateTime::format($action->ends_at, 'Y-m-d\TH:i:s') ?? '';
         $this->form['priority'] = (int) $action->priority;
         $this->form['usage_limit'] = $action->usage_limit !== null ? (string) $action->usage_limit : '';
         $this->form['usage_limit_per_user'] = $action->usage_limit_per_user !== null ? (string) $action->usage_limit_per_user : '';
@@ -543,13 +544,6 @@ class Form extends Component
         }
 
         return (int) $value;
-    }
-
-    private function nullableDateTime(mixed $value): ?string
-    {
-        $value = trim((string) $value);
-
-        return $value === '' ? null : $value;
     }
 
     /**

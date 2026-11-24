@@ -2,6 +2,7 @@
 
 namespace App\Services\Front;
 
+use App\Models\Catalog\Action\CatalogAction;
 use App\Models\Content\Blog\BlogPost;
 use App\Support\AssetVersion;
 use Illuminate\Contracts\Cache\Repository;
@@ -110,9 +111,16 @@ class GuestStorefrontCache
             'revision' => $this->revision(),
         ];
 
-        if (config('storefront.home') === 'lavaggio' && $request->routeIs('home')) {
-            $context['latest_blog_publication'] = BlogPost::where('is_active', true)
-                ->where('published_at', '<=', now())->max('published_at');
+        if (config('storefront.home') === 'lavaggio') {
+            $now = now();
+            $context['promotion_schedule'] = CatalogAction::query()->where('is_active', true)
+                ->where('scope', CatalogAction::SCOPE_PRODUCT)->where('audience_type', CatalogAction::AUDIENCE_ALL)
+                ->toBase()->selectRaw('MAX(CASE WHEN starts_at <= ? THEN starts_at END) AS started,
+                    MAX(CASE WHEN ends_at < ? THEN ends_at END) AS ended', [$now, $now])->first();
+            if ($request->routeIs('home')) {
+                $context['latest_blog_publication'] = BlogPost::where('is_active', true)
+                    ->where('published_at', '<=', $now)->max('published_at');
+            }
         }
 
         return $this->namespace().':html:'.hash('sha256', json_encode($context, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));

@@ -7,8 +7,8 @@ use App\Models\Catalog\Product\Product;
 use App\Services\Catalog\CatalogFeatureService;
 use App\Services\Front\GuestStorefrontCache;
 use App\Services\Pricing\ProductPricePresentationService;
+use App\Support\StorefrontDateTime;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -70,8 +70,8 @@ class PromotionManager extends Component
             'title' => $translation?->title ?? $action->code,
             'type' => $action->type,
             'discount_value' => (string) $action->discount_value,
-            'starts_at' => $this->formatPromotionDate($action->starts_at, 'Y-m-d\TH:i:s') ?? '',
-            'ends_at' => $this->formatPromotionDate($action->ends_at, 'Y-m-d\TH:i:s') ?? '',
+            'starts_at' => StorefrontDateTime::format($action->starts_at, 'Y-m-d\TH:i:s') ?? '',
+            'ends_at' => StorefrontDateTime::format($action->ends_at, 'Y-m-d\TH:i:s') ?? '',
             'is_active' => $action->is_active,
             'priority' => $action->priority,
             'is_exclusive' => $action->is_exclusive,
@@ -122,8 +122,8 @@ class PromotionManager extends Component
             $action->fill([
                 'type' => $validated['type'],
                 'discount_value' => $validated['discount_value'],
-                'starts_at' => $this->storedPromotionDate($validated['starts_at'] ?? null),
-                'ends_at' => $this->storedPromotionDate($validated['ends_at'] ?? null),
+                'starts_at' => StorefrontDateTime::fromInput($validated['starts_at'] ?? null),
+                'ends_at' => StorefrontDateTime::fromInput($validated['ends_at'] ?? null),
                 'is_active' => $validated['is_active'],
                 'priority' => $validated['priority'],
                 'is_exclusive' => $validated['is_exclusive'],
@@ -177,8 +177,8 @@ class PromotionManager extends Component
                     CatalogAction::TYPE_FIXED => number_format((float) $action->discount_value, 2, ',', '.').' €',
                     default => 'Složena akcija',
                 },
-                'starts_at' => $this->formatPromotionDate($action->starts_at, 'd.m.Y. H:i') ?? 'Bez početnog datuma',
-                'ends_at' => $this->formatPromotionDate($action->ends_at, 'd.m.Y. H:i') ?? 'Bez završnog datuma',
+                'starts_at' => StorefrontDateTime::format($action->starts_at, 'd.m.Y. H:i') ?? 'Bez početnog datuma',
+                'ends_at' => StorefrontDateTime::format($action->ends_at, 'd.m.Y. H:i') ?? 'Bez završnog datuma',
                 'editable' => $this->canEditInline($action),
             ]),
             'price' => app(ProductPricePresentationService::class)->forProduct($product, null),
@@ -214,31 +214,6 @@ class PromotionManager extends Component
                     });
                 }
             });
-    }
-
-    private function formatPromotionDate(?Carbon $date, string $format): ?string
-    {
-        if ($date === null) {
-            return null;
-        }
-
-        return (config('storefront.home') === 'lavaggio'
-            ? $date->copy()->timezone('Europe/Zagreb')
-            : $date)->format($format);
-    }
-
-    private function storedPromotionDate(?string $value): ?string
-    {
-        if (! filled($value)) {
-            return null;
-        }
-        if (config('storefront.home') !== 'lavaggio') {
-            return $value;
-        }
-
-        return Carbon::parse($value, 'Europe/Zagreb')
-            ->timezone((string) config('app.timezone', 'UTC'))
-            ->format('Y-m-d H:i:s');
     }
 
     protected function validationAttributes(): array

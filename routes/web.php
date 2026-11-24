@@ -135,7 +135,7 @@ Route::middleware(['front.customer-impersonation', 'front.locale', 'front.device
 
         Route::get('search/autocomplete', [CatalogController::class, 'autocomplete'])->name('search.autocomplete');
         Route::get('shop', [CatalogController::class, 'index'])->name('shop.index');
-        Route::get('akcije', fn () => redirect()->route('shop.index', ['promo_only' => 1]))->name('shop.promotions');
+        Route::get('akcije', [CatalogController::class, 'promotions'])->name('shop.promotions');
         Route::get('categories', [CatalogController::class, 'categories'])->name('categories.index');
         Route::get('category/{slug}', [CatalogController::class, 'showCategory'])->name('categories.show');
         Route::get('product/{slug}', [ProductController::class, 'show'])->name('products.show');

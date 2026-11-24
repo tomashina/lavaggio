@@ -147,16 +147,19 @@
 
             <div class="admin-panel admin-form-panel p-6">
                 <p class="admin-section-title">{{ __('Schedule & Usage') }}</p>
+                @if (config('storefront.home') === 'lavaggio')
+                    <p class="mt-2 text-xs text-slate-500">{{ __('Početak i završetak akcije unose se prema lokalnom vremenu u Hrvatskoj (Europe/Zagreb).') }}</p>
+                @endif
 
                 <div class="mt-4 grid gap-3 md:grid-cols-2">
                     <div>
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('Start At') }}</label>
-                        <input type="datetime-local" wire:model="form.starts_at" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                        <input type="datetime-local" step="1" wire:model="form.starts_at" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
                         @error('form.starts_at') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{{ __('End At') }}</label>
-                        <input type="datetime-local" wire:model="form.ends_at" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                        <input type="datetime-local" step="1" wire:model="form.ends_at" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
                         @error('form.ends_at') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                     </div>
                 </div>

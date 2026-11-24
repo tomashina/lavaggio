@@ -146,6 +146,32 @@ class LavaggioHomepageWidgetPersistenceTest extends TestCase
         $this->assertStringNotContainsString('full-price-excluded', $html);
     }
 
+    public function test_new_promotions_block_can_be_created_from_its_title_and_reopened_from_the_list(): void
+    {
+        $product = $this->product('na-akciji');
+        $this->product('redovna-ponuda');
+        $action = CatalogAction::create([
+            'code' => 'vikend-popust', 'scope' => CatalogAction::SCOPE_PRODUCT, 'type' => CatalogAction::TYPE_PERCENTAGE,
+            'discount_value' => 20, 'target_type' => CatalogAction::TARGET_PRODUCT,
+            'audience_type' => CatalogAction::AUDIENCE_ALL, 'is_active' => true,
+        ]);
+        $action->targets()->create(['target_type' => CatalogAction::TARGET_PRODUCT, 'target_id' => $product->id]);
+        $title = 'Svi artikli na akciji';
+        $this->actingAs($this->admin)->get(route('admin.content.blocks.create'))->assertOk()->assertSeeLivewire(Form::class);
+        Livewire::test(Form::class)->set('form.title', $title)
+            ->set('form.watchline.source', 'promotions')->call('save')->assertHasNoErrors()
+            ->assertRedirect(route('admin.content.blocks'));
+        $block = ContentBlock::where('name', $title)->sole();
+        $editUrl = route('admin.content.blocks.edit', $block);
+        $this->get(route('admin.content.blocks'))->assertOk()->assertSee($title)->assertSee($editUrl);
+        $this->get($editUrl)->assertOk()->assertSeeLivewire(Form::class);
+        $this->editor($block)->assertSet('form.title', $title)->assertSet('form.watchline.source', 'promotions');
+        $html = $this->widgetHtml($block);
+        $this->assertStringContainsString($title, $html);
+        $this->assertStringContainsString($product->code, $html);
+        $this->assertStringNotContainsString('redovna-ponuda', $html);
+    }
+
     public function test_brand_manual_order_and_all_source_change_after_save(): void
     {
         $first = $this->manufacturer('saved-brand-first');

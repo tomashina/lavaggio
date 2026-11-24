@@ -14,6 +14,7 @@ use App\Models\Catalog\Option\OptionValue;
 use App\Models\Catalog\Product\Product;
 use App\Models\Content\Blog\BlogPost;
 use App\Models\User;
+use App\Services\Catalog\B2CPromotionService;
 use App\Services\Catalog\CatalogFeatureService;
 use App\Services\Catalog\LibermediaSpecificationFilterIndex;
 use App\Services\Catalog\WatchlineCatalogFacets;
@@ -426,6 +427,15 @@ class CatalogController extends Controller
         ]);
     }
 
+    public function promotions(Request $request): Response|RedirectResponse
+    {
+        if (config('storefront.home') !== 'lavaggio') {
+            return redirect()->route('shop.index', ['promo_only' => 1]);
+        }
+
+        return $this->index($request);
+    }
+
     public function index(Request $request): Response|RedirectResponse
     {
         $locale = app()->getLocale();
@@ -448,7 +458,8 @@ class CatalogController extends Controller
         $sort = (string) $request->query('sort', $search !== '' ? 'relevance' : 'newest');
         $availableOnly = $this->normalizeBooleanFilterValue($request->query('available_only'));
         $this->localAvailabilityOnly = $availableOnly && str_contains(strtolower((string) app(SystemSettingsService::class)->get('store_brand_name', config('app.name', 'AG Shop'))), 'herrera');
-        $promoOnly = $this->normalizeBooleanFilterValue($request->query('promo_only'));
+        $isPromotionsPage = $request->routeIs('shop.promotions');
+        $promoOnly = $isPromotionsPage || $this->normalizeBooleanFilterValue($request->query('promo_only'));
         [$priceMin, $priceMax] = $this->normalizedPriceRange(
             $request->query('price_min'),
             $request->query('price_max')
@@ -708,6 +719,7 @@ class CatalogController extends Controller
         $view = $isManufacturerPage ? 'manufacturers.show' : 'shop.index';
         $response = response()->view($this->frontendView($request, $view), [
             'isShopPage' => ! $isManufacturerPage && $this->frontendVariant($request) === 'desktop',
+            'isPromotionsPage' => $isPromotionsPage,
             'isManufacturerPage' => $isManufacturerPage,
             'manufacturer' => $catalogManufacturer,
             'isWatchlineManufacturerCategoryContext' => $isWatchlineManufacturerCategoryContext,
@@ -2712,7 +2724,12 @@ class CatalogController extends Controller
     private function applyPromotionFilter(Builder $query, ?User $user): void
     {
         if (config('commerce.b2c_only')) {
-            app(\App\Services\Catalog\B2CPromotionService::class)->filter($query, $user);
+            $promotions = app(B2CPromotionService::class);
+            if (request()->routeIs('shop.promotions')) {
+                $query->whereIntegerInRaw('products.id', $promotions->discountedProductIds($user));
+            } else {
+                $promotions->filter($query, $user);
+            }
 
             return;
         }
@@ -2912,6 +2929,10 @@ class CatalogController extends Controller
 
     private function withDesktopCacheHeaders(Request $request, Response $response, string $scope): Response
     {
+        if (config('storefront.home') === 'lavaggio') {
+            // Prices can change at a scheduled second without any catalog record being updated.
+            return $response->header('Cache-Control', 'private, no-store');
+        }
         if ($this->frontendVariant($request) !== 'desktop') {
             return $response;
         }

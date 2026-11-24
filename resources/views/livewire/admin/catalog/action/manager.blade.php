@@ -120,8 +120,8 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2 text-center text-xs text-slate-600">
-                                <div>{{ $row->starts_at?->format('Y-m-d H:i') ?? __('No start') }}</div>
-                                <div>{{ $row->ends_at?->format('Y-m-d H:i') ?? __('No end') }}</div>
+                                <div>{{ \App\Support\StorefrontDateTime::format($row->starts_at, 'Y-m-d H:i') ?? __('No start') }}</div>
+                                <div>{{ \App\Support\StorefrontDateTime::format($row->ends_at, 'Y-m-d H:i') ?? __('No end') }}</div>
                             </td>
                             <td class="px-3 py-2 text-center text-slate-700">{{ (int) $row->priority }}</td>
                             <td class="px-3 py-2 text-center">

@@ -6,6 +6,7 @@ use App\Models\Catalog\Action\CatalogAction;
 use App\Models\Catalog\Action\CatalogActionTarget;
 use App\Models\Catalog\Product\Product;
 use App\Models\User;
+use App\Services\Pricing\ProductPricePresentationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -107,6 +108,21 @@ class B2CPromotionService
                 $q->orWhereIn('products.id', fn ($sub) => $sub->select('product_id')->from('category_product')->whereIn('category_id', $categories));
             }
         });
+    }
+
+    public function discountedProductIds(?User $user): array
+    {
+        $set = $this->promotionSet($user);
+        if (! isset($set->discountedProductIds)) {
+            $candidates = Product::query()->visibleOnStorefront()->with(['categories', 'taxRate']);
+            $this->filter($candidates, $user);
+            $prices = app(ProductPricePresentationService::class);
+            $set->discountedProductIds = $candidates->lazyById(200)
+                ->filter(fn (Product $product) => $prices->forProduct($product, $user, withReferencePrice: false)['has_promotional_discount'])
+                ->pluck('id')->all();
+        }
+
+        return $set->discountedProductIds;
     }
 
     private function hydrateMatches(\stdClass $set, array $ids): Collection
