@@ -45,6 +45,9 @@ return [
             'mutate' => ['catalog.products.update'],
             'delete' => ['catalog.products.delete'],
         ],
+        'admin.products.preview' => [
+            'view' => ['catalog.products.view', 'catalog.products.update'],
+        ],
         'admin.products.options' => [
             'view' => ['catalog.products.options.manage'],
             'mutate' => ['catalog.products.options.manage'],
@@ -279,6 +282,9 @@ return [
             'view' => ['content.blog.update'],
             'mutate' => ['content.blog.update'],
             'delete' => ['content.blog.delete'],
+        ],
+        'admin.content.blog.preview' => [
+            'view' => ['content.blog.view', 'content.blog.update'],
         ],
         'admin.content.blog.*' => [
             'view' => ['content.blog.view'],

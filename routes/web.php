@@ -367,6 +367,8 @@ Route::middleware(['admin.locale', 'auth', 'verified', 'admin.access', 'admin.ma
         Route::get('products/{product}/edit', function (Product $product) {
             return view('admin.products.edit', compact('product'));
         })->name('products.edit');
+        Route::get('products/preview/{translation}', [ProductController::class, 'preview'])
+            ->whereNumber('translation')->middleware(['front.locale:translation', 'front.device'])->name('products.preview');
         Route::view('orders', 'admin.orders.index')->name('orders');
         Route::view('gift-vouchers', 'admin.gift-vouchers')->name('gift-vouchers');
         Route::get('customer-offers', [\App\Http\Controllers\Admin\CustomerOfferController::class, 'index'])->name('customer-offers.index');
@@ -633,6 +635,8 @@ Route::middleware(['admin.locale', 'auth', 'verified', 'admin.access', 'admin.ma
                     Route::get('blog/{post}/edit', function (BlogPost $post) {
                         return view('admin.content.blog.edit', compact('post'));
                     })->name('blog.edit');
+                    Route::get('blog/preview/{translation}', [BlogController::class, 'preview'])
+                        ->whereNumber('translation')->middleware(['front.locale:translation', 'front.device'])->name('blog.preview');
                 });
                 Route::view('pages', 'admin.content.pages.index')->name('pages.index');
                 Route::view('pages/create', 'admin.content.pages.create')->name('pages.create');

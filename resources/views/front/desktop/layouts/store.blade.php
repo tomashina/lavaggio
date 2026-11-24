@@ -4,9 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     @include('front.partials.storefront-theme-head')
-    @include('front.partials.seo-meta')
-    @include('front.partials.schema-markup')
-    @include('front.partials.analytics')
+    @if ($isContentPreview ?? false)
+        <title>@yield('title')</title>
+        <meta name="robots" content="noindex, nofollow">
+    @else
+        @include('front.partials.seo-meta')
+        @include('front.partials.schema-markup')
+        @include('front.partials.analytics')
+    @endif
     <x-front.site-icons :branding="$storeSettings['branding'] ?? []" />
     @php
         $storefrontCssBundleIncludesLegacyAssets = true;
@@ -552,11 +557,25 @@
     $mainClasses = trim(($herreraStorefront ? 'herrera-main herrera-layout-container ' : '').$__env->yieldContent('main_class', 'mx-auto w-full max-w-7xl px-6 py-8'));
 @endphp
 <main class="{{ $mainClasses }}" @if ($herreraStorefront) data-herrera-main @endif>
+    @if ($isContentPreview ?? false)
+        <aside class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm text-cyan-900">
+            <strong>{{ __('Preview of the saved version') }}</strong>
+            @if (request()->routeIs('admin.products.preview'))
+                @can('catalog.products.update')
+                    <a href="{{ route('admin.products.edit', ['product' => $product, 'locale' => $locale]) }}" class="underline">{{ __('Edit Product') }}</a>
+                @endcan
+            @else
+                @can('content.blog.update')
+                    <a href="{{ route('admin.content.blog.edit', ['post' => $post, 'locale' => $locale]) }}" class="underline">{{ __('Edit Blog Post') }}</a>
+                @endcan
+            @endif
+        </aside>
+    @endif
     @include('front.desktop.partials.flash')
     @yield('content')
 </main>
 
-@include('front.partials.analytics-ecommerce')
+@includeUnless($isContentPreview ?? false, 'front.partials.analytics-ecommerce')
 
 <footer class="site-footer {{ request()->routeIs('home') ? 'mt-0' : 'mt-5' }} bg-white">
     <div class="site-footer-shell storefront-header-container {{ $herreraStorefront ? 'herrera-layout-container' : '' }}">

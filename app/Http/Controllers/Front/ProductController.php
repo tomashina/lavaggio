@@ -7,6 +7,7 @@ use App\Http\Controllers\Front\Concerns\ResolvesFrontendView;
 use App\Http\Controllers\Front\Concerns\ResolvesGridColumns;
 use App\Models\Catalog\Category\Category;
 use App\Models\Catalog\Product\Product;
+use App\Models\Catalog\Product\ProductTranslation;
 use App\Models\Content\Page\InfoPage;
 use App\Models\Content\Support\Comment;
 use App\Models\Settings\Local\PaymentMethod;
@@ -27,6 +28,7 @@ use App\Services\Settings\SystemSettingsService;
 use App\Support\BoxNowShipping;
 use App\Support\CountryCatalog;
 use App\Support\ProductMaterialLabel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -106,11 +108,27 @@ class ProductController extends Controller
 
     public function show(Request $request, string $slug): Response
     {
+        $locales = [app()->getLocale(), config('app.locale')];
+        $query = Product::query()->where('is_active', true)
+            ->whereHas('translations', fn ($translation) => $translation->whereIn('locale', $locales)->where('slug', $slug));
+
+        return $this->renderProduct($request, $query, $slug);
+    }
+
+    public function preview(Request $request, ProductTranslation $translation): Response
+    {
+        abort_unless(filled($translation->slug), 404);
+
+        return $this->renderProduct($request, Product::query()->whereKey($translation->product_id), $translation->slug, preview: true);
+    }
+
+    private function renderProduct(Request $request, Builder $query, string $slug, bool $preview = false): Response
+    {
         $locale = app()->getLocale();
         $fallbackLocale = (string) config('app.locale');
         $variant = $this->frontendVariant($request);
 
-        $product = Product::query()
+        $product = $query
             ->withStorefrontEnergyData()
             ->select(['id', 'code', 'sku', 'barcode', 'base_price', 'stock_qty', 'supplier_stock_qty', 'tax_rate_id', 'manufacturer_id', 'is_active', 'payload'])
             ->when(config('storefront.home') === 'lavaggio', fn ($query) => $query->addSelect([
@@ -118,11 +136,6 @@ class ProductController extends Controller
                 'delivery_mode', 'ingredients', 'hazard_notes', 'manufacturer_importer', 'country_of_origin',
             ]))
             ->withApprovedCommentSummary([$locale, $fallbackLocale])
-            ->where('is_active', true)
-            ->whereHas('translations', function ($q) use ($locale, $fallbackLocale, $slug): void {
-                $q->whereIn('locale', [$locale, $fallbackLocale])
-                    ->where('slug', $slug);
-            })
             ->with([
                 'taxRate:id,rate,rate_type,is_active',
                 'media' => fn ($q) => $q
@@ -427,13 +440,15 @@ class ProductController extends Controller
         $related = $relatedIds->map(fn (int $id) => $cards->get($id))->filter()->values();
         $recentlyViewed = $recentlyViewedCardIds->map(fn (int $id) => $cards->get($id))->filter()->values();
 
-        $updatedRecentlyViewedIds = collect([(int) $product->id])
-            ->concat($recentlyViewedIds)
-            ->unique()
-            ->take(self::RECENTLY_VIEWED_MAX)
-            ->values()
-            ->all();
-        $request->session()->put(self::RECENTLY_VIEWED_SESSION_KEY, $updatedRecentlyViewedIds);
+        if (! $preview) {
+            $updatedRecentlyViewedIds = collect([(int) $product->id])
+                ->concat($recentlyViewedIds)
+                ->unique()
+                ->take(self::RECENTLY_VIEWED_MAX)
+                ->values()
+                ->all();
+            $request->session()->put(self::RECENTLY_VIEWED_SESSION_KEY, $updatedRecentlyViewedIds);
+        }
 
         $topBlocks = app(ContentBlockResolver::class)->forPlacement(
             placement: 'product.top',
@@ -503,6 +518,7 @@ class ProductController extends Controller
 
         $response = response()->view($this->frontendView($request, 'products.show'), [
             'product' => $product,
+            'isContentPreview' => $preview,
             'related' => $related,
             'recentlyViewed' => $recentlyViewed,
             'comments' => $comments,
@@ -523,7 +539,7 @@ class ProductController extends Controller
             'fallbackLocale' => $fallbackLocale,
         ]);
 
-        return $this->withDesktopCacheHeaders($request, $response, (int) $product->id, $slug);
+        return $preview ? $response : $this->withDesktopCacheHeaders($request, $response, (int) $product->id, $slug);
     }
 
     private function groupShippingMethodsForProduct(Collection $methods, string $locale): Collection

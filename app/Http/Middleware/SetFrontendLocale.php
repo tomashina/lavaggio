@@ -11,12 +11,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SetFrontendLocale
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, ?string $translationParameter = null): Response
     {
         [$availableCodes, $availableLanguages, $defaultLocale] = $this->resolveLanguages();
 
         $sessionLocale = $this->normalizeLocale((string) $request->session()->get('front_locale', ''));
         $locale = in_array($sessionLocale, $availableCodes, true) ? $sessionLocale : $defaultLocale;
+        if ($translationParameter !== null) {
+            $locale = $request->route($translationParameter)->locale;
+        }
 
         App::setLocale($locale);
         $request->attributes->set('front_locale', $locale);

@@ -29,8 +29,8 @@ class EnsureAdminAccess
             return $next($request);
         }
 
-        // Bootstrap rule: first account entering admin gets superadmin role.
-        if (! DB::table('assigned_roles')->exists()) {
+        // Bootstrap the first admin account only from regular admin screens.
+        if (! $request->routeIs('admin.products.preview', 'admin.content.blog.preview') && ! DB::table('assigned_roles')->exists()) {
             Bouncer::role()->firstOrCreate(['name' => 'superadmin'], ['title' => 'Super Administrator']);
             Bouncer::role()->firstOrCreate(['name' => 'admin'], ['title' => 'Administrator']);
             Bouncer::role()->firstOrCreate(['name' => 'editor'], ['title' => 'Editor']);

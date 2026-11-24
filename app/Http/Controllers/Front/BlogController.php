@@ -7,6 +7,7 @@ use App\Http\Controllers\Front\Concerns\ResolvesFrontendView;
 use App\Models\Catalog\Category\Category;
 use App\Models\Catalog\Product\Product;
 use App\Models\Content\Blog\BlogPost;
+use App\Models\Content\Blog\BlogPostTranslation;
 use App\Services\Catalog\CatalogFeatureService;
 use App\Services\Content\BlogDiscoveryService;
 use App\Services\Content\ContentBlockResolver;
@@ -109,14 +110,29 @@ class BlogController extends Controller
                 $q->whereIn('locale', [$locale, $fallbackLocale])
                     ->where('slug', $slug)->whereRaw("TRIM(COALESCE(title, '')) <> ''");
             })
-            ->with([
-                'translations' => fn ($q) => $q->whereIn('locale', [$locale, $fallbackLocale])
-                    ->whereRaw("TRIM(COALESCE(title, '')) <> ''")->whereRaw("TRIM(COALESCE(slug, '')) <> ''"),
-                'categories.translations' => fn ($q) => $q->whereIn('locale', [$locale, $fallbackLocale]),
-                'creator:id,name',
-                'media',
-            ])
             ->firstOrFail();
+
+        return $this->renderPost($request, $post);
+    }
+
+    public function preview(Request $request, BlogPostTranslation $translation): View
+    {
+        abort_unless(filled($translation->title) && filled($translation->slug), 404);
+
+        return $this->renderPost($request, $translation->post()->firstOrFail(), preview: true);
+    }
+
+    private function renderPost(Request $request, BlogPost $post, bool $preview = false): View
+    {
+        $locale = app()->getLocale();
+        $fallbackLocale = (string) config('app.locale');
+        $post->load([
+            'translations' => fn ($q) => $q->whereIn('locale', [$locale, $fallbackLocale])
+                ->whereRaw("TRIM(COALESCE(title, '')) <> ''")->whereRaw("TRIM(COALESCE(slug, '')) <> ''"),
+            'categories.translations' => fn ($q) => $q->whereIn('locale', [$locale, $fallbackLocale]),
+            'creator:id,name',
+            'media',
+        ]);
 
         $discoveryLimit = config('storefront.home') === 'lavaggio' ? 4 : 3;
         $related = $this->discovery->related($post, [$locale, $fallbackLocale], $discoveryLimit);
@@ -220,6 +236,7 @@ class BlogController extends Controller
 
         return view($this->frontendView($request, 'blog.show'), [
             'post' => $post,
+            'isContentPreview' => $preview,
             'related' => $related,
             'popular' => $popular,
             'relatedProducts' => $relatedProducts,

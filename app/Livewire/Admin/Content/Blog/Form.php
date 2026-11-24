@@ -11,11 +11,16 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class Form extends Component
 {
+    #[Locked]
     public ?int $postId = null;
+
+    #[Locked]
+    public ?int $previewTranslationId = null;
 
     public string $activeTab = 'content';
 
@@ -195,9 +200,12 @@ class Form extends Component
         $this->skipRender();
     }
 
-    public function save()
+    public function save(bool $previewDraft = false)
     {
         $validated = $this->validate($this->rules());
+        if ($previewDraft) {
+            $validated['form']['is_active'] = false;
+        }
         $wasEditing = (bool) $this->postId;
 
         $payload = $this->decodeJsonField('form.payload_text');
@@ -245,7 +253,7 @@ class Form extends Component
                 $this->postId = $post->id;
             }
 
-            $post->translations()->updateOrCreate(
+            $translation = $post->translations()->updateOrCreate(
                 ['locale' => $validated['form']['locale']],
                 [
                     'title' => $validated['form']['title'],
@@ -257,6 +265,7 @@ class Form extends Component
                     'payload' => $translationPayload,
                 ]
             );
+            $this->previewTranslationId = $translation->id;
 
             $syncPayload = [];
             foreach (array_values($validated['form']['category_ids'] ?? []) as $index => $categoryId) {
@@ -278,6 +287,10 @@ class Form extends Component
                 ])
                 ->log('Blog post saved');
         });
+
+        if ($previewDraft) {
+            return redirect()->route('admin.content.blog.preview', $this->previewTranslationId);
+        }
 
         $message = $wasEditing ? 'Blog post updated.' : 'Blog post created.';
 
@@ -600,6 +613,7 @@ class Form extends Component
         $translation = $post->translations->firstWhere('locale', $preferredLocale)
             ?? $post->translations->firstWhere('locale', config('app.locale', 'en'))
             ?? $post->translations->first();
+        $this->previewTranslationId = filled($translation?->title) && filled($translation?->slug) ? $translation->id : null;
 
         $this->form['code'] = $post->code;
         $this->form['is_active'] = (bool) $post->is_active;
@@ -642,6 +656,7 @@ class Form extends Component
             ->where('post_id', $this->postId)
             ->where('locale', $this->form['locale'])
             ->first();
+        $this->previewTranslationId = filled($translation?->title) && filled($translation?->slug) ? $translation->id : null;
 
         if (! $translation) {
             $this->clearTranslationFields();

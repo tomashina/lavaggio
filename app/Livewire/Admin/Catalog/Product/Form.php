@@ -37,6 +37,9 @@ class Form extends Component
     public ?int $productId = null;
 
     #[Locked]
+    public ?int $previewTranslationId = null;
+
+    #[Locked]
     public ?array $initialRetailBase = null;
 
     public string $activeTab = 'content';
@@ -264,7 +267,7 @@ class Form extends Component
         $this->resetErrorBag('attributeSelections.'.$groupCode);
     }
 
-    public function save()
+    public function save(bool $previewDraft = false)
     {
         foreach (['code', 'sku', 'barcode'] as $field) {
             if (is_string($this->form[$field] ?? null)) {
@@ -282,6 +285,9 @@ class Form extends Component
         }
 
         $validated = $this->validate($this->rules());
+        if ($previewDraft) {
+            $validated['form']['is_active'] = false;
+        }
         if ($this->usesExtendedProductTabs()
             && (! $this->validateCommerceRows($validated) || ! $this->validateEnergyRows($validated))) {
             return null;
@@ -402,7 +408,7 @@ class Form extends Component
                 $this->productId = $product->id;
             }
 
-            $product->translations()->updateOrCreate(
+            $translation = $product->translations()->updateOrCreate(
                 ['locale' => $validated['form']['locale']],
                 [
                     'name' => $validated['form']['name'],
@@ -414,6 +420,7 @@ class Form extends Component
                     'payload' => $translationPayload,
                 ]
             );
+            $this->previewTranslationId = $translation->id;
 
             $syncPayload = [];
             foreach (array_values($validated['form']['category_ids'] ?? []) as $index => $categoryId) {
@@ -468,6 +475,10 @@ class Form extends Component
                 ])
                 ->log('Product saved');
         });
+
+        if ($previewDraft) {
+            return redirect()->route('admin.products.preview', $this->previewTranslationId);
+        }
 
         if ($wasEditing) {
             return redirect()
@@ -1176,6 +1187,7 @@ class Form extends Component
         $translation = $product->translations->firstWhere('locale', $preferredLocale)
             ?? $product->translations->firstWhere('locale', config('app.locale', 'en'))
             ?? $product->translations->first();
+        $this->previewTranslationId = filled($translation?->slug) ? $translation->id : null;
 
         $this->form['code'] = $product->code;
         $this->form['sku'] = $product->sku ?? '';
@@ -1606,6 +1618,7 @@ class Form extends Component
             ->where('product_id', $this->productId)
             ->where('locale', $this->form['locale'])
             ->first();
+        $this->previewTranslationId = filled($translation?->slug) ? $translation->id : null;
 
         if (! $translation) {
             $this->clearTranslationFields();

@@ -81,6 +81,12 @@
                             </td>
                             <td class="px-3 py-2 text-right">
                                 <div class="inline-flex items-center gap-1">
+                                    @if (filled($tr?->title) && filled($tr?->slug))
+                                        <a href="{{ $row->is_active && ! $row->published_at?->isFuture() ? route('blog.show', ['slug' => $tr->slug]) : route('admin.content.blog.preview', $tr) }}"
+                                           target="_blank" rel="noopener noreferrer" class="rounded-lg border border-cyan-200 px-2 py-1 text-xs font-semibold text-cyan-800 hover:bg-cyan-50">
+                                            {{ __('Preview') }}
+                                        </a>
+                                    @endif
                                     <a href="{{ route('admin.content.blog.edit', ['post' => $row->id, 'locale' => $locale]) }}" class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100">
                                         {{ __('Edit') }}
                                     </a>

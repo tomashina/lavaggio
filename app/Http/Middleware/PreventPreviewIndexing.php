@@ -24,13 +24,14 @@ class PreventPreviewIndexing
 
         $response = $next($request);
 
-        if ($localPreview && str_starts_with(strtolower((string) $response->headers->get('Content-Type')), 'text/html')) {
+        $adminPreview = $request->routeIs('admin.products.preview', 'admin.content.blog.preview');
+        if (($localPreview || $adminPreview) && str_starts_with(strtolower((string) $response->headers->get('Content-Type')), 'text/html')) {
             $response->headers->set('Cache-Control', 'private, no-store, max-age=0');
             $response->headers->remove('ETag');
             $response->headers->remove('Last-Modified');
         }
 
-        if ((SearchEngineIndexing::shouldBlock($request)
+        if (($adminPreview || SearchEngineIndexing::shouldBlock($request)
                 || (config('storefront.home') === 'watchline' && WatchlineSeo::isPrivate($request)))
             && stripos((string) $response->headers->get('X-Robots-Tag'), 'noindex') === false) {
             $response->headers->set('X-Robots-Tag', 'noindex, nofollow');

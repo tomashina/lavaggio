@@ -8,6 +8,11 @@
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <span class="admin-chip">{{ __('Locale:') }} {{ $form['locale'] }}</span>
+                @if ($previewTranslationId)
+                    <a href="{{ route('admin.content.blog.preview', $previewTranslationId) }}" target="_blank" rel="noopener noreferrer" title="{{ __('Preview of the saved version') }}" class="inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-white px-4 py-2 text-sm font-semibold text-cyan-800 hover:bg-cyan-50">
+                        <x-fa-icon name="eye" class="h-4 w-4" /> {{ __('Preview') }}
+                    </a>
+                @endif
                 <button type="button" wire:click="backToList" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">{{ __('Back to List') }}</button>
             </div>
         </div>
@@ -274,10 +279,17 @@
             />
         @endif
 
-        <div class="admin-form-actions flex items-center gap-2 pt-2">
-            <button type="submit" class="rounded-xl bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800">
+        <div class="admin-form-actions flex flex-wrap items-center gap-2 pt-2">
+            <button type="submit" wire:loading.attr="disabled" wire:target="save" class="rounded-xl bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800">
                 {{ $isEdit ? __('Update Blog Post') : __('Create Blog Post') }}
             </button>
+            @if (! $isEdit || ! $form['is_active'])
+                @canany(['content.blog.view', 'content.blog.update'])
+                    <button type="button" wire:click="save(true)" wire:loading.attr="disabled" wire:target="save" class="rounded-xl border border-cyan-200 px-4 py-2 text-sm font-semibold text-cyan-800 hover:bg-cyan-50">
+                        {{ __('Save draft and preview') }}
+                    </button>
+                @endcanany
+            @endif
             <button type="button" wire:click="backToList" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
                 {{ __('Cancel') }}
             </button>

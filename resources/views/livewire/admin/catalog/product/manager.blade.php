@@ -262,7 +262,7 @@
                                 <div class="inline-flex items-center gap-1">
                                     @if ($tr?->slug)
                                         <a
-                                            href="{{ route('products.show', ['slug' => $tr->slug]) }}"
+                                            href="{{ $row->is_active ? route('products.show', ['slug' => $tr->slug]) : route('admin.products.preview', $tr) }}"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             aria-label="{{ __('Preview') }}: {{ $tr?->name ?? $row->code }}"
