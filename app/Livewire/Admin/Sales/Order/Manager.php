@@ -8,6 +8,7 @@ use App\Services\Admin\OrderManagerAccess;
 use App\Services\Settings\SystemSettingsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -76,34 +77,41 @@ class Manager extends Component
     public function delete(int $orderId): void
     {
         $this->authorizeAccess('sales.orders.update');
-        $order = Order::query()->find($orderId);
-        if (! $order) {
-            $this->dispatch('notify', type: 'warning', message: __('Order not found.'));
+        $deleted = DB::transaction(function () use ($orderId): bool {
+            $order = Order::query()->lockForUpdate()->find($orderId);
+            if (! $order) {
+                $this->dispatch('notify', type: 'warning', message: __('Order not found.'));
 
-            return;
-        }
-        app(OrderManagerAccess::class)->assertOrder($order);
+                return false;
+            }
+            app(OrderManagerAccess::class)->assertOrder($order);
 
-        $properties = [
-            'order_id' => $orderId,
-            'order_number' => $order->order_number,
-            'item_qty' => (int) $order->item_qty,
-            'grand_total' => (float) $order->grand_total,
-        ];
+            if (Schema::hasTable('lavaggio_fira_documents') && DB::table('lavaggio_fira_documents')->where('order_id', $orderId)->exists()) {
+                $this->dispatch('notify', type: 'warning', message: __('This order has a FIRA document record and cannot be deleted.'));
 
-        DB::transaction(function () use ($order): void {
+                return false;
+            }
+
             $order->delete();
+            activity('orders')
+                ->performedOn($order)
+                ->causedBy(auth()->user())
+                ->event('deleted')
+                ->withProperties([
+                    'order_id' => $orderId,
+                    'order_number' => $order->order_number,
+                    'item_qty' => (int) $order->item_qty,
+                    'grand_total' => (float) $order->grand_total,
+                ])
+                ->log('Order deleted from admin.');
+
+            return true;
         });
 
-        activity('orders')
-            ->performedOn($order)
-            ->causedBy(auth()->user())
-            ->event('deleted')
-            ->withProperties($properties)
-            ->log('Order deleted from admin.');
-
-        $this->dispatch('notify', type: 'success', message: __('Order deleted.'));
-        $this->resetPage(pageName: self::PAGE_NAME);
+        if ($deleted) {
+            $this->dispatch('notify', type: 'success', message: __('Order deleted.'));
+            $this->resetPage(pageName: self::PAGE_NAME);
+        }
     }
 
     public function sort(string $field): void

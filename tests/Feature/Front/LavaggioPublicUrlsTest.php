@@ -71,6 +71,21 @@ class LavaggioPublicUrlsTest extends TestCase
         $this->get('https://shop.lavaggio.hr/poklon-bon/narudzba/TEST?signature=invalid')->assertForbidden();
     }
 
+    public function test_service_and_towel_rental_links_resolve_directly_to_published_replacements(): void
+    {
+        $targets = [
+            '/stranica/prikup-i-dostava-rublja' => '/stranica/usluzna-praonica-rublja',
+            '/page/prikup-i-dostava-rublja' => '/stranica/usluzna-praonica-rublja',
+            '/cjenik/cjenik-najma-rucnika' => '/blog/nova-usluga-najam-runika-u-istri',
+            '/usluge/najam-rucnika' => '/blog/nova-usluga-najam-runika-u-istri',
+        ];
+        foreach ($targets as $old => $target) {
+            $this->get('http://localhost'.$old.'/?izvor=meni')->assertStatus(301)->assertRedirect($target.'?izvor=meni');
+            $this->assertSame($target.'?izvor=meni#opis', PublicUrls::url($old.'/?izvor=meni#opis'));
+            $this->assertSame($target, PublicUrls::url($target));
+        }
+    }
+
     public function test_retired_service_pages_return_410_and_payment_callbacks_keep_their_routes(): void
     {
         foreach (['samoposluzna-praonica-rublja', 'kako-prati-rublje-kod-nas', 'kako-pripremiti-rublje-za-pranje', 'koji-program-za-pranje-odabrati', 'cjenik-samoposluzna-praonica', 'poklon-bon-lavaggio'] as $slug) {

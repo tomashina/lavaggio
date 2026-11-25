@@ -1239,6 +1239,7 @@
     "Option deleted.": "Opcija je obrisana.",
     "Option not found.": "Opcija nije pronađena.",
     "Order deleted.": "Narudžba je obrisana.",
+    "This order has a FIRA document record and cannot be deleted.": "Brisanje je onemogućeno jer narudžba ima zapis o izdavanju dokumenta u FIRA-i.",
     "Order not found.": "Narudžba nije pronađena.",
     "Product deleted.": "Artikl je obrisan.",
     "Product not found.": "Artikl nije pronađen.",

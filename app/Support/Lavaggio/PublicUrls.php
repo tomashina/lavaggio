@@ -83,6 +83,8 @@ class PublicUrls
             return $url;
         }
         $path = '/'.self::uri(ltrim((string) ($parts['path'] ?? ''), '/'));
+        $legacy = config('lavaggio_legacy_urls', []);
+        $path = $legacy[rawurldecode(rtrim($path, '/'))] ?? $path;
         if (in_array(rtrim($path, '/'), ['/cjenik', '/cjenik-usluzno-pranje', '/stranica/cjenik', '/stranica/cjenik-usluzno-pranje'], true)) {
             $path = '/cjenik-usluzno-pranje';
         }

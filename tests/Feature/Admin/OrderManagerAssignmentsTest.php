@@ -100,6 +100,31 @@ class OrderManagerAssignmentsTest extends TestCase
         $this->assertModelExists($otherOrder);
     }
 
+    public function test_deletion_preserves_orders_with_fira_records_and_still_works_for_other_orders(): void
+    {
+        $manager = $this->manager();
+        $customer = $this->customer('Order Buyer');
+        $this->assign($manager, $customer);
+        $protected = $this->order($customer, 'WITH-FIRA');
+        $ordinary = $this->order($customer, 'WITHOUT-FIRA');
+        $component = Livewire::actingAs($manager)->test(Orders::class);
+
+        DB::table('lavaggio_fira_documents')->insert([
+            'order_id' => $protected->id, 'state' => 'sending',
+            'document_type' => 'PONUDA', 'payload_hash' => hash('sha256', 'document'),
+        ]);
+        $component->call('delete', $protected->id)->assertDispatched('notify', type: 'warning',
+            message: __('This order has a FIRA document record and cannot be deleted.'));
+        $this->assertModelExists($protected);
+        $this->assertDatabaseHas('lavaggio_fira_documents', ['order_id' => $protected->id, 'state' => 'sending']);
+        $this->assertDatabaseMissing('activity_log', ['log_name' => 'orders', 'event' => 'deleted', 'subject_id' => $protected->id]);
+
+        $component->call('delete', $ordinary->id)->assertDispatched('notify', type: 'success');
+        $this->assertModelMissing($ordinary);
+        $this->assertDatabaseHas('activity_log', ['log_name' => 'orders', 'event' => 'deleted', 'subject_id' => $ordinary->id]);
+        $component->call('delete', $ordinary->id)->assertDispatched('notify', type: 'warning', message: __('Order not found.'));
+    }
+
     public function test_status_updates_require_current_assignment_even_after_component_was_opened(): void
     {
         $manager = $this->manager();
