@@ -7,6 +7,15 @@
 
     RewriteEngine On
 
+    # Redirect the cPanel aliases using the original, still-encoded request path.
+    RewriteCond %{HTTP_HOST} ^(?:www\.)?lavaggio\.bareda\.hr\.?(?::[0-9]+)?$ [NC]
+    RewriteCond %{THE_REQUEST} "^(?:GET|HEAD)[[:space:]]+(?:https?://[^/?[:space:]]+)?(/[^?[:space:]]*)"
+    RewriteRule ^ https://www.lavaggio.hr%1 [R=301,L,NE]
+
+    RewriteCond %{HTTP_HOST} ^(?:www\.)?lavaggio\.bareda\.hr\.?(?::[0-9]+)?$ [NC]
+    RewriteCond %{THE_REQUEST} "^[^[:space:]]+[[:space:]]+(?:https?://[^/?[:space:]]+)?(/[^?[:space:]]*)"
+    RewriteRule ^ https://www.lavaggio.hr%1 [R=308,L,NE]
+
     # Resolve both the MODX address and the public hostname in one redirect.
     RewriteCond %{HTTP_HOST} ^(?:(?:www|shop)\.)?lavaggio\.hr(?::[0-9]+)?$ [NC]
     RewriteCond %{REQUEST_METHOD} ^(?:GET|HEAD)$
