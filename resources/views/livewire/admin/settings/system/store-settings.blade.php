@@ -11,6 +11,7 @@
                 'branding' => 'Branding & Footer',
                 'newsletter' => 'Newsletter',
                 'integrations' => 'Integrations',
+                ...(config('storefront.home') === 'lavaggio' ? ['merchant' => 'Google Merchant Center'] : []),
                 'pricing' => 'Pricing',
                 'cart' => 'admin.settings.store.cart.tab',
                 'images' => 'Images',
@@ -450,6 +451,33 @@
                         <input type="text" wire:model="form.store_analytics_purchase_event_name" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="purchase" />
                     </div>
 
+                    @if (config('storefront.home') === 'lavaggio')
+                        <div class="md:col-span-2">
+                            <label for="lavaggio-meta-pixel" class="mb-1 block text-sm font-semibold">Meta Pixel ID</label>
+                            <input id="lavaggio-meta-pixel" type="text" inputmode="numeric" wire:model="form.lavaggio_meta_pixel_id" class="w-full max-w-sm rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                            <p class="mt-1 text-xs text-slate-600">Unesite broj piksela za praćenje nakon privole za marketinške kolačiće. Prazno polje isključuje praćenje.</p>
+                            @error('form.lavaggio_meta_pixel_id') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            @if ($tab === 'merchant' && config('storefront.home') === 'lavaggio')
+                <div class="space-y-5">
+                    <section class="space-y-3">
+                        <h3 class="text-sm font-bold">Google Merchant XML</h3>
+                        <label class="flex items-center gap-2"><input type="checkbox" wire:model="form.lavaggio_merchant_feed_enabled"> Objavi XML katalog proizvoda</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" wire:model="form.lavaggio_merchant_include_unavailable"> Uključi rasprodane proizvode sa statusom nedostupnosti</label>
+                        <p class="text-sm">Adresa za dohvat u Merchant Centeru</p>
+                        <a class="break-all text-cyan-700 underline" href="{{ route('lavaggio.google-merchant') }}">{{ route('lavaggio.google-merchant') }}</a>
+                    </section>
+                    <section class="space-y-3">
+                        <h3 class="text-sm font-bold">Google Customer Reviews</h3>
+                        <label for="lavaggio-merchant-id" class="block text-sm font-semibold">Merchant Center ID</label>
+                        <input id="lavaggio-merchant-id" type="text" inputmode="numeric" wire:model="form.lavaggio_merchant_id" class="w-full max-w-sm rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                        @error('form.lavaggio_merchant_id') <p class="text-sm text-rose-600">{{ $message }}</p> @enderror
+                        <label class="flex items-center gap-2"><input type="checkbox" wire:model="form.lavaggio_merchant_reviews_enabled"> Ponudi Googleovu anketu na potvrdi narudžbe</label>
+                    </section>
                 </div>
             @endif
 

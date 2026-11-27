@@ -297,6 +297,16 @@ class StoreSettings extends Component
         $this->locale = strtolower(trim((string) (request()->query('locale') ?: config('app.locale', 'en'))));
         $this->previousLocale = $this->locale;
 
+        if (config('storefront.home') === 'lavaggio') {
+            $this->form += [
+                'lavaggio_meta_pixel_id' => '',
+                'lavaggio_merchant_id' => '',
+                'lavaggio_merchant_feed_enabled' => false,
+                'lavaggio_merchant_include_unavailable' => true,
+                'lavaggio_merchant_reviews_enabled' => false,
+            ];
+        }
+
         if (config('storefront.home') === 'watchline') {
             $this->form = array_replace($this->form, [
                 'store_announcement_enabled' => false,
@@ -533,6 +543,11 @@ class StoreSettings extends Component
             'form.store_captcha_recaptcha_v3_min_score' => ['required', 'numeric', 'min:0', 'max:1'],
 
             'form.store_analytics_enabled' => ['required', 'boolean'],
+            'form.lavaggio_meta_pixel_id' => ['nullable', 'string', 'regex:/^[1-9][0-9]{4,19}$/D'],
+            'form.lavaggio_merchant_id' => ['required_if:form.lavaggio_merchant_reviews_enabled,true', 'nullable', 'string', 'regex:/^[1-9][0-9]{0,14}$/D'],
+            'form.lavaggio_merchant_feed_enabled' => ['required', 'boolean'],
+            'form.lavaggio_merchant_include_unavailable' => ['required', 'boolean'],
+            'form.lavaggio_merchant_reviews_enabled' => ['required', 'boolean'],
             'form.store_analytics_ga4_measurement_id' => ['nullable', 'string', 'max:64'],
             'form.store_analytics_purchase_event_enabled' => ['required', 'boolean'],
             'form.store_analytics_purchase_event_name' => ['nullable', 'string', 'max:64'],
@@ -1430,7 +1445,9 @@ class StoreSettings extends Component
                     || (config('storefront.home') === 'lavaggio' && (str_starts_with($key, 'lavaggio_footer_legal_') || $key === 'lavaggio_contact_cards')),
                 'newsletter' => str_starts_with($key, 'store_newsletter_'),
                 'integrations' => str_starts_with($key, 'store_captcha_')
-                    || str_starts_with($key, 'store_analytics_'),
+                    || str_starts_with($key, 'store_analytics_')
+                    || (config('storefront.home') === 'lavaggio' && $key === 'lavaggio_meta_pixel_id'),
+                'merchant' => config('storefront.home') === 'lavaggio' && str_starts_with($key, 'lavaggio_merchant_'),
                 'pricing' => str_starts_with($key, 'store_pricing_')
                     || (config('storefront.home') === 'lavaggio' && $key === 'lavaggio_free_shipping_threshold'),
                 'cart' => str_starts_with($key, 'store_cart_'),

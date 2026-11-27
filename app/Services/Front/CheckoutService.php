@@ -526,6 +526,10 @@ class CheckoutService
                     'payload' => [
                         'product_slug' => (string) ($translation?->slug ?? ''),
                         'inventory' => $stockAllocation,
+                        ...(config('storefront.home') === 'lavaggio' ? [
+                            'delivery_mode' => $product->delivery_mode,
+                            'gtin' => \App\Support\Lavaggio\ProductBarcode::gtin($product, $optionRow),
+                        ] : []),
                         'pricing' => [
                             'source' => $line['b2b_source_type'] ?? $line['price_source'] ?? 'base',
                             'catalog_id' => $line['price_catalog_id'] ?? null,

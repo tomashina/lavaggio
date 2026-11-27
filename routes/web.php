@@ -81,6 +81,8 @@ Route::get('sitemap-{kind}-{page}.xml', [\App\Http\Controllers\Front\SitemapCont
     ->where('kind', 'products|categories|manufacturers|pages|blog')->whereNumber('page')->name('seo.sitemap.part');
 
 Route::middleware(\App\Http\Middleware\RequireLavaggioStorefront::class)->group(function (): void {
+    Route::get('feeds/google-merchant.xml', \App\Http\Controllers\Feed\GoogleMerchantController::class)
+        ->name('lavaggio.google-merchant');
     Route::get('feeds/artikli.xml', \App\Http\Controllers\Feed\LavaggioStockFeedController::class)
         ->middleware('signed:relative')->name('lavaggio.stock-feed');
     Route::get('cjenici/{kind}.{format}', [\App\Http\Controllers\Front\LavaggioPriceListController::class, 'current'])

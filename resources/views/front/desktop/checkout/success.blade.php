@@ -128,12 +128,17 @@
         $metaPixelId = $analytics['meta_pixel_id'] ?? '';
         $metaPurchaseEnabled = $metaPixelId !== '';
         $placedInSession = (int) session('front.checkout.last_order_id') === (int) $order->id;
+        $reviewInvitation = $placedInSession ? app(\App\Services\Integrations\Google\CustomerReviews::class)->payload($order) : null;
         $purchasePayload = $placedInSession && ($ga4PurchaseEnabled || $metaPurchaseEnabled)
             && \App\Services\Analytics\StorefrontEcommerce::enabled()
             ? \App\Services\Analytics\StorefrontEcommerce::purchase($order) : null;
         $eventName = trim((string) ($analytics['purchase_event_name'] ?? 'purchase')) ?: 'purchase';
         $purchaseOnceKey = 'purchase:'.(string) $order->order_number;
     @endphp
+
+    @if ($reviewInvitation)
+        @include('front.partials.google-customer-reviews', ['invitation' => $reviewInvitation])
+    @endif
 
     @if ($purchasePayload)
         @push('scripts')

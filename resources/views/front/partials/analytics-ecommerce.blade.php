@@ -74,7 +74,7 @@
                 });
             </script>
         @endif
-    @elseif ((request()->routeIs('shop.index') || request()->routeIs('categories.show') || request()->routeIs('manufacturers.show')) && isset($products))
+    @elseif (request()->routeIs('shop.index', 'shop.pro', 'categories.show', 'manufacturers.show') && isset($products))
         @php
             $viewListItems = collect($products instanceof \Illuminate\Contracts\Pagination\Paginator ? $products->items() : $products)
                 ->take(200)
@@ -97,7 +97,7 @@
                 ? ((string) (($category->translations->firstWhere('locale', $locale)?->name ?? $category->translations->firstWhere('locale', $fallbackLocale)?->name ?? __('ui.shop.page_title')) ?? __('ui.shop.page_title')))
                 : (request()->routeIs('manufacturers.show')
                     ? ((string) (($manufacturer->translations->firstWhere('locale', $locale)?->name ?? $manufacturer->translations->firstWhere('locale', $fallbackLocale)?->name ?? __('ui.shop.page_title')) ?? __('ui.shop.page_title')))
-                    : __('ui.shop.page_title'));
+                    : (request()->routeIs('shop.pro') ? __('ui.shop.professional_title') : __('ui.shop.page_title')));
             $viewListPayload = [
                 'item_list_id' => $routeName !== '' ? $routeName : 'catalog.list',
                 'item_list_name' => $listName,

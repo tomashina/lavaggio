@@ -14,8 +14,10 @@ function harness({ readyState = 'loading', validConsent = false } = {}) {
     });
     let runs = 0;
     let shows = 0;
+    const dispatched = [];
     const document = {
         ...events('document'), readyState, cookie: '',
+        dispatchEvent(event) { dispatched.push(event.type); },
         getElementById() { return null; },
         querySelector() { return {}; },
     };
@@ -27,9 +29,9 @@ function harness({ readyState = 'loading', validConsent = false } = {}) {
             show() { shows++; }, acceptedCategory() { return false; },
         },
     };
-    vm.runInNewContext(script, { document, window });
+    vm.runInNewContext(script, { document, window, Event });
     return {
-        listeners, get runs() { return runs; }, get shows() { return shows; },
+        listeners, dispatched, get runs() { return runs; }, get shows() { return shows; },
         ready() { listeners.get('document:DOMContentLoaded')?.(); },
     };
 }
@@ -41,6 +43,7 @@ test('first-visit consent starts when the DOM is ready, before any tap or scroll
     await Promise.resolve();
     assert.equal(page.runs, 1);
     assert.equal(page.shows, 1);
+    assert.ok(page.dispatched.includes('shop:consent'));
     for (const event of ['pointerdown', 'touchstart', 'keydown', 'scroll']) {
         assert.equal(page.listeners.has(`window:${event}`), false);
     }

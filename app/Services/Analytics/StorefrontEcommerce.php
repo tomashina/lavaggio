@@ -57,20 +57,25 @@ class StorefrontEcommerce
         return $event ? ['name' => $event, 'params' => self::merchandise($items)] : null;
     }
 
-    public static function purchase(Order $order): ?array
+    public static function isConfirmedOrder(Order $order): bool
     {
         $status = $order->status;
         $cancelledCodes = [...OrderStatusClassification::CANCELLED_NAMES, 'refunded', 'failed', 'declined'];
         if ($status?->is_cancelled || in_array(strtolower(trim((string) $status?->code)), $cancelledCodes, true)
             || in_array(strtolower(trim((string) $status?->getRawOriginal('name'))), $cancelledCodes, true)
             || $order->items->isEmpty()) {
-            return null;
+            return false;
         }
 
         $corvus = app(CorvusPayFormService::class);
         $onlinePayment = $corvus->isCorvusOrder($order) || app(WSPayFormService::class)->isWspayOrder($order)
             || app(KeksPayService::class)->isKeksOrder($order);
-        if ($onlinePayment && ! $order->paid_at && ! $corvus->hasPreauthorization($order)) {
+        return ! $onlinePayment || $order->paid_at !== null || $corvus->hasPreauthorization($order);
+    }
+
+    public static function purchase(Order $order): ?array
+    {
+        if (! self::isConfirmedOrder($order)) {
             return null;
         }
 
