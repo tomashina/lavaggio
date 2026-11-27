@@ -8,6 +8,7 @@ use App\Models\Catalog\Product\ProductTranslation;
 use App\Services\Pricing\B2BAccessService;
 use App\Services\Pricing\ProductPricePresentationService;
 use App\Services\Settings\SystemSettingsService;
+use App\Services\Shipping\ShippingCalculator;
 use App\Support\Lavaggio\ProductBarcode;
 use App\Support\Media\LegacyCatalogImage;
 use Illuminate\Support\Str;
@@ -16,7 +17,7 @@ use XMLWriter;
 
 class GoogleMerchantController
 {
-    public function __invoke(SystemSettingsService $settings, ProductPricePresentationService $prices): StreamedResponse
+    public function __invoke(SystemSettingsService $settings, ProductPricePresentationService $prices, ShippingCalculator $shipping): StreamedResponse
     {
         abort_unless($settings->get('lavaggio_merchant_feed_enabled', false), 404);
         abort_unless(app(B2BAccessService::class)->canViewPrices(null), 403);
@@ -24,7 +25,7 @@ class GoogleMerchantController
         $store = $settings->get('store_brand_name', 'Lavaggio') ?: 'Lavaggio';
         $origin = rtrim((string) config('app.url'), '/');
 
-        return response()->stream(function () use ($prices, $includeUnavailable, $store, $origin): void {
+        return response()->stream(function () use ($prices, $shipping, $includeUnavailable, $store, $origin): void {
             $xml = new XMLWriter;
             $xml->openUri('php://output');
             $xml->startDocument('1.0', 'UTF-8');
@@ -37,7 +38,7 @@ class GoogleMerchantController
             $xml->writeElement('description', $this->plainText($store.' – katalog proizvoda', 5000));
 
             $products = Product::query()->visibleOnStorefront()->with([
-                'translations', 'taxRate', 'manufacturer.translations', 'categories.translations', 'media',
+                'translations', 'taxRate', 'manufacturer.translations', 'categories.translations', 'media', 'packages',
                 'optionValues.optionValue.option', 'optionValues.optionValue.translations',
                 'optionValues.parentOptionValue.option', 'optionValues.parentOptionValue.translations',
             ])->lazyById(100);
@@ -66,6 +67,10 @@ class GoogleMerchantController
                         continue;
                     }
                     $fields = $this->offer($product, $variant, $translation, $origin) + $base;
+                    $weightKg = $shipping->productMeasurements($product, $variant)['weight_kg'];
+                    if ($weightKg !== null && $weightKg <= 1000 && round($weightKg, 3) > 0) {
+                        $fields['shipping_weight'] = number_format($weightKg, 3, '.', '').' kg';
+                    }
                     $fields['availability'] = $available ? 'in_stock' : 'out_of_stock';
                     $current = round((float) $price['current_gross'], 2);
                     $regular = round((float) ($price['old_gross'] ?? $current), 2);

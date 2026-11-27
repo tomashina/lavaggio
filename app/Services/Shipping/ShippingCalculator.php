@@ -3,6 +3,7 @@
 namespace App\Services\Shipping;
 
 use App\Models\Catalog\Product\Product;
+use App\Models\Catalog\Product\ProductOptionValue;
 use App\Models\Catalog\Product\ProductPackage;
 use App\Models\Settings\Local\ShippingMethod;
 use App\Models\Settings\Local\ShippingMethodRate;
@@ -409,7 +410,7 @@ class ShippingCalculator
     /**
      * @return array{weight_kg:float|null,length_cm:float|null,width_cm:float|null,height_cm:float|null}
      */
-    private function productMeasurements(Product $product): array
+    public function productMeasurements(Product $product, ?ProductOptionValue $variant = null): array
     {
         /** @var ProductPackage|null $package */
         $package = null;
@@ -419,8 +420,10 @@ class ShippingCalculator
                 ?? $product->packages->first(fn (ProductPackage $row): bool => $row->is_active);
         }
 
+        $weight = $this->measurement(data_get($variant?->payload, 'weight_kg'), $product->weight_kg);
+
         return [
-            'weight_kg' => $this->measurement($product->weight_kg, $package?->weight_kg),
+            'weight_kg' => $this->measurement($weight, $package?->weight_kg),
             'length_cm' => $this->measurement($product->length_cm, $package?->length_cm),
             'width_cm' => $this->measurement($product->width_cm, $package?->width_cm),
             'height_cm' => $this->measurement($product->height_cm, $package?->height_cm),

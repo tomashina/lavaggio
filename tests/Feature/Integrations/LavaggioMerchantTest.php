@@ -59,6 +59,7 @@ class LavaggioMerchantTest extends TestCase
         foreach (['gel', 'rasprodan', 'skriven', 'bez-slike'] as $code) {
             $product = Product::create(['code' => $code, 'sku' => $code, 'base_price' => 10, 'stock_qty' => $code === 'rasprodan' ? 0 : 5,
                 'is_active' => $code !== 'skriven', 'barcode' => match ($code) { 'gel' => '4006381333931', 'rasprodan' => '123', default => null },
+                'weight_kg' => $code === 'gel' ? 1.245 : null, 'content_quantity' => 1, 'content_unit' => 'l',
                 'payload' => $code === 'bez-slike' ? [] : ['opencart' => ['image' => 'catalog/test.jpg']]]);
             $product->translations()->create(['locale' => 'hr', 'slug' => $code, 'name' => $code.' & pranje', 'description' => '<p>Gel &amp; sapun</p>']);
         }
@@ -74,11 +75,14 @@ class LavaggioMerchantTest extends TestCase
         $this->assertSame('10.00 EUR', (string) $offer->price);
         $this->assertSame('8.00 EUR', (string) $offer->sale_price);
         $this->assertSame('in_stock', (string) $offer->availability);
+        $this->assertSame('1.245 kg', (string) $offer->shipping_weight);
+        $this->assertSame('1l', (string) $offer->unit_pricing_measure);
         $this->assertSame('4006381333931', (string) $offer->gtin);
         $this->assertSame('https://www.lavaggio.hr/proizvod/gel', (string) $offer->link);
         $this->assertStringContainsString('catalog/test.jpg', (string) $offer->image_link);
         $out = $xml->channel->item[1]->children('http://base.google.com/ns/1.0');
         $this->assertSame('out_of_stock', (string) $out->availability);
+        $this->assertFalse(isset($out->shipping_weight));
         $this->assertFalse(isset($out->gtin));
         $settings->put('lavaggio_merchant_include_unavailable', false);
         $this->assertCount(1, simplexml_load_string($this->get($path)->assertOk()->streamedContent())->channel->item);
@@ -90,24 +94,34 @@ class LavaggioMerchantTest extends TestCase
     {
         app(SystemSettingsService::class)->putMany(['lavaggio_merchant_feed_enabled' => true, 'store_pricing_prices_include_tax' => true]);
         $product = Product::create(['code' => 'SIZE', 'sku' => 'PARENT', 'base_price' => 10, 'stock_qty' => 0,
-            'is_active' => true, 'barcode' => '4006381333931', 'payload' => ['opencart' => ['image' => 'catalog/test.jpg']]]);
+            'is_active' => true, 'weight_kg' => 0.75, 'barcode' => '4006381333931', 'payload' => ['opencart' => ['image' => 'catalog/test.jpg']]]);
         $product->translations()->create(['locale' => 'hr', 'slug' => 'rukavice', 'name' => 'Rukavice']);
         $option = Option::create(['code' => 'velicina', 'type' => 'select', 'is_active' => true]);
         $value = $option->values()->create(['code' => 'm', 'is_active' => true]);
         $value->translations()->create(['locale' => 'hr', 'slug' => 'm', 'name' => 'M']);
         $variant = $product->optionValues()->create(['option_value_id' => $value->id, 'mode' => 'single', 'sku' => 'SIZE-M',
             'stock_qty' => 2, 'price_override' => 13, 'combination_hash' => 'size-m', 'is_active' => true,
-            'payload' => ['barcode' => '036000291452']]);
+            'payload' => ['barcode' => '036000291452', 'weight_kg' => 0.325]]);
         $xml = simplexml_load_string($this->get('/feeds/google-merchant.xml')->assertOk()->streamedContent());
         $this->assertCount(1, $xml->channel->item);
         $offer = $xml->channel->item[0]->children('http://base.google.com/ns/1.0');
         $this->assertSame('SIZE-M', (string) $offer->id);
         $this->assertSame('PARENT', (string) $offer->item_group_id);
         $this->assertSame('M', (string) $offer->size);
+        $this->assertSame('0.325 kg', (string) $offer->shipping_weight);
         $this->assertSame('036000291452', (string) $offer->gtin);
         $this->assertSame('13.00 EUR', (string) $offer->price);
         $this->assertSame('in_stock', (string) $offer->availability);
         $this->assertSame('https://www.lavaggio.hr/proizvod/rukavice?product_option_value_id='.$variant->id, (string) $offer->link);
+        $variant->update(['payload' => ['weight_kg' => 0]]);
+        $getOffer = fn () => simplexml_load_string($this->get('/feeds/google-merchant.xml')->assertOk()->streamedContent())
+            ->channel->item[0]->children('http://base.google.com/ns/1.0');
+        $this->assertSame('0.750 kg', (string) $getOffer()->shipping_weight);
+        $product->update(['weight_kg' => null]);
+        $product->packages()->create(['code' => 'paket', 'name' => 'Paket', 'is_default' => true, 'is_active' => true, 'weight_kg' => 0.654]);
+        $this->assertSame('0.654 kg', (string) $getOffer()->shipping_weight);
+        $product->update(['weight_kg' => 1000.001]);
+        $this->assertFalse(isset($getOffer()->shipping_weight));
     }
 
     public function test_customer_reviews_use_the_confirmed_receipt_and_are_independent_of_analytics(): void
