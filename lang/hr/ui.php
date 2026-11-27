@@ -22,6 +22,8 @@ return [
     ],
     'shop' => [
         'page_title' => 'Shop',
+        'professional_title' => 'Profesionalni proizvodi',
+        'professional_empty' => 'Trenutno nema profesionalnih proizvoda.',
         'title' => 'Katalog proizvoda',
         'subtitle' => 'Pretraži i filtriraj aktivni katalog.',
         'search_autocomplete' => [

@@ -135,6 +135,8 @@ Route::middleware(['front.customer-impersonation', 'front.locale', 'front.device
 
         Route::get('search/autocomplete', [CatalogController::class, 'autocomplete'])->name('search.autocomplete');
         Route::get('shop', [CatalogController::class, 'index'])->name('shop.index');
+        Route::get('trgovina/pro', [CatalogController::class, 'index'])
+            ->middleware(\App\Http\Middleware\RequireLavaggioStorefront::class)->name('shop.pro');
         Route::get('akcije', [CatalogController::class, 'promotions'])->name('shop.promotions');
         Route::get('categories', [CatalogController::class, 'categories'])->name('categories.index');
         Route::get('category/{slug}', [CatalogController::class, 'showCategory'])->name('categories.show');

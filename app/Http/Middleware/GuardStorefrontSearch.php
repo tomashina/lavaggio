@@ -18,7 +18,7 @@ class GuardStorefrontSearch
 
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->routeIs('search.autocomplete', 'shop.index', 'categories.show', 'manufacturers.show')) {
+        if (! $request->routeIs('search.autocomplete', 'shop.index', 'shop.pro', 'categories.show', 'manufacturers.show')) {
             return $next($request);
         }
 

@@ -22,6 +22,8 @@ return [
     ],
     'shop' => [
         'page_title' => 'Shop',
+        'professional_title' => 'Professional products',
+        'professional_empty' => 'There are currently no professional products.',
         'title' => 'Shop Products',
         'subtitle' => 'Search and filter your live catalog.',
         'search_autocomplete' => [

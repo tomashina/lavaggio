@@ -29,6 +29,7 @@ use App\Services\Pricing\PriceCatalogQuery;
 use App\Services\Pricing\PriceCatalogResolver;
 use App\Services\Pricing\ProductPricePresentationService;
 use App\Services\Settings\SystemSettingsService;
+use App\Support\LavaggioProductFilters;
 use App\Support\Media\MediaUrl;
 use App\Support\ProductMaterialLabel;
 use Illuminate\Database\Eloquent\Builder;
@@ -53,6 +54,8 @@ class CatalogController extends Controller
     private ?bool $hideOutOfStockProductsCache = null;
 
     private bool $localAvailabilityOnly = false;
+
+    private bool $professionalOnly = false;
 
     private ?int $priceBoundsPaginationTotal = null;
 
@@ -438,6 +441,14 @@ class CatalogController extends Controller
 
     public function index(Request $request): Response|RedirectResponse
     {
+        $this->professionalOnly = $request->routeIs('shop.pro');
+        $proAttributeId = filter_var($request->query('attr_lavaggio_pro'), FILTER_VALIDATE_INT);
+        if ($proAttributeId > 0 && $request->routeIs('shop.index') && config('storefront.home') === 'lavaggio'
+            && Attribute::query()->whereKey($proAttributeId)->where('is_active', true)
+                ->where('code', LavaggioProductFilters::attributeCode('pro', 'PRO'))->exists()) {
+            return redirect()->route('shop.pro', $request->except('attr_lavaggio_pro'), 301);
+        }
+
         $locale = app()->getLocale();
         $fallbackLocale = (string) config('app.locale');
         $catalogManufacturer = $request->attributes->get('catalog_manufacturer');
@@ -490,6 +501,9 @@ class CatalogController extends Controller
                 : null);
         $configuredOptionIds = $this->configuredFilterOptionIds();
         $configuredAttributeGroups = $this->configuredFilterAttributeGroups();
+        if ($this->professionalOnly) {
+            $configuredAttributeGroups = array_diff($configuredAttributeGroups, [LavaggioProductFilters::groupCode('pro')]);
+        }
         $optionFilters = $this->catalogOptionFilters(
             $locale,
             $fallbackLocale,
@@ -592,6 +606,7 @@ class CatalogController extends Controller
             $query->addSelect(['products.is_professional', 'products.content_quantity', 'products.content_unit', 'products.delivery_mode']);
         }
 
+        $this->applyProfessionalFilter($query);
         $this->applyProductSearch($query, $locale, $fallbackLocale, $search);
 
         if ($categorySlug !== '') {
@@ -720,6 +735,7 @@ class CatalogController extends Controller
         $response = response()->view($this->frontendView($request, $view), [
             'isShopPage' => ! $isManufacturerPage && $this->frontendVariant($request) === 'desktop',
             'isPromotionsPage' => $isPromotionsPage,
+            'isProfessionalPage' => $this->professionalOnly,
             'isManufacturerPage' => $isManufacturerPage,
             'manufacturer' => $catalogManufacturer,
             'isWatchlineManufacturerCategoryContext' => $isWatchlineManufacturerCategoryContext,
@@ -1294,6 +1310,7 @@ class CatalogController extends Controller
             ->where('promotion_product_categories.is_active', true)
             ->whereIn('promotion_filter_categories.id', $categories->modelKeys());
         $this->applyCategoryScheduleToBaseQuery($productsQuery->getQuery(), 'promotion_product_categories');
+        $this->applyProfessionalFilter($productsQuery);
         if ($manufacturerId !== null) {
             $productsQuery->where('products.manufacturer_id', $manufacturerId);
         }
@@ -1359,7 +1376,7 @@ class CatalogController extends Controller
         bool $availableOnly = false
     ) {
         $hideOutOfStock = $this->hideOutOfStockProducts() || $availableOnly;
-        $includeEmptyCategories = config('storefront.home') === 'lavaggio';
+        $includeEmptyCategories = config('storefront.home') === 'lavaggio' && ! $this->professionalOnly;
         $cacheKey = sprintf('front:catalog:shop-root-categories:v2:%s:%s:%s', $locale, $fallbackLocale, $this->localAvailabilityOnly ? 'local-48h' : ($hideOutOfStock ? 'hide-oos' : 'all-stock'));
         if ($includeEmptyCategories) {
             $cacheKey .= ':include-empty';
@@ -1422,6 +1439,7 @@ class CatalogController extends Controller
                     ->select(['id', 'manufacturer_id', 'locale', 'name', 'slug'])
                     ->whereIn('locale', [$locale, $fallbackLocale])])
                 ->withCount(['products' => function ($query) use ($hideOutOfStock, $scopeIds): void {
+                    $this->applyProfessionalFilter($query);
                     $query->visibleOnStorefront($hideOutOfStock)->availableWithin48Hours($this->localAvailabilityOnly);
                     if ($scopeIds !== []) {
                         $query->whereHas('categories', function ($categoryQuery) use ($scopeIds): void {
@@ -1501,6 +1519,7 @@ class CatalogController extends Controller
             ->where('recursive_product_categories.is_active', true)
             ->whereIn('recursive_filter_categories.id', $categories->pluck('id')->all());
         $this->applyCategoryScheduleToBaseQuery($productsQuery->getQuery(), 'recursive_product_categories');
+        $this->applyProfessionalFilter($productsQuery);
         if ($manufacturerId !== null) {
             $productsQuery->where('products.manufacturer_id', $manufacturerId);
         }
@@ -1523,6 +1542,23 @@ class CatalogController extends Controller
         }
 
         return $this->hideOutOfStockProductsCache;
+    }
+
+    private function applyProfessionalFilter(Builder|QueryBuilder $query): void
+    {
+        if (! $this->professionalOnly) {
+            return;
+        }
+
+        // Imported products may carry the checkbox or the catalog attribute independently.
+        $taggedProducts = DB::table('catalog_attribute_product')
+            ->join('catalog_attributes', 'catalog_attributes.id', '=', 'catalog_attribute_product.attribute_id')
+            ->where('catalog_attributes.code', LavaggioProductFilters::attributeCode('pro', 'PRO'))
+            ->where('catalog_attributes.is_active', true)
+            ->select('catalog_attribute_product.product_id');
+
+        $query->where(fn ($products) => $products->where('products.is_professional', true)
+            ->orWhereIn('products.id', $taggedProducts));
     }
 
     /**
@@ -1797,6 +1833,7 @@ class CatalogController extends Controller
             $hideOutOfStock
         ): array {
             $productScope = function ($productQuery) use ($scopeIds, $manufacturerId, $hideOutOfStock): void {
+                $this->applyProfessionalFilter($productQuery);
                 $productQuery->visibleOnStorefront($hideOutOfStock)->availableWithin48Hours($this->localAvailabilityOnly);
                 if ($manufacturerId !== null) {
                     $productQuery->where('products.manufacturer_id', $manufacturerId);
@@ -2100,6 +2137,7 @@ class CatalogController extends Controller
                 $hideOutOfStock
             ): void {
                 $query->where('products.is_active', true);
+                $this->applyProfessionalFilter($query);
                 $this->applyProductStockVisibilityToBaseQuery($query, $hideOutOfStock);
 
                 if ($manufacturerId !== null) {
@@ -2290,6 +2328,7 @@ class CatalogController extends Controller
             ->whereIn('option_values.option_id', $optionIds)
             ->where('option_values.is_active', true);
 
+        $this->applyProfessionalFilter($query);
         $this->applyProductStockVisibilityToBaseQuery($query, $hideOutOfStock);
 
         if ($manufacturerId !== null) {
@@ -2375,6 +2414,7 @@ class CatalogController extends Controller
                 ->whereHas('productOptionValues', function ($q) use ($scopeIds, $manufacturerId, $hideOutOfStock): void {
                     $q->where('is_active', true)
                         ->whereHas('product', function ($productQuery) use ($scopeIds, $manufacturerId, $hideOutOfStock): void {
+                            $this->applyProfessionalFilter($productQuery);
                             $productQuery->visibleOnStorefront($hideOutOfStock)->availableWithin48Hours($this->localAvailabilityOnly);
                             if ($manufacturerId !== null) {
                                 $productQuery->where('products.manufacturer_id', $manufacturerId);
@@ -2998,6 +3038,9 @@ class CatalogController extends Controller
 
     private function publicSourceCacheKey(string $key): string
     {
+        if ($this->professionalOnly) {
+            $key .= ':lavaggio-pro';
+        }
         if (WatchlineCatalogFacets::enabled()) {
             $key .= ':watchline-facets:'.Cache::get(WatchlineCatalogFacets::REVISION_KEY, 'initial');
         } elseif (\App\Support\StorefrontTheme::usesLibermediaBrand()) {

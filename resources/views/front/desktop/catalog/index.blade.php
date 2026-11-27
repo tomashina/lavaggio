@@ -6,8 +6,13 @@
     $isHerreraCatalog = \App\Support\StorefrontTheme::usesHerreraLayout((string) ($storeSettings['branding']['store_name'] ?? config('app.name')));
     $isShopPage = (bool) ($isShopPage ?? false);
     $isPromotionsPage = $isPromotionsPage ?? false;
-    $shopRoute = $isPromotionsPage ? 'shop.promotions' : 'shop.index';
-    $shopPageTitle = $isPromotionsPage ? __('Artikli na akciji') : __('ui.shop.page_title');
+    $isProfessionalPage = $isProfessionalPage ?? false;
+    $isShopCollection = $isPromotionsPage || $isProfessionalPage;
+    [$shopRoute, $shopPageTitle] = match (true) {
+        $isProfessionalPage => ['shop.pro', __('ui.shop.professional_title')],
+        $isPromotionsPage => ['shop.promotions', __('Artikli na akciji')],
+        default => ['shop.index', __('ui.shop.page_title')],
+    };
     $isManufacturerPage = (bool) ($isManufacturerPage ?? false);
     $isWatchlineManufacturerCategoryContext = (bool) ($isWatchlineManufacturerCategoryContext ?? false);
     $manufacturerCategoryContext = $manufacturerCategoryContext ?? null;
@@ -63,7 +68,7 @@
     };
     $catalogHeading = match (true) {
         $isManufacturerPage => ($translation?->name ?? $manufacturerPageModel->code),
-        $isPromotionsPage => $shopPageTitle,
+        $isShopCollection => $shopPageTitle,
         $isShopPage => __('ui.shop.title'),
         default => ($translation?->name ?? $category->code),
     };
@@ -84,12 +89,12 @@
     $catalogCurrentCategoryUrl = url()->query($catalogBaseUrl, $catalogNavigationQuery);
     $hasSearchQuery = trim((string) ($filters['q'] ?? '')) !== '';
     $defaultSort = $hasSearchQuery ? 'relevance' : (($isShopPage || $isManufacturerPage) ? 'newest' : 'default');
-    $catalogCategoryUrl = static function ($catalogCategory) use ($isPromotionsPage, $isManufacturerPage, $isWatchlineManufacturerCategoryContext, $translation, $locale, $fallbackLocale, $catalogNavigationQuery): string {
+    $catalogCategoryUrl = static function ($catalogCategory) use ($isShopCollection, $shopRoute, $isManufacturerPage, $isWatchlineManufacturerCategoryContext, $translation, $locale, $fallbackLocale, $catalogNavigationQuery): string {
         $catalogCategoryTranslation = $catalogCategory->translations->firstWhere('locale', $locale)
             ?? $catalogCategory->translations->firstWhere('locale', $fallbackLocale);
 
-        if ($isPromotionsPage) {
-            return route('shop.promotions', ['category' => $catalogCategoryTranslation?->slug ?? $catalogCategory->id, ...$catalogNavigationQuery]);
+        if ($isShopCollection) {
+            return route($shopRoute, ['category' => $catalogCategoryTranslation?->slug ?? $catalogCategory->id, ...$catalogNavigationQuery]);
         }
 
         if ($isWatchlineManufacturerCategoryContext) {
@@ -153,7 +158,8 @@
         || trim((string) ($filters['price_min'] ?? '')) !== ''
         || trim((string) ($filters['price_max'] ?? '')) !== ''
         || (bool) ($filters['available_only'] ?? false)
-        || ($isPromotionsPage ? filled($filters['category'] ?? null) : $promoOnlyEnabled)
+        || ($isShopCollection && filled($filters['category'] ?? null))
+        || ($promoOnlyEnabled && ! $isPromotionsPage)
         || collect(array_keys(request()->query()))
             ->contains(fn ($key): bool => str_starts_with((string) $key, 'opt_') || str_starts_with((string) $key, 'attr_'))
         || (string) ($filters['sort'] ?? $defaultSort) !== $defaultSort;
@@ -269,6 +275,10 @@
                     <a href="{{ route('home') }}" class="inline-flex items-center justify-center text-slate-500 hover:text-slate-700"><x-front.breadcrumb-home /></a>
                 </li>
                 @if ($isShopPage)
+                    @if ($isProfessionalPage)
+                        <li aria-hidden="true">/</li>
+                        <li><a href="{{ route('shop.index') }}">{{ __('ui.shop.page_title') }}</a></li>
+                    @endif
                     <li class="text-slate-400">/</li>
                     <li class="text-slate-700">{{ $shopPageTitle }}</li>
                 @elseif ($isManufacturerPage)
@@ -386,7 +396,7 @@
                     </div>
                     <form method="GET" action="{{ $catalogBaseUrl }}" class="catalog-mobile-filter-panel" data-mobile-filter-panel id="category-mobile-filter-panel">
                         <input type="hidden" name="q" value="{{ $filters['q'] ?? '' }}">
-                        @if ($isWatchlineManufacturerCategoryContext || ($isPromotionsPage && filled($filters['category'] ?? null)))
+                        @if ($isWatchlineManufacturerCategoryContext || ($isShopCollection && filled($filters['category'] ?? null)))
                             <input type="hidden" name="category" value="{{ $filters['category'] }}">
                         @endif
                         <div class="catalog-mobile-filter-content">
@@ -753,7 +763,7 @@
                             >
                                 <input type="hidden" name="q" value="{{ $filters['q'] ?? '' }}">
                                 <input type="hidden" name="cols" value="{{ $currentCols }}">
-                                @if ($isWatchlineManufacturerCategoryContext || ($isPromotionsPage && filled($filters['category'] ?? null)))
+                                @if ($isWatchlineManufacturerCategoryContext || ($isShopCollection && filled($filters['category'] ?? null)))
                                     <input type="hidden" name="category" value="{{ $filters['category'] }}">
                                 @endif
 
@@ -873,7 +883,12 @@
 
                 <div class="catalog-products-main">
                     @if ($products->isEmpty())
-                        <div class="border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">{{ $isPromotionsPage ? ($hasActiveFilters ? __('ui.shop.empty') : __('Trenutno nema artikala na akciji.')) : __('ui.category.empty') }}</div>
+                        <div class="border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">{{ match (true) {
+                            $isShopCollection && $hasActiveFilters => __('ui.shop.empty'),
+                            $isProfessionalPage => __('ui.shop.professional_empty'),
+                            $isPromotionsPage => __('Trenutno nema artikala na akciji.'),
+                            default => __('ui.category.empty'),
+                        } }}</div>
                     @else
                         <div class="catalog-lined-grid {{ $gridClass }}" data-catalog-grid data-catalog-mobile-cols="{{ $mobileCols }}" data-continuous-card-grid @if(\App\Support\StorefrontTheme::usesLibermediaBrand()) data-libermedia-catalog-promos data-catalog-promo-context="{{ $catalogBaseUrl }}" data-catalog-promo-page="{{ $products->currentPage() }}" data-catalog-promo-per-page="{{ $products->perPage() }}" @endif>
                             @foreach ($products as $product)
